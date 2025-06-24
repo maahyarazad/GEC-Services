@@ -1,14 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./gallery-events.css";
 import PropTypes from "prop-types";
-
+import Modal from "../Modal";
+import RegistrationRequestForm from "../admin/RegistrationRequestForm";
 export const Events = ({ data }) => {
   const [eventsData, setEventsData] = useState(null);
+
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (!data) {
       return;
     }
+
     setEventsData(data.registration);
   }, [data]);
 
@@ -17,12 +21,13 @@ export const Events = ({ data }) => {
       <span className="gallery-header">
         <h4>Events Gallery</h4>
         <span>
-          <button className="cta-button blue">
+          <button className="cta-button blue" onClick={() =>setIsOpen(true)}>
             <img alt="add-item" src="/add-item.svg"></img>
-            <p>New</p>
+             
           </button>
         </span>
       </span>
+             
       <div className="table-container">
         <table>
           <thead>
@@ -57,6 +62,11 @@ export const Events = ({ data }) => {
           </tbody>
         </table>
       </div>
+       <Modal isOpen={isOpen} 
+                onRequestClose={() => setIsOpen(false)}   
+                title={"New Registration Page"}>
+                <RegistrationRequestForm/>
+              </Modal>
     </div>
   );
 };
