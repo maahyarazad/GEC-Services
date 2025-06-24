@@ -1,0 +1,223 @@
+/*MINIMUM RESET STYLES*/
+
+html,
+body {
+  border: none;
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
+}
+
+html {
+  font-size: 16px;
+}
+
+@media only screen and (max-width: 1024px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+address,
+big,
+cite,
+code,
+em,
+div,
+font,
+img,
+small,
+strike,
+sub,
+sup,
+li,
+ol,
+ul,
+fieldset,
+form,
+label,
+legend,
+button,
+table,
+caption,
+tr,
+th,
+td {
+  border: none;
+  font-size: inherit;
+  line-height: inherit;
+  margin: 0;
+  padding: 0;
+  text-align: inherit;
+  box-sizing: border-box;
+  font-family: var(--primaryfont);
+}
+
+body {
+  line-height: 1.618rem;
+  position: relative;
+  background: #ffffff;
+  font-family: var(--primaryfont);
+  color: var(--dark);
+  width: 100%;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+* {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  cursor: pointer !important;
+  border-radius: 4px;
+  text-decoration: none;
+  font-family: var(--primaryfont);
+}
+
+input,
+button,
+textarea,
+select {
+  border: 1px solid var(--grey);
+  background-color: unset;
+  font-family: var(--primaryfont);
+  font-size: 0.875rem;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+  font-family: var(--primaryfont);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--dark);
+}
+
+p,
+span,
+a,
+button,
+select,
+option {
+  font-family: var(--primaryfont);
+  line-height: 1.618;
+}
+
+p,
+a {
+  font-size: 0.875rem;
+  font-weight: 200;
+}
+
+@media only screen and (max-width: 767px) {
+  p {
+    font-weight: 400;
+  }
+}
+
+p > strong {
+  font-weight: 700;
+}
+
+a {
+  font-weight: 400;
+  font-size: 0.875rem;
+}
+
+h1 {
+  font-family: "Century Gothic Bold", sans-serif;
+  font-size: 2rem;
+}
+
+h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+h3 {
+  font-size: 1.3rem;
+  line-height: 1.3;
+  color: var(--primary);
+}
+
+h4 {
+  font-size: 1rem;
+}
+
+h5 {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+@media only screen and (max-width: 1024px) {
+  h1 {
+    font-size: 24px;
+    line-height: 1.618;
+  }
+
+  h2 {
+    line-height: 1.618;
+  }
+}
+
+input::placeholder,
+textarea::placeholder,
+select::placeholder,
+option::placeholder {
+  font-size: 0.75rem;
+  color: var(--gray);
+  font-family: var(--primaryfont);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+}
+
+*:focus {
+  outline: none;
+}
+
+a,
+button {
+  > * {
+    display: inline-block;
+    vertical-align: middle;
+    pointer-events: none;
+  }
+}
+
+/*Remove all animations and transitions for people that prefer not to see them*/
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

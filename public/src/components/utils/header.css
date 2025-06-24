@@ -1,0 +1,164 @@
+header {
+  width: 100%;
+  height: fit-content;
+  padding: 16px;
+  border-bottom: 1px solid var(--grey);
+
+  > div {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+
+    > span {
+      display: inline-block;
+      button#burgerMenu {
+        position: relative;
+        width: 20px;
+        height: 20px;
+        background-color: unset;
+        border: unset;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 8px;
+
+        > span {
+          position: relative;
+          width: 100%;
+          height: 2px;
+          display: block;
+          background-color: var(--dark);
+          transform-origin: center;
+          transition: 0.3s all ease;
+        }
+
+        > span::after,
+        > span::before {
+          content: "";
+          position: relative;
+          display: block;
+          width: 100%;
+          height: 2px;
+          background-color: var(--dark);
+          transform-origin: center;
+          transition: 0.3s all ease;
+        }
+
+        > span::after {
+          top: -8px;
+        }
+        > span::before {
+          top: 6px;
+        }
+      }
+
+      button#burgerMenu.click {
+        position: relative;
+        > span {
+          transition: 0.3s all ease;
+
+          transform: rotate(45deg);
+        }
+
+        > span::after {
+          transform: rotate(-90deg);
+          top: -2px;
+        }
+
+        > span::before {
+          opacity: 0;
+          top: 0;
+        }
+      }
+
+      > a {
+        display: inline-block;
+        width: 64px;
+        height: auto;
+        margin: 0 8px;
+
+        > img {
+          pointer-events: none;
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+      }
+
+      h2 {
+        font-size: 1.3rem;
+        color: var(--dark);
+        font-family: sans-serif;
+        font-weight: 400;
+        display: inline-block;
+        line-height: 1;
+        vertical-align: middle;
+      }
+    }
+
+    > span {
+      position: relative;
+      display: inline-block;
+      display: flex;
+      align-items: center;
+      gap: 0 16px;
+      > p#setTheTime {
+        color: var(--dark);
+        font-family: sans-serif;
+        font-size: 0.65rem;
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: inline-block;
+      }
+
+      > button.alarm:after {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 8px;
+        position: absolute;
+        top: -4px;
+        right: 0;
+        z-index: 2;
+        background-color: var(--error);
+      }
+    }
+  }
+}
+
+.error-container.active {
+  position: auto;
+  opacity: 1;
+  top: 0;
+}
+
+.error-container {
+  transition: 0.5s all ease;
+  pointer-events: none;
+  opacity: 0;
+  top: 48px;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1000000;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+
+  > p {
+    padding: 32px;
+    max-width: 480px;
+    text-align: center;
+    font-size: 1rem;
+    background: var(--white);
+    border-radius: 4px;
+    font-weight: 700;
+  }
+}

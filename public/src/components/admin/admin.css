@@ -1,0 +1,24 @@
+.admin {
+  position: relative;
+  width: 100%;
+  height: calc(100dvh - 75px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  background-color: var(--light);
+  padding: 16px;
+  > div {
+    position: relative;
+    background-color: var(--white);
+    height: 99%;
+  }
+
+  > div:nth-of-type(1) {
+    width: 20%;
+  }
+
+  > div:nth-of-type(2) {
+    width: calc(80% - 16px);
+  }
+}

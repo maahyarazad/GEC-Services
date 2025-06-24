@@ -1,0 +1,20 @@
+[
+  {
+    "id": "test"
+  },
+  {
+    "page_target": "registration",
+    "email": "houio@yahoo.com",
+    "phone": "1240912840",
+    "whatsapp": "019284098",
+    "gender": "male",
+    "firstName": "John",
+    "lastName": "John",
+    "companyName": "John",
+    "id": "gecre50682998",
+    "metadata": {
+      "createdAt": "2025-06-23",
+      "modifiedAt": "2025-06-23 16:49:58"
+    }
+  }
+]
