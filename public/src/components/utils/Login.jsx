@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { UseLogin } from "../hooks/UseLogin";
 import "./login.css";
 import { UseFormValidator } from "../hooks/UseFormValidator";
+import { useNavigate } from 'react-router-dom';
 
 const setWithExpiry = (key, value, ttlMs) => {
   const now = new Date();
@@ -21,7 +22,18 @@ export const Login = () => {
     const registration_code = useRef();
     const loginRef = useRef();
     const statusRef = useRef();
+   
 
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const gecuser = JSON.parse(localStorage.getItem("gec-registration"));
+        
+        if (gecuser) {
+            navigate(`/registration/${gecuser.value.page}`);
+        }
+    }, []);
+    
     // const [targetList, setTargetList] = useState([]);
     // useEffect(() => {
     //     const fetchData = async () => {
