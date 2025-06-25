@@ -1,6 +1,12 @@
 [
   {
     "id": "12345",
-    "page": "registration"
+    "page": "registration",
+    "paymentRequired" : false,
+    "title": "registration",
+    "description": "this should be ncharmax",
+    "Image": "this should be ncharmax",
+
+    "maxTokensPerGuest" : 10
   }
 ]

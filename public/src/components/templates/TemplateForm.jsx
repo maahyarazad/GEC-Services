@@ -6,6 +6,31 @@ import { UseCreateRecord } from "../hooks/UseCreateRecord";
 import { Link } from "react-router-dom";
 
 export const TemplateForm = () => {
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config`, {
+          method: 'GET',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch');
+        }
+
+        const values = await response.json();
+        console.log(values);
+        debugger;
+
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+
   const [target, setTarget] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);

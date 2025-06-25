@@ -2,7 +2,7 @@
   "apps": [
     {
       "name": "Services",
-      "script": "server.js",
+      "script": "server_with_sql.js",
       "watch": true,
       "ignore_watch": ["node_modules", "logs", "public", "data"],
       "log_file": "logs/my-app.log",

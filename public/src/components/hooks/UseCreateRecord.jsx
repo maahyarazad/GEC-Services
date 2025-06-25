@@ -1,6 +1,6 @@
-export const UseCreateRecord = async (xData, xKey, xValue, xPath, xCommand) => {
+export const UseCreateRecord = async (xData, xKey, xValue, xPath, xCommand, xEndpoint) => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_SERVERURL}/records`, {
+    const response = await fetch(`${import.meta.env.VITE_SERVERURL}/${xEndpoint}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

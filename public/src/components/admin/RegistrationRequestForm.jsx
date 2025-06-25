@@ -1,9 +1,9 @@
 // NewRegistrationPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import axios from 'axios';
-import { UseCreateRecord } from '../hooks/UseCreateRecord';
+import slugify from 'slugify';
+
 
 const validationSchema = Yup.object({
     title: Yup.string().required('Title is required'),
@@ -29,9 +29,22 @@ const validationSchema = Yup.object({
 
 export default function NewRegistrationPage() {
     const [submitSuccess, setSubmitSuccess] = useState(false);
+    const [slug, setSlug] = useState('');
     const [submitError, setSubmitError] = useState('');
+    const fileInputRef = useRef(null);
+
+    const timeoutRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
 
     const initialValues = {
+        page: '',
         payment: false,
         title: '',
         image: null,
@@ -40,42 +53,59 @@ export default function NewRegistrationPage() {
     };
 
     const handleSubmit = async (values, { setSubmitting, resetForm }) => {
-    setSubmitError('');
-    setSubmitSuccess(false);
+        setSubmitError('');
+        setSubmitSuccess(false);
 
-    try {
-        const data = {
-            payment: values.payment,
-            title: values.title,
-            tokensPerGuest: Number(values.tokensPerGuest),
-            description: values.description,
-            image: values.image, // base64 string
-        };
+        try {
+            const formData = new FormData();
+            formData.append('page', slug);
+            formData.append('paymentRequired', values.payment);
+            formData.append('title', values.title);
+            formData.append('maxTokensPerGuest', values.tokensPerGuest);
+            formData.append('description', values.description);
 
-        // Use the reusable function
-        const resp = await UseCreateRecord(
-            data,
-            null,         // xKey
-            null,         // xValue
-            'access',     // xPath
-            'create'      // xCommand
-        );
+            if (values.image) {
+                formData.append('image', values.image); // file object directly
+            }
 
-        if (resp?.status) {
-            setSubmitSuccess(true);
-            resetForm();
-        } else {
-            setSubmitError(resp?.message || "Something went wrong.");
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config`, {
+                method: 'POST',
+                body: formData,
+                // Important: Don't set 'Content-Type'; browser sets it including boundary
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.status) {
+                setSlug('');
+                setSubmitSuccess(true);
+
+                // Clear any previous timeout
+                if (timeoutRef.current) {
+                    clearTimeout(timeoutRef.current);
+                }
+
+                // Set a new timeout
+                timeoutRef.current = setTimeout(() => {
+                    setSubmitSuccess(false);
+                }, 3000);
+
+                resetForm();
+
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = null;
+                }
+            } else {
+                setSubmitError(data.message || 'Something went wrong.');
+            }
+        } catch (error) {
+            console.error(error);
+            setSubmitError(error.message || 'Submission failed, please try again');
+        } finally {
+            setSubmitting(false);
         }
-    } catch (err) {
-        console.error(err);
-        setSubmitError(
-            err?.message || 'Submission failed, please try again'
-        );
-    } finally {
-        setSubmitting(false);
-    }
-};
+    };
+
 
 
 
@@ -98,20 +128,39 @@ export default function NewRegistrationPage() {
             >
                 {({ setFieldValue, isSubmitting }) => (
                     <Form noValidate>
+                        {slug ? <span className="text-muted">
+                            <strong>Url will be: /{slug}</strong>
+                        </span> : <></>}
+
                         {/* Title */}
                         <div className="col-12">
 
                             <div className="d-flex justify-content-between">
+
                                 <div className='w-50 me-2'>
                                     <label htmlFor="title" className="form-label">
                                         Title
                                     </label>
-                                    <Field
-                                        name="title"
-                                        type="text"
-                                        className="form-control"
-                                        placeholder="Enter page title"
-                                    />
+
+                                    <Field name="title">
+                                        {({ field, form }) => (
+                                            <input
+                                                {...field} // includes value, name, onChange, and onBlur from Formik
+                                                type="text"
+                                                className="form-control"
+                                                placeholder="Enter page title"
+                                                onBlur={(e) => {
+                                                    field.onBlur(e); // ✅ still call Formik's internal onBlur
+
+                                                    setSlug(slugify(e.target.value, {
+                                                        lower: true,
+                                                        strict: true,
+                                                    }))
+
+                                                }}
+                                            />
+                                        )}
+                                    </Field>
                                     <div style={{ minHeight: 30 }}>
 
                                         <ErrorMessage
@@ -178,23 +227,20 @@ export default function NewRegistrationPage() {
                                     Image
                                 </label>
                                 <input
+                                    ref={fileInputRef}
                                     id="image"
                                     name="image"
                                     type="file"
                                     accept="image/*"
                                     className="form-control"
-                                    onChange={async e => {
+                                    onChange={e => {
                                         const file = e.currentTarget.files[0];
                                         if (file) {
-                                            const reader = new FileReader();
-                                            reader.onloadend = () => {
-                                                // This sets the base64 string as the value
-                                                setFieldValue('image', reader.result); // base64 string
-                                            };
-                                            reader.readAsDataURL(file);
+                                            setFieldValue('image', file);  // Store the File object, NOT base64
                                         }
                                     }}
                                 />
+
                                 <div style={{ minHeight: 30 }}>
 
                                     <ErrorMessage
@@ -218,11 +264,11 @@ export default function NewRegistrationPage() {
                                             type="checkbox"
                                         />
                                     )}
-                                    </Field>
+                                </Field>
                                 <label className="form-check-label" htmlFor="payment">
                                     Payment Required
                                 </label>
-                                
+
                             </div>
 
                         </div>
