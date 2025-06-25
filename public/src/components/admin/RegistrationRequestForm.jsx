@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import axios from 'axios';
+import { UseCreateRecord } from '../hooks/UseCreateRecord';
 
 const validationSchema = Yup.object({
     title: Yup.string().required('Title is required'),
@@ -31,6 +32,7 @@ export default function NewRegistrationPage() {
     const [submitError, setSubmitError] = useState('');
 
     const initialValues = {
+        payment: false,
         title: '',
         image: null,
         tokensPerGuest: '',
@@ -38,36 +40,47 @@ export default function NewRegistrationPage() {
     };
 
     const handleSubmit = async (values, { setSubmitting, resetForm }) => {
-        setSubmitError('');
-        try {
-            // if you need to send files, use FormData
-            const formData = new FormData();
-            formData.append('title', values.title);
-            formData.append('image', values.image);
-            formData.append('tokensPerGuest', values.tokensPerGuest);
-            formData.append('description', values.description);
+    setSubmitError('');
+    setSubmitSuccess(false);
 
-            // replace with your real endpoint
-            const resp = await axios.post('/api/new-registration', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+    try {
+        const data = {
+            payment: values.payment,
+            title: values.title,
+            tokensPerGuest: Number(values.tokensPerGuest),
+            description: values.description,
+            image: values.image, // base64 string
+        };
 
-            if (resp.status === 200) {
-                setSubmitSuccess(true);
-                resetForm();
-            }
-        } catch (err) {
-            console.error(err);
-            setSubmitError(
-                err.response?.data?.message || 'Submission failed, please try again'
-            );
-        } finally {
-            setSubmitting(false);
+        // Use the reusable function
+        const resp = await UseCreateRecord(
+            data,
+            null,         // xKey
+            null,         // xValue
+            'access',     // xPath
+            'create'      // xCommand
+        );
+
+        if (resp?.status) {
+            setSubmitSuccess(true);
+            resetForm();
+        } else {
+            setSubmitError(resp?.message || "Something went wrong.");
         }
-    };
+    } catch (err) {
+        console.error(err);
+        setSubmitError(
+            err?.message || 'Submission failed, please try again'
+        );
+    } finally {
+        setSubmitting(false);
+    }
+};
+
+
 
     return (
-        <div className="container py-5">
+        <div className="container py-4">
             {submitSuccess && (
                 <div className="alert alert-success">
                     Registration page created successfully!
@@ -89,7 +102,7 @@ export default function NewRegistrationPage() {
                         <div className="col-12">
 
                             <div className="d-flex justify-content-between">
-                                <div className='w-50'>
+                                <div className='w-50 me-2'>
                                     <label htmlFor="title" className="form-label">
                                         Title
                                     </label>
@@ -99,34 +112,34 @@ export default function NewRegistrationPage() {
                                         className="form-control"
                                         placeholder="Enter page title"
                                     />
-                                     <div style={{ minHeight: 30 }}>
+                                    <div style={{ minHeight: 30 }}>
 
                                         <ErrorMessage
                                             name="title"
                                             component="div"
                                             className="text-danger small mt-1"
                                         />
-                                     </div>
+                                    </div>
 
                                 </div>
                                 <div className='w-50'>
                                     <label htmlFor="tokensPerGuest" className="form-label">
-                                    Number of tokens per guest
-                                </label>
-                                <Field
-                                    name="tokensPerGuest"
-                                    type="number"
-                                    className="form-control"
-                                    placeholder="e.g. 3"
-                                />
-                                 <div style={{ minHeight: 30 }}>
-
-                                    <ErrorMessage
+                                        Maximum Number of Token per Guest
+                                    </label>
+                                    <Field
                                         name="tokensPerGuest"
-                                        component="div"
-                                        className="text-danger small mt-1"
+                                        type="number"
+                                        className="form-control"
+                                        placeholder="e.g. 3"
                                     />
-                                 </div>
+                                    <div style={{ minHeight: 30 }}>
+
+                                        <ErrorMessage
+                                            name="tokensPerGuest"
+                                            component="div"
+                                            className="text-danger small mt-1"
+                                        />
+                                    </div>
                                 </div>
 
                             </div>
@@ -156,7 +169,7 @@ export default function NewRegistrationPage() {
                                     />
                                 </div>
                             </div>
-                           
+
                         </div>
                         {/* Image */}
                         <div className="col-12">
@@ -170,8 +183,16 @@ export default function NewRegistrationPage() {
                                     type="file"
                                     accept="image/*"
                                     className="form-control"
-                                    onChange={e => {
-                                        setFieldValue('image', e.currentTarget.files[0]);
+                                    onChange={async e => {
+                                        const file = e.currentTarget.files[0];
+                                        if (file) {
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => {
+                                                // This sets the base64 string as the value
+                                                setFieldValue('image', reader.result); // base64 string
+                                            };
+                                            reader.readAsDataURL(file);
+                                        }
                                     }}
                                 />
                                 <div style={{ minHeight: 30 }}>
@@ -183,24 +204,45 @@ export default function NewRegistrationPage() {
                                     />
                                 </div>
                             </div>
+
+                            <div className="form-check form-switch mb-3">
+                                <Field name="payment">
+                                    {({ field }) => (
+                                        <input
+                                            name={field.name}
+                                            checked={field.value}
+                                            onChange={field.onChange}
+                                            onBlur={field.onBlur}
+                                            id="payment"
+                                            className="form-check-input"
+                                            type="checkbox"
+                                        />
+                                    )}
+                                    </Field>
+                                <label className="form-check-label" htmlFor="payment">
+                                    Payment Required
+                                </label>
+                                
+                            </div>
+
                         </div>
 
 
                         <div className='col-12'>
-                                    <div className='d-flex justify-content-end'>
+                            <div className='d-flex justify-content-end'>
 
-                                        <button
-                                            type="submit"
-                                            className="btn btn-primary"
-                                            disabled={isSubmitting}
-                                        >
-                                            {isSubmitting ? 'Submitting…' : 'Create Page'}
-                                        </button>
-                                        </div>    
+                                <button
+                                    type="submit"
+                                    className="btn btn-primary"
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? 'Submitting…' : 'Create Page'}
+                                </button>
                             </div>
+                        </div>
 
                     </Form>
-                    
+
                 )}
             </Formik>
         </div>
