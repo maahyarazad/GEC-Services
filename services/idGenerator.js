@@ -1,13 +1,14 @@
 //GENERATE USER ID TAIL USING TIME IN SECONDS
-const createID = () => {
+const createID = (val) => {
     const currentDate = new Date();
     const id = Math.floor(currentDate.getTime() / 1000);
     const idString = id.toString();
-    return idString.slice(-8);
+    return idString.slice(val);
 };
 
-const generateRecordId = (data) => {
+const generateRecordId = (data, code_length, use_gec_prefix = true) => {
   let idSuffix;
+  const path = data.page;
 
   switch (true) {
     case path.includes("leads"):
@@ -38,8 +39,8 @@ const generateRecordId = (data) => {
       idSuffix = "lo";
   }
 
-  data.code = `gec${idSuffix}${createID()}`;
-  return data;
+  let code = use_gec_prefix ? `gec${idSuffix}${createID(code_length)}` : `${idSuffix}${createID(code_length)}`;
+  return code;
 }
 
 

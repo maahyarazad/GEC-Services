@@ -20,5 +20,15 @@ CREATE TABLE IF NOT EXISTS registration_config (
   title VARCHAR(255),
   description TEXT,
   Image TEXT,
-  maxTokensPerGuest INT
+  maxTokensPerGuest INT,
+  registration_code VARCHAR(6)
+);
+
+CREATE TABLE IF NOT EXISTS registration_client_access (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  userAgent TEXT,
+  platform TEXT,
+  language TEXT,
+  registration_code TEXT,
+  createdAt DATETIME DEFAULT (datetime('now'))
 );

@@ -6,31 +6,7 @@ import { UseCreateRecord } from "../hooks/UseCreateRecord";
 import { Link } from "react-router-dom";
 
 export const TemplateForm = () => {
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config`, {
-          method: 'GET',
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch');
-        }
-
-        const values = await response.json();
-        console.log(values);
-        debugger;
-
-      } catch (err) {
-        console.error('Error fetching data:', err);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-
+   
   const [target, setTarget] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);
@@ -38,9 +14,11 @@ export const TemplateForm = () => {
   const modalRef = useRef();
   useEffect(() => {
     const gecuser = JSON.parse(localStorage.getItem("gec-registration"));
+    
     if (gecuser) {
-      setTarget(gecuser.page);
+      setTarget(gecuser.value);
     }
+    debugger;
   }, []);
 
   if (!target) {
@@ -98,12 +76,9 @@ export const TemplateForm = () => {
       <div className="template-form">
         <div>
           <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Doloribus
-            beatae natus cupiditate eaque, qui tempora quisquam voluptatem
-            repudiandae debitis. Eum, totam earum! Voluptatem accusamus quisquam
-            earum enim. Tenetur, molestiae provident.
+            {target.description}
           </p>
-          <img src="https://placehold.co/800"></img>
+          <img src={target.Image} alt="My Image" />
         </div>
         <div>
           <Link to={"/"}>

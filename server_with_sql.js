@@ -273,10 +273,10 @@ app.post("/registration-config", upload.single('image'), async (req, res) => {
             data.image = base64Image;
         }
 
-        data = generateRecordId(data);
+        data.registration_code = generateRecordId(data, -2, false);
         const insert_data = await dbService.create(table_name, data);
 
-        res.json({ status: true, message: "Data saved successfully", data });
+        res.json({ status: true, message: "Data saved successfully", insert_data });
     } catch (error) {
         console.error(error);
         res.status(500).json({ status: false, message: "Server error" });
@@ -296,6 +296,34 @@ app.get("/registration-config", async (req, res) => {
         res.status(500).json({ status: false, message: "Server error" });
     }
 });
+
+
+app.post("/registration-config-access", upload.none() ,async (req, res) => {
+    try {
+
+        const data = req.body;
+        // Check duplicate
+        const valid_request = await dbService.any("registration_config", "registration_code", data.registration_code);
+        if (valid_request === 0) {
+            return res.status(401).json({ status: false, message: "Invalid Authorization Code" });
+        } 
+
+        const page_data = await dbService.findByColumn("registration_config", "registration_code", data.registration_code);
+        await dbService.create("registration_client_access", data);
+        
+        res.status(200).json({
+            status: true,
+            message: "Login Success",
+            data: page_data
+        });
+
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: false, message: "Server error" });
+    }
+});
+
 
 //WILL FETCH AND RETURN ANY DATA
 app.post("/data", async (req, res) => {

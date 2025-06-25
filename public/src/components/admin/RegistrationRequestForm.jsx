@@ -79,7 +79,7 @@ export default function NewRegistrationPage() {
             if (response.ok && data.status) {
                 setSlug('');
                 setSubmitSuccess(true);
-
+                debugger;
                 // Clear any previous timeout
                 if (timeoutRef.current) {
                     clearTimeout(timeoutRef.current);

@@ -14,7 +14,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path={"/"} element={<Login />} />
-          <Route path={"/registration"} element={<TemplateForm />} />
+          <Route path={"/registration/*"} element={<TemplateForm />} />
           <Route path={"/admin"} element={<Admin data={data} />} />
         </Routes>
       </BrowserRouter>
