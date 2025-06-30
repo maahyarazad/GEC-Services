@@ -1,8 +1,9 @@
-import { useRef, useState, useEffect } from "react";
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 
-const OtpInput = ({ length = 5, onChange, onComplete }) => {
+const OtpInput = forwardRef(({ length = 5, onChange, onComplete }, ref) => {
   const [otp, setOtp] = useState(new Array(length).fill(""));
   const inputsRef = useRef([]);
+  const completedRef = useRef(false);
 
   const handleChange = (element, index) => {
     const value = element.value.replace(/[^0-9]/g, "");
@@ -25,6 +26,7 @@ const OtpInput = ({ length = 5, onChange, onComplete }) => {
         newOtp[index] = "";
         setOtp(newOtp);
         onChange?.(newOtp.join(""));
+        completedRef.current = false;
       } else if (index > 0) {
         inputsRef.current[index - 1]?.focus();
       }
@@ -32,10 +34,22 @@ const OtpInput = ({ length = 5, onChange, onComplete }) => {
   };
 
   useEffect(() => {
-    if (otp.every((digit) => digit !== "")) {
+    if (otp.every((digit) => digit !== "") && !completedRef.current) {
+      completedRef.current = true;
       onComplete?.(otp.join(""));
     }
   }, [otp, onComplete]);
+
+  // Expose `clear` function to parent via ref
+  useImperativeHandle(ref, () => ({
+    clear: () => {
+      const cleared = new Array(length).fill("");
+      setOtp(cleared);
+      completedRef.current = false;
+      onChange?.("");
+      inputsRef.current[0]?.focus();
+    },
+  }));
 
   return (
     <div style={{ display: "flex", gap: "8px" }}>
@@ -59,6 +73,6 @@ const OtpInput = ({ length = 5, onChange, onComplete }) => {
       ))}
     </div>
   );
-};
+});
 
 export default OtpInput;

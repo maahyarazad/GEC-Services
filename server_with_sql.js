@@ -46,17 +46,25 @@ const db = new sqlite3.Database("./app.db", (err) => {
 })();
 
 
+
 app.use(session({
-  secret: 'your-super-secret-key',
-  resave: false,
-  saveUninitialized: true,
-  cookie: {
-    secure: false, // set true if using HTTPS
-    maxAge: 60 * 60 * 1000 // 1 hour
-  }
+    secret: 'your-secret-key',       // required
+    resave: false,                   // don't save session if unmodified
+    saveUninitialized: true,         // save new but empty sessions
+    cookie: {
+        maxAge: 5 * 60 * 1000, // 5 minutes
+        httpOnly: true,
+        secure: false, // true only if you're using HTTPS
+        sameSite: 'lax', // or 'none' if cross-site with credentials
+    }
 }));
 
-app.use(cors());
+
+app.use(cors({
+    origin: 'http://localhost:5173', // your frontend URL
+    credentials: true
+}));
+
 app.use(express.json());
 
 app.use((req, res, next) => {
@@ -332,7 +340,8 @@ app.post("/registration-config-access", upload.none(), async (req, res) => {
         res.status(200).json({
             status: true,
             message: "Login Success",
-            data: page_data
+            data: page_data,
+            session: req.session,
         });
 
 
@@ -342,11 +351,25 @@ app.post("/registration-config-access", upload.none(), async (req, res) => {
     }
 });
 
-app.get("/otp-check", async (req, res) => {
+app.post("/otp-check", upload.none(), async (req, res) => {
     try {
+        const data = req.body;
+        const otp = req.session.otp;
+        const now = Date.now();
+        if (Date.now() > req.session.otpExpires) {
+            return res.status(401).json({ status: false, message: 'OTP has expired please try again' });
+        }
+
+        if(data.otp !== otp){
+            return res.status(401).json({
+                        status: false,
+                        message: "Invalid OTP code",
+                    });
+        }
 
         const page_data = await dbService.findByColumn("registration_config", "registration_code", data.registration_code);
-        const result = await sendOtpToPhone(phone, req, client, twilioPhone);
+
+        delete data.otp;
         await dbService.create("registration_client_access", data);
 
         res.status(200).json({
@@ -398,9 +421,14 @@ const sendOtpToPhone = async (phone, req, twilioClient, twilioPhone) => {
         return { status: false, code: 400, message: 'Phone number required' };
     }
 
+    if(req.session.otp){
+        delete req.session.otp;
+        delete req.session.otpExpires;
+    }
+
     const otp = generateOTP();
     req.session.otp = otp;
-    req.session.otpExpires = Date.now() + 5 * 60 * 1000; // expires in 5 mins
+    req.session.otpExpires = Date.now() + 1 * 60 * 1000; // expires in 1 mins
 
     try {
         // await twilioClient.messages.create({
