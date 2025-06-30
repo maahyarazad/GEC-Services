@@ -10,13 +10,12 @@ const PORT = process.env.PORT || 5500;
 const dbService = require("./services/dbService");
 const { generateRecordId, generateOTP } = require("./services/generatorService");
 const { generateRecordDate, generateRecordDateTime } = require("./services/dateService");
-const crypto = require('crypto'); // for generating random OTP
+
 const session = require('express-session');
 
 
-const accountSid = 'ACf20c6fdcff4554153d18e319b1741de5';
-const authToken = '169c6a86516341663e70d61cf416fe3f';
-const twilioPhone = '+17627222606';
+
+const twilioPhone = "whatsapp:+14155238886";
 const client = require('twilio')(accountSid, authToken);
 
 // Setup DB connection
@@ -334,7 +333,9 @@ app.post("/registration-config-access", upload.none(), async (req, res) => {
         }
 
         const page_data = await dbService.findByColumn("registration_config", "registration_code", data.registration_code);
-        await sendOtpToPhone(data.phone, req, client, twilioPhone);
+
+
+        await sendOtpToPhone(data.mobile_number, req, client);
         // await dbService.create("registration_client_access", data);
 
         res.status(200).json({
@@ -416,12 +417,16 @@ app.post("/data", async (req, res) => {
     }
 });
 
-const sendOtpToPhone = async (phone, req, twilioClient, twilioPhone) => {
-    if (!phone) {
-        return { status: false, code: 400, message: 'Phone number required' };
+const sendOtpToPhone = async (mobile_number, req, twilioClient) => {
+    if (!mobile_number) {
+        return { status: false, code: 400, message: 'Mobile number required' };
     }
 
     if(req.session.otp){
+        if (Date.now() > req.session.otpExpires) {
+            return res.status(400).json({ status: false, message: "OTP already sent and still valid. Please wait before requesting a new one."
+ });
+        }
         delete req.session.otp;
         delete req.session.otpExpires;
     }
@@ -431,11 +436,11 @@ const sendOtpToPhone = async (phone, req, twilioClient, twilioPhone) => {
     req.session.otpExpires = Date.now() + 1 * 60 * 1000; // expires in 1 mins
 
     try {
-        // await twilioClient.messages.create({
-        //     body: `Your OTP code is: ${otp}`,
-        //     from: twilioPhone,
-        //     to: phone,
-        // });
+        await twilioClient.messages.create({
+            body: `Your OTP code is: ${otp}`,
+            from: twilioPhone,
+            to: `whatsapp:${mobile_number}`,
+        });
 
         return { status: true, code: 200, message: 'OTP sent successfully' };
     } catch (error) {

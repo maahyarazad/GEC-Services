@@ -30,5 +30,6 @@ CREATE TABLE IF NOT EXISTS registration_client_access (
   platform TEXT,
   language TEXT,
   registration_code TEXT,
+  mobile_number TEXT,
   createdAt DATETIME DEFAULT (datetime('now'))
 );

@@ -59,9 +59,10 @@ export const Login = () => {
     const [showPassword, setShowPassowrd] = useState(false);
     const [showOtpInput, setShowOtpInput] = useState(false);
     const [loginResponseData, setLoginResponseData] = useState(null);
+    const [currentResponseStatus, setCurrentResponseStatus] = useState(true);
     
 
-    const [mobile, setMobile] = useState("");
+    const [mobile_number, setmobile_number] = useState("");
 
     const phoneRef = useRef();
     const registration_code = useRef();
@@ -71,10 +72,6 @@ export const Login = () => {
     const navigate = useNavigate();
 
     const otpRef = useRef();
-
-    const handleClearOtp = () => {
-        otpRef.current?.clear();
-    };
 
     useEffect(() => {
         const gecuser = JSON.parse(localStorage.getItem("gec-registration"));
@@ -87,7 +84,7 @@ export const Login = () => {
     const handleSendOtp = () => {
         // TODO: Trigger backend OTP sending here
         setShowOtpInput(true);
-        statusRef.current.innerText = "OTP sent to " + mobile;
+        statusRef.current.innerText = "OTP sent to " + mobile_number;
     };
 
 
@@ -97,10 +94,10 @@ export const Login = () => {
             const data = {
                 otp: value,
                 userAgent: navigator.userAgent,
-                phone: mobile,
                 platform: navigator.platform,
                 language: navigator.language,
                 registration_code: registration_code.current.value,
+                mobile_number: phoneRef.current.value,
             };
 
             const formData = new FormData();
@@ -114,24 +111,23 @@ export const Login = () => {
                 credentials: 'include'
             });
 
+            setCurrentResponseStatus(otpResponse.status)
+
             if (otpResponse.status === 400 || otpResponse.status === 500) {
                 throw new Error(`Server responded with ${otpResponse.status}`);
             }
 
             const otp_response_data = await otpResponse.json();
-            setOtpResponseData(otp_response_data);
             debugger;
-
-
             if (otp_response_data.status) {
 
-                setWithExpiry("gec-registration", loginResponseData.data, 1000 * 60 * 10); // expires in 10 mins
+                setWithExpiry("gec-registration", otp_response_data.data, 1000 * 60 * 10); // expires in 10 mins
                 debugger;
 
                 statusRef.current.textContent = "Login successful, please wait.... ";
 
                 setTimeout(() => {
-                    window.location.assign(`/registration/${loginResponseData.data.page}`);
+                    window.location.assign(`/registration/${otp_response_data.data.page}`);
                 }, 500);
 
             } else {
@@ -153,10 +149,10 @@ export const Login = () => {
 
             const data = {
                 userAgent: navigator.userAgent,
-                phone: mobile,
                 platform: navigator.platform,
                 language: navigator.language,
                 registration_code: registration_code.current.value,
+                mobile_number: phoneRef.current.value,
             };
 
             const formData = new FormData();
@@ -170,13 +166,15 @@ export const Login = () => {
                 credentials: 'include'
             });
 
+            setCurrentResponseStatus(loginResponse.status)
+
             if (!loginResponse.ok) {
                 throw new Error(`Server responded with ${loginResponse.message}`);
             }
 
             const response_data = await loginResponse.json();
             setLoginResponseData(response_data);
-            debugger;
+            
 
             if (response_data.status) {
 
@@ -187,6 +185,8 @@ export const Login = () => {
             } else {
                 statusRef.current.textContent = loginResponseData.message;
             }
+
+
         } catch (err) {
             console.error("Login failed:", err);
             if (statusRef.current) {
@@ -209,7 +209,7 @@ export const Login = () => {
 
             const data = {
                 userAgent: navigator.userAgent,
-                phone: mobile,
+                mobile_number: phoneRef.current.value,
                 platform: navigator.platform,
                 language: navigator.language,
                 registration_code: registration_code.current.value,
@@ -226,13 +226,16 @@ export const Login = () => {
                 credentials: 'include'
             });
 
-            if (!loginResponse.ok) {
-                throw new Error(`Server responded with ${loginResponse.message}`);
-            }
+            setCurrentResponseStatus(loginResponse.status);
 
             const response_data = await loginResponse.json();
-            setLoginResponseData(response_data);
-            debugger;
+
+            setLoginResponseData(loginResponse);
+
+            if (response_data.status === 401) {
+                statusRef.current.textContent = response_data.message;
+                return;
+            }
 
             if (response_data.status) {
 
@@ -240,8 +243,10 @@ export const Login = () => {
                 return;
 
             } else {
-                statusRef.current.textContent = loginResponseData.message;
+                statusRef.current.textContent = response_data.message;
             }
+
+
         } catch (err) {
             console.error("Login failed:", err);
             if (statusRef.current) {
@@ -261,9 +266,9 @@ export const Login = () => {
                         <input
                             ref={phoneRef}
                             type="tel"
-                            value={mobile}
-                            onChange={(e) => setMobile(e.target.value)}
-                            placeholder="Enter Mobile Number"
+                            value={mobile_number}
+                            onChange={(e) => setmobile_number(e.target.value)}
+                            placeholder="Enter mobile_number Number"
                             className="loginvalue"
                         />
                     </label>
@@ -279,7 +284,7 @@ export const Login = () => {
                     </label>
 
 
-                    {/* Step 1: Mobile Number Input */}
+                    {/* Step 1: mobile_number Number Input */}
 
 
                     <div className="cta-zone">
@@ -306,6 +311,7 @@ export const Login = () => {
                     {showOtpInput ? (
                         <>
                             <OtpInput
+                                ref={otpRef}
                                 onChange={(val) => console.log("Current OTP:", val)}
                                 onComplete={(val) => {
                                     console.log("OTP Complete:", val);
@@ -316,13 +322,13 @@ export const Login = () => {
                                 <OtpTimer
                                     loginResponseData={loginResponseData}
                                     onResend={handleOtpResend}
-                                    ref={otpRef}
+                                    
                                 /> : null}
                         </>
                     ) : null}
 
                 </form>
-                <p ref={statusRef}></p>
+                <p ref={statusRef} className={currentResponseStatus ? "" : "text-danger"}></p>
             </div>
 
         </div>

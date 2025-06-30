@@ -8,6 +8,7 @@
   align-items: center;
   justify-content: center;
   position: relative;
+  font-size: 15px;
   > div {
     width: 40%;
     max-width: 400px;
