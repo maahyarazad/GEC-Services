@@ -27,9 +27,9 @@ const validationSchema = Yup.object({
     description: Yup.string().required('Description is required'),
 });
 
-export default function NewRegistrationPage() {
+export default function NewRegistrationPage({ initialData = null }) {
     const [submitSuccess, setSubmitSuccess] = useState(false);
-    const [slug, setSlug] = useState('');
+    const [slug, setSlug] = useState(initialData?.page || '');
     const [submitError, setSubmitError] = useState('');
     const fileInputRef = useRef(null);
     const containerRef = useRef(null);
@@ -45,15 +45,15 @@ export default function NewRegistrationPage() {
     }, []);
 
     const initialValues = {
-        page: '',
-        paymentRequired: false,
-        birthdayRequired: false,
-        companyRequired: false,
-        lockRegistration: false,
-        title: '',
-        image: null,
-        tokensPerGuest: '',
-        description: '',
+        page: initialData?.page || '',
+        paymentRequired: initialData?.paymentRequired === "true",
+        birthdayRequired: initialData?.birthdayRequired === "true",
+        companyRequired: initialData?.companyRequired === "true",
+        lockRegistration: initialData?.lockRegistration === "true",
+        title: initialData?.title || '',
+        image: null, // file must be re-selected
+        tokensPerGuest: initialData?.maxTokensPerGuest || '',
+        description: initialData?.description || '',
     };
 
     const handleSubmit = async (values, { setSubmitting, resetForm }) => {
@@ -132,6 +132,7 @@ export default function NewRegistrationPage() {
             <Formik
                 initialValues={initialValues}
                 validationSchema={validationSchema}
+                enableReinitialize={true}
                 onSubmit={handleSubmit}
             >
                 {({ setFieldValue, isSubmitting }) => (

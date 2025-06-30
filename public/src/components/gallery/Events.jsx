@@ -19,7 +19,9 @@ export const Events = ({ data }) => {
   return (
     <div className="gallery-events">
       <span className="gallery-header">
-        <h4>Events Gallery</h4>
+        <h4>
+          
+        </h4>
         <span>
           <button className="cta-button blue" onClick={() =>setIsOpen(true)}>
             <img alt="add-item" src="/add-item.svg"></img>
@@ -62,11 +64,7 @@ export const Events = ({ data }) => {
           </tbody>
         </table>
       </div>
-       <Modal isOpen={isOpen} 
-                onRequestClose={() => setIsOpen(false)}   
-                title={"New Registration Page"}>
-                <RegistrationRequestForm/>
-              </Modal>
+      
     </div>
   );
 };
