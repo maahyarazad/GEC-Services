@@ -14,7 +14,8 @@ const { generateRecordDate, generateRecordDateTime } = require("./services/dateS
 const session = require('express-session');
 
 
-
+const accountSid = 'ACf20c6fdcff4554153d18e319b1741de5';
+const authToken = '169c6a86516341663e70d61cf416fe3f';
 const twilioPhone = "whatsapp:+14155238886";
 const client = require('twilio')(accountSid, authToken);
 

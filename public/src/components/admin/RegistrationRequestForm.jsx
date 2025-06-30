@@ -32,6 +32,7 @@ export default function NewRegistrationPage() {
     const [slug, setSlug] = useState('');
     const [submitError, setSubmitError] = useState('');
     const fileInputRef = useRef(null);
+    const containerRef = useRef(null);
 
     const timeoutRef = useRef(null);
 
@@ -45,7 +46,10 @@ export default function NewRegistrationPage() {
 
     const initialValues = {
         page: '',
-        payment: false,
+        paymentRequired: false,
+        birthdayRequired: false,
+        companyRequired: false,
+        lockRegistration: false,
         title: '',
         image: null,
         tokensPerGuest: '',
@@ -59,7 +63,10 @@ export default function NewRegistrationPage() {
         try {
             const formData = new FormData();
             formData.append('page', slug);
-            formData.append('paymentRequired', values.payment);
+            formData.append('paymentRequired', values.paymentRequired);
+            formData.append('birthdayRequired', values.birthdayRequired);
+            formData.append('companyRequired', values.companyRequired);
+            formData.append('lockRegistration', values.lockRegistration);
             formData.append('title', values.title);
             formData.append('maxTokensPerGuest', values.tokensPerGuest);
             formData.append('description', values.description);
@@ -88,7 +95,7 @@ export default function NewRegistrationPage() {
                 // Set a new timeout
                 timeoutRef.current = setTimeout(() => {
                     setSubmitSuccess(false);
-                }, 3000);
+                }, 8000);
 
                 resetForm();
 
@@ -102,6 +109,7 @@ export default function NewRegistrationPage() {
             console.error(error);
             setSubmitError(error.message || 'Submission failed, please try again');
         } finally {
+            containerRef.current?.scrollIntoView({ behavior: 'smooth' });
             setSubmitting(false);
         }
     };
@@ -110,7 +118,7 @@ export default function NewRegistrationPage() {
 
 
     return (
-        <div className="container py-4">
+        <div className="container py-4" ref={containerRef}>
             {submitSuccess && (
                 <div className="alert alert-success">
                     Registration page created successfully!
@@ -252,21 +260,81 @@ export default function NewRegistrationPage() {
                             </div>
 
                             <div className="form-check form-switch mb-3">
-                                <Field name="payment">
+                                <Field name="paymentRequired">
                                     {({ field }) => (
                                         <input
                                             name={field.name}
                                             checked={field.value}
                                             onChange={field.onChange}
                                             onBlur={field.onBlur}
-                                            id="payment"
+                                            id="paymentRequired"
                                             className="form-check-input"
                                             type="checkbox"
                                         />
                                     )}
                                 </Field>
-                                <label className="form-check-label" htmlFor="payment">
+                                <label className="form-check-label" htmlFor="paymentRequired">
                                     Payment Required
+                                </label>
+
+                            </div>
+
+                            <div className="form-check form-switch mb-3">
+                                <Field name="companyRequired">
+                                    {({ field }) => (
+                                        <input
+                                            name={field.name}
+                                            checked={field.value}
+                                            onChange={field.onChange}
+                                            onBlur={field.onBlur}
+                                            id="companyRequired"
+                                            className="form-check-input"
+                                            type="checkbox"
+                                        />
+                                    )}
+                                </Field>
+                                <label className="form-check-label" htmlFor="companyRequired">
+                                    Enable Company Field Required
+                                </label>
+
+                            </div>
+
+                            <div className="form-check form-switch mb-3">
+                                <Field name="birthdayRequired">
+                                    {({ field }) => (
+                                        <input
+                                            name={field.name}
+                                            checked={field.value}
+                                            onChange={field.onChange}
+                                            onBlur={field.onBlur}
+                                            id="birthdayRequired"
+                                            className="form-check-input"
+                                            type="checkbox"
+                                        />
+                                    )}
+                                </Field>
+                                <label className="form-check-label" htmlFor="birthdayRequired">
+                                    Enable Birthday Field Required
+                                </label>
+
+                            </div>
+
+                                <div className="form-check form-switch mb-3">
+                                <Field name="lockRegistration">
+                                    {({ field }) => (
+                                        <input
+                                            name={field.name}
+                                            checked={field.value}
+                                            onChange={field.onChange}
+                                            onBlur={field.onBlur}
+                                            id="lockRegistration"
+                                            className="form-check-input"
+                                            type="checkbox"
+                                        />
+                                    )}
+                                </Field>
+                                <label className="form-check-label" htmlFor="lockRegistration">
+                                    Lock Registration
                                 </label>
 
                             </div>

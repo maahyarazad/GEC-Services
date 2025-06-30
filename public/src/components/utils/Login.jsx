@@ -111,7 +111,7 @@ export const Login = () => {
                 credentials: 'include'
             });
 
-            setCurrentResponseStatus(otpResponse.status)
+            setCurrentResponseStatus(otpResponse.ok)
 
             if (otpResponse.status === 400 || otpResponse.status === 500) {
                 throw new Error(`Server responded with ${otpResponse.status}`);
@@ -166,7 +166,7 @@ export const Login = () => {
                 credentials: 'include'
             });
 
-            setCurrentResponseStatus(loginResponse.status)
+            setCurrentResponseStatus(loginResponse.ok)
 
             if (!loginResponse.ok) {
                 throw new Error(`Server responded with ${loginResponse.message}`);
@@ -226,13 +226,14 @@ export const Login = () => {
                 credentials: 'include'
             });
 
-            setCurrentResponseStatus(loginResponse.status);
+            setCurrentResponseStatus(loginResponse.ok);
 
             const response_data = await loginResponse.json();
 
             setLoginResponseData(loginResponse);
 
             if (response_data.status === 401) {
+                
                 statusRef.current.textContent = response_data.message;
                 return;
             }
@@ -297,7 +298,7 @@ export const Login = () => {
                             <p>Login</p>
                         </button>
                         <span>
-                            <p>Show Password</p>
+                            <p className="me-1">Show Password</p>
                             <input
                                 onChange={() => setShowPassowrd((prev) => !prev)}
                                 type="checkbox"
@@ -328,7 +329,9 @@ export const Login = () => {
                     ) : null}
 
                 </form>
-                <p ref={statusRef} className={currentResponseStatus ? "" : "text-danger"}></p>
+                <p 
+                    ref={statusRef} 
+                    className={`mt-1 ${currentResponseStatus ? "" : "text-danger" }`}></p>
             </div>
 
         </div>
