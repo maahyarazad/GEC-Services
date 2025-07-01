@@ -3,12 +3,14 @@
   height: 100dvh;
   border: 16px solid var(--white);
   background-color: var(--white);
-  overflow: hidden;
+
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: flex-start;
   gap: 0 32px;
+  overflow: scroll !important;
+  height: 100vh;
 
   > div {
     border-radius: 16px;
@@ -25,11 +27,11 @@
     justify-content: center;
     overflow: hidden;
 
-    > p {
+     > .target-description {
       position: relative;
       width: 80%;
       max-width: 600px;
-      z-index: 2;
+      z-index: 10;
     }
 
     > img {

@@ -9,15 +9,44 @@ import * as Yup from 'yup';
 import CryptoJS from 'crypto-js';
 
 const validationSchema = Yup.object().shape({
-    email: Yup.string().email('Invalid email').required('Required'),
-    phone: Yup.string().required('Required'),
-    whatsapp: Yup.string().required('Required'),
-    firstName: Yup.string().required('Required'),
-    lastName: Yup.string().required('Required'),
-    companyName: Yup.string().required('Required'),
-    birthday: Yup.string().required('Required'),
-    consent: Yup.boolean().oneOf([true], 'You must accept'),
+  email: Yup.string()
+    .email("Please enter a valid email address.")
+    .required("Email is required."),
+  
+  phone: Yup.string()
+    .matches(
+      /^\+?[0-9]{10,15}$/,
+      "Phone number must be 10–15 digits, and may start with +."
+    )
+    .required("Phone number is required."),
+  
+  whatsapp: Yup.string()
+    .matches(
+      /^\+?[0-9]{10,15}$/,
+      "WhatsApp number must be 10–15 digits, and may start with +."
+    )
+    .required("WhatsApp number is required."),
+  
+  firstName: Yup.string()
+    .min(2, "First name must be at least 2 characters.")
+    .required("First name is required."),
+  
+  lastName: Yup.string()
+    .min(2, "Last name must be at least 2 characters.")
+    .required("Last name is required."),
+  
+  companyName: Yup.string()
+    .min(2, "Company name must be at least 2 characters.")
+    .required("Company name is required."),
+  
+  birthday: Yup.date()
+    .max(new Date(), "Birthday cannot be in the future.")
+    .required("Birthday is required."),
+  
+  consent: Yup.boolean()
+    .oneOf([true], "You must agree to the terms and conditions."),
 });
+
 
 export const TemplateForm = () => {
 
@@ -78,7 +107,7 @@ export const TemplateForm = () => {
         });
 
         // console.log("Form data:", formData);
-
+        debugger;
         const createRecordResponse = await UseCreateRecord(
             formData,
             null,
@@ -98,10 +127,10 @@ export const TemplateForm = () => {
     return (
         <>
             <div className={`template-form ${target.lockRegistration  === 'true' ? "locked-template-form" : ""}`}>
-                <div>
-                    <p>
+                <div >
+                    <div className="target-description">
                         {target.description}
-                    </p>
+                    </div>
                     <img src={`${import.meta.env.VITE_SERVERURL}/uploads/${target.Image}`} alt={target.title} />
                 </div>
                 <div>
@@ -124,64 +153,86 @@ export const TemplateForm = () => {
                             validationSchema={validationSchema}
                             onSubmit={handleSubmitRegistration}
                         >
-                            {({ values, setFieldValue }) => (
+                            {({ values, setFieldValue, errors, touched }) => (
                                 <Form>
                                     <h1>Please fill in the boxes below</h1>
                                     <h4>17 June 2025 - Tuesday</h4>
                                     <div className="clearance-flat"></div>
 
-                                    <label className="full">
-                                        <p>Email</p>
-                                        <Field type="email" name="email" />
+                                    <div className="full">
+                                        <div className="w-100">
+                                            <label>Email</label>
+                                            <Field 
+                                                className={`form-control ${errors.email && touched.email ? 'is-invalid' : ''}`}
+                                                type="email" 
+                                                name="email" />
+                                        </div>
                                         <ErrorMessage name="email" component="div" className="text-danger small" />
-                                    </label>
+                                    </div>
 
-                                    <label className="full">
-                                        <p>Phone Number</p>
-                                        <Field type="tel" name="phone" />
+                                    <div className="full">
+                                        <label>Phone Number</label>
+                                        <Field 
+                                            className={`form-control ${errors.phone && touched.phone ? 'is-invalid' : ''}`}
+                                            // pattern="^(\+?[0-9]{1,3}-)?[0-9]{3}-[0-9]{3}-[0-9]{4}$"
+                                            type="tel" 
+                                            name="phone" />
                                         <ErrorMessage name="phone" component="div" className="text-danger small" />
-                                    </label>
+                                    </div>
 
-                                    <label className="full">
-                                        <p>Whatsapp Number</p>
-                                        <Field type="tel" name="whatsapp" />
+                                    <div className="full">
+                                        <label>Whatsapp Number</label>
+                                        <Field 
+                                            className={`form-control ${errors.whatsapp && touched.whatsapp ? 'is-invalid' : ''}`}
+                                            type="tel" 
+                                            name="whatsapp" />
                                         <ErrorMessage name="whatsapp" component="div" className="text-danger small" />
-                                    </label>
+                                    </div>
 
                                     <div className="spacer"></div>
 
-                                    <label className="full">
-                                        <p>Gender</p>
+                                    <div className="full">
+                                        <label>Gender</label>
                                         <Field as="select" name="gender">
                                             <option value="male">Male</option>
                                             <option value="female">Female</option>
                                         </Field>
-                                    </label>
+                                    </div>
 
-                                    <label className="full">
-                                        <p>First Name</p>
-                                        <Field type="text" name="firstName" />
+                                    <div className="full">
+                                        <label>First Name</label>
+                                        <Field 
+                                            className={`form-control ${errors.firstName && touched.firstName ? 'is-invalid' : ''}`}
+                                            type="text" 
+                                            name="firstName" />
                                         <ErrorMessage name="firstName" component="div" className="text-danger small" />
-                                    </label>
+                                    </div>
 
-                                    <label className="full">
-                                        <p>Last Name</p>
-                                        <Field type="text" name="lastName" />
+                                    <div className="full">
+                                        <label>Last Name</label>
+                                        <Field
+                                            className={`form-control ${errors.lastName && touched.lastName ? 'is-invalid' : ''}`} 
+                                            type="text" 
+                                            name="lastName" />
                                         <ErrorMessage name="lastName" component="div" className="text-danger small" />
-                                    </label>
+                                    </div>
 
                                     {target.companyRequired === 'true' && (
-                                        <label className="full">
-                                            <p>Company Name</p>
-                                            <Field type="text" name="companyName" />
+                                        <div className="full">
+                                            <label>Company Name</label>
+                                            <Field 
+                                                className={`form-control ${errors.companyName && touched.companyName ? 'is-invalid' : ''}`}
+                                                type="text" 
+                                                name="companyName" />
                                             <ErrorMessage name="companyName" component="div" className="text-danger small" />
-                                        </label>
+                                        </div>
                                     )}
 
                                     {target.birthdayRequired === 'true' && (
-                                        <label className="full">
-                                            <p>Birthday</p>
+                                        <div className="full">
+                                            <label>Birthday</label>
                                             <Field
+                                                className={`form-control ${errors.birthday && touched.birthday ? 'is-invalid' : ''}`}
                                                 name="birthday"
                                                 type="date"
                                                 value={selectedDate}
@@ -191,27 +242,40 @@ export const TemplateForm = () => {
                                                 }}
                                             />
                                             <ErrorMessage name="birthday" component="div" className="text-danger small" />
-                                        </label>
+                                        </div>
                                     )}
 
-                                    <label className="full d-flex gap-2 align-items-center mt-3">
-                                        <Field
-                                            name="consent"
-                                            type="checkbox"
-                                            onClick={() => setShowSubmit((prev) => !prev)}
-                                        />
-                                        <p>
+                                    <div className="full">
+                                        <label htmlFor="consent">
                                             I confirm that I have a valid proof of identification and consent to present it at the venue.
-                                        </p>
-                                        <ErrorMessage name="consent" component="div" className="text-danger small" />
-                                    </label>
+                                        </label>
+                                        <Field name="consent">
+                                            {({ field, form }) => (
+                                            <input
+                                                {...field}
+                                                type="checkbox"
+                                                id="consent"
+                                                className={`form-check-input ${form.errors.consent && form.touched.consent ? 'is-invalid' : ''}`}
+                                                onChange={e => {
+                                                field.onChange(e);               // update Formik state
+                                                setShowSubmit(e.target.checked); // toggle your local submit button visibility
+                                                }}
+                                            />
+                                            )}
+                                        </Field>
+                                    </div>
+                                        <ErrorMessage
+                                            name="consent"
+                                            component="div"
+                                            className="invalid-feedback small"
+                                        />
 
                                     <div className="cta-zone">
                                         <button
                                             type="submit"
                                             className={`cta-button blue ${showSubmit ? "show" : ""}`}
                                         >
-                                            <p>Submit</p>
+                                            <label>Submit</label>
                                         </button>
                                     </div>
                                 </Form>

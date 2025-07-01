@@ -270,7 +270,7 @@ export const Login = () => {
                 <h4>Please login to view this page</h4>
                 {/* Step 1: check code login */}
                 <form ref={loginRef}>
-                    <label className="full">
+                    <div className="full">
                         <input
                             ref={phoneRef}
                             type="tel"
@@ -279,8 +279,8 @@ export const Login = () => {
                             placeholder="Enter mobile_number Number"
                             className="loginvalue"
                         />
-                    </label>
-                    <label className="full">
+                    </div>
+                    <div className="full">
                         <input
                             ref={registration_code}
                             defaultValue={"12345"}
@@ -289,7 +289,7 @@ export const Login = () => {
                             placeholder={showPassword ? "Enter password" : "••••••••"}
                             className="loginvalue"
                         ></input>
-                    </label>
+                    </div>
 
 
                     {/* Step 1: mobile_number Number Input */}

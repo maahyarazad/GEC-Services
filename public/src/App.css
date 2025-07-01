@@ -468,7 +468,8 @@ form {
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;
-  gap: 16px 12px;
+  gap: 4px 12px;
+
 
   > span {
     margin-top: 32px;
@@ -499,7 +500,7 @@ form {
     width: calc(33.33% - 8px) !important;
   }
 
-  label.full {
+  div.full {
     /* width: calc(100% - 16px); */
     width: 100%;
   }
@@ -636,3 +637,4 @@ tr.eventhide {
   overflow-y: auto;
   max-height: calc(80dvh - 4rem); /* subtract header/footer if any */
 }
+

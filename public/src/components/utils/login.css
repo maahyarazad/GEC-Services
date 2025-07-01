@@ -10,7 +10,7 @@
   position: relative;
   font-size: 15px;
   > div {
-    width: 40%;
+    width: 100%;
     max-width: 400px;
     background-color: var(--white);
     padding: 16px 32px;
@@ -21,7 +21,7 @@
       margin-top: 16px;
       gap: 0 0 8px;
 
-      > label {
+      > div {
         > input {
           width: 100%;
         }
