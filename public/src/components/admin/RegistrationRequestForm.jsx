@@ -25,11 +25,19 @@ const validationSchema = Yup.object({
         .positive('Must be greater than zero')
         .required('Number of tokens is required'),
     description: Yup.string().required('Description is required'),
+    paymentRequired: Yup.boolean(),
+    birthdayRequired: Yup.boolean(),
+    companyRequired: Yup.boolean(),
+    lockRegistration: Yup.boolean(),
 });
 
 export default function NewRegistrationPage({ initialData = null }) {
     const [submitSuccess, setSubmitSuccess] = useState(false);
-    const [slug, setSlug] = useState(initialData?.page || '');
+    const [slug, setSlug] = useState(() => {
+        return initialData?.page
+            ? slugify(initialData.page, { lower: true, strict: true })
+            : '';
+        });
     const [submitError, setSubmitError] = useState('');
     const fileInputRef = useRef(null);
     const containerRef = useRef(null);
@@ -137,9 +145,9 @@ export default function NewRegistrationPage({ initialData = null }) {
             >
                 {({ setFieldValue, isSubmitting }) => (
                     <Form noValidate>
-                        {slug ? <span className="text-muted">
+                        {slug && (<span className="text-muted">
                             <strong>Url will be: /{slug}</strong>
-                        </span> : <></>}
+                        </span>)}
 
                         {/* Title */}
                         <div className="col-12">
@@ -351,7 +359,7 @@ export default function NewRegistrationPage({ initialData = null }) {
                                     className="btn btn-primary"
                                     disabled={isSubmitting}
                                 >
-                                    {isSubmitting ? 'Submitting…' : 'Create Page'}
+                                    {isSubmitting ? 'Saving...' : 'Save Registration Page'}
                                 </button>
                             </div>
                         </div>

@@ -4,6 +4,20 @@ import { useEffect, useRef, useState } from "react";
 import { UseFormValidator } from "../hooks/UseFormValidator";
 import { UseCreateRecord } from "../hooks/UseCreateRecord";
 import { Link } from "react-router-dom";
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
+
+
+const validationSchema = Yup.object().shape({
+    email: Yup.string().email('Invalid email').required('Required'),
+    phone: Yup.string().required('Required'),
+    whatsapp: Yup.string().required('Required'),
+    firstName: Yup.string().required('Required'),
+    lastName: Yup.string().required('Required'),
+    companyName: Yup.string().required('Required'),
+    birthday: Yup.string().required('Required'),
+    consent: Yup.boolean().oneOf([true], 'You must accept'),
+});
 
 export const TemplateForm = () => {
 
@@ -12,6 +26,20 @@ export const TemplateForm = () => {
     const [selectedDate, setSelectedDate] = useState('');
     const formRegRef = useRef();
     const modalRef = useRef();
+
+
+
+    const initialValues = {
+        email: '',
+        phone: '',
+        whatsapp: '',
+        gender: 'male',
+        firstName: '',
+        lastName: '',
+        companyName: '',
+        birthday: '',
+        consent: false,
+    };
 
     useEffect(() => {
         const gecuser = JSON.parse(localStorage.getItem("gec-registration"));
@@ -85,81 +113,104 @@ export const TemplateForm = () => {
                         >
                             <img alt="" src="/info.svg"></img>
                         </button>
-                        <form ref={formRegRef}>
-                            <h1>Please fill in the boxes below</h1>
-                            <h4>17 June 2025 - Tuesday</h4>
-                            <div className="clearance-flat"></div>
-                            <label className="full">
-                                <p>Email</p>
-                                <input type="email" name="email"></input>
-                            </label>
-                            <label className="full">
-                                <p>Phone Number</p>
-                                <input type="tel" name="phone"></input>
-                            </label>
-                            <label className="full">
-                                <p>Whatsapp Number</p>
-                                <input type="tel" name="whatsapp"></input>
-                            </label>
-                            <div className="spacer"></div>
+                        <Formik
+                            initialValues={initialValues}
+                            validationSchema={validationSchema}
+                            onSubmit={handleSubmit}
+                        >
+                            {({ values, setFieldValue }) => (
+                                <Form>
+                                    <h1>Please fill in the boxes below</h1>
+                                    <h4>17 June 2025 - Tuesday</h4>
+                                    <div className="clearance-flat"></div>
 
-                            <select name="gender">
-                                <option value={"male"}>Male</option>
-                                <option value={"female"}>Female</option>
-                            </select>
+                                    <label className="full">
+                                        <p>Email</p>
+                                        <Field type="email" name="email" />
+                                        <ErrorMessage name="email" component="div" className="text-danger small" />
+                                    </label>
 
-                            <label className="full">
-                                <p>First Name</p>
-                                <input type="text" name="firstName"></input>
-                            </label>
+                                    <label className="full">
+                                        <p>Phone Number</p>
+                                        <Field type="tel" name="phone" />
+                                        <ErrorMessage name="phone" component="div" className="text-danger small" />
+                                    </label>
 
-                            <label className="full">
-                                <p>Last Name</p>
-                                <input type="text" name="lastName"></input>
-                            </label>
+                                    <label className="full">
+                                        <p>Whatsapp Number</p>
+                                        <Field type="tel" name="whatsapp" />
+                                        <ErrorMessage name="whatsapp" component="div" className="text-danger small" />
+                                    </label>
 
-                            {target.company ?
-                                <label className="full">
-                                    <p>Company Name</p>
-                                    <input type="text" name="companyName"></input>
-                                </label> :
-                                null}
+                                    <div className="spacer"></div>
 
+                                    <label className="full">
+                                        <p>Gender</p>
+                                        <Field as="select" name="gender">
+                                            <option value="male">Male</option>
+                                            <option value="female">Female</option>
+                                        </Field>
+                                    </label>
 
-                            {target.birthday ?
-                                <label className="full">
-                                    <p>Birthday</p>
-                                    <input
-                                        name="birthday"
-                                        type="date"
-                                        id="date"
-                                        value={selectedDate}
-                                        onChange={(e) => setSelectedDate(e.target.value)}
-                                    />
-                                </label> : null}
+                                    <label className="full">
+                                        <p>First Name</p>
+                                        <Field type="text" name="firstName" />
+                                        <ErrorMessage name="firstName" component="div" className="text-danger small" />
+                                    </label>
 
+                                    <label className="full">
+                                        <p>Last Name</p>
+                                        <Field type="text" name="lastName" />
+                                        <ErrorMessage name="lastName" component="div" className="text-danger small" />
+                                    </label>
 
-                            <span>
-                                <input
-                                    onInput={() => setShowSubmit((prev) => !prev)}
-                                    type="checkbox"
-                                ></input>
-                                <p>
-                                    I confirm that I have a valid proof of identification and
-                                    consent to present it at the venue.
-                                </p>
-                            </span>
+                                    {target.company && (
+                                        <label className="full">
+                                            <p>Company Name</p>
+                                            <Field type="text" name="companyName" />
+                                            <ErrorMessage name="companyName" component="div" className="text-danger small" />
+                                        </label>
+                                    )}
 
-                            <div className="cta-zone">
-                                <button
-                                    onClick={handleSubmitRegistration}
-                                    type="button"
-                                    className={`cta-button blue ${showSubmit ? "show" : ""}`}
-                                >
-                                    <p>Submit</p>
-                                </button>
-                            </div>
-                        </form>
+                                    {target.birthday && (
+                                        <label className="full">
+                                            <p>Birthday</p>
+                                            <Field
+                                                name="birthday"
+                                                type="date"
+                                                value={selectedDate}
+                                                onChange={(e) => {
+                                                    setFieldValue('birthday', e.target.value);
+                                                    setSelectedDate(e.target.value);
+                                                }}
+                                            />
+                                            <ErrorMessage name="birthday" component="div" className="text-danger small" />
+                                        </label>
+                                    )}
+
+                                    <label className="full d-flex gap-2 align-items-center mt-3">
+                                        <Field
+                                            name="consent"
+                                            type="checkbox"
+                                            onClick={() => setShowSubmit((prev) => !prev)}
+                                        />
+                                        <p>
+                                            I confirm that I have a valid proof of identification and consent to present it at the venue.
+                                        </p>
+                                        <ErrorMessage name="consent" component="div" className="text-danger small" />
+                                    </label>
+
+                                    <div className="cta-zone">
+                                        <button
+                                            type="submit"
+                                            className={`cta-button blue ${showSubmit ? "show" : ""}`}
+                                        >
+                                            <p>Submit</p>
+                                        </button>
+                                    </div>
+                                </Form>
+                            )}
+                        </Formik>
                     </div>
                 </div>
             </div>

@@ -54,8 +54,8 @@ export const Admin = ({ data }) => {
                             }}
                             
                         >
-                            <Tab label="Registration Management" />
-                            <Tab label="Event Management" />
+                            <Tab label="Registration Management" style={{textTransform: 'none'}}/>
+                            <Tab label="Event Management" style={{textTransform: 'none'}}/>
                         </Tabs>
 
                     </Box>
