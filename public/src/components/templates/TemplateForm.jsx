@@ -35,16 +35,16 @@ const validationSchema = Yup.object().shape({
     .min(2, "Last name must be at least 2 characters.")
     .required("Last name is required."),
   
-  companyName: Yup.string()
-    .min(2, "Company name must be at least 2 characters.")
-    .required("Company name is required."),
+//   companyName: Yup.string()
+//     .min(2, "Company name must be at least 2 characters.")
+//     .required("Company name is required."),
   
   birthday: Yup.date()
     .max(new Date(), "Birthday cannot be in the future.")
     .required("Birthday is required."),
   
-  consent: Yup.boolean()
-    .oneOf([true], "You must agree to the terms and conditions."),
+//   consent: Yup.boolean()
+//     .oneOf([true], "You must agree to the terms and conditions."),
 });
 
 
@@ -78,51 +78,52 @@ export const TemplateForm = () => {
             const decryptedJson = bytes.toString(CryptoJS.enc.Utf8);
             const gecuser = JSON.parse(decryptedJson);
             if (gecuser) {
-                debugger;
+                
                 setTarget(gecuser.value);
             }
         }
 
     }, []);
 
+
+    const handleSubmitRegistration = async (values) => {
+        
+        debugger;
+        console.log("🟢 handleSubmitRegistration fired", values);
+        debugger;
+
+    
+        // const formData = {};
+        // formData["eventPage"] = target;
+
+        // Array.from(values).forEach((item) => {
+        //     if (item.name) {
+        //         formData[item.name] = item.value;
+        //     }
+        // });
+
+        // // console.log("Form data:", formData);
+        // debugger;
+        // const createRecordResponse = await UseCreateRecord(
+        //     formData,
+        //     null,
+        //     null,
+        //     "registration",
+        //     "create"
+        // );
+
+        // if (createRecordResponse.status) {
+        //     setShowModal((prev) => !prev);
+        //     modalRef.current.textContent = createRecordResponse.message;
+
+        //     Array.from(values).forEach((item) => (item.value = ""));
+        // }
+    };
+
     if (!target) {
         return <Login />;
     }
 
-    const handleSubmitRegistration = async (e) => {
-        e.preventDefault();
-        const values = formRegRef.current.querySelectorAll("input, select");
-        const validate = UseFormValidator(values);
-
-        if (!validate) {
-            return;
-        }
-        const formData = {};
-        formData["eventPage"] = target;
-
-        Array.from(values).forEach((item) => {
-            if (item.name) {
-                formData[item.name] = item.value;
-            }
-        });
-
-        // console.log("Form data:", formData);
-        debugger;
-        const createRecordResponse = await UseCreateRecord(
-            formData,
-            null,
-            null,
-            "registration",
-            "create"
-        );
-
-        if (createRecordResponse.status) {
-            setShowModal((prev) => !prev);
-            modalRef.current.textContent = createRecordResponse.message;
-
-            Array.from(values).forEach((item) => (item.value = ""));
-        }
-    };
 
     return (
         <>
@@ -257,8 +258,8 @@ export const TemplateForm = () => {
                                                 id="consent"
                                                 className={`form-check-input ${form.errors.consent && form.touched.consent ? 'is-invalid' : ''}`}
                                                 onChange={e => {
-                                                field.onChange(e);               // update Formik state
-                                                setShowSubmit(e.target.checked); // toggle your local submit button visibility
+                                                    field.onChange(e);               // update Formik state
+                                                    setShowSubmit(e.target.checked); // toggle your local submit button visibility
                                                 }}
                                             />
                                             )}
@@ -270,20 +271,21 @@ export const TemplateForm = () => {
                                             className="invalid-feedback small"
                                         />
 
-                                    <div className="cta-zone">
-                                        <button
-                                            type="submit"
-                                            className={`cta-button blue ${showSubmit ? "show" : ""}`}
+                                   <button
+                                        type="submit"
+                                        onClick={() => console.log("clicked")}
+                                        disabled={false}
+                                        style={{ pointerEvents: 'auto', opacity: 1 }}
                                         >
-                                            <label>Submit</label>
-                                        </button>
-                                    </div>
+                                        Submit
+                                    </button>
                                 </Form>
                             )}
                         </Formik>
                     </div>
                 </div>
             </div>
+
             {target.lockRegistration  === 'true' && (<div className="locked-overlay-message">
                 Registration has been closed!
             </div> )}

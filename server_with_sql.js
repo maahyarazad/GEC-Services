@@ -378,10 +378,10 @@ app.post("/registration-config-access", upload.none(), async (req, res) => {
             return res.status(401).json({ status: false, message: "Invalid Authorization Code" });
         }
 
-        await sendOtpToPhone(data.mobile_number, req, client);
+        await sendOtpToPhone(data.mobile_number, req, res, client);
         // await dbService.create("registration_client_access", data);
 
-        res.status(200).json({
+        return res.status(200).json({
             status: true,
             message: "Login Success",
             data: page_data,
@@ -391,7 +391,7 @@ app.post("/registration-config-access", upload.none(), async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ status: false, message: "Server error" });
+        return res.status(500).json({ status: false, message: "Server error" });
     }
 });
 
@@ -425,7 +425,7 @@ app.post("/otp-check", upload.none(), async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ status: false, message: "Server error" });
+        return res.status(500).json({ status: false, message: "Server error" });
     }
 });
 
@@ -456,27 +456,23 @@ app.post("/data", async (req, res) => {
         return res.json(data);
     } catch (error) {
         console.error("Error reading the file:", error);
-        res.status(500).send("Internal error with Data API");
+        return res.status(500).send("Internal error with Data API");
     }
 });
 
-const sendOtpToPhone = async (mobile_number, req, twilioClient) => {
+const sendOtpToPhone = async (mobile_number, req, res, twilioClient) => {
     if (!mobile_number) {
         return { status: false, code: 400, message: 'Mobile number required' };
     }
 
     if(req.session.otp){
-        if (Date.now() > req.session.otpExpires) {
-            return res.status(400).json({ status: false, message: "OTP already sent and still valid. Please wait before requesting a new one."
-        });
-    }
         delete req.session.otp;
         delete req.session.otpExpires;
     }
 
     const otp = generateOTP();
     req.session.otp = otp;
-    req.session.otpExpires = Date.now() + 1 * 60 * 1000; // expires in 1 mins
+    req.session.otpExpires = Date.now() + 1 * 59 * 1000; // expires in 1 mins
 
     try {
         await twilioClient.messages.create({

@@ -26,7 +26,7 @@ const setWithExpiry = (key, value, ttlMs) => {
     localStorage.setItem(key, ciphertext);
 }
 
-const OtpTimer = ({ initialSeconds = 60, loginResponseData = {}, onResend }) => {
+const OtpTimer = ({ initialSeconds = 59, loginResponseData = {}, onResend }) => {
     const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
     const [expired, setExpired] = useState(false);
 

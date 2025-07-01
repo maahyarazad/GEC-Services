@@ -146,7 +146,6 @@ input[type="date"] {
 .cta-zone.hide {
   max-height: 0;
   overflow: hidden;
-  pointer-events: none;
 }
 
 .cta-button.super-hide {
