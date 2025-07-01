@@ -4,6 +4,7 @@ import "./login.css";
 import { UseFormValidator } from "../hooks/UseFormValidator";
 import { useNavigate } from 'react-router-dom';
 import OtpInput from '../utils/OtpInput';
+import CryptoJS from 'crypto-js';
 
 const setWithExpiry = (key, value, ttlMs) => {
     const now = new Date();
@@ -12,8 +13,8 @@ const setWithExpiry = (key, value, ttlMs) => {
         value,
         expiry: now.getTime() + ttlMs // time to live in milliseconds
     };
-
-    localStorage.setItem(key, JSON.stringify(item));
+    const ciphertext = CryptoJS.AES.encrypt(JSON.stringify(item), import.meta.env.VITE_LOCAL_STORAGE_KEY).toString();
+    localStorage.setItem(key, ciphertext);
 }
 
 const OtpTimer = ({ initialSeconds = 60, loginResponseData = {}, onResend }) => {
@@ -74,10 +75,16 @@ export const Login = () => {
     const otpRef = useRef();
 
     useEffect(() => {
-        const gecuser = JSON.parse(localStorage.getItem("gec-registration"));
 
-        if (gecuser) {
-            navigate(`/registration/${gecuser.value.page}`);
+        const ciphertext = localStorage.getItem("gec-registration");
+        debugger;
+        if(ciphertext){
+            const bytes = CryptoJS.AES.decrypt(ciphertext, import.meta.env.VITE_LOCAL_STORAGE_KEY);
+            const decryptedJson = bytes.toString(CryptoJS.enc.Utf8);
+            const gecuser = JSON.parse(decryptedJson);
+            if (gecuser) {
+                navigate(`/registration/${gecuser.value.page}`);
+            }
         }
     }, []);
 

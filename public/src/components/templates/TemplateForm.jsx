@@ -6,7 +6,7 @@ import { UseCreateRecord } from "../hooks/UseCreateRecord";
 import { Link } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-
+import CryptoJS from 'crypto-js';
 
 const validationSchema = Yup.object().shape({
     email: Yup.string().email('Invalid email').required('Required'),
@@ -42,10 +42,16 @@ export const TemplateForm = () => {
     };
 
     useEffect(() => {
-        const gecuser = JSON.parse(localStorage.getItem("gec-registration"));
+        const ciphertext = localStorage.getItem("gec-registration");
 
-        if (gecuser) {
-            setTarget(gecuser.value);
+        if (ciphertext) {
+            const bytes = CryptoJS.AES.decrypt(ciphertext, import.meta.env.VITE_LOCAL_STORAGE_KEY);
+            const decryptedJson = bytes.toString(CryptoJS.enc.Utf8);
+            const gecuser = JSON.parse(decryptedJson);
+            if (gecuser) {
+                debugger;
+                setTarget(gecuser.value);
+            }
         }
 
     }, []);
@@ -91,12 +97,12 @@ export const TemplateForm = () => {
 
     return (
         <>
-            <div className={`template-form ${target.lockRegistration ? "locked-template-form" : ""}`}>
+            <div className={`template-form ${target.lockRegistration  === 'true' ? "locked-template-form" : ""}`}>
                 <div>
                     <p>
                         {target.description}
                     </p>
-                    <img src={target.Image} alt="My Image" />
+                    <img src={`${import.meta.env.VITE_SERVERURL}/uploads/${target.Image}`} alt={target.title} />
                 </div>
                 <div>
                     <Link to={"/"}>
@@ -116,7 +122,7 @@ export const TemplateForm = () => {
                         <Formik
                             initialValues={initialValues}
                             validationSchema={validationSchema}
-                            onSubmit={handleSubmit}
+                            onSubmit={handleSubmitRegistration}
                         >
                             {({ values, setFieldValue }) => (
                                 <Form>
@@ -164,7 +170,7 @@ export const TemplateForm = () => {
                                         <ErrorMessage name="lastName" component="div" className="text-danger small" />
                                     </label>
 
-                                    {target.company && (
+                                    {target.companyRequired === 'true' && (
                                         <label className="full">
                                             <p>Company Name</p>
                                             <Field type="text" name="companyName" />
@@ -172,7 +178,7 @@ export const TemplateForm = () => {
                                         </label>
                                     )}
 
-                                    {target.birthday && (
+                                    {target.birthdayRequired === 'true' && (
                                         <label className="full">
                                             <p>Birthday</p>
                                             <Field
@@ -214,9 +220,9 @@ export const TemplateForm = () => {
                     </div>
                 </div>
             </div>
-            {target.lockRegistration ? <div class="locked-overlay-message">
+            {target.lockRegistration  === 'true' && (<div className="locked-overlay-message">
                 Registration has been closed!
-            </div> : null}
+            </div> )}
 
         </>
     );
