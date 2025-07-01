@@ -5,6 +5,15 @@ import { UseFormValidator } from "../hooks/UseFormValidator";
 import { useNavigate } from 'react-router-dom';
 import OtpInput from '../utils/OtpInput';
 import CryptoJS from 'crypto-js';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
+
+ const validationSchema = Yup.object({
+    mobile_number: Yup.string()
+      .matches(/^\+?[0-9]{12,15}$/, 'Enter a valid phone number')
+      .required('Required'),
+    registration_code: Yup.string().required('Required'),
+  });
 
 const setWithExpiry = (key, value, ttlMs) => {
     const now = new Date();
@@ -40,8 +49,8 @@ const OtpTimer = ({ initialSeconds = 60, loginResponseData = {}, onResend }) => 
         setExpired(false);
 
         if (typeof onResend === "function") {
-                onResend(loginResponseData);
-            }
+            onResend(loginResponseData);
+        }
     };
 
     return (
@@ -61,12 +70,13 @@ export const Login = () => {
     const [showOtpInput, setShowOtpInput] = useState(false);
     const [loginResponseData, setLoginResponseData] = useState(null);
     const [currentResponseStatus, setCurrentResponseStatus] = useState(true);
-    
 
-    const [mobile_number, setmobile_number] = useState("");
 
-    const phoneRef = useRef();
-    const registration_code = useRef();
+    const [mobile_number, setMobile_number] = useState(null);
+    const [registration_code, setRegistration_code] = useState(true);
+
+    // const phoneRef = useRef();
+    // const registration_code = useRef();
     const loginRef = useRef();
     const statusRef = useRef();
 
@@ -74,11 +84,16 @@ export const Login = () => {
 
     const otpRef = useRef();
 
+    const initialValues= {
+                        mobile_number: '',
+                        registration_code: '',
+                    };
+
     useEffect(() => {
 
         const ciphertext = localStorage.getItem("gec-registration");
         debugger;
-        if(ciphertext){
+        if (ciphertext) {
             const bytes = CryptoJS.AES.decrypt(ciphertext, import.meta.env.VITE_LOCAL_STORAGE_KEY);
             const decryptedJson = bytes.toString(CryptoJS.enc.Utf8);
             const gecuser = JSON.parse(decryptedJson);
@@ -103,8 +118,8 @@ export const Login = () => {
                 userAgent: navigator.userAgent,
                 platform: navigator.platform,
                 language: navigator.language,
-                registration_code: registration_code.current.value,
-                mobile_number: phoneRef.current.value,
+                registration_code: registration_code,
+                mobile_number: mobile_number,
             };
 
             const formData = new FormData();
@@ -158,8 +173,8 @@ export const Login = () => {
                 userAgent: navigator.userAgent,
                 platform: navigator.platform,
                 language: navigator.language,
-                registration_code: registration_code.current.value,
-                mobile_number: phoneRef.current.value,
+                registration_code: registration_code,
+                mobile_number: mobile_number,
             };
 
             const formData = new FormData();
@@ -180,9 +195,9 @@ export const Login = () => {
             }
 
             const response_data = await loginResponse.json();
+            
             setLoginResponseData(response_data);
             
-
             if (response_data.status) {
 
                 handleSendOtp();
@@ -203,24 +218,18 @@ export const Login = () => {
 
     };
 
-    const handleLoginSubmit = async () => {
+    const handleLoginSubmit = async (values, { setSubmitting, resetForm }) => {
         try {
-            const values = document.querySelectorAll(".loginvalue");
-            const validate = UseFormValidator(values);
-
-            if (!validate) {
-                return;
-            }
-
-
-
+            
             const data = {
                 userAgent: navigator.userAgent,
-                mobile_number: phoneRef.current.value,
+                mobile_number: values.mobile_number,
                 platform: navigator.platform,
                 language: navigator.language,
-                registration_code: registration_code.current.value,
+                registration_code: values.registration_code,
             };
+
+
 
             const formData = new FormData();
             for (const key in data) {
@@ -238,15 +247,14 @@ export const Login = () => {
             const response_data = await loginResponse.json();
 
             setLoginResponseData(loginResponse);
-
+            
             if (response_data.status === 401) {
-                
+
                 statusRef.current.textContent = response_data.message;
                 return;
             }
 
             if (response_data.status) {
-
                 handleSendOtp();
                 return;
 
@@ -269,76 +277,94 @@ export const Login = () => {
             <div>
                 <h4>Please login to view this page</h4>
                 {/* Step 1: check code login */}
-                <form ref={loginRef}>
-                    <div className="full">
-                        <input
-                            ref={phoneRef}
-                            type="tel"
-                            value={mobile_number}
-                            onChange={(e) => setmobile_number(e.target.value)}
-                            placeholder="Enter mobile_number Number"
-                            className="loginvalue"
-                        />
-                    </div>
-                    <div className="full">
-                        <input
-                            ref={registration_code}
-                            defaultValue={"12345"}
-                            name="confirm"
-                            type={showPassword ? "text" : "password"}
-                            placeholder={showPassword ? "Enter password" : "••••••••"}
-                            className="loginvalue"
-                        ></input>
-                    </div>
+                <Formik
+                    initialValues={initialValues}
+                    validationSchema={validationSchema}
+                    onSubmit={(values, formikHelpers) =>
+                        handleLoginSubmit(values, formikHelpers)
+                    }
+                >
+                    {({ values, setFieldValue,errors, touched,isSubmitting }) => (
+                        <Form ref={loginRef}>
+                            <div className="full">
+                                <Field
+                                    onChange={(e) => {
+                                        setFieldValue('mobile_number', e.target.value)
+                                        setMobile_number(e.target.value);
+                                    }}
+                                    name="mobile_number"
+                                    type="tel"
+                                    placeholder="Enter mobile number"
+                                    className={`form-control ${errors.mobile_number && touched.mobile_number ? 'is-invalid' : ''}`}
+                                />
+                                <ErrorMessage
+                                    name="mobile_number"
+                                    component="div"
+                                    className="text-danger small"
+                                />
+                            </div>
 
+                            <div className="full">
+                                <Field
+                                    onChange={(e) => {
+                                        setFieldValue('registration_code', e.target.value);
+                                        setRegistration_code( e.target.value);
+                                    }}
+                                    name="registration_code"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder={showPassword ? 'Enter password' : '••••••••'}
+                                    className={`form-control ${errors.registration_code && touched.registration_code ? 'is-invalid' : ''}`}
+                                />
+                                <ErrorMessage
+                                    name="registration_code"
+                                    component="div"
+                                    className="text-danger small"
+                                />
+                            </div>
 
-                    {/* Step 1: mobile_number Number Input */}
+                            <div className="cta-zone mt-1 mb-4">
+                                <button
+                                    type="submit"
+                                    className="cta-button dark"
+                                    disabled={isSubmitting || showOtpInput}
+                                >
+                                    <img alt="login" src="/lock.svg" />
+                                    <p>Login</p>
+                                </button>
 
+                                <span>
+                                    <p className="me-1">Show Password</p>
+                                    <input
+                                        type="checkbox"
+                                        onChange={() => setShowPassowrd((prev) => !prev)}
+                                    />
+                                </span>
+                            </div>
 
-                    <div className="cta-zone">
-                        <button disabled={showOtpInput}
-                            onClick={(e) => handleLoginSubmit(e)}
-                            type="button"
-                            className="cta-button dark"
-                        >
-                            <img alt="login" src="/lock.svg"></img>
-                            <p>Login</p>
-                        </button>
-                        <span>
-                            <p className="me-1">Show Password</p>
-                            <input
-                                onChange={() => setShowPassowrd((prev) => !prev)}
-                                type="checkbox"
-                            ></input>
-                        </span>
-                    </div>
+                            {showOtpInput && (
+                                <>
+                                    <OtpInput
+                                        onChange={(val) => console.log('Current OTP:', val)}
+                                        onComplete={(val) => {
+                                            console.log('OTP Complete:', val);
+                                            handlePostOTP(val);
+                                        }}
+                                    />
 
-
-                    {/* Step 2: OTP Input (appears after Send OTP) */}
-
-                    {showOtpInput ? (
-                        <>
-                            <OtpInput
-                                ref={otpRef}
-                                onChange={(val) => console.log("Current OTP:", val)}
-                                onComplete={(val) => {
-                                    console.log("OTP Complete:", val);
-                                    handlePostOTP(val);
-                                }}
-                            />
-                            {loginResponseData !== null ?
-                                <OtpTimer
-                                    loginResponseData={loginResponseData}
-                                    onResend={handleOtpResend}
-                                    
-                                /> : null}
-                        </>
-                    ) : null}
-
-                </form>
-                <p 
-                    ref={statusRef} 
-                    className={`mt-1 ${currentResponseStatus ? "" : "text-danger" }`}></p>
+                                    {loginResponseData && (
+                                        <OtpTimer
+                                            loginResponseData={loginResponseData}
+                                            onResend={handleOtpResend}
+                                        />
+                                    )}
+                                </>
+                            )}
+                        </Form>
+                    )}
+                </Formik>
+                <p
+                    ref={statusRef}
+                    className={`mt-1 ${currentResponseStatus ? "" : "text-danger"}`}></p>
             </div>
 
         </div>

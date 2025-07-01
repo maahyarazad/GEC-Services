@@ -373,13 +373,10 @@ app.post("/registration-config-access", upload.none(), async (req, res) => {
 
         const data = req.body;
         // Check duplicate
-        const valid_request = await dbService.any("registration_config", "registration_code", data.registration_code);
-        if (valid_request === 0) {
+        const page_data = await dbService.findExact("registration_config", "registration_code", data.registration_code);
+        if (!page_data) {
             return res.status(401).json({ status: false, message: "Invalid Authorization Code" });
         }
-
-        const page_data = await dbService.findByColumn("registration_config", "registration_code", data.registration_code);
-
 
         await sendOtpToPhone(data.mobile_number, req, client);
         // await dbService.create("registration_client_access", data);
@@ -471,8 +468,8 @@ const sendOtpToPhone = async (mobile_number, req, twilioClient) => {
     if(req.session.otp){
         if (Date.now() > req.session.otpExpires) {
             return res.status(400).json({ status: false, message: "OTP already sent and still valid. Please wait before requesting a new one."
- });
-        }
+        });
+    }
         delete req.session.otp;
         delete req.session.otpExpires;
     }
