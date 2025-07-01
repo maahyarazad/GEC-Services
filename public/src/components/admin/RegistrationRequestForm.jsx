@@ -9,16 +9,15 @@ const validationSchema = Yup.object({
     title: Yup.string().required('Title is required'),
     image: Yup.mixed()
         .required('Image is required')
-        .test(
-            'fileSize',
-            'File too large (max 5MB)',
-            value => !value || (value && value.size <= 5 * 1024 * 1024)
-        )
-        .test(
-            'fileType',
-            'Unsupported File Format',
-            value => !value || (value && ['image/jpeg', 'image/png', 'image/gif'].includes(value.type))
-        ),
+        .test("fileSize", "File too large (max 5MB)", (value) => {
+            if (!value) return true; // allow empty
+            if (typeof value === "string") return true; // allow initial string (existing image)
+            return value.size <= 5 * 1024 * 1024; // check file size if it's a File
+        })
+        .test("fileType", "Unsupported file format", (value) => {
+            if (!value || typeof value === "string") return true;
+            return ["image/jpeg", "image/png", "image/webp"].includes(value.type);
+        }),
     tokensPerGuest: Yup.number()
         .typeError('Must be a number')
         .integer('Must be an integer')
@@ -31,18 +30,17 @@ const validationSchema = Yup.object({
     lockRegistration: Yup.boolean(),
 });
 
-export default function NewRegistrationPage({ initialData = null }) {
+export default function NewRegistrationPage({ initialData = null, modalSwitch }) {
     const [submitSuccess, setSubmitSuccess] = useState(false);
-    const [slug, setSlug] = useState(() => {
-        return initialData?.page
-            ? slugify(initialData.page, { lower: true, strict: true })
-            : '';
-        });
+    const [slug, setSlug] = useState(null);
     const [submitError, setSubmitError] = useState('');
+    const [preview, setPreview] = useState(null);
+
     const fileInputRef = useRef(null);
     const containerRef = useRef(null);
 
     const timeoutRef = useRef(null);
+
 
     useEffect(() => {
         return () => {
@@ -53,16 +51,33 @@ export default function NewRegistrationPage({ initialData = null }) {
     }, []);
 
     const initialValues = {
+        id: initialData?.id || null,
         page: initialData?.page || '',
         paymentRequired: initialData?.paymentRequired === "true",
         birthdayRequired: initialData?.birthdayRequired === "true",
         companyRequired: initialData?.companyRequired === "true",
         lockRegistration: initialData?.lockRegistration === "true",
         title: initialData?.title || '',
-        image: null, // file must be re-selected
+        image: initialData?.Image || null,
         tokensPerGuest: initialData?.maxTokensPerGuest || '',
         description: initialData?.description || '',
     };
+
+    useEffect(() => {
+        if (initialValues.image && typeof initialValues.image === 'string') {
+            setPreview(`${import.meta.env.VITE_SERVERURL}/uploads/${initialValues.image}`);
+        }
+    }, [initialValues.image]);
+
+
+    useEffect(() => {
+        if (initialValues.page && typeof initialValues.page === 'string') {
+            setSlug(slugify(initialValues.page, {
+                                                        lower: true,
+                                                        strict: true,
+                                                    }));
+        }
+    }, [initialValues.page]);
 
     const handleSubmit = async (values, { setSubmitting, resetForm }) => {
         setSubmitError('');
@@ -70,6 +85,12 @@ export default function NewRegistrationPage({ initialData = null }) {
 
         try {
             const formData = new FormData();
+
+            if(initialData){
+                formData.append('id', initialData.id);
+            }
+
+            
             formData.append('page', slug);
             formData.append('paymentRequired', values.paymentRequired);
             formData.append('birthdayRequired', values.birthdayRequired);
@@ -103,7 +124,8 @@ export default function NewRegistrationPage({ initialData = null }) {
                 // Set a new timeout
                 timeoutRef.current = setTimeout(() => {
                     setSubmitSuccess(false);
-                }, 8000);
+                    modalSwitch();
+                }, 5000);
 
                 resetForm();
 
@@ -119,6 +141,7 @@ export default function NewRegistrationPage({ initialData = null }) {
         } finally {
             containerRef.current?.scrollIntoView({ behavior: 'smooth' });
             setSubmitting(false);
+            
         }
     };
 
@@ -129,7 +152,7 @@ export default function NewRegistrationPage({ initialData = null }) {
         <div className="container py-4" ref={containerRef}>
             {submitSuccess && (
                 <div className="alert alert-success">
-                    Registration page created successfully!
+                    Registration page saved successfully!
                 </div>
             )}
             {submitError && (
@@ -243,6 +266,16 @@ export default function NewRegistrationPage({ initialData = null }) {
                                 <label htmlFor="image" className="form-label">
                                     Image
                                 </label>
+                                {preview && (
+                                    <div className="mb-2">
+                                        <label>Current Image:</label>
+                                        <img
+                                            src={preview}
+                                            alt="Current"
+                                            style={{ width: '150px', height: 'auto', display: 'block', marginBottom: '10px' }}
+                                        />
+                                    </div>
+                                )}
                                 <input
                                     ref={fileInputRef}
                                     id="image"
@@ -254,6 +287,7 @@ export default function NewRegistrationPage({ initialData = null }) {
                                         const file = e.currentTarget.files[0];
                                         if (file) {
                                             setFieldValue('image', file);  // Store the File object, NOT base64
+                                            setPreview(URL.createObjectURL(file)); // Set live preview
                                         }
                                     }}
                                 />

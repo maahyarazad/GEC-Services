@@ -14,24 +14,24 @@ const getColumns = ({ onEdit, onLock }) => [
         width: 150,
         valueFormatter: (params) => (params.value === "true" ? "Yes" : "No"),
     },
-    {
-        field: 'birthdayRequired',
-        headerName: 'Birthday Required',
-        width: 150,
-        valueFormatter: (params) => (params.value === "true" ? "Yes" : "No"),
-    },
-    {
-        field: 'companyRequired',
-        headerName: 'Company Required',
-        width: 150,
-        valueFormatter: (params) => (params.value === "true" ? "Yes" : "No"),
-    },
-    {
-        field: 'lockRegistration',
-        headerName: 'Lock Registration',
-        width: 150,
-        valueFormatter: (params) => (params.value === "true" ? "Yes" : "No"),
-    },
+    // {
+    //     field: 'birthdayRequired',
+    //     headerName: 'Birthday Required',
+    //     width: 150,
+    //     valueFormatter: (params) => (params.value === "true" ? "Yes" : "No"),
+    // },
+    // {
+    //     field: 'companyRequired',
+    //     headerName: 'Company Required',
+    //     width: 150,
+    //     valueFormatter: (params) => (params.value === "true" ? "Yes" : "No"),
+    // },
+    // {
+    //     field: 'lockRegistration',
+    //     headerName: 'Lock Registration',
+    //     width: 150,
+    //     valueFormatter: (params) => (params.value === "true" ? "Yes" : "No"),
+    // },
     { field: 'title', headerName: 'Title', width: 130 },
     { field: 'description', headerName: 'Description', width: 150 },
     {
@@ -40,7 +40,7 @@ const getColumns = ({ onEdit, onLock }) => [
         width: 100,
         renderCell: (params) => (
             <img
-                src={params.value}
+            src={`${import.meta.env.VITE_SERVERURL}/uploads/${params.value}`}
                 alt="thumbnail"
                 style={{ width: 50, height: 50, objectFit: 'contain', borderRadius: 4 }}
             />
@@ -100,6 +100,7 @@ export const RegistrationList = ({ data }) => {
             }
 
             const values = await response.json();
+            debugger;
             setRegistrationList(values);
             console.log('Fetched registrations:', values);
         } catch (err) {
@@ -119,7 +120,7 @@ export const RegistrationList = ({ data }) => {
             for (const key in selectedRow) {
                 formData.append(key, selectedRow[key]);
             }
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/edit-object/`, {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/switch-registration-lock/`, {
                 method: 'POST',
                 body: formData,
             });
@@ -142,7 +143,7 @@ export const RegistrationList = ({ data }) => {
 
     const openEdit = (row) => {
         const selectedRow = registrationList?.rows?.find((x) => x.id === row.id);
-
+        debugger;
         if (selectedRow) {
 
             setInitialData(selectedRow);
@@ -153,9 +154,7 @@ export const RegistrationList = ({ data }) => {
     const switchLock = (row) => {
         const selectedRow = registrationList?.rows?.find((x) => x.id === row.id);
         if (selectedRow) {
-            selectedRow.lockRegistration = !selectedRow.lockRegistration;
             selectedRow.Image = null;
-
             handleEdit(selectedRow)
         }
     };
@@ -195,14 +194,21 @@ export const RegistrationList = ({ data }) => {
                 <Modal isOpen={editReg}
                     onRequestClose={() => setEditReg(false)}
                     title={`Modify ${initialData?.title}`}>
-                    <RegistrationRequestForm initialData={initialData} />
+                    <RegistrationRequestForm initialData={initialData}  modalSwitch={() => {
+                        setEditReg(false); 
+                        fetchData();
+                    }}/>
                 </Modal>
 
             </div>
             <Modal isOpen={newReg}
                 onRequestClose={() => setNewReg(false)}
                 title={"New Registration Page"}>
-                <RegistrationRequestForm initialData={null} />
+                <RegistrationRequestForm initialData={null} 
+                    modalSwitch={() => {
+                        setNewReg(false); 
+                        fetchData();
+                    }}/>
             </Modal>
         </div>
     );

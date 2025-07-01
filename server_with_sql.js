@@ -72,6 +72,8 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use('/uploads', express.static(path.join(__dirname, 'file_storage')));
+
 const hashthis = async (hashitem) => {
     const saltRounds = 10; // You can adjust the number of salt rounds as needed
     const salt = await bcrypt.genSalt(saltRounds);
@@ -118,7 +120,7 @@ const author = async (xPath, data) => {
 // MULTER STORAGE
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, "public/");
+        cb(null, "file_storage/");
     },
     filename: async (req, file, cb) => {
         const originalName = path.parse(file.originalname).name;
@@ -126,13 +128,13 @@ const storage = multer.diskStorage({
         let newFileName = originalName;
         let counter = 1;
         // Check if the file already exists
-        let filePath = path.join("public", file.originalname);
+        let filePath = path.join("file_storage", file.originalname);
         try {
             while (true) {
                 try {
                     await fs.access(filePath);
                     newFileName = `${originalName} (${counter})`;
-                    filePath = path.join("public", `${newFileName}${extension}`);
+                    filePath = path.join("file_storage", `${newFileName}${extension}`);
                     counter++;
                 } catch (err) {
                     break;
@@ -283,23 +285,6 @@ app.post("/registration-config", upload.single('image'), async (req, res) => {
         const table_name = "registration_config";
         const data = req.body
 
-        // Check duplicate
-        const duplicate_record = await dbService.any(table_name, "page", data.page);
-        if (duplicate_record > 0) {
-            return res.status(400).json({ status: false, message: "Duplicate record found." });
-        }
-
-
-        
-        let base64Image = null;
-        if (req.file) {
-            // req.file.path is the full disk path of the uploaded file
-            const fileBuffer = await fs.readFile(req.file.path);
-            base64Image = fileBuffer.toString('base64');
-            base64Image = `data:${req.file.mimetype};base64,${base64Image}`;
-            data.image = base64Image;
-        }
-        
         // EDIT MODE
         if (data.id) {
             const existing = await dbService.findById(table_name, data.id);
@@ -307,11 +292,31 @@ app.post("/registration-config", upload.single('image'), async (req, res) => {
                 return res.status(404).json({ status: false, message: "Record not found" });
             }
 
+            // Check duplicate
+            const duplicate_record = await dbService.findByColumn(table_name, "page", data.page);
+            if (duplicate_record && duplicate_record.id !== existing.id) {
+                return res.status(400).json({ status: false, message: "A duplicate record with the same page URL was found." });
+            }
+
+            if (req.file) {
+                data.image = req.file.filename;
+            }
             // Update record (registration_code should not change if not re-generated)
             const updated = await dbService.update(table_name, data.id, data);
             return res.json({ status: true, message: "Record updated successfully", data: updated });
         }
-        
+
+        // Check duplicate
+        const duplicate_record = await dbService.any(table_name, "page", data.page);
+        if (duplicate_record > 0) {
+            return res.status(400).json({ status: false, message: "Duplicate record found." });
+        }
+
+
+        if (req.file) {
+            data.image = String(req.file.filename);
+        }
+                
         data.registration_code = generateRecordId(data, -2, false);
         const insert_data = await dbService.create(table_name, data);
 
@@ -323,10 +328,11 @@ app.post("/registration-config", upload.single('image'), async (req, res) => {
 });
 
 
-app.post("/registration-config/edit-object", upload.single('none'), async (req, res) => {
+app.post("/registration-config/switch-registration-lock", upload.single('none'), async (req, res) => {
     try {
         const table_name = "registration_config";
-        const data = req.body;
+        const { Image, ...data } = req.body;
+
         const id = data.id;
 
         // Check if the record exists
@@ -334,6 +340,8 @@ app.post("/registration-config/edit-object", upload.single('none'), async (req, 
         if (!existing) {
             return res.status(404).json({ status: false, message: "Record not found" });
         }
+
+        data.lockRegistration = String(!(data.lockRegistration === "true"));
 
         const updated = await dbService.update(table_name, id, data);
 
