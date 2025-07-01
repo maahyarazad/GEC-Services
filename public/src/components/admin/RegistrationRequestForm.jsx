@@ -115,7 +115,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
             if (response.ok && data.status) {
                 setSlug('');
                 setSubmitSuccess(true);
-                debugger;
+
                 // Clear any previous timeout
                 if (timeoutRef.current) {
                     clearTimeout(timeoutRef.current);
@@ -125,7 +125,9 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                 timeoutRef.current = setTimeout(() => {
                     setSubmitSuccess(false);
                     modalSwitch();
-                }, 5000);
+                    setPreview(null);
+                    setSlug(null);
+                }, 3000);
 
                 resetForm();
 

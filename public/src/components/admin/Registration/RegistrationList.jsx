@@ -197,6 +197,7 @@ export const RegistrationList = ({ data }) => {
                     <RegistrationRequestForm initialData={initialData}  modalSwitch={() => {
                         setEditReg(false); 
                         fetchData();
+                        setInitialData(null);
                     }}/>
                 </Modal>
 
@@ -208,6 +209,7 @@ export const RegistrationList = ({ data }) => {
                     modalSwitch={() => {
                         setNewReg(false); 
                         fetchData();
+                        
                     }}/>
             </Modal>
         </div>

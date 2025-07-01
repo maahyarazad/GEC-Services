@@ -317,7 +317,7 @@ app.post("/registration-config", upload.single('image'), async (req, res) => {
             data.image = String(req.file.filename);
         }
                 
-        data.registration_code = generateRecordId(data, -2, false);
+        data.registration_code = generateRecordId(data, -4, false);
         const insert_data = await dbService.create(table_name, data);
 
         res.json({ status: true, message: "Data saved successfully", insert_data });
