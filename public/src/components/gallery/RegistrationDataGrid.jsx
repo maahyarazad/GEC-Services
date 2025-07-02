@@ -6,7 +6,7 @@ import {
     Box, CircularProgress
 } from '@mui/material';
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 10;
 
 const columns = [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -26,11 +26,12 @@ export const RegistrationDataGrid = () => {
     const [registrationList, setRegistrationList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(0);
+    const [pageSize, setPageSize] = useState(25);
     const [rowCount, setRowCount] = useState(0);
     const [sortModel, setSortModel] = useState([]);
     const [filterModel, setFilterModel] = useState({});
 
-    const fetchData = async (page, sortModel = [], filterModel = {}) => {
+    const fetchData = async (page, pageSize, sortModel = [], filterModel = {}) => {
         setLoading(true);
         try {
             const sort = sortModel.length > 0 ? sortModel[0] : {};
@@ -42,7 +43,7 @@ export const RegistrationDataGrid = () => {
 
             const queryParams = [
                 `page=${page + 1}`,
-                `pageSize=${PAGE_SIZE}`,
+                `pageSize=${pageSize}`,
                 sortField ? `sortField=${sortField}` : '',
                 sortOrder ? `sortOrder=${sortOrder}` : '',
                 filterParams
@@ -50,9 +51,9 @@ export const RegistrationDataGrid = () => {
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration?${queryParams}`);
             const response_data = await response.json();
-
+            debugger;
             setRegistrationList(response_data.data || []);
-            setRowCount(response_data.total || response_data.data.length || 0);
+            setRowCount(response_data.total || 0);
             
         } catch (err) {
             console.error('Failed to fetch:', err);
@@ -62,8 +63,8 @@ export const RegistrationDataGrid = () => {
     };
 
     useEffect(() => {
-        fetchData(page, sortModel, filterModel);
-    }, [page, sortModel, filterModel]);
+        fetchData(page, pageSize, sortModel, filterModel);
+    }, [page,pageSize, sortModel, filterModel]);
 
     return (
         <Box sx={{ padding: 2 }}>
@@ -72,12 +73,13 @@ export const RegistrationDataGrid = () => {
                     <CircularProgress />
                 </Box>
             ) : (
-                <div style={{ width: '100%', height: 500 }}>
+                <div style={{ width: '100%', height: '85vh' }}>
                     <DataGrid
                         rows={registrationList}
                         columns={columns}
-                        pageSize={PAGE_SIZE}
-                        rowsPerPageOptions={[PAGE_SIZE]}
+
+                        pageSize={pageSize}
+                        rowsPerPageOptions={[25, 50, 100]}  
                         paginationMode="server"
                         sortingMode="server"
                         filterMode="server"
@@ -85,6 +87,7 @@ export const RegistrationDataGrid = () => {
                         page={page}
                         onPageChange={(newPage) => setPage(newPage)}
                         onSortModelChange={(newModel) => setSortModel(newModel)}
+                        onPageSizeChange={(newPageSize) => setPageSize(newPageSize)} 
                         onFilterModelChange={(newModel) => {
                             const filters = {};
                             newModel.items.forEach(item => {
@@ -96,7 +99,6 @@ export const RegistrationDataGrid = () => {
                         }}
                         sortModel={sortModel}
                         disableSelectionOnClick
-                        autoHeight
                     />
                 </div>
             )}

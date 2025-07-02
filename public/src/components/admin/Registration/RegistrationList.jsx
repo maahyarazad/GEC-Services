@@ -40,7 +40,7 @@ const getColumns = ({ onEdit, onLock }) => [
         width: 100,
         renderCell: (params) => (
             <img
-            src={`${import.meta.env.VITE_SERVERURL}/uploads/${params.value}`}
+                src={`${import.meta.env.VITE_SERVERURL}/uploads/${params.value}`}
                 alt="thumbnail"
                 style={{ width: 50, height: 50, objectFit: 'contain', borderRadius: 4 }}
             />
@@ -161,56 +161,58 @@ export const RegistrationList = () => {
 
     return (
         <div className="gallery-events">
-            <span className="gallery-header">
-                <h4>
 
-                </h4>
-                <span>
+            <div className="d-flex justify-content-end">
+                <span className="me-4 pt-4">
                     <button className="cta-button blue" onClick={() => setNewReg(true)}>
                         <img alt="add-item" src="/add-item.svg"></img>
 
                     </button>
                 </span>
-            </span>
+            </div>
 
-            <div style={{ width: '100%', overflowX: 'auto' }}>
-                {registrationList
-                    ?
-                    <div style={{ height: '100%' }}>
-                        <DataGrid
-                            rows={registrationList.rows}
-                            columns={getColumns({ onEdit: openEdit, onLock: switchLock })}
-                            pageSize={5}
-                            rowsPerPageOptions={[5]}
-                            disableSelectionOnClick
-                        />
-                    </div>
-                    :
-                    <Box sx={{ display: 'flex', justifySelf: 'center' }}>
-                        <CircularProgress />
-                    </Box>
-                }
+
+            <div style={{ width: '100%', height: '85vh' }}>
+                <Box sx={{ padding: 2 }}>
+
+                    {registrationList
+                        ?
+                        <div style={{ height: '100%' }}>
+                            <DataGrid
+                                rows={registrationList.rows}
+                                columns={getColumns({ onEdit: openEdit, onLock: switchLock })}
+                                pageSize={5}
+                                rowsPerPageOptions={[5]}
+                                disableSelectionOnClick
+                            />
+                        </div>
+                        :
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                            <CircularProgress />
+                        </Box>
+                    }
+                </Box>
 
                 <Modal isOpen={editReg}
                     onRequestClose={() => setEditReg(false)}
                     title={`Modify ${initialData?.title}`}>
-                    <RegistrationRequestForm initialData={initialData}  modalSwitch={() => {
-                        setEditReg(false); 
+                    <RegistrationRequestForm initialData={initialData} modalSwitch={() => {
+                        setEditReg(false);
                         fetchData();
                         setInitialData(null);
-                    }}/>
+                    }} />
                 </Modal>
 
             </div>
             <Modal isOpen={newReg}
                 onRequestClose={() => setNewReg(false)}
                 title={"New Registration Page"}>
-                <RegistrationRequestForm initialData={null} 
+                <RegistrationRequestForm initialData={null}
                     modalSwitch={() => {
-                        setNewReg(false); 
+                        setNewReg(false);
                         fetchData();
-                        
-                    }}/>
+
+                    }} />
             </Modal>
         </div>
     );
