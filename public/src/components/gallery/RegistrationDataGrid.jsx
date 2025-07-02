@@ -33,11 +33,14 @@ export const RegistrationDataGrid = () => {
         page: 0,
         pageSize: 25,
     });
-    const fetchData = async (page, pageSize, sortModel = [], filterModel = {}) => {
+    const fetchData = async (paginationModel, sortModel = [], filterModel = {}) => {
         setLoading(true);
         try {
-            const sort = sortModel.length > 0 ? sortModel[0] : {};
-            const { field: sortField, sort: sortOrder } = sort;
+
+            const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
+
+            const sortField = sort.field || '';
+            const sortOrder = sort.sort || '';
 
             const filterParams = Object.entries(filterModel).map(
                 ([field, { value }]) => `filter_${field}=${encodeURIComponent(value)}`
@@ -87,16 +90,25 @@ export const RegistrationDataGrid = () => {
                         rowCount={rowCount}
                         paginationModel={paginationModel}
                         onPaginationModelChange={(newModel) => {
-                            console.log('Pagination model changed:', newModel);
                             setPaginationModel(newModel);
                         }}
-                        onSortModelChange={(newModel) => setSortModel(newModel)}
+                        onSortModelChange={(newModel) => {
+                            // console.log('Sort model changed:', newModel);
+                            setSortModel(newModel)
+                        }}
+                        filterModel={{
+                            items: Object.entries(filterModel).map(([field, { value }]) => ({
+                            field,
+                            value,
+                            operator: 'contains' // optionally specify operator
+                            }))
+                        }}
                         onFilterModelChange={(newModel) => {
                             const filters = {};
                             newModel.items.forEach(item => {
-                                if (item.value) {
-                                    filters[item.field] = { value: item.value };
-                                }
+                            if (item.value && item.field) {
+                                filters[item.field] = { value: item.value };
+                            }
                             });
                             setFilterModel(filters);
                         }}
