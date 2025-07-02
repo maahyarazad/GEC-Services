@@ -7,46 +7,7 @@ import { Formik, Form, Field, ErrorMessage, useFormikContext } from 'formik';
 import * as Yup from 'yup';
 import { getCookie } from '../utils/cookieUtils';
 import { Switch, Button, Box, Tooltip } from '@mui/material';
-
-
-const validationSchema = Yup.object().shape({
-    email: Yup.string()
-        .email("Please enter a valid email address.")
-        .required("Email is required."),
-
-    phone: Yup.string()
-        .matches(
-            /^\+?[0-9]{10,15}$/,
-            "Phone number must be 10–15 digits, and may start with +."
-        )
-        .required("Phone number is required."),
-
-    whatsapp: Yup.string()
-        .matches(
-            /^\+?[0-9]{10,15}$/,
-            "WhatsApp number must be 10–15 digits, and may start with +."
-        )
-        .required("WhatsApp number is required."),
-
-    firstName: Yup.string()
-        .min(2, "First name must be at least 2 characters.")
-        .required("First name is required."),
-
-    lastName: Yup.string()
-        .min(2, "Last name must be at least 2 characters.")
-        .required("Last name is required."),
-
-    companyName: Yup.string()
-        .min(2, "Company name must be at least 2 characters.")
-        .required("Company name is required."),
-
-    birthday: Yup.date()
-        .max(new Date(), "Birthday cannot be in the future.")
-        .required("Birthday is required."),
-
-    consent: Yup.boolean()
-        .oneOf([true], "You must agree to the terms and conditions."),
-});
+import { getValidationSchema } from "./dynamicValidation";
 
 const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
     const { setFieldValue } = useFormikContext();
@@ -87,10 +48,27 @@ export const TemplateForm = () => {
     }, []);
 
     const handleSubmitRegistration = async (values) => {
-        debugger;
-        console.log("🟢 handleSubmitRegistration fired", values);
-        debugger;
 
+        const { consent, registration_code, ...data } = {
+            ...values,
+            event: target.page,
+        };
+
+        debugger;
+        const formData = new FormData();
+        for (const key in data) {
+            formData.append(key, data[key]);
+        }
+
+        
+        const registration_response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration`, {
+            method: 'POST',
+            body: formData,
+        });
+
+
+        const registration_response_data = await otpResponse.json();
+        debugger;
         // Your submit logic here, for example:
         // const createRecordResponse = await UseCreateRecord(...);
         // if (createRecordResponse.status) { ... }
@@ -123,7 +101,7 @@ export const TemplateForm = () => {
                         <Formik
                             enableReinitialize={true}
                             initialValues={initialValues}
-                            validationSchema={validationSchema}
+                            validationSchema={getValidationSchema(target)}
                             onSubmit={handleSubmitRegistration}
                         >
                             {({ setFieldValue, errors, touched }) => (
@@ -131,8 +109,13 @@ export const TemplateForm = () => {
                                     {/* Autofill phone and whatsapp fields */}
                                     <AutofillPhoneAndWhatsapp mobileNumber={target.mobile_number} />
 
-                                    <h1>Please fill in the boxes below</h1>
-                                    <h4>17 June 2025 - Tuesday</h4>
+                                    <h1>Welcome to {target.title} – Please Register</h1>
+                                    <h4>{new Date(target.event_date).toLocaleDateString('en-GB', {
+                                        day: '2-digit',
+                                        month: 'long',
+                                        year: 'numeric',
+                                        weekday: 'long',
+                                    })}</h4>
                                     <div className="clearance-flat"></div>
 
                                     <div className="full">
@@ -246,14 +229,14 @@ export const TemplateForm = () => {
                                                 />
                                             )}
                                         </Field>
+                                        <ErrorMessage name="consent" component="div" className="invalid-feedback small" />
                                     </div>
-                                    <ErrorMessage name="consent" component="div" className="invalid-feedback small" />
                                     <Box className="d-flex justify-content-end w-100">
 
                                         <Button
                                             variant="contained"
                                             color="primary"
-
+                                            disabled={false}
                                             type="submit"
                                             style={{ pointerEvents: 'auto', opacity: 1, width: '100%' }}
 

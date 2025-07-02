@@ -83,8 +83,6 @@ const hashthis = async (hashitem) => {
 
 
 
-
-
 //DEFINE PATHS
 const leadsListPath = "./data/leads_list.json";
 const accessPath = "./data/access.json";
@@ -302,7 +300,10 @@ app.post("/registration-config", upload.single('image'), async (req, res) => {
                 data.image = req.file.filename;
             }
             // Update record (registration_code should not change if not re-generated)
-            const updated = await dbService.update(table_name, data.id, data);
+            const updated = await dbService.update(table_name, data.id, {
+                ...data,
+                modifiedAt: new Date().toISOString(),
+            });
             return res.json({ status: true, message: "Record updated successfully", data: updated });
         }
 
@@ -316,8 +317,8 @@ app.post("/registration-config", upload.single('image'), async (req, res) => {
         if (req.file) {
             data.image = String(req.file.filename);
         }
-                
-        data.registration_code = generateRecordId(data, -4, false);
+
+        data.registration_code = generateRecordId(data.page, -4, false);
         const insert_data = await dbService.create(table_name, data);
 
         res.json({ status: true, message: "Data saved successfully", insert_data });
@@ -326,7 +327,6 @@ app.post("/registration-config", upload.single('image'), async (req, res) => {
         res.status(500).json({ status: false, message: "Server error" });
     }
 });
-
 
 app.post("/registration-config/switch-registration-lock", upload.single('none'), async (req, res) => {
     try {
@@ -343,7 +343,11 @@ app.post("/registration-config/switch-registration-lock", upload.single('none'),
 
         data.lockRegistration = String(!(data.lockRegistration === "true"));
 
-        const updated = await dbService.update(table_name, id, data);
+
+        const updated = await dbService.update(table_name, id, {
+            ...data,
+            modifiedAt: new Date().toISOString(),
+        });
 
         res.json({ status: true, message: "Data updated successfully", updated });
     } catch (error) {
@@ -351,8 +355,6 @@ app.post("/registration-config/switch-registration-lock", upload.single('none'),
         res.status(500).json({ status: false, message: "Server error" });
     }
 });
-
-
 
 app.get("/registration-config", async (req, res) => {
     try {
@@ -366,7 +368,6 @@ app.get("/registration-config", async (req, res) => {
         res.status(500).json({ status: false, message: "Server error" });
     }
 });
-
 
 app.post("/registration-config-access", upload.none(), async (req, res) => {
     try {
@@ -404,11 +405,11 @@ app.post("/otp-check", upload.none(), async (req, res) => {
             return res.status(401).json({ status: false, message: 'OTP has expired please try again' });
         }
 
-        if(data.otp !== otp){
+        if (data.otp !== otp) {
             return res.status(401).json({
-                        status: false,
-                        message: "Invalid OTP code",
-                    });
+                status: false,
+                message: "Invalid OTP code",
+            });
         }
 
         const page_data = await dbService.findByColumn("registration_config", "registration_code", data.registration_code);
@@ -428,6 +429,82 @@ app.post("/otp-check", upload.none(), async (req, res) => {
         return res.status(500).json({ status: false, message: "Server error" });
     }
 });
+
+const sendOtpToPhone = async (mobile_number, req, res, twilioClient) => {
+    if (!mobile_number) {
+        return { status: false, code: 400, message: 'Mobile number required' };
+    }
+
+    if (req.session.otp) {
+        delete req.session.otp;
+        delete req.session.otpExpires;
+    }
+
+    const otp = generateOTP();
+    req.session.otp = otp;
+    req.session.otpExpires = Date.now() + 1 * 59 * 1000; // expires in 1 mins
+
+    try {
+        await twilioClient.messages.create({
+            body: `Your OTP code is: ${otp}`,
+            from: twilioPhone,
+            to: `whatsapp:${mobile_number}`,
+        });
+
+        return { status: true, code: 200, message: 'OTP sent successfully' };
+    } catch (error) {
+        console.error("Failed to send OTP:", error.message);
+        return { status: false, code: 500, message: 'Failed to send OTP' };
+    }
+};
+
+app.post("/registration", upload.single('none'), async (req, res) => {
+    try {
+        const table_name = "registration";
+        const data  = req.body;
+
+        // Todo: count the number of token per user here
+        // const existing = await dbService.findById(table_name, id);
+        // if (!existing) {
+        //     return res.status(404).json({ status: false, message: "Record not found" });
+        // }
+
+        data.event_id = generateRecordId(data.event, -6, false);
+        const create_result = dbService.createSafe(table_name, data);
+        if(create_result.status){
+            return res.json({ status: true, message: "Data updated successfully", create_result });
+        }
+
+        return res.json({ status: false, message: create_result.error });
+
+    } catch (error) {
+        console.error("Edit error:", error);
+        res.status(500).json({ status: false, message: "Server error" });
+    }
+});
+
+app.get('/registration', async (req, res) => {
+  try {
+    const { search = "", page = "1", pageSize = "10" } = req.query;
+
+    const pageNumber = Math.max(0, parseInt(page, 10) - 1);
+    const limit = parseInt(pageSize, 10);
+
+    const filters = {};
+    if (search) filters.search = search;
+
+    const data = await dbService.getPaginatedFilteredData("registration", filters, pageNumber, limit);
+
+    return res.json({
+      status: true,
+      data,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: false, message: 'Server error' });
+  }
+});
+
 
 
 //WILL FETCH AND RETURN ANY DATA
@@ -460,85 +537,6 @@ app.post("/data", async (req, res) => {
     }
 });
 
-const sendOtpToPhone = async (mobile_number, req, res, twilioClient) => {
-    if (!mobile_number) {
-        return { status: false, code: 400, message: 'Mobile number required' };
-    }
-
-    if(req.session.otp){
-        delete req.session.otp;
-        delete req.session.otpExpires;
-    }
-
-    const otp = generateOTP();
-    req.session.otp = otp;
-    req.session.otpExpires = Date.now() + 1 * 59 * 1000; // expires in 1 mins
-
-    try {
-        await twilioClient.messages.create({
-            body: `Your OTP code is: ${otp}`,
-            from: twilioPhone,
-            to: `whatsapp:${mobile_number}`,
-        });
-
-        return { status: true, code: 200, message: 'OTP sent successfully' };
-    } catch (error) {
-        console.error("Failed to send OTP:", error.message);
-        return { status: false, code: 500, message: 'Failed to send OTP' };
-    }
-};
-
-
-
-
-
-//LOGIN
-app.post("/login", async (req, res) => {
-    const key = req.body.key;
-    const users = await runner(usersPath);
-    console.log(users);
-    const match = users.find((item) => item.id === key);
-
-    if (match) {
-        res.status(200).json({ message: "User found", data: match });
-    } else {
-        res.status(200).json({ message: "User not found" });
-        console.log("match not found");
-    }
-});
-
-//ACCESS CODE
-app.post("/access", async (req, res) => {
-    const data = req.body.data;
-    console.log("Received data:", data.confirm);
-    const access = await runner(accessPath);
-    console.log("Access data:", access);
-
-    const match = access.find((item) => item.id === data.confirm);
-    console.log("Match found:", match);
-
-    if (match) {
-        res
-            .status(200)
-            .json({ success: true, message: "Access code is valid.", data: match });
-    } else {
-        res
-            .status(404)
-            .json({ success: false, message: "Access code is invalid." });
-    }
-});
-
-// Route to read JSON data from a file
-app.get("/data/web_partner", async (req, res) => {
-    try {
-        const data = await fs.readFile("./data/web_partner.json", "utf-8");
-        const jsonData = JSON.parse(data);
-        res.json(jsonData);
-    } catch (error) {
-        console.error("Error reading the file:", error);
-        res.status(500).send("Internal Server Error");
-    }
-});
 
 // Start the server
 app.listen(PORT, () => {

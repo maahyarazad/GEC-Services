@@ -9,7 +9,9 @@ CREATE TABLE IF NOT EXISTS registration (
   firstName VARCHAR(100),
   lastName VARCHAR(100),
   companyName VARCHAR(255),
-  metadata_createdAt DATE,
+  birthday DATE,
+  event_id VARCHAR(20),
+  metadata_createdAt DATETIME DEFAULT (datetime('now')),
   metadata_modifiedAt DATETIME
 );
 
@@ -21,11 +23,15 @@ CREATE TABLE IF NOT EXISTS registration_config (
   companyRequired BOOLEAN,
   lockRegistration BOOLEAN,
   title VARCHAR(255),
+  event_date DATETIME, 
   description TEXT,
   Image TEXT,
   maxTokensPerGuest INT,
-  registration_code VARCHAR(6)
+  registration_code VARCHAR(6),
+  createdAt DATETIME DEFAULT (datetime('now')),
+  modifiedAt DATETIME
 );
+
 
 CREATE TABLE IF NOT EXISTS registration_client_access (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

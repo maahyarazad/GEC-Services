@@ -6,29 +6,38 @@ import slugify from 'slugify';
 
 
 const validationSchema = Yup.object({
-    title: Yup.string().required('Title is required'),
-    image: Yup.mixed()
-        .required('Image is required')
-        .test("fileSize", "File too large (max 5MB)", (value) => {
-            if (!value) return true; // allow empty
-            if (typeof value === "string") return true; // allow initial string (existing image)
-            return value.size <= 5 * 1024 * 1024; // check file size if it's a File
-        })
-        .test("fileType", "Unsupported file format", (value) => {
-            if (!value || typeof value === "string") return true;
-            return ["image/jpeg", "image/png", "image/webp"].includes(value.type);
-        }),
-    tokensPerGuest: Yup.number()
-        .typeError('Must be a number')
-        .integer('Must be an integer')
-        .positive('Must be greater than zero')
-        .required('Number of tokens is required'),
-    description: Yup.string().required('Description is required'),
-    paymentRequired: Yup.boolean(),
-    birthdayRequired: Yup.boolean(),
-    companyRequired: Yup.boolean(),
-    lockRegistration: Yup.boolean(),
+  title: Yup.string().required('Title is required'),
+
+  image: Yup.mixed()
+    .required('Image is required')
+    .test("fileSize", "File too large (max 5MB)", (value) => {
+      if (!value) return true;
+      if (typeof value === "string") return true;
+      return value.size <= 5 * 1024 * 1024;
+    })
+    .test("fileType", "Unsupported file format", (value) => {
+      if (!value || typeof value === "string") return true;
+      return ["image/jpeg", "image/png", "image/webp"].includes(value.type);
+    }),
+
+  tokensPerGuest: Yup.number()
+    .typeError('Must be a number')
+    .integer('Must be an integer')
+    .positive('Must be greater than zero')
+    .required('Number of tokens is required'),
+
+  description: Yup.string().required('Description is required'),
+
+  event_date: Yup.date()
+    .required('Event date is required')
+    .min(new Date(), 'Event date must be in the future'),
+
+  paymentRequired: Yup.boolean(),
+  birthdayRequired: Yup.boolean(),
+  companyRequired: Yup.boolean(),
+  lockRegistration: Yup.boolean(),
 });
+
 
 export default function NewRegistrationPage({ initialData = null, modalSwitch }) {
     const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -58,6 +67,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
         companyRequired: initialData?.companyRequired === "true",
         lockRegistration: initialData?.lockRegistration === "true",
         title: initialData?.title || '',
+        event_date: initialData?.event_date || '',
         image: initialData?.Image || null,
         tokensPerGuest: initialData?.maxTokensPerGuest || '',
         description: initialData?.description || '',
@@ -73,9 +83,9 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
     useEffect(() => {
         if (initialValues.page && typeof initialValues.page === 'string') {
             setSlug(slugify(initialValues.page, {
-                                                        lower: true,
-                                                        strict: true,
-                                                    }));
+                lower: true,
+                strict: true,
+            }));
         }
     }, [initialValues.page]);
 
@@ -86,17 +96,18 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
         try {
             const formData = new FormData();
 
-            if(initialData){
+            if (initialData) {
                 formData.append('id', initialData.id);
             }
 
-            
+
             formData.append('page', slug);
             formData.append('paymentRequired', values.paymentRequired);
             formData.append('birthdayRequired', values.birthdayRequired);
             formData.append('companyRequired', values.companyRequired);
             formData.append('lockRegistration', values.lockRegistration);
             formData.append('title', values.title);
+            formData.append('event_date', values.event_date);
             formData.append('maxTokensPerGuest', values.tokensPerGuest);
             formData.append('description', values.description);
 
@@ -143,7 +154,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
         } finally {
             containerRef.current?.scrollIntoView({ behavior: 'smooth' });
             setSubmitting(false);
-            
+
         }
     };
 
@@ -168,8 +179,8 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                 enableReinitialize={true}
                 onSubmit={handleSubmit}
             >
-                {({ setFieldValue, isSubmitting }) => (
-                    <Form noValidate>
+                {({ setFieldValue, errors, touched }) => (
+                    <Form>
                         {slug && (<span className="text-muted">
                             <strong>Url will be: /{slug}</strong>
                         </span>)}
@@ -189,7 +200,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                                             <input
                                                 {...field} // includes value, name, onChange, and onBlur from Formik
                                                 type="text"
-                                                className="form-control"
+                                                className={`form-control ${errors.title && touched.title ? 'is-invalid' : ''}`}
                                                 placeholder="Enter page title"
                                                 onBlur={(e) => {
                                                     field.onBlur(e); // ✅ still call Formik's internal onBlur
@@ -220,7 +231,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                                     <Field
                                         name="tokensPerGuest"
                                         type="number"
-                                        className="form-control"
+                                        className={`form-control ${errors.tokensPerGuest && touched.tokensPerGuest ? 'is-invalid' : ''}`}
                                         placeholder="e.g. 3"
                                     />
                                     <div style={{ minHeight: 30 }}>
@@ -238,6 +249,27 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
 
                         </div>
 
+
+                        <div className="col-12">
+                            <div className="align-items-center">
+                                <label htmlFor="event_date" className="form-label">
+                                    Event Date
+                                </label>
+                                <Field
+                                    name="event_date"
+                                    type="date"
+                                    className={`form-control ${errors.event_date && touched.event_date ? 'is-invalid' : ''}`}
+                                    placeholder="Select event date"
+                                />
+                                <div style={{ minHeight: 30 }}>
+                                    <ErrorMessage
+                                        name="event_date"
+                                        component="div"
+                                        className="text-danger small mt-1"
+                                    />
+                                </div>
+                            </div>
+                        </div>
                         {/* Description */}
                         <div className="col-12">
                             <div className="align-items-center">
@@ -247,7 +279,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                                 <Field
                                     name="description"
                                     as="textarea"
-                                    className="form-control"
+                                    className={`form-control ${errors.description && touched.description ? 'is-invalid' : ''}`}
                                     rows="4"
                                     placeholder="Enter a brief description"
                                 />
@@ -364,7 +396,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
 
                             </div>
 
-                                <div className="form-check form-switch mb-3">
+                            <div className="form-check form-switch mb-3">
                                 <Field name="lockRegistration">
                                     {({ field }) => (
                                         <input
@@ -393,9 +425,8 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                                 <button
                                     type="submit"
                                     className="btn btn-primary"
-                                    disabled={isSubmitting}
                                 >
-                                    {isSubmitting ? 'Saving...' : 'Save Registration Page'}
+                                    Save Registration Page
                                 </button>
                             </div>
                         </div>

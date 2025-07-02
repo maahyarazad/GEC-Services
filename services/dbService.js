@@ -3,26 +3,33 @@ const path = require("path");
 const dbPath = path.resolve(__dirname, "../app.db");
 const db = new sqlite3.Database(dbPath);
 
-const safeWrite = (db, query, params) => {
-  const maxAttempts = 5;
-  let attempt = 0;
+const safeWrite = async (query, params = []) => {
+    const maxAttempts = 5;
+    let attempt = 0;
 
-  while (attempt < maxAttempts) {
-    try {
-      db.prepare(query).run(params);
-      return;
-    } catch (err) {
-      if (err.code === 'SQLITE_BUSY') {
-        attempt++;
-        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50); // sleep 50ms
-      } else {
-        throw err;
-      }
+    while (attempt < maxAttempts) {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                db.run(query, params, function (err) {
+                    if (err) return reject(err);
+                    resolve({ id: this.lastID });
+                });
+            });
+            return result; // ✅ Exit loop and function on success
+        } catch (err) {
+            if (err.code === 'SQLITE_BUSY') {
+                attempt++;
+                await new Promise(resolve => setTimeout(resolve, 50));
+            } else {
+                throw err; // Don't retry other errors
+            }
+        }
     }
-  }
 
-  throw new Error("Failed to write after retries");
-}
+    throw new Error("Failed to write after retries");
+};
+
+
 
 
 const dbService = {
@@ -129,12 +136,40 @@ const dbService = {
         const sql = `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${placeholders})`;
 
         try {
-        safeWrite(sql, values);
-        return { status: true };
+            safeWrite(sql, values);
+            return { status: true };
         } catch (err) {
-        return { status: false, error: err.message };
+            return { status: false, error: err.message };
         }
     },
+
+    getPaginatedFilteredData: (table, filters = {}, page = 0, pageSize = 10) => {
+        const offset = page * pageSize;
+
+        // Build WHERE clause dynamically for filters with LIKE
+        const keys = Object.keys(filters);
+        const whereClause = keys.length
+            ? "WHERE " + keys.map(key => `${key} LIKE ?`).join(" AND ")
+            : "";
+
+        const params = keys.map(key => `%${filters[key]}%`);
+
+        const sql = `
+            SELECT * FROM ${table}
+            ${whereClause}
+            LIMIT ? OFFSET ?
+        `;
+
+        return new Promise((resolve, reject) => {
+            db.all(sql, [...params, pageSize, offset], (err, rows) => {
+            if (err) return reject(err);
+            resolve(rows);
+            });
+        });
+    }
+    
+
+
 
 };
 

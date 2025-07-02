@@ -82,7 +82,7 @@ const getColumns = ({ onEdit, onLock }) => [
 ];
 
 
-export const RegistrationList = ({ data }) => {
+export const RegistrationList = () => {
 
     const [registrationList, setRegistrationList] = useState(null);
     const [newReg, setNewReg] = useState(false);

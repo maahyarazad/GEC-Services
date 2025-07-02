@@ -1,4 +1,4 @@
-import { Events } from "../gallery/Events";
+
 import { Header } from "../utils/Header";
 import PropTypes from "prop-types";
 import "./admin.css";
@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import { useState } from "react";
 import { RegistrationList } from "./Registration/RegistrationList";
-
+import { RegistrationDataGrid } from "../gallery/RegistrationDataGrid"
 
 export const Admin = ({ data }) => {
 
@@ -22,7 +22,7 @@ export const Admin = ({ data }) => {
     let content;
     switch (tabValue) {
         case 1:
-            content = <Events data={data} />;
+            content = <RegistrationDataGrid />;
             break;
         default:
             content = <RegistrationList/>

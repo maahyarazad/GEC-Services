@@ -8,36 +8,9 @@ const createID = (val) => {
 
 const generateRecordId = (data, code_length, use_gec_prefix = true) => {
   let idSuffix;
-  const path = data.page;
 
-  switch (true) {
-    case path.includes("leads"):
-      idSuffix = "le";
-      break;
-    case path.includes("contacts"):
-      idSuffix = "co";
-      break;
-    case path.includes("scheduled_meetings"):
-      idSuffix = "sc";
-      break;
-    case path.includes("factsheet"):
-      idSuffix = "fs";
-      break;
-    case path.includes("logs"):
-      idSuffix = "lg";
-      break;
-    case path.includes("notifications"):
-      idSuffix = "no";
-      break;
-    case path.includes("aftercare"):
-      idSuffix = "af";
-      break;
-    case path.includes("registration"):
-      idSuffix = "re";
-      break;
-    default:
-      idSuffix = "lo";
-  }
+  idSuffix =data.slice(0, 3)
+
 
   let code = use_gec_prefix ? `gec${idSuffix}${createID(code_length)}` : `${idSuffix}${createID(code_length)}`;
   return code;
