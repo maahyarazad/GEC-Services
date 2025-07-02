@@ -6,8 +6,6 @@ import { Login } from "./components/utils/Login";
 import { UseGlobalFetch } from "./components/hooks/UseGlobalFetch";
 import RichTextEditor from '../src/components/utils/RichTextEditor'
 function App() {
-  const data = UseGlobalFetch();
-  console.log(data);
 
   return (
     <>
@@ -15,7 +13,7 @@ function App() {
         <Routes>
           <Route path={"/"} element={<Login />} />
           <Route path={"/registration/*"} element={<TemplateForm />} />
-          <Route path={"/admin"} element={<Admin data={data} />} />
+          <Route path={"/admin"} element={<Admin/>} />
           <Route path={"/rich"} element={<RichTextEditor />} />
         </Routes>
       </BrowserRouter>

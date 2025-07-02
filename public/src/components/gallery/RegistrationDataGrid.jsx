@@ -25,12 +25,14 @@ const columns = [
 export const RegistrationDataGrid = () => {
     const [registrationList, setRegistrationList] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [page, setPage] = useState(0);
-    const [pageSize, setPageSize] = useState(25);
+
     const [rowCount, setRowCount] = useState(0);
     const [sortModel, setSortModel] = useState([]);
     const [filterModel, setFilterModel] = useState({});
-
+    const [paginationModel, setPaginationModel] = useState({
+        page: 0,
+        pageSize: 25,
+    });
     const fetchData = async (page, pageSize, sortModel = [], filterModel = {}) => {
         setLoading(true);
         try {
@@ -42,8 +44,8 @@ export const RegistrationDataGrid = () => {
             ).join('&');
 
             const queryParams = [
-                `page=${page + 1}`,
-                `pageSize=${pageSize}`,
+                `page=${paginationModel.page + 1}`,
+                `pageSize=${paginationModel.pageSize}`,
                 sortField ? `sortField=${sortField}` : '',
                 sortOrder ? `sortOrder=${sortOrder}` : '',
                 filterParams
@@ -54,7 +56,7 @@ export const RegistrationDataGrid = () => {
             debugger;
             setRegistrationList(response_data.data || []);
             setRowCount(response_data.total || 0);
-            
+
         } catch (err) {
             console.error('Failed to fetch:', err);
         } finally {
@@ -63,8 +65,8 @@ export const RegistrationDataGrid = () => {
     };
 
     useEffect(() => {
-        fetchData(page, pageSize, sortModel, filterModel);
-    }, [page,pageSize, sortModel, filterModel]);
+        fetchData(paginationModel, sortModel, filterModel);
+    }, [paginationModel, sortModel, filterModel]);
 
     return (
         <Box sx={{ padding: 2 }}>
@@ -77,17 +79,18 @@ export const RegistrationDataGrid = () => {
                     <DataGrid
                         rows={registrationList}
                         columns={columns}
-
-                        pageSize={pageSize}
-                        rowsPerPageOptions={[25, 50, 100]}  
+                       
+                        rowsPerPageOptions={[25, 50, 100]}
                         paginationMode="server"
                         sortingMode="server"
                         filterMode="server"
                         rowCount={rowCount}
-                        page={page}
-                        onPageChange={(newPage) => setPage(newPage)}
+                        paginationModel={paginationModel}
+                        onPaginationModelChange={(newModel) => {
+                            console.log('Pagination model changed:', newModel);
+                            setPaginationModel(newModel);
+                        }}
                         onSortModelChange={(newModel) => setSortModel(newModel)}
-                        onPageSizeChange={(newPageSize) => setPageSize(newPageSize)} 
                         onFilterModelChange={(newModel) => {
                             const filters = {};
                             newModel.items.forEach(item => {
@@ -99,7 +102,9 @@ export const RegistrationDataGrid = () => {
                         }}
                         sortModel={sortModel}
                         disableSelectionOnClick
+                        pagination
                     />
+
                 </div>
             )}
         </Box>
