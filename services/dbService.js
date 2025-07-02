@@ -143,33 +143,63 @@ const dbService = {
         }
     },
 
-    getPaginatedFilteredData: (table, filters = {}, page = 0, pageSize = 10) => {
+    getTotalCount: (table, filters = {}) => {
+    return new Promise((resolve, reject) => {
+        const keys = Object.keys(filters);
+        const whereClause = keys.length
+        ? "WHERE " + keys.map(key => `${key} LIKE ?`).join(" AND ")
+        : "";
+        const params = keys.map(key => `%${filters[key]}%`);
+
+        const sql = `SELECT COUNT(*) AS count FROM ${table} ${whereClause}`;
+
+        db.get(sql, params, (err, row) => {
+        if (err) return reject(err);
+        resolve(row.count);
+        });
+    });
+    }
+
+    ,
+    getPaginatedFilteredData: (
+        table,
+        filters = {},
+        page = 0,
+        pageSize = 10,
+        sortField = null,
+        sortOrder = 'ASC' // 'ASC' or 'DESC'
+    ) => {
         const offset = page * pageSize;
 
         // Build WHERE clause dynamically for filters with LIKE
-        const keys = Object.keys(filters);
-        const whereClause = keys.length
-            ? "WHERE " + keys.map(key => `${key} LIKE ?`).join(" AND ")
+        const filterKeys = Object.keys(filters);
+        const whereClause = filterKeys.length
+            ? "WHERE " + filterKeys.map(key => `${key} LIKE ?`).join(" AND ")
             : "";
 
-        const params = keys.map(key => `%${filters[key]}%`);
+        const params = filterKeys.map(key => `%${filters[key]}%`);
+
+        // Validate sortField and sortOrder to avoid SQL injection
+        const orderClause =
+            sortField && /^[a-zA-Z0-9_]+$/.test(sortField) && /^(ASC|DESC)$/i.test(sortOrder)
+                ? `ORDER BY ${sortField} ${sortOrder.toUpperCase()}`
+                : "";
 
         const sql = `
             SELECT * FROM ${table}
             ${whereClause}
+            ${orderClause}
             LIMIT ? OFFSET ?
         `;
 
         return new Promise((resolve, reject) => {
             db.all(sql, [...params, pageSize, offset], (err, rows) => {
-            if (err) return reject(err);
-            resolve(rows);
+                if (err) return reject(err);
+                resolve(rows);
             });
         });
     }
     
-
-
 
 };
 

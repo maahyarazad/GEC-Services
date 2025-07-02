@@ -485,25 +485,48 @@ app.post("/registration", upload.single('none'), async (req, res) => {
 
 app.get('/registration', async (req, res) => {
   try {
-    const { search = "", page = "1", pageSize = "10" } = req.query;
+    const {
+      page = "1",
+      pageSize = "10",
+      sortField,
+      sortOrder,
+      ...queryFilters
+    } = req.query;
 
     const pageNumber = Math.max(0, parseInt(page, 10) - 1);
     const limit = parseInt(pageSize, 10);
 
+    // Build filters from query parameters like filter_email, filter_gender, etc.
     const filters = {};
-    if (search) filters.search = search;
+    for (const key in queryFilters) {
+      if (key.startsWith('filter_')) {
+        const field = key.replace('filter_', '');
+        filters[field] = queryFilters[key];
+      }
+    }
 
-    const data = await dbService.getPaginatedFilteredData("registration", filters, pageNumber, limit);
+    const data = await dbService.getPaginatedFilteredData(
+      "registration",
+      filters,
+      pageNumber,
+      limit,
+      sortField,
+      sortOrder
+    );
+
+    const total = await dbService.getTotalCount("registration", filters);
 
     return res.json({
       status: true,
       data,
+      total
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error in /registration:", error);
     res.status(500).json({ status: false, message: 'Server error' });
   }
 });
+
 
 
 
