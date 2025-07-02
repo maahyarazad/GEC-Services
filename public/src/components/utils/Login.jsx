@@ -7,6 +7,7 @@ import OtpInput from '../utils/OtpInput';
 import CryptoJS from 'crypto-js';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
+import { getCookie, setEncryptedCookie } from '../utils/cookieUtils';
 
  const validationSchema = Yup.object({
     mobile_number: Yup.string()
@@ -15,16 +16,6 @@ import * as Yup from 'yup';
     registration_code: Yup.string().required('Required'),
   });
 
-const setWithExpiry = (key, value, ttlMs) => {
-    const now = new Date();
-
-    const item = {
-        value,
-        expiry: now.getTime() + ttlMs // time to live in milliseconds
-    };
-    const ciphertext = CryptoJS.AES.encrypt(JSON.stringify(item), import.meta.env.VITE_LOCAL_STORAGE_KEY).toString();
-    localStorage.setItem(key, ciphertext);
-}
 
 const OtpTimer = ({ initialSeconds = 59, loginResponseData = {}, onResend }) => {
     const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
@@ -91,16 +82,11 @@ export const Login = () => {
 
     useEffect(() => {
 
-        const ciphertext = localStorage.getItem("gec-registration");
+        const gecuser = getCookie("gec-registration");
         debugger;
-        if (ciphertext) {
-            const bytes = CryptoJS.AES.decrypt(ciphertext, import.meta.env.VITE_LOCAL_STORAGE_KEY);
-            const decryptedJson = bytes.toString(CryptoJS.enc.Utf8);
-            const gecuser = JSON.parse(decryptedJson);
-            if (gecuser) {
-                navigate(`/registration/${gecuser.value.page}`);
-            }
-        }
+        if (gecuser) {
+                    navigate(`/registration/${gecuser.page}`);
+                }
     }, []);
 
     const handleSendOtp = () => {
@@ -141,10 +127,16 @@ export const Login = () => {
 
             const otp_response_data = await otpResponse.json();
             debugger;
+
             if (otp_response_data.status) {
 
-                setWithExpiry("gec-registration", otp_response_data.data, 1000 * 60 * 10); // expires in 10 mins
-                debugger;
+                const mobile_number = { mobile_number: data.mobile_number };
+                const payload = {
+                    ...otp_response_data.data,
+                    ...mobile_number
+                };
+
+                setEncryptedCookie("gec-registration", payload);
 
                 statusRef.current.textContent = "Login successful, please wait.... ";
 
@@ -275,7 +267,7 @@ export const Login = () => {
     return (
         <div className="login">
             <div>
-                <h4>Please login to view this page</h4>
+                <h4>Welcome Back! Log In to Complete Your Registration</h4>
                 {/* Step 1: check code login */}
                 <Formik
                     initialValues={initialValues}

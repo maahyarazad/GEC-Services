@@ -109,9 +109,9 @@
     }
 
     > div:first-of-type {
-      position: absolute;
-      width: 100%;
-      > p {
+      position: absolute !important;
+      width: 100% !important;;
+      > div {
         display: none;
       }
     }

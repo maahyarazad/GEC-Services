@@ -1,62 +1,71 @@
 import "./templateform.css";
 import { Login } from "../utils/Login";
-import { useEffect, useRef, useState } from "react";
-import { UseFormValidator } from "../hooks/UseFormValidator";
+import { useEffect, useState } from "react";
 import { UseCreateRecord } from "../hooks/UseCreateRecord";
 import { Link } from "react-router-dom";
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Formik, Form, Field, ErrorMessage, useFormikContext } from 'formik';
 import * as Yup from 'yup';
-import CryptoJS from 'crypto-js';
+import { getCookie } from '../utils/cookieUtils';
+import { Switch, Button, Box, Tooltip } from '@mui/material';
+
 
 const validationSchema = Yup.object().shape({
-  email: Yup.string()
-    .email("Please enter a valid email address.")
-    .required("Email is required."),
-  
-  phone: Yup.string()
-    .matches(
-      /^\+?[0-9]{10,15}$/,
-      "Phone number must be 10–15 digits, and may start with +."
-    )
-    .required("Phone number is required."),
-  
-  whatsapp: Yup.string()
-    .matches(
-      /^\+?[0-9]{10,15}$/,
-      "WhatsApp number must be 10–15 digits, and may start with +."
-    )
-    .required("WhatsApp number is required."),
-  
-  firstName: Yup.string()
-    .min(2, "First name must be at least 2 characters.")
-    .required("First name is required."),
-  
-  lastName: Yup.string()
-    .min(2, "Last name must be at least 2 characters.")
-    .required("Last name is required."),
-  
-//   companyName: Yup.string()
-//     .min(2, "Company name must be at least 2 characters.")
-//     .required("Company name is required."),
-  
-  birthday: Yup.date()
-    .max(new Date(), "Birthday cannot be in the future.")
-    .required("Birthday is required."),
-  
-//   consent: Yup.boolean()
-//     .oneOf([true], "You must agree to the terms and conditions."),
+    email: Yup.string()
+        .email("Please enter a valid email address.")
+        .required("Email is required."),
+
+    phone: Yup.string()
+        .matches(
+            /^\+?[0-9]{10,15}$/,
+            "Phone number must be 10–15 digits, and may start with +."
+        )
+        .required("Phone number is required."),
+
+    whatsapp: Yup.string()
+        .matches(
+            /^\+?[0-9]{10,15}$/,
+            "WhatsApp number must be 10–15 digits, and may start with +."
+        )
+        .required("WhatsApp number is required."),
+
+    firstName: Yup.string()
+        .min(2, "First name must be at least 2 characters.")
+        .required("First name is required."),
+
+    lastName: Yup.string()
+        .min(2, "Last name must be at least 2 characters.")
+        .required("Last name is required."),
+
+    companyName: Yup.string()
+        .min(2, "Company name must be at least 2 characters.")
+        .required("Company name is required."),
+
+    birthday: Yup.date()
+        .max(new Date(), "Birthday cannot be in the future.")
+        .required("Birthday is required."),
+
+    consent: Yup.boolean()
+        .oneOf([true], "You must agree to the terms and conditions."),
 });
 
+const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
+    const { setFieldValue } = useFormikContext();
+
+    useEffect(() => {
+        if (mobileNumber) {
+            setFieldValue("phone", mobileNumber);
+            setFieldValue("whatsapp", mobileNumber);
+        }
+    }, [mobileNumber, setFieldValue]);
+
+    return null;
+};
 
 export const TemplateForm = () => {
-
     const [target, setTarget] = useState(null);
     const [showSubmit, setShowSubmit] = useState(false);
     const [selectedDate, setSelectedDate] = useState('');
-    const formRegRef = useRef();
-    const modalRef = useRef();
-
-
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const initialValues = {
         email: '',
@@ -71,91 +80,57 @@ export const TemplateForm = () => {
     };
 
     useEffect(() => {
-        const ciphertext = localStorage.getItem("gec-registration");
-
-        if (ciphertext) {
-            const bytes = CryptoJS.AES.decrypt(ciphertext, import.meta.env.VITE_LOCAL_STORAGE_KEY);
-            const decryptedJson = bytes.toString(CryptoJS.enc.Utf8);
-            const gecuser = JSON.parse(decryptedJson);
-            if (gecuser) {
-                
-                setTarget(gecuser.value);
-            }
+        const gecuser = getCookie("gec-registration");
+        if (gecuser) {
+            setTarget(gecuser);
         }
-
     }, []);
 
-
     const handleSubmitRegistration = async (values) => {
-        
         debugger;
         console.log("🟢 handleSubmitRegistration fired", values);
         debugger;
 
-    
-        // const formData = {};
-        // formData["eventPage"] = target;
-
-        // Array.from(values).forEach((item) => {
-        //     if (item.name) {
-        //         formData[item.name] = item.value;
-        //     }
-        // });
-
-        // // console.log("Form data:", formData);
-        // debugger;
-        // const createRecordResponse = await UseCreateRecord(
-        //     formData,
-        //     null,
-        //     null,
-        //     "registration",
-        //     "create"
-        // );
-
-        // if (createRecordResponse.status) {
-        //     setShowModal((prev) => !prev);
-        //     modalRef.current.textContent = createRecordResponse.message;
-
-        //     Array.from(values).forEach((item) => (item.value = ""));
-        // }
+        // Your submit logic here, for example:
+        // const createRecordResponse = await UseCreateRecord(...);
+        // if (createRecordResponse.status) { ... }
     };
 
     if (!target) {
         return <Login />;
     }
 
-
     return (
         <>
-            <div className={`template-form ${target.lockRegistration  === 'true' ? "locked-template-form" : ""}`}>
-                <div >
-                    <div className="target-description">
-                        {target.description}
-                    </div>
+            <div className={`template-form ${target.lockRegistration === 'true' ? "locked-template-form" : ""}`}>
+                <div>
+                    <div className="target-description">{target.description}</div>
                     <img src={`${import.meta.env.VITE_SERVERURL}/uploads/${target.Image}`} alt={target.title} />
                 </div>
                 <div>
                     <Link to={"/"}>
-                        <img alt="home" src="/logo-gec.png"></img>
+                        <img alt="home" src="/logo-gec.png" />
                     </Link>
                     <div>
                         <button
                             onClick={() => {
-                                setShowModal((prev) => !prev);
-                                modalRef.current.textContent =
-                                    "Lorem ipsum dolor sit amet consectetur adipisicing elit. Doloribus beatae natus cupiditate eaque, qui tempora quisquam voluptatem";
+                                // your modal logic here
                             }}
                             className="cta-button simple"
                         >
-                            <img alt="" src="/info.svg"></img>
+                            <img alt="" src="/info.svg" />
                         </button>
                         <Formik
+                            enableReinitialize={true}
                             initialValues={initialValues}
                             validationSchema={validationSchema}
                             onSubmit={handleSubmitRegistration}
                         >
-                            {({ values, setFieldValue, errors, touched }) => (
+                            {({ setFieldValue, errors, touched }) => (
                                 <Form>
+                                    {/* Autofill phone and whatsapp fields */}
+                                    <AutofillPhoneAndWhatsapp mobileNumber={target.mobile_number} />
+
                                     <h1>Please fill in the boxes below</h1>
                                     <h4>17 June 2025 - Tuesday</h4>
                                     <div className="clearance-flat"></div>
@@ -163,30 +138,34 @@ export const TemplateForm = () => {
                                     <div className="full">
                                         <div className="w-100">
                                             <label>Email</label>
-                                            <Field 
+                                            <Field
                                                 className={`form-control ${errors.email && touched.email ? 'is-invalid' : ''}`}
-                                                type="email" 
-                                                name="email" />
+                                                type="email"
+                                                name="email"
+                                            />
                                         </div>
                                         <ErrorMessage name="email" component="div" className="text-danger small" />
                                     </div>
 
                                     <div className="full">
                                         <label>Phone Number</label>
-                                        <Field 
+                                        <Field
                                             className={`form-control ${errors.phone && touched.phone ? 'is-invalid' : ''}`}
-                                            // pattern="^(\+?[0-9]{1,3}-)?[0-9]{3}-[0-9]{3}-[0-9]{4}$"
-                                            type="tel" 
-                                            name="phone" />
+                                            type="tel"
+                                            name="phone"
+                                            disabled={true}
+                                        />
                                         <ErrorMessage name="phone" component="div" className="text-danger small" />
                                     </div>
 
                                     <div className="full">
                                         <label>Whatsapp Number</label>
-                                        <Field 
+                                        <Field
                                             className={`form-control ${errors.whatsapp && touched.whatsapp ? 'is-invalid' : ''}`}
-                                            type="tel" 
-                                            name="whatsapp" />
+                                            type="tel"
+                                            name="whatsapp"
+                                            disabled={true}
+                                        />
                                         <ErrorMessage name="whatsapp" component="div" className="text-danger small" />
                                     </div>
 
@@ -202,29 +181,32 @@ export const TemplateForm = () => {
 
                                     <div className="full">
                                         <label>First Name</label>
-                                        <Field 
+                                        <Field
                                             className={`form-control ${errors.firstName && touched.firstName ? 'is-invalid' : ''}`}
-                                            type="text" 
-                                            name="firstName" />
+                                            type="text"
+                                            name="firstName"
+                                        />
                                         <ErrorMessage name="firstName" component="div" className="text-danger small" />
                                     </div>
 
                                     <div className="full">
                                         <label>Last Name</label>
                                         <Field
-                                            className={`form-control ${errors.lastName && touched.lastName ? 'is-invalid' : ''}`} 
-                                            type="text" 
-                                            name="lastName" />
+                                            className={`form-control ${errors.lastName && touched.lastName ? 'is-invalid' : ''}`}
+                                            type="text"
+                                            name="lastName"
+                                        />
                                         <ErrorMessage name="lastName" component="div" className="text-danger small" />
                                     </div>
 
                                     {target.companyRequired === 'true' && (
                                         <div className="full">
                                             <label>Company Name</label>
-                                            <Field 
+                                            <Field
                                                 className={`form-control ${errors.companyName && touched.companyName ? 'is-invalid' : ''}`}
-                                                type="text" 
-                                                name="companyName" />
+                                                type="text"
+                                                name="companyName"
+                                            />
                                             <ErrorMessage name="companyName" component="div" className="text-danger small" />
                                         </div>
                                     )}
@@ -252,33 +234,35 @@ export const TemplateForm = () => {
                                         </label>
                                         <Field name="consent">
                                             {({ field, form }) => (
-                                            <input
-                                                {...field}
-                                                type="checkbox"
-                                                id="consent"
-                                                className={`form-check-input ${form.errors.consent && form.touched.consent ? 'is-invalid' : ''}`}
-                                                onChange={e => {
-                                                    field.onChange(e);               // update Formik state
-                                                    setShowSubmit(e.target.checked); // toggle your local submit button visibility
-                                                }}
-                                            />
+                                                <input
+                                                    {...field}
+                                                    type="checkbox"
+                                                    id="consent"
+                                                    className={`form-check-input ${form.errors.consent && form.touched.consent ? 'is-invalid' : ''}`}
+                                                    onChange={e => {
+                                                        field.onChange(e);
+                                                        setShowSubmit(e.target.checked);
+                                                    }}
+                                                />
                                             )}
                                         </Field>
                                     </div>
-                                        <ErrorMessage
-                                            name="consent"
-                                            component="div"
-                                            className="invalid-feedback small"
-                                        />
+                                    <ErrorMessage name="consent" component="div" className="invalid-feedback small" />
+                                    <Box className="d-flex justify-content-end w-100">
 
-                                   <button
-                                        type="submit"
-                                        onClick={() => console.log("clicked")}
-                                        disabled={false}
-                                        style={{ pointerEvents: 'auto', opacity: 1 }}
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+
+                                            type="submit"
+                                            style={{ pointerEvents: 'auto', opacity: 1, width: '100%' }}
+
                                         >
-                                        Submit
-                                    </button>
+                                            {isSubmitting ? 'Saving...' : 'Submit'}
+                                        </Button>
+                                    </Box>
+
+
                                 </Form>
                             )}
                         </Formik>
@@ -286,10 +270,11 @@ export const TemplateForm = () => {
                 </div>
             </div>
 
-            {target.lockRegistration  === 'true' && (<div className="locked-overlay-message">
-                Registration has been closed!
-            </div> )}
-
+            {target.lockRegistration === 'true' && (
+                <div className="locked-overlay-message">
+                    Registration has been closed!
+                </div>
+            )}
         </>
     );
 };
