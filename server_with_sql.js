@@ -472,6 +472,9 @@ app.post("/registration", upload.single('none'), async (req, res) => {
         data.event_id = generateRecordId(data.event, -6, false);
         const create_result = dbService.createSafe(table_name, data);
         if(create_result.status){
+            // Todo: send email
+            // await generateQRWithText(request, path);
+            // await forumRegisterSendEmail({ reqBody: request });
             return res.json({ status: true, message: "Data updated successfully", create_result });
         }
 

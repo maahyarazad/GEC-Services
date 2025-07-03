@@ -8,6 +8,13 @@ import * as Yup from 'yup';
 import { getCookie } from '../utils/cookieUtils';
 import { Switch, Button, Box, Tooltip } from '@mui/material';
 import { getValidationSchema } from "./dynamicValidation";
+import { FaWhatsapp } from "react-icons/fa6";
+import { MdEmail } from "react-icons/md";
+import { FaPhoneAlt } from "react-icons/fa";
+import { MdOutlineCalendarMonth } from "react-icons/md";
+import { MdDriveFileRenameOutline } from "react-icons/md";
+import { LuBriefcaseBusiness } from "react-icons/lu";
+import { BsGenderAmbiguous } from "react-icons/bs";
 
 const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
     const { setFieldValue } = useFormikContext();
@@ -60,7 +67,7 @@ export const TemplateForm = () => {
             formData.append(key, data[key]);
         }
 
-        
+
         const registration_response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration`, {
             method: 'POST',
             body: formData,
@@ -121,34 +128,52 @@ export const TemplateForm = () => {
                                     <div className="full">
                                         <div className="w-100">
                                             <label>Email</label>
-                                            <Field
-                                                className={`form-control ${errors.email && touched.email ? 'is-invalid' : ''}`}
-                                                type="email"
-                                                name="email"
-                                            />
+                                            <div className="input-group">
+
+                                                <span className="input-group-text">
+                                                    <MdEmail />
+                                                </span>
+                                                <Field
+                                                    className={`form-control ${errors.email && touched.email ? 'is-invalid' : ''}`}
+                                                    type="email"
+                                                    name="email"
+                                                />
+                                            </div>
                                         </div>
                                         <ErrorMessage name="email" component="div" className="text-danger small" />
                                     </div>
 
                                     <div className="full">
                                         <label>Phone Number</label>
-                                        <Field
-                                            className={`form-control ${errors.phone && touched.phone ? 'is-invalid' : ''}`}
-                                            type="tel"
-                                            name="phone"
-                                            disabled={true}
-                                        />
+                                        <div className="input-group">
+
+                                            <span className="input-group-text">
+                                                <FaPhoneAlt />
+                                            </span>
+                                            <Field
+                                                className={`form-control ${errors.phone && touched.phone ? 'is-invalid' : ''}`}
+                                                type="tel"
+                                                name="phone"
+                                                disabled={true}
+                                            />
+                                        </div>
                                         <ErrorMessage name="phone" component="div" className="text-danger small" />
                                     </div>
 
                                     <div className="full">
                                         <label>Whatsapp Number</label>
-                                        <Field
-                                            className={`form-control ${errors.whatsapp && touched.whatsapp ? 'is-invalid' : ''}`}
-                                            type="tel"
-                                            name="whatsapp"
-                                            disabled={true}
-                                        />
+                                        <div className="input-group">
+
+                                            <span className="input-group-text">
+                                                <FaWhatsapp />
+                                            </span>
+                                            <Field
+                                                className={`form-control ${errors.whatsapp && touched.whatsapp ? 'is-invalid' : ''}`}
+                                                type="tel"
+                                                name="whatsapp"
+                                                disabled={true}
+                                            />
+                                        </div>
                                         <ErrorMessage name="whatsapp" component="div" className="text-danger small" />
                                     </div>
 
@@ -156,40 +181,67 @@ export const TemplateForm = () => {
 
                                     <div className="full">
                                         <label>Gender</label>
-                                        <Field as="select" name="gender">
-                                            <option value="male">Male</option>
-                                            <option value="female">Female</option>
-                                        </Field>
+                                        <div className="input-group">
+
+                                            <span className="input-group-text">
+                                                <BsGenderAmbiguous />
+                                            </span>
+
+                                            <Field as="select" name="gender">
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                            </Field>
+                                        </div>
                                     </div>
 
                                     <div className="full">
                                         <label>First Name</label>
-                                        <Field
-                                            className={`form-control ${errors.firstName && touched.firstName ? 'is-invalid' : ''}`}
-                                            type="text"
-                                            name="firstName"
-                                        />
+                                        <div className="input-group">
+
+                                            <span className="input-group-text">
+                                                <MdDriveFileRenameOutline />
+                                            </span>
+
+                                            <Field
+                                                className={`form-control ${errors.firstName && touched.firstName ? 'is-invalid' : ''}`}
+                                                type="text"
+                                                name="firstName"
+                                            />
+                                        </div>
                                         <ErrorMessage name="firstName" component="div" className="text-danger small" />
                                     </div>
 
                                     <div className="full">
                                         <label>Last Name</label>
-                                        <Field
-                                            className={`form-control ${errors.lastName && touched.lastName ? 'is-invalid' : ''}`}
-                                            type="text"
-                                            name="lastName"
-                                        />
+                                        <div className="input-group">
+
+                                            <span className="input-group-text">
+                                                <MdDriveFileRenameOutline />
+                                            </span>
+
+                                            <Field
+                                                className={`form-control ${errors.lastName && touched.lastName ? 'is-invalid' : ''}`}
+                                                type="text"
+                                                name="lastName"
+                                            />
+                                        </div>
                                         <ErrorMessage name="lastName" component="div" className="text-danger small" />
                                     </div>
 
                                     {target.companyRequired === 'true' && (
                                         <div className="full">
                                             <label>Company Name</label>
-                                            <Field
-                                                className={`form-control ${errors.companyName && touched.companyName ? 'is-invalid' : ''}`}
-                                                type="text"
-                                                name="companyName"
-                                            />
+                                            <div className="input-group">
+
+                                                <span className="input-group-text">
+                                                    <LuBriefcaseBusiness />
+                                                </span>
+                                                <Field
+                                                    className={`form-control ${errors.companyName && touched.companyName ? 'is-invalid' : ''}`}
+                                                    type="text"
+                                                    name="companyName"
+                                                />
+                                            </div>
                                             <ErrorMessage name="companyName" component="div" className="text-danger small" />
                                         </div>
                                     )}
@@ -197,16 +249,22 @@ export const TemplateForm = () => {
                                     {target.birthdayRequired === 'true' && (
                                         <div className="full">
                                             <label>Birthday</label>
-                                            <Field
-                                                className={`form-control ${errors.birthday && touched.birthday ? 'is-invalid' : ''}`}
-                                                name="birthday"
-                                                type="date"
-                                                value={selectedDate}
-                                                onChange={(e) => {
-                                                    setFieldValue('birthday', e.target.value);
-                                                    setSelectedDate(e.target.value);
-                                                }}
-                                            />
+                                            <div className="input-group">
+
+                                                <span className="input-group-text">
+                                                    <MdOutlineCalendarMonth />
+                                                </span>
+                                                <Field
+                                                    className={`form-control ${errors.birthday && touched.birthday ? 'is-invalid' : ''}`}
+                                                    name="birthday"
+                                                    type="date"
+                                                    value={selectedDate}
+                                                    onChange={(e) => {
+                                                        setFieldValue('birthday', e.target.value);
+                                                        setSelectedDate(e.target.value);
+                                                    }}
+                                                />
+                                            </div>
                                             <ErrorMessage name="birthday" component="div" className="text-danger small" />
                                         </div>
                                     )}
