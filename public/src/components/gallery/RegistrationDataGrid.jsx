@@ -56,7 +56,7 @@ export const RegistrationDataGrid = () => {
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration?${queryParams}`);
             const response_data = await response.json();
-            debugger;
+
             setRegistrationList(response_data.data || []);
             setRowCount(response_data.total || 0);
 

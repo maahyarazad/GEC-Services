@@ -40,6 +40,7 @@ export const TemplateForm = () => {
     const snackbarRef = useRef();
     const fileInputRef = useRef();
 
+
     const initialValues = {
         email: '',
         phone: '',
@@ -54,7 +55,7 @@ export const TemplateForm = () => {
 
     useEffect(() => {
         const gecuser = getCookie("gec-registration");
-        debugger;
+
         if (gecuser) {
             setTarget(gecuser);
         }
@@ -74,7 +75,6 @@ export const TemplateForm = () => {
                 formData.append(key, data[key]);
             }
 
-            debugger;
             const registration_response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration`, {
                 method: 'POST',
                 body: formData,
@@ -330,6 +330,30 @@ export const TemplateForm = () => {
                                             <ErrorMessage name="fileUpload" component="div" className="invalid-feedback small" />
                                         </div>
                                     )}
+
+                                    {target.IdentityConsent === 'true' && (
+                                        <div className="full">
+                                            <label htmlFor="consent">
+                                                I confirm that I have a valid proof of identification and consent to present it at the venue.
+                                            </label>
+                                            <Field name="consent">
+                                                {({ field, form }) => (
+                                                    <input
+                                                        {...field}
+                                                        type="checkbox"
+                                                        id="consent"
+                                                        className={`form-check-input ${form.errors.consent && form.touched.consent ? 'is-invalid' : ''}`}
+                                                        onChange={e => {
+                                                            field.onChange(e);
+                                                            setShowSubmit(e.target.checked);
+                                                        }}
+                                                    />
+                                                )}
+                                            </Field>
+                                            <ErrorMessage name="consent" component="div" className="invalid-feedback small" />
+                                        </div>
+                                    )}
+
                                     <Box className="d-flex justify-content-end w-100 my-2">
 
                                         <Button

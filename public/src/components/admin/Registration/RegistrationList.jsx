@@ -5,6 +5,8 @@ import { DataGrid } from '@mui/x-data-grid';
 import { Switch, Button, Box, Tooltip } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { MdFormatListBulletedAdd } from "react-icons/md";
+import AlertDialog from '../../utils/AlertDialog';
+
 const getColumns = ({ onEdit, onLock }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'page', headerName: 'Page', width: 130 },
@@ -14,24 +16,6 @@ const getColumns = ({ onEdit, onLock }) => [
         width: 150,
         valueFormatter: (params) => (params.value === "true" ? "Yes" : "No"),
     },
-    // {
-    //     field: 'birthdayRequired',
-    //     headerName: 'Birthday Required',
-    //     width: 150,
-    //     valueFormatter: (params) => (params.value === "true" ? "Yes" : "No"),
-    // },
-    // {
-    //     field: 'companyRequired',
-    //     headerName: 'Company Required',
-    //     width: 150,
-    //     valueFormatter: (params) => (params.value === "true" ? "Yes" : "No"),
-    // },
-    // {
-    //     field: 'lockRegistration',
-    //     headerName: 'Lock Registration',
-    //     width: 150,
-    //     valueFormatter: (params) => (params.value === "true" ? "Yes" : "No"),
-    // },
     { field: 'title', headerName: 'Title', width: 130 },
     { field: 'description', headerName: 'Description', width: 150 },
     {
@@ -67,7 +51,7 @@ const getColumns = ({ onEdit, onLock }) => [
                 >
                     Edit
                 </Button>
-                <Tooltip title="Switch Registration Lock">
+                <Tooltip title="Switch Registration Lock" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
                     <Switch
                         checked={params.row.lockRegistration === true || params.row.lockRegistration === "true"}
                         onChange={() => onLock(params.row)}
@@ -88,6 +72,7 @@ export const RegistrationList = () => {
     const [newReg, setNewReg] = useState(false);
     const [editReg, setEditReg] = useState(false);
     const [initialData, setInitialData] = useState(null);
+    const dialogRef = useRef();
 
     const fetchData = useCallback(async () => {
         try {
@@ -100,7 +85,7 @@ export const RegistrationList = () => {
             }
 
             const values = await response.json();
-            debugger;
+
             setRegistrationList(values);
             console.log('Fetched registrations:', values);
         } catch (err) {
@@ -143,7 +128,7 @@ export const RegistrationList = () => {
 
     const openEdit = (row) => {
         const selectedRow = registrationList?.rows?.find((x) => x.id === row.id);
-        debugger;
+
         if (selectedRow) {
 
             setInitialData(selectedRow);
@@ -152,21 +137,32 @@ export const RegistrationList = () => {
     };
 
     const switchLock = (row) => {
-        const selectedRow = registrationList?.rows?.find((x) => x.id === row.id);
-        if (selectedRow) {
-            selectedRow.Image = null;
-            handleEdit(selectedRow)
-        }
+        dialogRef.current.openDialog(
+            'Are you sure you want to continue?',
+            'Switching Registration Lock',
+            () => {
+
+                const selectedRow = registrationList?.rows?.find((x) => x.id === row.id);
+                if (selectedRow) {
+                    selectedRow.Image = null;
+                    handleEdit(selectedRow)
+                }
+            },
+            () => {
+                console.log('❌ Cancel clicked');
+
+            }
+        );
+
     };
 
     return (
         <div className="gallery-events">
-
+            <AlertDialog ref={dialogRef} />
             <div className="d-flex justify-content-end">
                 <div className="me-4 pt-4">
-                    <Tooltip title="Add new registration">
-                   
-                        <MdFormatListBulletedAdd onClick={()=> setNewReg(true)} size={30} className="text-primary"
+                    <Tooltip title="Add New Registration Page" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
+                        <MdFormatListBulletedAdd onClick={() => setNewReg(true)} size={30} className="text-primary" style={{ cursor: 'pointer' }}
                         />
                     </Tooltip>
                 </div>

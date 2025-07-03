@@ -83,7 +83,7 @@ export const Login = () => {
     useEffect(() => {
 
         const gecuser = getCookie("gec-registration");
-        debugger;
+
         if (gecuser) {
             navigate(`/registration/${gecuser.page}`);
         }
@@ -127,7 +127,7 @@ export const Login = () => {
             }
 
             const otp_response_data = await otpResponse.json();
-            debugger;
+
 
             if (otp_response_data.status) {
 

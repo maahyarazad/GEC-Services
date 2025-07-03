@@ -3,13 +3,13 @@
   height: 100dvh;
   border: 16px solid var(--white);
   background-color: var(--white);
-
+  overflow: hidden;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: flex-start;
   gap: 0 32px;
-  overflow: scroll !important;
+
   height: 100vh;
 
   > div {
@@ -48,14 +48,17 @@
 
   > div:nth-of-type(2) {
     width: calc(33% - 32px);
-    max-width: 400px;
-    height: 100%;
+    padding: 20px;
+    padding-top: 50px;
+    padding-bottom: 50px;
+    /* max-width: 400px; */
+    height: 100dvh !important;
     position: relative;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     align-content: center;
-
+    overflow-y: scroll !important;
     > a {
       width: 96px;
       height: auto;
@@ -103,7 +106,7 @@
 @media only screen and (max-width: 767px) {
   .template-form {
     position: relative;
-
+    overflow: scroll !important;
     > div {
       border-radius: 8px;
     }
@@ -119,7 +122,7 @@
     > div:nth-of-type(2) {
       width: calc(100% - 40px);
       margin: 0 auto;
-
+      overflow: hidden !important;
       > a {
         width: 80px;
         height: auto;
