@@ -1,0 +1,564 @@
+.hero-section {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #1b1b1b;
+}
+
+.hero-section video {
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: cover;
+  z-index: -1;
+}
+
+.count-down {
+  position: absolute;
+  top: 5%;
+  right: 5%;
+  color: white;
+  text-align: center;
+  border-top: 2px solid white;
+  padding-top: 4px;
+
+  > a {
+    border-radius: 4px;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 4px 8px;
+    margin-top: 16px;
+    font-size: 0.875rem;
+    text-decoration: unset;
+    display: block;
+    transition: 0.3s all ease;
+  }
+
+  > a:hover {
+    filter: brightness(0.8);
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  .count-down {
+    bottom: 32px;
+    top: unset;
+    left: 50%;
+    transform: translate(-50%);
+    width: fit-content;
+
+    > a {
+      display: inline-block;
+      padding: 16px 32px;
+    }
+  }
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 300ms ease-out;
+  z-index: 999;
+}
+
+.modal-overlay_after-open {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-overlay_before-close {
+  background: rgba(0, 0, 0, 0);
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 720px;
+  max-height: 80dvh;
+  overflow-y: scroll;
+  padding: 1rem;
+  position: relative;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: transform 300ms ease-out, opacity 300ms ease-out;
+}
+
+.modal-content_after-open {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.modal-content_before-close {
+  transform: translateY(100px);
+  opacity: 0;
+}
+
+.modal-close-btn {
+  background: transparent;
+  color: #222;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  align-self: flex-end;
+}
+
+.modal-header {
+  display: block !important;
+}
+
+/* .modal-body {
+  margin-top: 1rem;
+} */
+
+.attachment-button {
+  cursor: pointer;
+}
+
+.attached-file-name > span:nth-child(1),
+.attached-file-name > :nth-child(2) {
+  background-color: inherit;
+  color: black !important;
+  transition: transform 0.2s ease-in-out;
+}
+
+.attached-file-name > :nth-child(2):hover {
+  transform: scale(1.1);
+  transition: transform 0.1s ease-in-out;
+}
+
+/* CONTAINER SLIDE‐IN/SLIDE‐OUT ANIMATIONS */
+.container.slide-out-y {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: opacity 600ms ease-out, transform 600ms ease-out;
+}
+
+.container.slide-in-y {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 600ms ease-out, transform 600ms ease-out;
+}
+
+/* PARTNER SLIDER STYLES */
+.gec-slider .slide-item {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  box-sizing: border-box;
+  .client-img {
+    border-radius: 10px !important;
+
+    object-fit: contain;
+  }
+}
+
+/* PARTNER SLIDER STYLES */
+.partner-slider .slide-item {
+  height: 120px;
+  padding: 0 10px 0 10px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  box-sizing: border-box;
+}
+
+.partner-slider .slide-item .client-img {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+}
+.gec-slider .slick-prev,
+.gec-slider .slick-next,
+.partner-slider .slick-prev,
+.partner-slider .slick-next {
+  position: absolute;
+  top: 50%;
+  /* transform: translateY(-20%); */
+  /* width: 3rem;
+    height: 4rem; */
+  z-index: 2;
+}
+.gec-slider .slick-prev,
+.partner-slider .slick-prev {
+  left: 0px;
+}
+.gec-slider .slick-next,
+.partner-slider .slick-next {
+  right: 0px;
+}
+.gec-slider .slick-prev:before,
+.gec-slider .slick-next:before,
+.partner-slider .slick-prev:before,
+.partner-slider .slick-next:before {
+  font-size: 2rem;
+  color: var(--primary-color);
+}
+
+/* RESPONSIVE ADJUSTMENT: REDUCE HEIGHT ON SMALLER SCREENS */
+@media (max-width: 768px) {
+  .partner-slider .slide-item {
+    height: 80px;
+  }
+}
+
+@media (max-width: 500px) {
+  .partner-slider .slide-item {
+    height: 60px;
+  }
+}
+
+/* Footer base styles */
+.footer {
+  background-color: #222;
+  /* dark background */
+  color: #eee;
+  /* light text */
+  padding: 1rem 0;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* On wider screens, layout text side by side */
+@media (min-width: 576px) {
+  .footer-container {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+/* Footer text */
+.footer-text,
+.footer-email {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+/* Email link styling */
+.footer-email a {
+  color: #ddd;
+  text-decoration: none;
+}
+
+.footer-email a:hover {
+  text-decoration: underline;
+}
+
+/* Optional: adjust font sizes on very small screens */
+@media (max-width: 350px) {
+  .footer-text,
+  .footer-email {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 450px) {
+  .modal-content {
+    max-width: (300px);
+  }
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(217, 177, 68, 0.25);
+}
+
+.custom-header {
+  font-size: 1.1rem;
+  line-height: 1.68;
+  margin-top: 1rem;
+}
+
+/* =================== Registration App =================== */
+
+body > #root > .registration-app {
+  .registration-form-container {
+    padding: 4rem;
+    position: relative;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border-radius: 1em;
+    visibility: show;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+  }
+
+  .registration-form-container.hide {
+    transform: translateX(100%);
+    opacity: 0;
+    top: 0;
+    position: absolute;
+    display: none;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+  }
+
+  .react-datepicker-wrapper {
+    display: block !important;
+  }
+
+  @media screen and (max-width: 1024px) {
+    .registration-form-container {
+      padding: 1rem;
+    }
+
+    .custom-message-wrapper {
+      padding: 16px !important;
+    }
+  }
+
+  .react-datepicker-popper {
+    z-index: 10 !important;
+  }
+
+  .thank-you-message {
+    opacity: 0 !important;
+    position: absolute;
+
+    transform: translateX(-100%);
+    transition: left 0.5s ease, opacity 0.5s ease;
+  }
+
+  .thank-you-message.show {
+    position: relative;
+    font-size: 4rem;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border-radius: 1em;
+    padding: 4rem;
+    transform: translateX(0);
+    opacity: 1 !important;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+  }
+
+  .text-success {
+    font-weight: 700;
+    color: rgba(var(--bs-success-rgb), var(--bs-text-opacity));
+    border-bottom: 4px solid green;
+  }
+
+  .datepicker-flex {
+    flex: 1 1 auto;
+    width: 1%;
+  }
+
+  .custom-message {
+    text-align: left;
+
+    > p {
+      font-size: 1.3rem;
+    }
+
+    > p:first-of-type {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+  }
+
+  .consent {
+    font-style: italic !important;
+    font-size: 0.75rem;
+    font-weight: 400;
+    width: calc(100% - 16px);
+    display: flex;
+    align-items: center;
+    padding: 0;
+  }
+
+  .form-header-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .form-header-title-2 {
+    font-size: 1rem;
+  }
+
+  .custom-form-label {
+    font-size: 0.875rem;
+  }
+
+  .form-control {
+    border-radius: unset;
+    border-bottom-right-radius: 4px;
+    border-top-right-radius: 4px;
+  }
+
+  .react-datepicker__input-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+  }
+
+  .react-datepicker-wrapper {
+    padding: 0;
+    border: 0;
+    flex: 1;
+  }
+}
+
+.page-not-found {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-content: center;
+  text-align: center;
+}
+
+body > #root > .guest-registration-app {
+  .registration-form-container {
+    padding: 4rem;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border-radius: 1em;
+    visibility: show;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    background: rgba(255, 255, 255, 0.754);
+  }
+}
+
+.row.second-section-row {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0 16px;
+  margin-top: 32px;
+
+  > div:first-of-type {
+    width: calc(40% - 8px);
+    > img {
+      width: 100%;
+      height: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      object-position: center;
+    }
+  }
+
+  > div:nth-of-type(2) {
+    width: calc(60% - 8px);
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    > h3 {
+      margin: 0 0 32px;
+    }
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  .row.second-section-row {
+    > div:first-of-type {
+      width: 100%;
+      margin-bottom: 32px;
+      padding: unset;
+      > img {
+        aspect-ratio: 1 / 1;
+      }
+    }
+
+    > div:nth-of-type(2) {
+      width: 100%;
+
+      button {
+        padding: 16px 32px;
+      }
+    }
+  }
+}
+
+.floating-header {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50%;
+  height: auto;
+  z-index: 3;
+  text-align: center;
+  > img {
+    position: relative;
+    display: block;
+    width: 80%;
+    margin: 0 auto;
+  }
+
+  > h1 {
+    margin-top: 16px;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    display: inline-block;
+    border-top: 2px solid var(--primary-color);
+    padding-top: 8px;
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  .floating-header {
+    width: 90%;
+
+    > img {
+      max-width: 240px;
+    }
+  }
+}
+
+.floating-header + video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.floating-logo {
+  position: absolute;
+  top: 32px;
+  left: 48px;
+  width: 160px;
+  > img {
+    width: 100%;
+    height: auto;
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  .floating-logo {
+    left: 32px;
+    width: 90px;
+  }
+
+  .awardregistrationsubmit {
+    padding: 16px 32px !important;
+  }
+}

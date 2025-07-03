@@ -10,14 +10,11 @@ const PORT = process.env.PORT || 5500;
 const dbService = require("./services/dbService");
 const { generateRecordId, generateOTP } = require("./services/generatorService");
 const { generateRecordDate, generateRecordDateTime } = require("./services/dateService");
-
+require("dotenv").config();
 const session = require('express-session');
 
 
-const accountSid = 'ACf20c6fdcff4554153d18e319b1741de5';
-const authToken = '169c6a86516341663e70d61cf416fe3f';
-const twilioPhone = "whatsapp:+14155238886";
-const client = require('twilio')(accountSid, authToken);
+const client = require('twilio')(process.env.TWILIO_ACOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 // Setup DB connection
 const db = new sqlite3.Database("./app.db", (err) => {
@@ -447,7 +444,7 @@ const sendOtpToPhone = async (mobile_number, req, res, twilioClient) => {
     try {
         await twilioClient.messages.create({
             body: `Your OTP code is: ${otp}`,
-            from: twilioPhone,
+            from: process.env.TWILIO_PHONE,
             to: `whatsapp:${mobile_number}`,
         });
 
@@ -463,7 +460,7 @@ app.post("/registration", upload.single('none'), async (req, res) => {
         const table_name = "registration";
         const data  = req.body;
 
-        // Todo: count the number of token per user here
+        //Todo: count the number of token per user here
         // const existing = await dbService.findById(table_name, id);
         // if (!existing) {
         //     return res.status(404).json({ status: false, message: "Record not found" });

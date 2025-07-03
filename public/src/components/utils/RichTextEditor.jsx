@@ -1,62 +1,47 @@
-import React, { useEffect } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
-import TextAlign from '@tiptap/extension-text-align';
-import Image from '@tiptap/extension-image';
+import {$getRoot, $getSelection} from 'lexical';
+import {useEffect} from 'react';
 
-const RichTextEditor = ({ value, onChange }) => {
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Image,
-      Placeholder.configure({
-        placeholder: 'Write something…',
-      }),
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
-    ],
-    content: value || '<p>Hello World</p>',
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      onChange?.(html);
-    },
-  });
+import {AutoFocusPlugin} from '@lexical/react/LexicalAutoFocusPlugin';
+import {LexicalComposer} from '@lexical/react/LexicalComposer';
+import {RichTextPlugin} from '@lexical/react/LexicalRichTextPlugin';
+import {ContentEditable} from '@lexical/react/LexicalContentEditable';
+import {HistoryPlugin} from '@lexical/react/LexicalHistoryPlugin';
+import {LexicalErrorBoundary} from '@lexical/react/LexicalErrorBoundary';
 
-  useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value || '', false);
-    }
-  }, [value, editor]);
+const theme = {
+  // Theme styling goes here
+  //...
+}
 
-  if (!editor) return <p>Loading editor...</p>;
+// Catch any errors that occur during Lexical updates and log them
+// or throw them as needed. If you don't throw them, Lexical will
+// try to recover gracefully without losing user data.
+function onError(error) {
+  console.error(error);
+}
+
+const Editor = () => {
+  const initialConfig = {
+    namespace: 'MyEditor',
+    theme,
+    onError,
+  };
 
   return (
-    <div className="admin">
-<div
-      style={{
-        border: '1px solid #ccc',
-        borderRadius: '6px',
-        padding: '1rem',
-        minHeight: '200px',
-        backgroundColor: 'white',
-        fontFamily: 'sans-serif',
-        fontSize: '1rem',
-        lineHeight: '1.6',
-      }}
-    >
-      <EditorContent
-        editor={editor}
-        style={{
-          outline: 'none',
-          minHeight: '150px',
-        }}
+    <LexicalComposer initialConfig={initialConfig}>
+      <RichTextPlugin
+        contentEditable={
+          <ContentEditable
+            aria-placeholder={'Enter some text...'}
+            placeholder={<div>Enter some text...</div>}
+          />
+        }
+        ErrorBoundary={LexicalErrorBoundary}
       />
-    </div>
-    </div>
-    
+      <HistoryPlugin />
+      <AutoFocusPlugin />
+    </LexicalComposer>
   );
-};
+}
 
-export default RichTextEditor;
+export default Editor;
