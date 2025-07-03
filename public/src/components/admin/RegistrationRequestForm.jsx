@@ -37,6 +37,10 @@ const validationSchema = Yup.object({
     birthdayRequired: Yup.boolean(),
     companyRequired: Yup.boolean(),
     lockRegistration: Yup.boolean(),
+    IdentityConsent: Yup.boolean(),
+    fileUpload: Yup.boolean(),
+    textarea: Yup.boolean(),
+    filedIcon: Yup.boolean(),
 });
 
 
@@ -70,6 +74,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
         IdentityConsent: initialData?.IdentityConsent === "true",
         fileUpload: initialData?.fileUpload === "true",
         textarea: initialData?.textarea === "true",
+        fieldIcon: initialData?.fieldIcon === "true",
         title: initialData?.title || '',
         send_button_text: initialData?.send_button_text || 'Submit',
         image: initialData?.Image || null,

@@ -17,7 +17,7 @@ import { LuBriefcaseBusiness } from "react-icons/lu";
 import { BsGenderAmbiguous } from "react-icons/bs";
 import SimpleSnackbar from "../utils/Snackbar";
 import { useRef } from "react";
-
+import CircularProgress from '@mui/material/CircularProgress';
 
 const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
     const { setFieldValue } = useFormikContext();
@@ -38,6 +38,7 @@ export const TemplateForm = () => {
     const [selectedDate, setSelectedDate] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const snackbarRef = useRef();
+    const fileInputRef = useRef();
 
     const initialValues = {
         email: '',
@@ -53,37 +54,42 @@ export const TemplateForm = () => {
 
     useEffect(() => {
         const gecuser = getCookie("gec-registration");
+        debugger;
         if (gecuser) {
             setTarget(gecuser);
         }
     }, []);
 
     const handleSubmitRegistration = async (values) => {
+        try{
+            setIsSubmitting(true);
 
-        const { consent, registration_code, ...data } = {
-            ...values,
-            event: target.page,
-        };
+            const { consent, registration_code, ...data } = {
+                ...values,
+                event: target.page,
+            };
 
-        debugger;
-        const formData = new FormData();
-        for (const key in data) {
-            formData.append(key, data[key]);
+            const formData = new FormData();
+            for (const key in data) {
+                formData.append(key, data[key]);
+            }
+
+            debugger;
+            const registration_response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration`, {
+                method: 'POST',
+                body: formData,
+            });
+
+
+            const registration_response_data = await registration_response.json();
+            snackbarRef.current?.openSnackbar(registration_response_data.message);
+
+        }catch(e){
+            snackbarRef.current?.openSnackbar(e);
+        }finally{
+            setIsSubmitting(false);
         }
-
-
-        const registration_response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration`, {
-            method: 'POST',
-            body: formData,
-        });
-
-
-        const registration_response_data = await registration_response.json();
-        debugger;
-        snackbarRef.current?.openSnackbar(registration_response_data.message);
-        // Your submit logic here, for example:
-        // const createRecordResponse = await UseCreateRecord(...);
-        // if (createRecordResponse.status) { ... }
+        
     };
 
     if (!target) {
@@ -111,8 +117,8 @@ export const TemplateForm = () => {
                                     {/* Autofill phone and whatsapp fields */}
                                     <AutofillPhoneAndWhatsapp mobileNumber={target.mobile_number} />
 
-                                    <h1>Welcome to {target.title} – Please Register</h1>
-                                    <h4>{new Date(target.event_date).toLocaleDateString('en-GB', {
+                                    <h1 className="mb-2">{target.title}</h1>
+                                    <h4 className="mb-1">{new Date(target.event_date).toLocaleDateString('en-GB', {
                                         day: '2-digit',
                                         month: 'long',
                                         year: 'numeric',
@@ -239,25 +245,6 @@ export const TemplateForm = () => {
                                         <ErrorMessage name="lastName" component="div" className="text-danger small" />
                                     </div>
 
-                                    {target.companyRequired === 'true' && (
-                                        <div className="full">
-                                            <label>Company Name</label>
-                                            <div className="input-group">
-                                                {target.fieldIcon === 'true' && (
-
-                                                    <span className="input-group-text">
-                                                        <LuBriefcaseBusiness />
-                                                    </span>
-                                                )}
-                                                <Field
-                                                    className={`form-control ${errors.companyName && touched.companyName ? 'is-invalid' : ''}`}
-                                                    type="text"
-                                                    name="companyName"
-                                                />
-                                            </div>
-                                            <ErrorMessage name="companyName" component="div" className="text-danger small" />
-                                        </div>
-                                    )}
 
                                     {target.birthdayRequired === 'true' && (
                                         <div className="full">
@@ -282,26 +269,65 @@ export const TemplateForm = () => {
                                         </div>
                                     )}
 
-                                    {target.IdentityConsent === 'true' && (
+
+                                     {target.companyRequired === 'true' && (
                                         <div className="full">
-                                            <label htmlFor="consent">
-                                                I confirm that I have a valid proof of identification and consent to present it at the venue.
-                                            </label>
-                                            <Field name="consent">
-                                                {({ field, form }) => (
-                                                    <input
-                                                        {...field}
-                                                        type="checkbox"
-                                                        id="consent"
-                                                        className={`form-check-input ${form.errors.consent && form.touched.consent ? 'is-invalid' : ''}`}
-                                                        onChange={e => {
-                                                            field.onChange(e);
-                                                            setShowSubmit(e.target.checked);
-                                                        }}
-                                                    />
+                                            <label>Company Name</label>
+                                            <div className="input-group">
+                                                {target.fieldIcon === 'true' && (
+
+                                                    <span className="input-group-text">
+                                                        <LuBriefcaseBusiness />
+                                                    </span>
                                                 )}
-                                            </Field>
-                                            <ErrorMessage name="consent" component="div" className="invalid-feedback small" />
+                                                <Field
+                                                    className={`form-control ${errors.companyName && touched.companyName ? 'is-invalid' : ''}`}
+                                                    type="text"
+                                                    name="companyName"
+                                                />
+                                            </div>
+                                            <ErrorMessage name="companyName" component="div" className="text-danger small" />
+                                        </div>
+                                    )}
+
+
+                                     {target.textarea === 'true' && (
+                                        <div className="full">
+                                            <label htmlFor="textarea">Message</label>
+                                            <div className="input-group">
+                                                
+                                                <Field
+                                                    as="textarea"
+                                                    rows={4}
+                                                    className={`form-control ${errors.textarea && touched.textarea ? 'is-invalid' : ''}`}
+                                                    name="textarea"
+                                                    />
+                                            </div>
+                                            <ErrorMessage name="textarea" component="div" className="text-danger small" />
+                                        </div>
+                                    )}
+
+                                    {target.fileUpload === 'true' && (
+                                        <div className="full">
+                                            <label htmlFor="fileUpload">
+                                               Please attach any documentation to support your application.
+                                            </label>
+                                            <input
+                                                ref={fileInputRef}
+                                                id="fileUpload"
+                                                name="fileUpload"
+                                                type="file"
+                                                accept=".pdf, .doc, .docx, .ppt, .pptx, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                                                className={`form-control ${errors.fileUpload && touched.fileUpload ? 'is-invalid' : ''}`}
+                                                onChange={e => {
+                                                        const file = e.currentTarget.files[0];
+                                                        if (file) {
+                                                            setFieldValue('fileUpload', file);
+                                                        }
+                                                    }}
+                                                />
+
+                                            <ErrorMessage name="fileUpload" component="div" className="invalid-feedback small" />
                                         </div>
                                     )}
                                     <Box className="d-flex justify-content-end w-100 my-2">
@@ -314,7 +340,12 @@ export const TemplateForm = () => {
                                             style={{ pointerEvents: 'auto', opacity: 1, width: '100%', textTransform: 'none' }}
 
                                         >
-                                            {isSubmitting ? 'Saving...' : 'Submit'}
+                                            {isSubmitting ? 
+                                                <CircularProgress
+                                                    size={20}
+                                                    color="inherit"
+                                                />
+                                             : target.send_button_text}
                                         </Button>
                                     </Box>
 

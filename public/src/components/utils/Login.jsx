@@ -8,13 +8,13 @@ import CryptoJS from 'crypto-js';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { getCookie, setEncryptedCookie } from '../utils/cookieUtils';
-
- const validationSchema = Yup.object({
+import CircularProgress from '@mui/material/CircularProgress';
+const validationSchema = Yup.object({
     mobile_number: Yup.string()
-      .matches(/^\+?[0-9]{12,15}$/, 'Enter a valid phone number')
-      .required('Required'),
+        .matches(/^\+?[0-9]{12,15}$/, 'Enter a valid phone number')
+        .required('Required'),
     registration_code: Yup.string().required('Required'),
-  });
+});
 
 
 const OtpTimer = ({ initialSeconds = 59, loginResponseData = {}, onResend }) => {
@@ -65,6 +65,7 @@ export const Login = () => {
 
     const [mobile_number, setMobile_number] = useState(null);
     const [registration_code, setRegistration_code] = useState(true);
+    const [isLogging, setIsLogging] = useState(false);
 
     // const phoneRef = useRef();
     // const registration_code = useRef();
@@ -74,18 +75,18 @@ export const Login = () => {
 
     const otpRef = useRef();
 
-    const initialValues= {
-                        mobile_number: '',
-                        registration_code: '',
-                    };
+    const initialValues = {
+        mobile_number: '',
+        registration_code: '',
+    };
 
     useEffect(() => {
 
         const gecuser = getCookie("gec-registration");
         debugger;
         if (gecuser) {
-                    navigate(`/registration/${gecuser.page}`);
-                }
+            navigate(`/registration/${gecuser.page}`);
+        }
     }, []);
 
     const handleSendOtp = () => {
@@ -98,6 +99,7 @@ export const Login = () => {
 
     const handlePostOTP = async (value) => {
         try {
+            setIsLogging(true);
             const data = {
                 otp: value,
                 userAgent: navigator.userAgent,
@@ -152,6 +154,8 @@ export const Login = () => {
             if (statusRef.current) {
                 statusRef.current.textContent = `Login failed: ${err.message}`;
             }
+        }finally{
+            setIsLogging(false);
         }
 
     };
@@ -159,7 +163,7 @@ export const Login = () => {
 
     const handleOtpResend = async () => {
         try {
-
+            setIsLogging(true);
             const data = {
                 userAgent: navigator.userAgent,
                 platform: navigator.platform,
@@ -186,9 +190,9 @@ export const Login = () => {
             }
 
             const response_data = await loginResponse.json();
-            
+
             setLoginResponseData(response_data);
-            
+
             if (response_data.status) {
 
                 handleSendOtp();
@@ -205,13 +209,15 @@ export const Login = () => {
             if (statusRef.current) {
                 statusRef.current.textContent = `Login failed: ${err.message}`;
             }
+        }finally{
+            setIsLogging(false);
         }
 
     };
 
     const handleLoginSubmit = async (values, { setSubmitting, resetForm }) => {
         try {
-            
+            setIsLogging(true);
             const data = {
                 userAgent: navigator.userAgent,
                 mobile_number: values.mobile_number,
@@ -238,7 +244,7 @@ export const Login = () => {
             const response_data = await loginResponse.json();
 
             setLoginResponseData(loginResponse);
-            
+
             if (response_data.status === 401) {
 
                 statusRef.current.textContent = response_data.message;
@@ -259,6 +265,8 @@ export const Login = () => {
             if (statusRef.current) {
                 statusRef.current.textContent = `Login failed: ${err.message}`;
             }
+        }finally{
+            setIsLogging(false);
         }
 
     };
@@ -266,7 +274,7 @@ export const Login = () => {
     return (
         <div className="login">
             <div>
-                <h4>Welcome Back! Log In to Complete Your Registration</h4>
+                <h4>Welcome Back! Log In to Porceed.</h4>
                 {/* Step 1: check code login */}
                 <Formik
                     initialValues={initialValues}
@@ -275,7 +283,7 @@ export const Login = () => {
                         handleLoginSubmit(values, formikHelpers)
                     }
                 >
-                    {({ values, setFieldValue,errors, touched,isSubmitting }) => (
+                    {({ values, setFieldValue, errors, touched, isSubmitting }) => (
                         <Form ref={loginRef}>
                             <div className="full">
                                 <Field
@@ -299,7 +307,7 @@ export const Login = () => {
                                 <Field
                                     onChange={(e) => {
                                         setFieldValue('registration_code', e.target.value);
-                                        setRegistration_code( e.target.value);
+                                        setRegistration_code(e.target.value);
                                     }}
                                     name="registration_code"
                                     type={showPassword ? 'text' : 'password'}
@@ -320,7 +328,13 @@ export const Login = () => {
                                     disabled={isSubmitting || showOtpInput}
                                 >
                                     <img alt="login" src="/lock.svg" />
-                                    <p>Login</p>
+                                    {
+                                        isLogging ? <CircularProgress
+                                                        size={20}
+                                                        color="inherit"
+                                                    /> 
+                                        : <span className="ms-2">Login</span>
+                                    }
                                 </button>
 
                                 <span>
@@ -332,21 +346,21 @@ export const Login = () => {
                                 </span>
                             </div>
 
-                            
-                                <div className={showOtpInput? "d-block": "d-none"}>
-                                    <OtpInput ref={otpRef}
-                                        onComplete={(val) => {
-                                            handlePostOTP(val);
-                                        }}
-                                    />
 
-                                    {loginResponseData && (
-                                        <OtpTimer
-                                            loginResponseData={loginResponseData}
-                                            onResend={handleOtpResend}
-                                        />
-                                    )}
-                                </div>
+                            <div className={`otp-slide ${showOtpInput ? "show" : ""}`}>
+                                <OtpInput ref={otpRef}
+                                    onComplete={(val) => {
+                                        handlePostOTP(val);
+                                    }}
+                                />
+
+                                {loginResponseData && (
+                                    <OtpTimer
+                                        loginResponseData={loginResponseData}
+                                        onResend={handleOtpResend}
+                                    />
+                                )}
+                            </div>
                         </Form>
                     )}
                 </Formik>

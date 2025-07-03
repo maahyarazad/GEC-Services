@@ -43,9 +43,9 @@ const SimpleSnackbar = forwardRef((_, ref) => {
       slotProps={{
         content: {
         sx: {
-            fontSize: '1rem',
-            backgroundColor: '#333', // example background
-            color: '#fff',
+            fontSize: '1.2rem',
+            backgroundColor: '#f7f7f7', // example background
+            color: '#141414',
             padding: '16px 24px',
             borderRadius: '8px',
             boxShadow: '0 4px 10px rgba(0,0,0,0.3)',

@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS registration (
   page_target VARCHAR(100),
   event VARCHAR(100),
   email VARCHAR(255) NOT NULL,
+  message TEXT, 
+  attachment_file TEXT,
   phone VARCHAR(50),
   whatsapp VARCHAR(50),
   gender VARCHAR(20),
