@@ -75,6 +75,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
         image: initialData?.Image || null,
         tokensPerGuest: initialData?.maxTokensPerGuest || '',
         description: initialData?.description || '',
+        event_date: initialData?.event_date || '',
     };
 
     useEffect(() => {
@@ -114,6 +115,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
             formData.append('textarea', values.textarea);
             formData.append('fieldIcon', values.fieldIcon);
             formData.append('title', values.title);
+            formData.append('send_button_text', values.send_button_text);
             formData.append('event_date', values.event_date);
             formData.append('maxTokensPerGuest', values.tokensPerGuest);
             formData.append('description', values.description);
@@ -128,8 +130,8 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                 // Important: Don't set 'Content-Type'; browser sets it including boundary
             });
 
-            const data = await response.json();
 
+            const data = await response.json();
             if (response.ok && data.status) {
                 setSlug('');
                 setSubmitSuccess(true);
@@ -145,9 +147,11 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                     modalSwitch();
                     setPreview(null);
                     setSlug(null);
+                    resetForm();
+
                 }, 3000);
 
-                resetForm();
+               
 
                 if (fileInputRef.current) {
                     fileInputRef.current.value = null;
@@ -262,7 +266,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
 
                                 <div className='col-6'>
                                     <div className="align-items-center">
-                                        <label htmlFor="event_date" className="form-label">
+                                        <label htmlFor="send_button_text" className="form-label">
                                             Submit Button Text
                                         </label>
                                         <Field

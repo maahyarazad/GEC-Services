@@ -52,10 +52,6 @@ select option {
   font-size: 0.75rem;
 }
 
-input[type="date"] {
-  font-size: 0.75rem;
-  font-weight: 200;
-}
 
 .clearance-flat {
   display: block;
@@ -638,3 +634,8 @@ tr.eventhide {
   max-height: calc(80dvh - 4rem); /* subtract header/footer if any */
 }
 
+
+/* input[type="date"] {
+    font-size: 1rem;
+    font-weight: 200;
+} */
