@@ -4,7 +4,7 @@ import RegistrationRequestForm from "../RegistrationRequestForm";
 import { DataGrid } from '@mui/x-data-grid';
 import { Switch, Button, Box, Tooltip } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-
+import { MdFormatListBulletedAdd } from "react-icons/md";
 const getColumns = ({ onEdit, onLock }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'page', headerName: 'Page', width: 130 },
@@ -163,12 +163,13 @@ export const RegistrationList = () => {
         <div className="gallery-events">
 
             <div className="d-flex justify-content-end">
-                <span className="me-4 pt-4">
-                    <button className="cta-button blue" onClick={() => setNewReg(true)}>
-                        <img alt="add-item" src="/add-item.svg"></img>
-
-                    </button>
-                </span>
+                <div className="me-4 pt-4">
+                    <Tooltip title="Add new registration">
+                   
+                        <MdFormatListBulletedAdd onClick={()=> setNewReg(true)} size={30} className="text-primary"
+                        />
+                    </Tooltip>
+                </div>
             </div>
 
 

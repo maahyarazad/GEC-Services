@@ -127,6 +127,18 @@ const dbService = {
         });
     },
 
+    countExact: (table, column, pattern) => {
+        const sql = `SELECT COUNT(*) AS count FROM ${table} WHERE ${column} = ?`;
+        const param = `${pattern}`;
+
+        return new Promise((resolve, reject) => {
+            db.get(sql, [param], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+    },
+
 
     // Optional: alternative version using safeWrite for sync writes
     createSafe: (table, data) => {

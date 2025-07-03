@@ -45,9 +45,9 @@ const OtpTimer = ({ initialSeconds = 59, loginResponseData = {}, onResend }) => 
     };
 
     return (
-        <div>
+        <div className="mt-2">
             {expired ? (
-                <button onClick={handleResend}>Send new OTP</button>
+                <button onClick={handleResend} className="p-1 ">Send new OTP</button>
             ) : (
                 <span>OTP expires in: {secondsLeft} seconds</span>
             )}
@@ -70,7 +70,6 @@ export const Login = () => {
     // const registration_code = useRef();
     const loginRef = useRef();
     const statusRef = useRef();
-
     const navigate = useNavigate();
 
     const otpRef = useRef();
@@ -333,12 +332,10 @@ export const Login = () => {
                                 </span>
                             </div>
 
-                            {showOtpInput && (
-                                <>
-                                    <OtpInput
-                                        onChange={(val) => console.log('Current OTP:', val)}
+                            
+                                <div className={showOtpInput? "d-block": "d-none"}>
+                                    <OtpInput ref={otpRef}
                                         onComplete={(val) => {
-                                            console.log('OTP Complete:', val);
                                             handlePostOTP(val);
                                         }}
                                     />
@@ -349,8 +346,7 @@ export const Login = () => {
                                             onResend={handleOtpResend}
                                         />
                                     )}
-                                </>
-                            )}
+                                </div>
                         </Form>
                     )}
                 </Formik>

@@ -461,13 +461,30 @@ const sendOtpToPhone = async (mobile_number, req, res, twilioClient) => {
 app.post("/registration", upload.single('none'), async (req, res) => {
     try {
         const table_name = "registration";
-        const data  = req.body;
+        const data = req.body;
 
-        // Todo: count the number of token per user here
-        // const existing = await dbService.findById(table_name, id);
-        // if (!existing) {
-        //     return res.status(404).json({ status: false, message: "Record not found" });
-        // }
+        const max_token_value = await dbService.findExact("registration_config", "page", data.event);
+        const count_token = await dbService.countExact(table_name, "phone", data.phone);
+
+        // Convert to numbers
+        const maxTokens = Number(max_token_value?.maxTokensPerGuest);
+        const currentCount = Number(count_token.count);
+
+        // Validate values
+        if (isNaN(maxTokens) || isNaN(currentCount)) {
+            return res.status(400).json({
+                status: false,
+                message: "Invalid registration configuration or user data.",
+            });
+        }
+
+        if (currentCount >= maxTokens) {
+            return res.status(413).json({
+                status: false,
+                message: "You have reached the maximum number of registrations allowed for this event.",
+            });
+        }
+
 
         data.event_id = generateRecordId(data.event, false);
         const create_result = dbService.createSafe(table_name, data);

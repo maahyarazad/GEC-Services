@@ -6,36 +6,37 @@ import slugify from 'slugify';
 
 
 const validationSchema = Yup.object({
-  title: Yup.string().required('Title is required'),
+    title: Yup.string().required('Title is required'),
+    send_button_text: Yup.string().required('Send Button Text is required'),
 
-  image: Yup.mixed()
-    .required('Image is required')
-    .test("fileSize", "File too large (max 5MB)", (value) => {
-      if (!value) return true;
-      if (typeof value === "string") return true;
-      return value.size <= 5 * 1024 * 1024;
-    })
-    .test("fileType", "Unsupported file format", (value) => {
-      if (!value || typeof value === "string") return true;
-      return ["image/jpeg", "image/png", "image/webp"].includes(value.type);
-    }),
+    image: Yup.mixed()
+        .required('Image is required')
+        .test("fileSize", "File too large (max 5MB)", (value) => {
+            if (!value) return true;
+            if (typeof value === "string") return true;
+            return value.size <= 5 * 1024 * 1024;
+        })
+        .test("fileType", "Unsupported file format", (value) => {
+            if (!value || typeof value === "string") return true;
+            return ["image/jpeg", "image/png", "image/webp"].includes(value.type);
+        }),
 
-  tokensPerGuest: Yup.number()
-    .typeError('Must be a number')
-    .integer('Must be an integer')
-    .positive('Must be greater than zero')
-    .required('Number of tokens is required'),
+    tokensPerGuest: Yup.number()
+        .typeError('Must be a number')
+        .integer('Must be an integer')
+        .positive('Must be greater than zero')
+        .required('Number of tokens is required'),
 
-  description: Yup.string().required('Description is required'),
+    description: Yup.string().required('Description is required'),
 
-  event_date: Yup.date()
-    .required('Event date is required')
-    .min(new Date(), 'Event date must be in the future'),
+    event_date: Yup.date()
+        .required('Event date is required')
+        .min(new Date(), 'Event date must be in the future'),
 
-  paymentRequired: Yup.boolean(),
-  birthdayRequired: Yup.boolean(),
-  companyRequired: Yup.boolean(),
-  lockRegistration: Yup.boolean(),
+    paymentRequired: Yup.boolean(),
+    birthdayRequired: Yup.boolean(),
+    companyRequired: Yup.boolean(),
+    lockRegistration: Yup.boolean(),
 });
 
 
@@ -66,8 +67,11 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
         birthdayRequired: initialData?.birthdayRequired === "true",
         companyRequired: initialData?.companyRequired === "true",
         lockRegistration: initialData?.lockRegistration === "true",
+        IdentityConsent: initialData?.IdentityConsent === "true",
+        fileUpload: initialData?.fileUpload === "true",
+        textarea: initialData?.textarea === "true",
         title: initialData?.title || '',
-        event_date: initialData?.event_date || '',
+        send_button_text: initialData?.send_button_text || 'Submit',
         image: initialData?.Image || null,
         tokensPerGuest: initialData?.maxTokensPerGuest || '',
         description: initialData?.description || '',
@@ -100,12 +104,15 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                 formData.append('id', initialData.id);
             }
 
-
             formData.append('page', slug);
             formData.append('paymentRequired', values.paymentRequired);
             formData.append('birthdayRequired', values.birthdayRequired);
             formData.append('companyRequired', values.companyRequired);
             formData.append('lockRegistration', values.lockRegistration);
+            formData.append('IdentityConsent', values.IdentityConsent);
+            formData.append('fileUpload', values.fileUpload);
+            formData.append('textarea', values.textarea);
+            formData.append('fieldIcon', values.fieldIcon);
             formData.append('title', values.title);
             formData.append('event_date', values.event_date);
             formData.append('maxTokensPerGuest', values.tokensPerGuest);
@@ -188,9 +195,9 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                         {/* Title */}
                         <div className="col-12">
 
-                            <div className="d-flex justify-content-between">
+                            <div className="row">
 
-                                <div className='w-50 me-2'>
+                                <div className='col-6'>
                                     <label htmlFor="title" className="form-label">
                                         Title
                                     </label>
@@ -224,7 +231,8 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                                     </div>
 
                                 </div>
-                                <div className='w-50'>
+
+                                <div className='col-6'>
                                     <label htmlFor="tokensPerGuest" className="form-label">
                                         Maximum Number of Token per Guest
                                     </label>
@@ -249,27 +257,56 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
 
                         </div>
 
-
                         <div className="col-12">
-                            <div className="align-items-center">
-                                <label htmlFor="event_date" className="form-label">
-                                    Event Date
-                                </label>
-                                <Field
-                                    name="event_date"
-                                    type="date"
-                                    className={`form-control ${errors.event_date && touched.event_date ? 'is-invalid' : ''}`}
-                                    placeholder="Select event date"
-                                />
-                                <div style={{ minHeight: 30 }}>
-                                    <ErrorMessage
-                                        name="event_date"
-                                        component="div"
-                                        className="text-danger small mt-1"
-                                    />
+                            <div className='row'>
+
+                                <div className='col-6'>
+                                    <div className="align-items-center">
+                                        <label htmlFor="event_date" className="form-label">
+                                            Submit Button Text
+                                        </label>
+                                        <Field
+                                            name="send_button_text"
+                                            type="text"
+                                            className={`form-control ${errors.send_button_text && touched.send_button_text ? 'is-invalid' : ''}`}
+                                            placeholder=""
+                                        />
+                                        <div style={{ minHeight: 30 }}>
+                                            <ErrorMessage
+                                                name="send_button_text"
+                                                component="div"
+                                                className="text-danger small mt-1"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className='col-6'>
+
+                                    <div className="align-items-center">
+                                        <label htmlFor="event_date" className="form-label">
+                                            Event Date
+                                        </label>
+                                        <Field
+                                            name="event_date"
+                                            type="date"
+                                            className={`form-control ${errors.event_date && touched.event_date ? 'is-invalid' : ''}`}
+                                            placeholder="Select event date"
+                                            style={{minHeight: 38}}
+                                        />
+                                        <div style={{ minHeight: 30 }}>
+                                            <ErrorMessage
+                                                name="event_date"
+                                                component="div"
+                                                className="text-danger small mt-1"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+
                         </div>
+
                         {/* Description */}
                         <div className="col-12">
                             <div className="align-items-center">
@@ -316,7 +353,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                                     name="image"
                                     type="file"
                                     accept="image/*"
-                                    className="form-control"
+                                    className={`form-control ${errors.image && touched.image ? 'is-invalid' : ''}`}
                                     onChange={e => {
                                         const file = e.currentTarget.files[0];
                                         if (file) {
@@ -336,85 +373,186 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                                 </div>
                             </div>
 
-                            <div className="form-check form-switch mb-3">
-                                <Field name="paymentRequired">
-                                    {({ field }) => (
-                                        <input
-                                            name={field.name}
-                                            checked={field.value}
-                                            onChange={field.onChange}
-                                            onBlur={field.onBlur}
-                                            id="paymentRequired"
-                                            className="form-check-input"
-                                            type="checkbox"
-                                        />
-                                    )}
-                                </Field>
-                                <label className="form-check-label" htmlFor="paymentRequired">
-                                    Payment Required
-                                </label>
+                            <div className='row'>
+                                <div className='col-6'>
+
+                                    <div className='pb-3'> Event Settings</div>
+
+                                    <div className="form-check form-switch mb-3">
+                                        <Field name="fileUpload">
+                                            {({ field }) => (
+                                                <input
+                                                    name={field.name}
+                                                    checked={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    id="fileUpload"
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                />
+                                            )}
+                                        </Field>
+                                        <label className="form-check-label" htmlFor="fileUpload">
+                                            File Upload Required
+                                        </label>
+
+                                    </div>
+
+
+                                    <div className="form-check form-switch mb-3">
+                                        <Field name="textarea">
+                                            {({ field }) => (
+                                                <input
+                                                    name={field.name}
+                                                    checked={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    id="textarea"
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                />
+                                            )}
+                                        </Field>
+                                        <label className="form-check-label" htmlFor="textarea">
+                                            Textarea for Messaging Required
+                                        </label>
+
+                                    </div>
+
+                                    <div className="form-check form-switch mb-3">
+                                        <Field name="IdentityConsent">
+                                            {({ field }) => (
+                                                <input
+                                                    name={field.name}
+                                                    checked={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    id="IdentityConsent"
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                />
+                                            )}
+                                        </Field>
+                                        <label className="form-check-label" htmlFor="IdentityConsent">
+                                            Identity Consent Check-box Required
+                                        </label>
+
+                                    </div>
+
+
+                                    <div className="form-check form-switch mb-3">
+                                        <Field name="lockRegistration">
+                                            {({ field }) => (
+                                                <input
+                                                    name={field.name}
+                                                    checked={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    id="lockRegistration"
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                />
+                                            )}
+                                        </Field>
+                                        <label className="form-check-label" htmlFor="lockRegistration">
+                                            Lock Registration
+                                        </label>
+
+                                    </div>
+
+                                    <div className="form-check form-switch mb-3">
+                                        <Field name="paymentRequired">
+                                            {({ field }) => (
+                                                <input
+                                                    name={field.name}
+                                                    checked={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    id="paymentRequired"
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                />
+                                            )}
+                                        </Field>
+                                        <label className="form-check-label" htmlFor="paymentRequired">
+                                            Payment Required
+                                        </label>
+
+                                    </div>
+
+                                   
+                                </div>
+                                <div className='col-6'>
+
+                                    <div className='pb-3'>Optional Fields</div>
+
+                                    <div className="form-check form-switch mb-3">
+                                        <Field name="fieldIcon">
+                                            {({ field }) => (
+                                                <input
+                                                    name={field.name}
+                                                    checked={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    id="fieldIcon"
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                />
+                                            )}
+                                        </Field>
+                                        <label className="form-check-label" htmlFor="fieldIcon">
+                                            Enable Field Icons
+                                        </label>
+
+                                    </div>
+
+                                    <div className="form-check form-switch mb-3">
+                                        <Field name="birthdayRequired">
+                                            {({ field }) => (
+                                                <input
+                                                    name={field.name}
+                                                    checked={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    id="birthdayRequired"
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                />
+                                            )}
+                                        </Field>
+                                        <label className="form-check-label" htmlFor="birthdayRequired">
+                                            Enable Birthday Field Required
+                                        </label>
+
+                                    </div>
+
+                                     <div className="form-check form-switch mb-3">
+                                        <Field name="companyRequired">
+                                            {({ field }) => (
+                                                <input
+                                                    name={field.name}
+                                                    checked={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    id="companyRequired"
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                />
+                                            )}
+                                        </Field>
+                                        <label className="form-check-label" htmlFor="companyRequired">
+                                            Enable Company Field Required
+                                        </label>
+
+                                    </div>
+
+                                    
+                                </div>
 
                             </div>
 
-                            <div className="form-check form-switch mb-3">
-                                <Field name="companyRequired">
-                                    {({ field }) => (
-                                        <input
-                                            name={field.name}
-                                            checked={field.value}
-                                            onChange={field.onChange}
-                                            onBlur={field.onBlur}
-                                            id="companyRequired"
-                                            className="form-check-input"
-                                            type="checkbox"
-                                        />
-                                    )}
-                                </Field>
-                                <label className="form-check-label" htmlFor="companyRequired">
-                                    Enable Company Field Required
-                                </label>
 
-                            </div>
 
-                            <div className="form-check form-switch mb-3">
-                                <Field name="birthdayRequired">
-                                    {({ field }) => (
-                                        <input
-                                            name={field.name}
-                                            checked={field.value}
-                                            onChange={field.onChange}
-                                            onBlur={field.onBlur}
-                                            id="birthdayRequired"
-                                            className="form-check-input"
-                                            type="checkbox"
-                                        />
-                                    )}
-                                </Field>
-                                <label className="form-check-label" htmlFor="birthdayRequired">
-                                    Enable Birthday Field Required
-                                </label>
-
-                            </div>
-
-                            <div className="form-check form-switch mb-3">
-                                <Field name="lockRegistration">
-                                    {({ field }) => (
-                                        <input
-                                            name={field.name}
-                                            checked={field.value}
-                                            onChange={field.onChange}
-                                            onBlur={field.onBlur}
-                                            id="lockRegistration"
-                                            className="form-check-input"
-                                            type="checkbox"
-                                        />
-                                    )}
-                                </Field>
-                                <label className="form-check-label" htmlFor="lockRegistration">
-                                    Lock Registration
-                                </label>
-
-                            </div>
 
                         </div>
 

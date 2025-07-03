@@ -15,6 +15,9 @@ import { MdOutlineCalendarMonth } from "react-icons/md";
 import { MdDriveFileRenameOutline } from "react-icons/md";
 import { LuBriefcaseBusiness } from "react-icons/lu";
 import { BsGenderAmbiguous } from "react-icons/bs";
+import SimpleSnackbar from "../utils/Snackbar";
+import { useRef } from "react";
+
 
 const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
     const { setFieldValue } = useFormikContext();
@@ -34,6 +37,7 @@ export const TemplateForm = () => {
     const [showSubmit, setShowSubmit] = useState(false);
     const [selectedDate, setSelectedDate] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const snackbarRef = useRef();
 
     const initialValues = {
         email: '',
@@ -74,8 +78,9 @@ export const TemplateForm = () => {
         });
 
 
-        const registration_response_data = await otpResponse.json();
+        const registration_response_data = await registration_response.json();
         debugger;
+        snackbarRef.current?.openSnackbar(registration_response_data.message);
         // Your submit logic here, for example:
         // const createRecordResponse = await UseCreateRecord(...);
         // if (createRecordResponse.status) { ... }
@@ -87,24 +92,14 @@ export const TemplateForm = () => {
 
     return (
         <>
+            <SimpleSnackbar ref={snackbarRef} />
             <div className={`template-form ${target.lockRegistration === 'true' ? "locked-template-form" : ""}`}>
                 <div>
                     <div className="target-description">{target.description}</div>
                     <img src={`${import.meta.env.VITE_SERVERURL}/uploads/${target.Image}`} alt={target.title} />
                 </div>
                 <div>
-                    <Link to={"/"}>
-                        <img alt="home" src="/logo-gec.png" />
-                    </Link>
                     <div>
-                        <button
-                            onClick={() => {
-                                // your modal logic here
-                            }}
-                            className="cta-button simple"
-                        >
-                            <img alt="" src="/info.svg" />
-                        </button>
                         <Formik
                             enableReinitialize={true}
                             initialValues={initialValues}
@@ -129,10 +124,12 @@ export const TemplateForm = () => {
                                         <div className="w-100">
                                             <label>Email</label>
                                             <div className="input-group">
+                                                {target.fieldIcon === 'true' && (
+                                                    <span className="input-group-text">
+                                                        <MdEmail />
+                                                    </span>
+                                                )}
 
-                                                <span className="input-group-text">
-                                                    <MdEmail />
-                                                </span>
                                                 <Field
                                                     className={`form-control ${errors.email && touched.email ? 'is-invalid' : ''}`}
                                                     type="email"
@@ -146,10 +143,12 @@ export const TemplateForm = () => {
                                     <div className="full">
                                         <label>Phone Number</label>
                                         <div className="input-group">
+                                            {target.fieldIcon === 'true' && (
+                                                <span className="input-group-text">
+                                                    <FaPhoneAlt />
+                                                </span>
 
-                                            <span className="input-group-text">
-                                                <FaPhoneAlt />
-                                            </span>
+                                            )}
                                             <Field
                                                 className={`form-control ${errors.phone && touched.phone ? 'is-invalid' : ''}`}
                                                 type="tel"
@@ -163,10 +162,13 @@ export const TemplateForm = () => {
                                     <div className="full">
                                         <label>Whatsapp Number</label>
                                         <div className="input-group">
+                                            {target.fieldIcon === 'true' && (
 
-                                            <span className="input-group-text">
-                                                <FaWhatsapp />
-                                            </span>
+                                                <span className="input-group-text">
+                                                    <FaWhatsapp />
+                                                </span>
+
+                                            )}
                                             <Field
                                                 className={`form-control ${errors.whatsapp && touched.whatsapp ? 'is-invalid' : ''}`}
                                                 type="tel"
@@ -182,10 +184,13 @@ export const TemplateForm = () => {
                                     <div className="full">
                                         <label>Gender</label>
                                         <div className="input-group">
+                                            {target.fieldIcon === 'true' && (
 
-                                            <span className="input-group-text">
-                                                <BsGenderAmbiguous />
-                                            </span>
+                                                <span className="input-group-text">
+                                                    <BsGenderAmbiguous />
+                                                </span>
+
+                                            )}
 
                                             <Field as="select" name="gender">
                                                 <option value="male">Male</option>
@@ -197,10 +202,13 @@ export const TemplateForm = () => {
                                     <div className="full">
                                         <label>First Name</label>
                                         <div className="input-group">
+                                            {target.fieldIcon === 'true' && (
 
-                                            <span className="input-group-text">
-                                                <MdDriveFileRenameOutline />
-                                            </span>
+
+                                                <span className="input-group-text">
+                                                    <MdDriveFileRenameOutline />
+                                                </span>
+                                            )}
 
                                             <Field
                                                 className={`form-control ${errors.firstName && touched.firstName ? 'is-invalid' : ''}`}
@@ -214,10 +222,13 @@ export const TemplateForm = () => {
                                     <div className="full">
                                         <label>Last Name</label>
                                         <div className="input-group">
+                                            {target.fieldIcon === 'true' && (
 
-                                            <span className="input-group-text">
-                                                <MdDriveFileRenameOutline />
-                                            </span>
+
+                                                <span className="input-group-text">
+                                                    <MdDriveFileRenameOutline />
+                                                </span>
+                                            )}
 
                                             <Field
                                                 className={`form-control ${errors.lastName && touched.lastName ? 'is-invalid' : ''}`}
@@ -232,10 +243,12 @@ export const TemplateForm = () => {
                                         <div className="full">
                                             <label>Company Name</label>
                                             <div className="input-group">
+                                                {target.fieldIcon === 'true' && (
 
-                                                <span className="input-group-text">
-                                                    <LuBriefcaseBusiness />
-                                                </span>
+                                                    <span className="input-group-text">
+                                                        <LuBriefcaseBusiness />
+                                                    </span>
+                                                )}
                                                 <Field
                                                     className={`form-control ${errors.companyName && touched.companyName ? 'is-invalid' : ''}`}
                                                     type="text"
@@ -269,34 +282,36 @@ export const TemplateForm = () => {
                                         </div>
                                     )}
 
-                                    <div className="full">
-                                        <label htmlFor="consent">
-                                            I confirm that I have a valid proof of identification and consent to present it at the venue.
-                                        </label>
-                                        <Field name="consent">
-                                            {({ field, form }) => (
-                                                <input
-                                                    {...field}
-                                                    type="checkbox"
-                                                    id="consent"
-                                                    className={`form-check-input ${form.errors.consent && form.touched.consent ? 'is-invalid' : ''}`}
-                                                    onChange={e => {
-                                                        field.onChange(e);
-                                                        setShowSubmit(e.target.checked);
-                                                    }}
-                                                />
-                                            )}
-                                        </Field>
-                                        <ErrorMessage name="consent" component="div" className="invalid-feedback small" />
-                                    </div>
-                                    <Box className="d-flex justify-content-end w-100">
+                                    {target.IdentityConsent === 'true' && (
+                                        <div className="full">
+                                            <label htmlFor="consent">
+                                                I confirm that I have a valid proof of identification and consent to present it at the venue.
+                                            </label>
+                                            <Field name="consent">
+                                                {({ field, form }) => (
+                                                    <input
+                                                        {...field}
+                                                        type="checkbox"
+                                                        id="consent"
+                                                        className={`form-check-input ${form.errors.consent && form.touched.consent ? 'is-invalid' : ''}`}
+                                                        onChange={e => {
+                                                            field.onChange(e);
+                                                            setShowSubmit(e.target.checked);
+                                                        }}
+                                                    />
+                                                )}
+                                            </Field>
+                                            <ErrorMessage name="consent" component="div" className="invalid-feedback small" />
+                                        </div>
+                                    )}
+                                    <Box className="d-flex justify-content-end w-100 my-2">
 
                                         <Button
                                             variant="contained"
                                             color="primary"
                                             disabled={false}
                                             type="submit"
-                                            style={{ pointerEvents: 'auto', opacity: 1, width: '100%' }}
+                                            style={{ pointerEvents: 'auto', opacity: 1, width: '100%', textTransform: 'none' }}
 
                                         >
                                             {isSubmitting ? 'Saving...' : 'Submit'}

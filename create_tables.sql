@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS registration (
   metadata_modifiedAt DATETIME
 );
 
+
 CREATE TABLE IF NOT EXISTS registration_config (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   page VARCHAR(100),
@@ -22,7 +23,12 @@ CREATE TABLE IF NOT EXISTS registration_config (
   birthdayRequired BOOLEAN,
   companyRequired BOOLEAN,
   lockRegistration BOOLEAN,
+  IdentityConsent BOOLEAN,
+  fileUpload BOOLEAN,
+  textarea BOOLEAN,
+  fieldIcon BOOLEAN,
   title VARCHAR(255),
+  send_button_text VARCHAR(255),
   event_date DATETIME, 
   description TEXT,
   Image TEXT,
