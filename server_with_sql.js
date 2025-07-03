@@ -469,7 +469,7 @@ app.post("/registration", upload.single('none'), async (req, res) => {
         //     return res.status(404).json({ status: false, message: "Record not found" });
         // }
 
-        data.event_id = generateRecordId(data.event, -6, false);
+        data.event_id = generateRecordId(data.event, false);
         const create_result = dbService.createSafe(table_name, data);
         if(create_result.status){
             // Todo: send email
