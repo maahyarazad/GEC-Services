@@ -459,41 +459,52 @@ const sendOtpToPhone = async (mobile_number, req, res, twilioClient) => {
     }
 };
 
-app.post("/registration", upload.single('none'), async (req, res) => {
+app.post("/registration", upload.single('attachment_file'), async (req, res) => {
     try {
         const table_name = "registration";
         const data = req.body;
+        const file = req.file; 
 
-        const max_token_value = await dbService.findExact("registration_config", "page", data.event);
-        const count_token = await dbService.countExact(table_name, "phone", data.phone);
-
-        // Convert to numbers
-        const maxTokens = Number(max_token_value?.maxTokensPerGuest);
-        const currentCount = Number(count_token.count);
-
-        // Validate values
-        if (isNaN(maxTokens) || isNaN(currentCount)) {
-            return res.status(400).json({
-                status: false,
-                message: "Invalid registration configuration or user data.",
-            });
+        // Max token doesn't mean anything for sending out documents like applying for Golden Adler Ward 
+        if(!file){
+            const max_token_value = await dbService.findExact("registration_config", "page", data.event);
+            const count_token = await dbService.countExact(table_name, "phone", data.phone);
+    
+            // Convert to numbers
+            const maxTokens = Number(max_token_value?.maxTokensPerGuest);
+            const currentCount = Number(count_token.count);
+    
+            // Validate values
+            if (isNaN(maxTokens) || isNaN(currentCount)) {
+                return res.status(400).json({
+                    status: false,
+                    message: "Invalid registration configuration or user data.",
+                });
+            }
+    
+            if (currentCount >= maxTokens) {
+                return res.status(413).json({
+                    status: false,
+                    message: "You have reached the maximum number of registrations allowed for this event.",
+                });
+            }
         }
 
-        if (currentCount >= maxTokens) {
-            return res.status(413).json({
-                status: false,
-                message: "You have reached the maximum number of registrations allowed for this event.",
-            });
-        }
 
+       
+
+        // You can check if file was sent
+        if (file) {
+            data.attachment_file = file.originalname
+        } 
 
         data.event_id = generateRecordId(data.event, false);
-        const create_result = dbService.createSafe(table_name, data);
+        const create_result = await dbService.createSafe(table_name, data);
         if(create_result.status){
             // Todo: send email
             // await generateQRWithText(request, path);
             // await forumRegisterSendEmail({ reqBody: request });
-            return res.json({ status: true, message: "Data updated successfully", create_result });
+            return res.json({ status: true, message: "Your request has been successfully processed.", create_result });
         }
 
         return res.json({ status: false, message: create_result.error });

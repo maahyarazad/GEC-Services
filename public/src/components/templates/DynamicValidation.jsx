@@ -34,7 +34,7 @@ export const getValidationSchema = (target) => {
           .required("Birthday is required.")
       : Yup.date().nullable().notRequired(),
 
-    consent: target?.birthdayRequired === 'true'?
+    consent: target?.IdentityConsent === 'true'?
       Yup.boolean()
       .oneOf([true], "You must agree to the terms and conditions.")
       :Yup.boolean().notRequired(),
@@ -43,8 +43,8 @@ export const getValidationSchema = (target) => {
       ? Yup.mixed()
           .required("Attachment is required.")
           .test("fileSize", "Attachment file should be less than 5MB", (value) => {
-              if (!value || typeof value === "string") return true; // If editing, string path is allowed
-              return value.size <= 5 * 1024 * 1024;
+            if (!value || typeof value === "string") return true; 
+            return value instanceof File && value.size <= 5 * 1024 * 1024;
           })
       : Yup.mixed().notRequired(),
 

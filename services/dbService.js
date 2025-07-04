@@ -141,14 +141,14 @@ const dbService = {
 
 
     // Optional: alternative version using safeWrite for sync writes
-    createSafe: (table, data) => {
+    createSafe: async (table, data) => {
         const keys = Object.keys(data);
         const values = Object.values(data);
         const placeholders = keys.map(() => "?").join(", ");
         const sql = `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${placeholders})`;
 
         try {
-            safeWrite(sql, values);
+            await safeWrite(sql, values);
             return { status: true };
         } catch (err) {
             return { status: false, error: err.message };

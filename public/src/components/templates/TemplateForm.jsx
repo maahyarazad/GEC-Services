@@ -37,9 +37,9 @@ export const TemplateForm = () => {
     const [showSubmit, setShowSubmit] = useState(false);
     const [selectedDate, setSelectedDate] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+
     const snackbarRef = useRef();
     const fileInputRef = useRef();
-
 
     const initialValues = {
         email: '',
@@ -50,6 +50,8 @@ export const TemplateForm = () => {
         lastName: '',
         companyName: '',
         birthday: '',
+        textarea: '',
+        fileUpload: null,
         consent: false,
     };
 
@@ -61,20 +63,37 @@ export const TemplateForm = () => {
         }
     }, []);
 
-    const handleSubmitRegistration = async (values) => {
+    const handleSubmitRegistration = async (values, { resetForm, setFieldValue }) => {
         try{
+
             setIsSubmitting(true);
 
-            const { consent, registration_code, ...data } = {
+            const { textarea, consent, registration_code, ...data } = {
                 ...values,
                 event: target.page,
             };
 
+            data.message = textarea;
+            
             const formData = new FormData();
             for (const key in data) {
+                if(key === "fileUpload") continue;
                 formData.append(key, data[key]);
             }
 
+            // file attachment logic goes here
+            if (target.fileUpload && data.fileUpload && typeof data.fileUpload !== 'string') {
+                
+                const renamedFile = new File([data.fileUpload], `${target.page}__${Date.now()}__${data.fileUpload.name}`,
+                 {
+                    type: data.fileUpload.type,
+                });
+
+                debugger;
+                formData.append('attachment_file', renamedFile);
+            }
+            
+            
             const registration_response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration`, {
                 method: 'POST',
                 body: formData,
@@ -82,10 +101,25 @@ export const TemplateForm = () => {
 
 
             const registration_response_data = await registration_response.json();
-            snackbarRef.current?.openSnackbar(registration_response_data.message);
 
+            if(registration_response_data.status){
+
+                snackbarRef.current?.openSnackbar(registration_response_data.message);
+                resetForm(); // 👈 Reset the form after submission
+
+                setFieldValue("phone", target.mobile_number);
+                setFieldValue("whatsapp", target.mobile_number);
+
+                // Optionally clear file input manually if you're using ref
+                if (fileInputRef) {
+                    fileInputRef.current.value = "";
+                }
+                return;
+            }
+        
+            
         }catch(e){
-            snackbarRef.current?.openSnackbar(e);
+            snackbarRef.current?.openSnackbar(e.message);
         }finally{
             setIsSubmitting(false);
         }
@@ -110,7 +144,8 @@ export const TemplateForm = () => {
                             enableReinitialize={true}
                             initialValues={initialValues}
                             validationSchema={getValidationSchema(target)}
-                            onSubmit={handleSubmitRegistration}
+                            onSubmit={async (values, { resetForm, setFieldValue }) => 
+                                {await handleSubmitRegistration(values, { resetForm, setFieldValue })}}
                         >
                             {({ setFieldValue, errors, touched }) => (
                                 <Form>
@@ -156,6 +191,7 @@ export const TemplateForm = () => {
 
                                             )}
                                             <Field
+
                                                 className={`form-control ${errors.phone && touched.phone ? 'is-invalid' : ''}`}
                                                 type="tel"
                                                 name="phone"
