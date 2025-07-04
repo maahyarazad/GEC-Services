@@ -40,6 +40,7 @@ export const TemplateForm = () => {
 
     const snackbarRef = useRef();
     const fileInputRef = useRef();
+    const identityConsentRef = useRef();
 
     const initialValues = {
         email: '',
@@ -99,12 +100,13 @@ export const TemplateForm = () => {
                 body: formData,
             });
 
+            
 
             const registration_response_data = await registration_response.json();
-
+            // debugger;
             if(registration_response_data.status){
 
-                snackbarRef.current?.openSnackbar(registration_response_data.message);
+                snackbarRef.current?.openSnackbar(registration_response_data.message, 'success');
                 resetForm(); // 👈 Reset the form after submission
 
                 setFieldValue("phone", target.mobile_number);
@@ -114,7 +116,12 @@ export const TemplateForm = () => {
                 if (fileInputRef) {
                     fileInputRef.current.value = "";
                 }
-                return;
+
+                if (identityConsentRef.current) {
+                    identityConsentRef.current.checked = false;
+                }
+            }else{
+                snackbarRef.current?.openSnackbar(registration_response_data.message, '');
             }
         
             
@@ -375,6 +382,7 @@ export const TemplateForm = () => {
                                             <Field name="consent">
                                                 {({ field, form }) => (
                                                     <input
+                                                        ref={identityConsentRef}
                                                         {...field}
                                                         type="checkbox"
                                                         id="consent"

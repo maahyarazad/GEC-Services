@@ -6,7 +6,7 @@ import { Switch, Button, Box, Tooltip } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { MdFormatListBulletedAdd } from "react-icons/md";
 import AlertDialog from '../../utils/AlertDialog';
-
+import lockRegistrationImage from '../../../assets/media/lock_registration.png'
 const getColumns = ({ onEdit, onLock }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'page', headerName: 'Page', width: 130 },
@@ -138,8 +138,11 @@ export const RegistrationList = () => {
 
     const switchLock = (row) => {
         dialogRef.current.openDialog(
-            'Are you sure you want to continue?',
-            'Switching Registration Lock',
+            <div>
+                Enabling this option will lock the registration page and prevent further submissions. Are you sure you want to proceed?
+                <img src={lockRegistrationImage} alt="Lock" style={{ maxWidth: '100%', marginTop: 8 }} />
+            </div>,
+            'Confirm Action',
             () => {
 
                 const selectedRow = registrationList?.rows?.find((x) => x.id === row.id);
@@ -149,8 +152,7 @@ export const RegistrationList = () => {
                 }
             },
             () => {
-                console.log('❌ Cancel clicked');
-
+                
             }
         );
 
@@ -188,7 +190,7 @@ export const RegistrationList = () => {
                     }
 
                 <Modal isOpen={editReg}
-                    onRequestClose={() => setEditReg(false)}
+                    onRequestClose={() => {setEditReg(false);  setInitialData(null);}}
                     title={`Modify ${initialData?.title}`}>
                     <RegistrationRequestForm initialData={initialData} modalSwitch={() => {
                         setEditReg(false);

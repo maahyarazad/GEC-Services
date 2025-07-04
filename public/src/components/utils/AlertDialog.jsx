@@ -44,7 +44,7 @@ const AlertDialog = React.forwardRef((props, ref) => {
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
     >
-      <DialogTitle id="alert-dialog-title">Confirm {actionTitle}</DialogTitle>
+      <DialogTitle id="alert-dialog-title">{actionTitle}</DialogTitle>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
           {message}
