@@ -157,10 +157,10 @@ export const RegistrationList = () => {
     };
 
     return (
-        <div className="gallery-events">
+        <Box sx={{ padding: 1 }}>
             <AlertDialog ref={dialogRef} />
-            <div className="d-flex justify-content-end">
-                <div className="me-4 pt-4">
+            <div className="d-flex justify-content-start mb-1">
+                <div className="">
                     <Tooltip title="Add New Registration Page" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
                         <MdFormatListBulletedAdd onClick={() => setNewReg(true)} size={30} className="text-primary" style={{ cursor: 'pointer' }}
                         />
@@ -169,9 +169,7 @@ export const RegistrationList = () => {
             </div>
 
 
-            <div style={{ width: '100%', height: '85vh' }}>
-                <Box sx={{ padding: 2 }}>
-
+          
                     {registrationList
                         ?
                         <div style={{ height: '100%' }}>
@@ -188,7 +186,6 @@ export const RegistrationList = () => {
                             <CircularProgress />
                         </Box>
                     }
-                </Box>
 
                 <Modal isOpen={editReg}
                     onRequestClose={() => setEditReg(false)}
@@ -200,7 +197,6 @@ export const RegistrationList = () => {
                     }} />
                 </Modal>
 
-            </div>
             <Modal isOpen={newReg}
                 onRequestClose={() => setNewReg(false)}
                 title={"New Registration Page"}>
@@ -211,6 +207,6 @@ export const RegistrationList = () => {
 
                     }} />
             </Modal>
-        </div>
+        </Box>
     );
 };

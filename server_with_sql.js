@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 5500;
 const dbService = require("./services/dbService");
 const { generateRecordId, generateOTP } = require("./services/generatorService");
 const { generateRecordDate, generateRecordDateTime } = require("./services/dateService");
+const { exportTableAsCSV } = require("./services/csvParser");
 
 const session = require('express-session');
 
@@ -505,35 +506,9 @@ app.post("/registration", upload.single('none'), async (req, res) => {
 
 app.get('/registration', async (req, res) => {
   try {
-    const {
-      page = "1",
-      pageSize = "10",
-      sortField,
-      sortOrder,
-      ...queryFilters
-    } = req.query;
-
-    const pageNumber = Math.max(0, parseInt(page, 10) - 1);
-    const limit = parseInt(pageSize, 10);
-
-    // Build filters from query parameters like filter_email, filter_gender, etc.
-    const filters = {};
-    for (const key in queryFilters) {
-      if (key.startsWith('filter_')) {
-        const field = key.replace('filter_', '');
-        filters[field] = queryFilters[key];
-      }
-    }
-
-    const data = await dbService.getPaginatedFilteredData(
-      "registration",
-      filters,
-      pageNumber,
-      limit,
-      sortField,
-      sortOrder
-    );
-
+  
+    const { filters, data } = await dbService.QuerySqlConverter(req.query, "registration");
+    
     const total = await dbService.getTotalCount("registration", filters);
 
     return res.json({
@@ -541,12 +516,33 @@ app.get('/registration', async (req, res) => {
       data,
       total
     });
+    
   } catch (error) {
     console.error("Error in /registration:", error);
     res.status(500).json({ status: false, message: 'Server error' });
   }
 });
 
+app.get('/registration-csv-data', async (req, res) => {
+  try {
+  
+    const data = await dbService.findAll("registration");
+    
+    const csv = await exportTableAsCSV(data); // Await CSV generation
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=registration-data-${Date.now()}.csv`
+    );
+
+    res.send(csv); // Send the actual CSV string
+    
+  } catch (error) {
+    console.error("Error in fetching data from sql server:", error);
+    res.status(500).json({ status: false, message: 'Server error' });
+  }
+});
 
 
 

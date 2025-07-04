@@ -156,20 +156,20 @@ const dbService = {
     },
 
     getTotalCount: (table, filters = {}) => {
-    return new Promise((resolve, reject) => {
-        const keys = Object.keys(filters);
-        const whereClause = keys.length
-        ? "WHERE " + keys.map(key => `${key} LIKE ?`).join(" AND ")
-        : "";
-        const params = keys.map(key => `%${filters[key]}%`);
+        return new Promise((resolve, reject) => {
+            const keys = Object.keys(filters);
+            const whereClause = keys.length
+            ? "WHERE " + keys.map(key => `${key} LIKE ?`).join(" AND ")
+            : "";
+            const params = keys.map(key => `%${filters[key]}%`);
 
-        const sql = `SELECT COUNT(*) AS count FROM ${table} ${whereClause}`;
+            const sql = `SELECT COUNT(*) AS count FROM ${table} ${whereClause}`;
 
-        db.get(sql, params, (err, row) => {
-        if (err) return reject(err);
-        resolve(row.count);
+            db.get(sql, params, (err, row) => {
+            if (err) return reject(err);
+            resolve(row.count);
+            });
         });
-    });
     }
 
     ,
@@ -210,6 +210,34 @@ const dbService = {
                 resolve(rows);
             });
         });
+    },
+
+    QuerySqlConverter: async (query, table_name) => {
+        const {
+            page = "1", pageSize = "10", sortField, sortOrder, ...queryFilters
+        } = query;
+
+        const pageNumber = Math.max(0, parseInt(page, 10) - 1);
+        const limit = parseInt(pageSize, 10);
+
+        // Build filters from query parameters like filter_email, filter_gender, etc.
+        const filters = {};
+        for (const key in queryFilters) {
+            if (key.startsWith('filter_')) {
+                const field = key.replace('filter_', '');
+                filters[field] = queryFilters[key];
+            }
+        }
+
+        const data = await dbService.getPaginatedFilteredData(
+            table_name,
+            filters,
+            pageNumber,
+            limit,
+            sortField,
+            sortOrder
+        );
+        return { filters, data };
     }
     
 

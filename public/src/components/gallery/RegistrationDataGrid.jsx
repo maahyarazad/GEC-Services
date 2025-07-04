@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import {
-    DataGrid
-} from '@mui/x-data-grid';
-import {
-    Box, CircularProgress
-} from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
+import { Box, CircularProgress, Tooltip } from '@mui/material';
+import { BsFiletypeCsv } from "react-icons/bs";
+
 
 const PAGE_SIZE = 10;
 
@@ -25,6 +23,7 @@ const columns = [
 export const RegistrationDataGrid = () => {
     const [registrationList, setRegistrationList] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [isDownloading, setIsDownloadings] = useState(false);
 
     const [rowCount, setRowCount] = useState(0);
     const [sortModel, setSortModel] = useState([]);
@@ -71,18 +70,72 @@ export const RegistrationDataGrid = () => {
         fetchData(paginationModel, sortModel, filterModel);
     }, [paginationModel, sortModel, filterModel]);
 
+
+    const handleExport = async () => {
+        try {
+            setIsDownloadings(true);
+
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-csv-data`);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch CSV file');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'registration.csv'); // Set desired file name
+            document.body.appendChild(link);
+            link.click();
+
+            // Cleanup
+            link.remove();
+            window.URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error("Download failed", error);
+        }finally{
+            setIsDownloadings(false);
+        }
+    };
+
+
     return (
-        <Box sx={{ padding: 2 }}>
+
+
+        <Box sx={{ padding: 1 }}>
+            <div className="d-flex justify-content-start mb-1">
+                <div className="">
+                    <Tooltip title="Download CSV data" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
+
+                        {isDownloading ? <div className='d-flex'>
+                            <span className='me-2'>Downloading</span>
+                            <CircularProgress
+                                                        size={20}
+                                                        color="inherit"
+                                                    />
+                        </div>
+                        
+                                             
+                                        : 
+                        <BsFiletypeCsv onClick={handleExport} size={30} className="text-primary" style={{ cursor: 'pointer' }}
+                        />}
+                    </Tooltip>
+                </div>
+            </div>
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                     <CircularProgress />
                 </Box>
             ) : (
-                <div style={{ width: '100%', height: '85vh' }}>
+
+                <div style={{ width: '100%', height: '82dvh' }}>
                     <DataGrid
                         rows={registrationList}
                         columns={columns}
-                       
+
                         rowsPerPageOptions={[25, 50, 100]}
                         paginationMode="server"
                         sortingMode="server"
@@ -98,17 +151,17 @@ export const RegistrationDataGrid = () => {
                         }}
                         filterModel={{
                             items: Object.entries(filterModel).map(([field, { value }]) => ({
-                            field,
-                            value,
-                            operator: 'contains' // optionally specify operator
+                                field,
+                                value,
+                                operator: 'contains' // optionally specify operator
                             }))
                         }}
                         onFilterModelChange={(newModel) => {
                             const filters = {};
                             newModel.items.forEach(item => {
-                            if (item.value && item.field) {
-                                filters[item.field] = { value: item.value };
-                            }
+                                if (item.value && item.field) {
+                                    filters[item.field] = { value: item.value };
+                                }
                             });
                             setFilterModel(filters);
                         }}
