@@ -491,7 +491,6 @@ app.post("/registration", upload.single('attachment_file'), async (req, res) => 
         }
 
 
-       
 
         // You can check if file was sent
         if (file) {
@@ -534,6 +533,8 @@ app.get('/registration', async (req, res) => {
   }
 });
 
+
+
 app.get('/registration-csv-data', async (req, res) => {
   try {
   
@@ -555,6 +556,75 @@ app.get('/registration-csv-data', async (req, res) => {
   }
 });
 
+
+app.get('/member-csv-data', async (req, res) => {
+  try {
+    const data = await dbService.findAll("member");
+
+    const csv = await exportTableAsCSV(data); // Await CSV generation
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=member-data-${Date.now()}.csv`
+    );
+
+    res.send(csv); // Send the actual CSV string
+    
+  } catch (error) {
+    console.error("Error in fetching data from member table:", error);
+    res.status(500).json({ status: false, message: 'Server error' });
+  }
+});
+
+
+app.get('/member', async (req, res) => {
+  try {
+  
+    const { filters, data } = await dbService.QuerySqlConverter(req.query, "member");
+    
+    const total = await dbService.getTotalCount("member", filters);
+
+    return res.json({
+      status: true,
+      data,
+      total
+    });
+    
+  } catch (error) {
+    console.error("Error in /member:", error);
+    res.status(500).json({ status: false, message: 'Server error' });
+  }
+});
+
+
+app.post("/member", upload.single('attachment_file'), async (req, res) => {
+    try {
+        const table_name = "member";
+        const data = req.body;
+        const file = req.file; 
+
+        // You can check if file was sent
+        if (file) {
+            data.attachment_file = file.originalname
+        } 
+
+        const create_result = await dbService.createSafe(table_name, data);
+
+        if(create_result.status){
+            // Todo: send email
+            // await generateQRWithText(request, path);
+            // await forumRegisterSendEmail({ reqBody: request });
+            return res.json({ status: true, message: "Your request has been successfully processed.", create_result });
+        }
+
+        return res.json({ status: false, message: create_result.error });
+
+    } catch (error) {
+        console.error("Edit error:", error);
+        res.status(500).json({ status: false, message: "Server error" });
+    }
+});
 
 
 //WILL FETCH AND RETURN ANY DATA

@@ -50,3 +50,21 @@ CREATE TABLE IF NOT EXISTS registration_client_access (
   mobile_number TEXT,
   createdAt DATETIME DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS Member (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+  firstName VARCHAR(100) NOT NULL,
+  lastName VARCHAR(100) NOT NULL,
+
+  phoneNumber VARCHAR(20) NOT NULL UNIQUE,
+  whatsapp VARCHAR(20) NOT NULL,
+  avatar TEXT,
+
+  language VARCHAR(10) CHECK(language IN ('en', 'de', 'ar')),
+
+  uniqueIdentifier VARCHAR(64),
+
+  createdAt DATETIME NOT NULL DEFAULT (datetime('now')),
+  modifiedAt DATETIME DEFAULT NULL
+);

@@ -164,9 +164,15 @@ export const RegistrationList = () => {
             <div className="d-flex justify-content-start mb-1">
                 <div className="">
                     <Tooltip title="Add New Registration Page" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
-                        <MdFormatListBulletedAdd onClick={() => setNewReg(true)} size={30} className="text-primary" style={{ cursor: 'pointer' }}
-                        />
                     </Tooltip>
+                       <Button
+                         variant="outlined"
+                         startIcon={<MdFormatListBulletedAdd size={24} />}
+                         onClick={() => setNewReg(true)}
+                         sx={{ fontSize: 14, textTransform: 'none' }}
+                       >
+                         Add Registration
+                       </Button>
                 </div>
             </div>
 

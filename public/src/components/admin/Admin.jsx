@@ -9,7 +9,7 @@ import Box from '@mui/material/Box';
 import { useState } from "react";
 import { RegistrationList } from "./Registration/RegistrationList";
 import { RegistrationDataGrid } from "../gallery/RegistrationDataGrid"
-
+import {MemberDataGrid} from "../gallery/MembersDataGrid"
 export const Admin = ({ data }) => {
 
 
@@ -23,6 +23,9 @@ export const Admin = ({ data }) => {
     switch (tabValue) {
         case 1:
             content = <RegistrationDataGrid />;
+            break;
+        case 2:
+            content = <MemberDataGrid />;
             break;
         default:
             content = <RegistrationList/>
@@ -56,6 +59,7 @@ export const Admin = ({ data }) => {
                         >
                             <Tab label="Registration Management" style={{textTransform: 'none'}}/>
                             <Tab label="Event Management" style={{textTransform: 'none'}}/>
+                            <Tab label="Member Management" style={{textTransform: 'none'}}/>
                         </Tabs>
 
                     </Box>

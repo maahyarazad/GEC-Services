@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { Box, CircularProgress, Tooltip } from '@mui/material';
+import { Box, CircularProgress, Tooltip, Button } from '@mui/material';
 import { BsFiletypeCsv } from "react-icons/bs";
 
 
@@ -109,7 +109,7 @@ export const RegistrationDataGrid = () => {
             <div className="d-flex justify-content-start mb-1">
                 <div className="">
                     <Tooltip title="Download CSV data" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
-
+</Tooltip>
                         {isDownloading ? <div className='d-flex'>
                             <span className='me-2'>Downloading</span>
                             <CircularProgress
@@ -120,9 +120,16 @@ export const RegistrationDataGrid = () => {
                         
                                              
                                         : 
-                        <BsFiletypeCsv onClick={handleExport} size={30} className="text-primary" style={{ cursor: 'pointer' }}
-                        />}
-                    </Tooltip>
+                        <Button
+  variant="outlined"
+  startIcon={<BsFiletypeCsv size={20} />}
+  onClick={handleExport}
+  sx={{ fontSize: 14, color: 'primary.main', textTransform: 'none' }}
+>
+  Download CSV
+</Button>
+                        }
+                    
                 </div>
             </div>
             {loading ? (
