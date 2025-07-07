@@ -11,9 +11,9 @@ const dbService = require("./services/dbService");
 const { generateRecordId, generateOTP } = require("./services/generatorService");
 const { generateRecordDate, generateRecordDateTime } = require("./services/dateService");
 const { exportTableAsCSV } = require("./services/csvParser");
-
+const {comfirm_message_email, event_confirm_registration_email} = require("./services/emailService");
 const session = require('express-session');
-
+const  {generateQRWithText} = require("./services/qrGenerator");
 
 const accountSid = 'ACf20c6fdcff4554153d18e319b1741de5';
 const authToken = '169c6a86516341663e70d61cf416fe3f';
@@ -518,8 +518,6 @@ app.post("/registration", upload.single('attachment_file'), async (req, res) => 
             }
         }
 
-
-
         // You can check if file was sent
         if (file) {
             data.attachment_file = file.originalname
@@ -529,8 +527,13 @@ app.post("/registration", upload.single('attachment_file'), async (req, res) => 
         const create_result = await dbService.createSafe(table_name, data);
         if(create_result.status){
             // Todo: send email
-            // await generateQRWithText(request, path);
-            // await forumRegisterSendEmail({ reqBody: request });
+            if (file) {
+                data.attachment_file = file.originalname
+            } else{
+                
+                await generateQRWithText(request, path);
+                await event_confirm_registration_email({ reqBody: request });
+            }
             return res.json({ status: true, message: "Your request has been successfully processed.", create_result });
         }
 

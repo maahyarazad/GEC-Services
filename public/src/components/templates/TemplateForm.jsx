@@ -63,21 +63,20 @@ export const TemplateForm = () => {
 
             
             if(otp_response.ok){
-                console.log(otp_response);
+
                 setGlobalWhatsapp(values["whatsapp"])
-                
                 setCurrentResponseStatus(otp_response.ok);
                 setValidOtp(true);
 
                 statusRef.current.innerText = "OTP sent to " + values.whatsapp;
     
-    
                 const response_data = await otp_response.json();
     
                 setCurrentResponseMessage(response_data.message);
-                debugger;
             }
+            debugger;
 
+            
         }catch(e){
             debugger;
             statusRef.current.innerText = e.message;
@@ -94,7 +93,7 @@ export const TemplateForm = () => {
     }
     const handlePostOTP = async (value) => {
         try {
-            debugger;
+
             const data = {
                 otp: value,
                 userAgent: navigator.userAgent,
@@ -115,7 +114,6 @@ export const TemplateForm = () => {
                 credentials: 'include'
             });
 
-            setCurrentResponseStatus(otpResponse.ok)
 
             if (otpResponse.status === 400 || otpResponse.status === 500) {
                 throw new Error(`Server responded with ${otpResponse.status}`);
@@ -130,9 +128,8 @@ export const TemplateForm = () => {
                 setShowOtpInput(false);
                 snackbarRef.current?.openSnackbar(otp_response_data.message, 'success');
                 
-
-
             } else {
+
                 statusRef.current.textContent = otp_response_data.message;
             }
 
