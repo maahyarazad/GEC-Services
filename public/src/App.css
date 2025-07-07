@@ -785,3 +785,9 @@ tr.eventhide {
     top: 18.5px;
   }
 }
+
+
+.ql-editor {
+  direction: ltr;
+  text-align: left;
+}

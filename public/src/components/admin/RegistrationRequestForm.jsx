@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import slugify from 'slugify';
-
+import QuillField from '../utils/QuillField'
 
 const validationSchema = Yup.object({
     title: Yup.string().required('Title is required'),
@@ -322,13 +322,15 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                                 <label htmlFor="description" className="form-label">
                                     Description
                                 </label>
-                                <Field
+                                <QuillField name="description" />
+
+                                {/* <Field
                                     name="description"
                                     as="textarea"
                                     className={`form-control ${errors.description && touched.description ? 'is-invalid' : ''}`}
                                     rows="4"
                                     placeholder="Enter a brief description"
-                                />
+                                /> */}
                                 <div style={{ minHeight: 30 }}>
 
                                     <ErrorMessage

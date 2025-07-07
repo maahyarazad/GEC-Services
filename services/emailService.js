@@ -183,7 +183,7 @@ async function forumRegisterSendEmail({ reqBody }) {
       </div>
       <div class="content">
         <p>
-          Thank you for registering for the <strong>German Forum 2025</strong>.
+          Thank you for registering for the <strong></strong>.
           We appreciate your interest and look forward to your participation.
         </p>
         <p><strong>Date:</strong> 17th June 2025</p>
