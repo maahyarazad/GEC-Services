@@ -2,11 +2,16 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import Modal from "../../Modal";
 import RegistrationRequestForm from "../RegistrationRequestForm";
 import { DataGrid } from '@mui/x-data-grid';
-import { Switch, Button, Box, Tooltip } from '@mui/material';
+import { Switch, Button, Box, Tooltip, FormControlLabel } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 import { MdFormatListBulletedAdd } from "react-icons/md";
 import AlertDialog from '../../utils/AlertDialog';
 import lockRegistrationImage from '../../../assets/media/lock_registration.png'
+import Stepper from '@mui/material/Stepper';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
+
+
 const getColumns = ({ onEdit, onLock }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'page', headerName: 'Page', width: 130 },
@@ -158,6 +163,26 @@ export const RegistrationList = () => {
 
     };
 
+  const [assignEventCode, setAssignEventCode] = useState(false);
+
+    const steps = [
+    'Step 1: Select Initial Event Configuration',
+    'Step 2: Registration'
+    ];
+
+  const [activeStep, setActiveStep] = useState(0);
+  const handleNext = () => {
+    setActiveStep((prev) => prev + 1);
+  };
+
+  const handleBack = () => {
+    setActiveStep((prev) => prev - 1);
+  };
+
+  const handleClose = () => {
+    setNewReg(false);
+    setActiveStep(0); // reset step on close
+  };
     return (
         <Box sx={{ padding: 1 }}>
             <AlertDialog ref={dialogRef} />
@@ -178,22 +203,22 @@ export const RegistrationList = () => {
 
 
           
-                    {registrationList
-                        ?
-                        <div style={{ height: '100%' }}>
-                            <DataGrid
-                                rows={registrationList.rows}
-                                columns={getColumns({ onEdit: openEdit, onLock: switchLock })}
-                                pageSize={5}
-                                rowsPerPageOptions={[5]}
-                                disableSelectionOnClick
-                            />
-                        </div>
-                        :
-                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                            <CircularProgress />
-                        </Box>
-                    }
+                {registrationList
+                    ?
+                    <div style={{ height: '100%' }}>
+                        <DataGrid
+                            rows={registrationList.rows}
+                            columns={getColumns({ onEdit: openEdit, onLock: switchLock })}
+                            pageSize={5}
+                            rowsPerPageOptions={[5]}
+                            disableSelectionOnClick
+                        />
+                    </div>
+                    :
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <CircularProgress />
+                    </Box>
+                }
 
                 <Modal isOpen={editReg}
                     onRequestClose={() => {setEditReg(false);  setInitialData(null);}}
@@ -205,16 +230,70 @@ export const RegistrationList = () => {
                     }} />
                 </Modal>
 
-            <Modal isOpen={newReg}
-                onRequestClose={() => setNewReg(false)}
-                title={"New Registration Page"}>
-                <RegistrationRequestForm initialData={null}
-                    modalSwitch={() => {
-                        setNewReg(false);
-                        fetchData();
+           
 
-                    }} />
-            </Modal>
+
+    <Modal isOpen={newReg} onRequestClose={() => setNewReg(false)} title="New Registration Page">
+  <Stepper activeStep={activeStep} alternativeLabel>
+    {steps.map((label) => (
+      <Step key={label}>
+        <StepLabel>{label}</StepLabel>
+      </Step>
+    ))}
+  </Stepper>
+
+  <div className="my-4">
+    {activeStep === 0 && (
+      <>
+        <div className="mb-4">
+          <p>
+            There are currently <strong>10 active members</strong> in the system.
+            Do you want to <strong>enable event code assignment</strong> for each member?
+          </p>
+          <p>
+            Enabling this option will generate a <strong>unique access code</strong> for each member.
+            Later, you can limit the number of registrations allowed per code.
+          </p>
+
+          <FormControlLabel
+            control={
+              <Switch
+                checked={assignEventCode}
+                onChange={(e) => setAssignEventCode(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Enable unique event codes for members"
+          />
+        </div>
+
+        <div className="mt-4 text-end">
+          <Button variant="contained" color="primary" onClick={handleNext}>
+            Next
+          </Button>
+        </div>
+      </>
+    )}
+
+    {activeStep === 1 && (
+      <>
+        <RegistrationRequestForm
+          initialData={null}
+          assignEventCode={assignEventCode}
+          modalSwitch={() => {
+            handleClose();
+            fetchData();
+          }}
+        />
+        <div className="mt-4 text-end">
+          <Button variant="outlined" onClick={handleBack} className="me-2">
+            Back
+          </Button>
+        </div>
+      </>
+    )}
+  </div>
+</Modal>
         </Box>
     );
 };

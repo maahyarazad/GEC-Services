@@ -531,8 +531,8 @@ app.post("/registration", upload.single('attachment_file'), async (req, res) => 
                 data.attachment_file = file.originalname
             } else{
                 
-                await generateQRWithText(request, path);
-                await event_confirm_registration_email({ reqBody: request });
+                await generateQRWithText(data.event, data.event_id);
+                await event_confirm_registration_email(req);
             }
             return res.json({ status: true, message: "Your request has been successfully processed.", create_result });
         }

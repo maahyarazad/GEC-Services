@@ -85,7 +85,7 @@ async function comfirm_message_email({ reqBody }) {
   }
 }
 
-async function event_confirm_registration_email({ reqBody }) {
+async function event_confirm_registration_email(reqBody) {
   const tempPath = path.join(__dirname, "qr-files");
   const filePath = path.join(tempPath, `${reqBody.timestamp}.png`);
 

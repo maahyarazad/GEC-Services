@@ -7,7 +7,7 @@ const fs = require('fs');
  * Generate a QR code with embedded text over it.
  * @param {string} data - The data to encode in the QR code.
  */
-async function generateQRWithText(data) {
+async function generateQRWithText(event_page, code) {
 
 
   const tempPath = path.join(__dirname, 'qr-files');
@@ -15,10 +15,10 @@ async function generateQRWithText(data) {
       fs.mkdirSync(tempPath, { recursive: true });
     }
     
-  const filePath = path.join(tempPath, `${data.timestamp}.png`)
+  const filePath = path.join(tempPath, `${code}.png`)
   try {
     
-    const qeValue = `${process.env.VITE_SERVER_URL}/guest-registration?guest-code=${data.hash}`;
+    const qeValue = `${process.env.VITE_SERVER_URL}/guest-registration/${event_page}?guest-code=${code}`;
     await QRCode.toFile(filePath, qeValue);
 
   } catch (error) {

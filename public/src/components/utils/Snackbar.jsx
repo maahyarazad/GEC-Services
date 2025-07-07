@@ -51,6 +51,7 @@ const SimpleSnackbar = forwardRef((_, ref) => {
                             padding: '16px 24px',
                             borderRadius: '8px',
                             boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                            display:"flex"
                         },
                     }
                 }}
@@ -58,9 +59,9 @@ const SimpleSnackbar = forwardRef((_, ref) => {
                 autoHideDuration={999999}
                 onClose={handleClose}
                 message={
-                <div className='d-flex align-items-center'>
-                        <div className='row'>
-                            <div className='col-1 d-flex justify-content-center align-items-center'>
+               
+                        <div className='d-flex justify-content-between w-100' style={{minWidth:400}}>
+                            <div className='d-flex justify-content-center align-items-center'>
                                 <div className="d-flex justify-content-center align-items-center">
                                     {
                                         messageType === 'success' ?
@@ -73,20 +74,15 @@ const SimpleSnackbar = forwardRef((_, ref) => {
                                             <div className="swal2-error" ></div>
                                     }
                                 </div>
+                                <div className='ps-2 d-flex justify-content-center align-items-center' >
+                                    {message}
+                                </div>
                             </div>
-                            <div className='col-10 d-flex justify-content-center align-items-center' >
-                                {message}
-                            </div>
-                            <div className='col-1 d-flex justify-content-center align-items-center'>
+                            
+                            <div className='d-flex justify-content-center align-items-center'>
                                 {action}
                             </div>
                         </div>
-
-
-
-                    
-
-                </div>
             }
         />
     );

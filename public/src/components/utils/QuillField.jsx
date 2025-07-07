@@ -27,9 +27,9 @@ const QuillField = ({ name }) => {
       <input type="hidden" name={name} value={field.value || ''} />
 
       {/* Show validation error if any */}
-      {meta.touched && meta.error && (
+      {/* {meta.touched && meta.error && (
         <div className="text-danger small mt-1">{meta.error}</div>
-      )}
+      )} */}
     </div>
   );
 };

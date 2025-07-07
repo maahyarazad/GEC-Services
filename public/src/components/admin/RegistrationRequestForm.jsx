@@ -27,7 +27,7 @@ const validationSchema = Yup.object({
         .positive('Must be greater than zero')
         .required('Number of tokens is required'),
 
-    description: Yup.string().required('Description is required'),
+    // description: Yup.string().required('Description is required'),
 
     event_date: Yup.date()
         .required('Event date is required')
@@ -331,14 +331,14 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
                                     rows="4"
                                     placeholder="Enter a brief description"
                                 /> */}
-                                <div style={{ minHeight: 30 }}>
+                                {/* <div style={{ minHeight: 30 }}>
 
                                     <ErrorMessage
                                         name="description"
                                         component="div"
                                         className="text-danger small mt-1"
                                     />
-                                </div>
+                                </div> */}
                             </div>
 
                         </div>
