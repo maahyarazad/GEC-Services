@@ -142,9 +142,16 @@ export const TemplateForm = () => {
             <SimpleSnackbar ref={snackbarRef} />
             <div className={`template-form ${target.lockRegistration === 'true' ? "locked-template-form" : ""}`}>
                 <div>
-                    <div className="target-description">{target.description}</div>
-                    <img src={`${import.meta.env.VITE_SERVERURL}/uploads/${target.Image}`} alt={target.title} />
+                <div
+                    className="target-description"
+                    dangerouslySetInnerHTML={{ __html: target.description }}
+                />
+                <img
+                    src={`${import.meta.env.VITE_SERVERURL}/uploads/${target.Image}`}
+                    alt={target.title}
+                />
                 </div>
+
                 <div>
                     <div>
                         <Formik
