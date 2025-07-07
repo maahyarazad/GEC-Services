@@ -649,59 +649,60 @@ tr.eventhide {
 }
 
 
+/* SweetAlert2 - Custom Success Icon */
 .swal2-success {
-  display: inline-block;
-  border-radius: 50%;
-  border: 2px solid #a5dc86; /* 4 → 2 */
-  box-sizing: content-box;
   position: relative;
-  width: 40px;   /* 80 → 40 */
-  height: 40px;  /* 80 → 40 */
-  animation: swal2-rotate-success 0.5s ease-in;
-}
-
-.swal2-success:after,
-.swal2-success:before {
-  content: '';
+  display: inline-block;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  border: 2px solid #a5dc86;
   border-radius: 50%;
-  position: absolute;
+  background: white;
+  animation: swal2-rotate-success 0.5s ease-in-out;
 }
 
-.swal2-success:before {
+.swal2-success::before,
+.swal2-success::after {
+  content: '';
+  position: absolute;
   width: 100%;
   height: 100%;
-  background: white;
-  z-index: -1;
+  border-radius: 50%;
+  top: 0;
+  left: 0;
+}
+
+.swal2-success-line-tip,
+.swal2-success-line-long {
+  position: absolute;
+  background-color: #a5dc86;
+  height: 2.5px;
+  border-radius: 1px;
 }
 
 .swal2-success-line-tip {
-  position: absolute;
-  height: 2.5px;            /* 5 → 2.5 */
-  background-color: #a5dc86;
-  top: 23px;                /* 46 → 23 */
-  left: 7px;                /* 14 → 7 */
-  width: 12.5px;            /* 25 → 12.5 */
+  width: 12.5px;
+  top: 23px;
+  left: 7px;
   transform: rotate(45deg);
-  animation: swal2-animate-success-line-tip 0.1s;
+  animation: swal2-animate-success-line-tip 0.2s ease-out;
 }
 
 .swal2-success-line-long {
-  position: absolute;
-  height: 2.5px;
-  background-color: #a5dc86;
-  top: 19px;                /* 38 → 19 */
-  left: 13px;               /* 26 → 13 */
-  width: 23.5px;            /* 47 → 23.5 */
+  width: 23.5px;
+  top: 19px;
+  left: 13px;
   transform: rotate(-45deg);
-  animation: swal2-animate-success-line-long 0.1s;
+  animation: swal2-animate-success-line-long 0.2s ease-out;
 }
 
 @keyframes swal2-rotate-success {
   0% {
-    transform: rotate(0);
+    transform: rotate(0deg);
   }
   100% {
-    transform: rotate(1turn);
+    transform: rotate(360deg);
   }
 }
 
@@ -721,12 +722,12 @@ tr.eventhide {
 @keyframes swal2-animate-success-line-long {
   0% {
     width: 0;
-    right: 0;
+    left: 13px;
     top: 19px;
   }
   100% {
     width: 23.5px;
-    right: 0;
+    left: 13px;
     top: 19px;
   }
 }

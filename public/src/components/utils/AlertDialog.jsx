@@ -5,6 +5,11 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import Slide from '@mui/material/Slide';
+
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="left" ref={ref} {...props} />;
+});
 
 // Reusable AlertDialog component
 const AlertDialog = React.forwardRef((props, ref) => {
@@ -14,7 +19,7 @@ const AlertDialog = React.forwardRef((props, ref) => {
   const onProceedRef = React.useRef(null);
   const onCancelRef = React.useRef(null);
 
-  const openDialog = (msg, actionTitle ,onProceed, onCancel) => {
+  const openDialog = (msg, actionTitle, onProceed, onCancel) => {
     if (msg) setMessage(msg);
     if (actionTitle) setActionTitle(actionTitle);
     onProceedRef.current = onProceed;
@@ -43,6 +48,8 @@ const AlertDialog = React.forwardRef((props, ref) => {
       onClose={handleCancel}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
+      TransitionComponent={Transition}
+      keepMounted
     >
       <DialogTitle id="alert-dialog-title">{actionTitle}</DialogTitle>
       <DialogContent>
@@ -51,8 +58,8 @@ const AlertDialog = React.forwardRef((props, ref) => {
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleCancel} style={{textTransform: 'none'}} >Cancel</Button>
-        <Button onClick={handleProceed} style={{textTransform: 'none'}} autoFocus>
+        <Button onClick={handleCancel} style={{ textTransform: 'none' }}>Cancel</Button>
+        <Button onClick={handleProceed} style={{ textTransform: 'none' }} autoFocus>
           Proceed
         </Button>
       </DialogActions>

@@ -18,21 +18,136 @@ import { BsGenderAmbiguous } from "react-icons/bs";
 import SimpleSnackbar from "../utils/Snackbar";
 import { useRef } from "react";
 import CircularProgress from '@mui/material/CircularProgress';
+import OtpTimer from "../utils/OtpTimer";
+import OtpInput from "../utils/OtpInput"
 
-const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
-    const { setFieldValue } = useFormikContext();
 
-    useEffect(() => {
-        if (mobileNumber) {
-            setFieldValue("phone", mobileNumber);
-            setFieldValue("whatsapp", mobileNumber);
-        }
-    }, [mobileNumber, setFieldValue]);
+// const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
+//     const { setFieldValue } = useFormikContext();
 
-    return null;
-};
+//     useEffect(() => {
+//         if (mobileNumber) {
+//             setFieldValue("phone", mobileNumber);
+//             setFieldValue("whatsapp", mobileNumber);
+//         }
+//     }, [mobileNumber, setFieldValue]);
+
+//     return null;
+// };
 
 export const TemplateForm = () => {
+    //OTP
+    const [showOtpInput, setShowOtpInput] = useState(false);
+    const otpRef = useRef();
+    const statusRef = useRef();
+    const [currentResponseStatus, setCurrentResponseStatus] = useState(null);
+    const [currentResponseMessage, setCurrentResponseMessage] = useState('');
+    const [phoneRegistered, setPhoneRegistered] = useState(false)
+    const [validOtp, setValidOtp] = useState(null)   
+    const [global_whatsapp, setGlobalWhatsapp] = useState('');
+    const handleSendOtp = async (values) => {
+        try{
+            setShowOtpInput(true);
+            const formData = new FormData();
+
+
+            for (const key in values) {
+                if(key === "whatsapp") formData.append(key, values[key]);
+            }
+            debugger;
+            const otp_response = await fetch(`${import.meta.env.VITE_SERVERURL}/send-otp`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+
+            
+            if(otp_response.ok){
+                console.log(otp_response);
+                setGlobalWhatsapp(values["whatsapp"])
+                
+                setCurrentResponseStatus(otp_response.ok);
+                setValidOtp(true);
+
+                statusRef.current.innerText = "OTP sent to " + values.whatsapp;
+    
+    
+                const response_data = await otp_response.json();
+    
+                setCurrentResponseMessage(response_data.message);
+                debugger;
+            }
+
+        }catch(e){
+            debugger;
+            statusRef.current.innerText = e.message;
+
+
+        }finally{
+
+        }
+        
+    };
+
+    const handleExpiredChange = (val) =>{
+        setValidOtp(false)
+    }
+    const handlePostOTP = async (value) => {
+        try {
+            debugger;
+            const data = {
+                otp: value,
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                registration_code: target.registration_code,
+                mobile_number: global_whatsapp,
+            };
+
+            const formData = new FormData();
+            for (const key in data) {
+                formData.append(key, data[key]);
+            }
+
+            const otpResponse = await fetch(`${import.meta.env.VITE_SERVERURL}/otp-check`, {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            });
+
+            setCurrentResponseStatus(otpResponse.ok)
+
+            if (otpResponse.status === 400 || otpResponse.status === 500) {
+                throw new Error(`Server responded with ${otpResponse.status}`);
+            }
+
+            const otp_response_data = await otpResponse.json();
+
+
+            if (otp_response_data.status) {
+
+                setPhoneRegistered(true);
+                setShowOtpInput(false);
+                snackbarRef.current?.openSnackbar(otp_response_data.message, 'success');
+                
+
+
+            } else {
+                statusRef.current.textContent = otp_response_data.message;
+            }
+
+        } catch (err) {
+            console.error("Login failed:", err);
+            if (statusRef.current) {
+                statusRef.current.textContent = `Login failed: ${err.message}`;
+            }
+        } finally {
+            
+        }
+
+    };
+
+
     const [target, setTarget] = useState(null);
     const [showSubmit, setShowSubmit] = useState(false);
     const [selectedDate, setSelectedDate] = useState('');
@@ -65,7 +180,7 @@ export const TemplateForm = () => {
     }, []);
 
     const handleSubmitRegistration = async (values, { resetForm, setFieldValue }) => {
-        try{
+        try {
 
             setIsSubmitting(true);
 
@@ -75,36 +190,36 @@ export const TemplateForm = () => {
             };
 
             data.message = textarea;
-            
+
             const formData = new FormData();
             for (const key in data) {
-                if(key === "fileUpload") continue;
+                if (key === "fileUpload") continue;
                 formData.append(key, data[key]);
             }
 
             // file attachment logic goes here
             if (target.fileUpload && data.fileUpload && typeof data.fileUpload !== 'string') {
-                
+
                 const renamedFile = new File([data.fileUpload], `${target.page}__${Date.now()}__${data.fileUpload.name}`,
-                 {
-                    type: data.fileUpload.type,
-                });
+                    {
+                        type: data.fileUpload.type,
+                    });
 
                 debugger;
                 formData.append('attachment_file', renamedFile);
             }
-            
-            
+
+
             const registration_response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration`, {
                 method: 'POST',
                 body: formData,
             });
 
-            
+
 
             const registration_response_data = await registration_response.json();
             // debugger;
-            if(registration_response_data.status){
+            if (registration_response_data.status) {
 
                 snackbarRef.current?.openSnackbar(registration_response_data.message, 'success');
                 resetForm(); // 👈 Reset the form after submission
@@ -120,17 +235,17 @@ export const TemplateForm = () => {
                 if (identityConsentRef.current) {
                     identityConsentRef.current.checked = false;
                 }
-            }else{
+            } else {
                 snackbarRef.current?.openSnackbar(registration_response_data.message, '');
             }
-        
-            
-        }catch(e){
+
+
+        } catch (e) {
             snackbarRef.current?.openSnackbar(e.message);
-        }finally{
+        } finally {
             setIsSubmitting(false);
         }
-        
+
     };
 
     if (!target) {
@@ -142,14 +257,14 @@ export const TemplateForm = () => {
             <SimpleSnackbar ref={snackbarRef} />
             <div className={`template-form ${target.lockRegistration === 'true' ? "locked-template-form" : ""}`}>
                 <div>
-                <div
-                    className="target-description"
-                    dangerouslySetInnerHTML={{ __html: target.description }}
-                />
-                <img
-                    src={`${import.meta.env.VITE_SERVERURL}/uploads/${target.Image}`}
-                    alt={target.title}
-                />
+                    <div
+                        className="target-description"
+                        dangerouslySetInnerHTML={{ __html: target.description }}
+                    />
+                    <img
+                        src={`${import.meta.env.VITE_SERVERURL}/uploads/${target.Image}`}
+                        alt={target.title}
+                    />
                 </div>
 
                 <div>
@@ -158,13 +273,12 @@ export const TemplateForm = () => {
                             enableReinitialize={true}
                             initialValues={initialValues}
                             validationSchema={getValidationSchema(target)}
-                            onSubmit={async (values, { resetForm, setFieldValue }) => 
-                                {await handleSubmitRegistration(values, { resetForm, setFieldValue })}}
+                            onSubmit={async (values, { resetForm, setFieldValue }) => { await handleSubmitRegistration(values, { resetForm, setFieldValue }) }}
                         >
-                            {({ setFieldValue, errors, touched }) => (
+                            {({ setFieldValue, errors, touched, values, validateForm, setTouched }) => (
                                 <Form>
                                     {/* Autofill phone and whatsapp fields */}
-                                    <AutofillPhoneAndWhatsapp mobileNumber={target.mobile_number} />
+                                    {/* <AutofillPhoneAndWhatsapp mobileNumber={target.mobile_number} /> */}
 
                                     <h1 className="mb-2">{target.title}</h1>
                                     <h4 className="mb-1">{new Date(target.event_date).toLocaleDateString('en-GB', {
@@ -209,7 +323,7 @@ export const TemplateForm = () => {
                                                 className={`form-control ${errors.phone && touched.phone ? 'is-invalid' : ''}`}
                                                 type="tel"
                                                 name="phone"
-                                                disabled={true}
+                                                disabled={false}
                                             />
                                         </div>
                                         <ErrorMessage name="phone" component="div" className="text-danger small" />
@@ -229,11 +343,60 @@ export const TemplateForm = () => {
                                                 className={`form-control ${errors.whatsapp && touched.whatsapp ? 'is-invalid' : ''}`}
                                                 type="tel"
                                                 name="whatsapp"
-                                                disabled={true}
+                                                disabled={phoneRegistered}
                                             />
                                         </div>
                                         <ErrorMessage name="whatsapp" component="div" className="text-danger small" />
                                     </div>
+
+                                    <div className={`otp-slide ${showOtpInput ? "show" : ""}`}>
+                                        <div ref={statusRef}></div>
+
+                                        {currentResponseStatus && (
+                                            <>
+                                                <OtpInput ref={otpRef}
+                                                    onComplete={(val) => {
+                                                        handlePostOTP(val);
+                                                    }}
+                                                />
+                                                {validOtp && (
+                                                    <OtpTimer
+                                                        loginResponseData={currentResponseStatus}
+                                                        onExpiredChange={handleExpiredChange}
+                                                    />
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+
+                                        {!phoneRegistered && (
+
+                                            <Button
+                                                variant="contained"
+                                                color="primary"
+                                                disabled={validOtp === true}
+                                                type="button"
+                                                onClick={async()=>{
+                                                    const formErrors = await validateForm(); // validate entire form
+                                                    
+                                                    if (formErrors.whatsapp) {
+                                                        setTouched({ whatsapp: true });
+                                                    }
+
+                                                    if (!formErrors.whatsapp && values.whatsapp) {
+                                                        handleSendOtp(values);
+                                                    }
+                                                }}
+                                                style={{ pointerEvents: 'auto', opacity: 1, width: '100%', textTransform: 'none' }}
+
+                                            >
+                                                Send OTP
+                                            </Button>
+                                        )}
+
+
+                                       
+                                       
 
                                     <div className="spacer"></div>
 
@@ -320,7 +483,7 @@ export const TemplateForm = () => {
                                     )}
 
 
-                                     {target.companyRequired === 'true' && (
+                                    {target.companyRequired === 'true' && (
                                         <div className="full">
                                             <label>Company Name</label>
                                             <div className="input-group">
@@ -341,17 +504,17 @@ export const TemplateForm = () => {
                                     )}
 
 
-                                     {target.textarea === 'true' && (
+                                    {target.textarea === 'true' && (
                                         <div className="full">
                                             <label htmlFor="textarea">Message</label>
                                             <div className="input-group">
-                                                
+
                                                 <Field
                                                     as="textarea"
                                                     rows={4}
                                                     className={`form-control ${errors.textarea && touched.textarea ? 'is-invalid' : ''}`}
                                                     name="textarea"
-                                                    />
+                                                />
                                             </div>
                                             <ErrorMessage name="textarea" component="div" className="text-danger small" />
                                         </div>
@@ -360,7 +523,7 @@ export const TemplateForm = () => {
                                     {target.fileUpload === 'true' && (
                                         <div className="full">
                                             <label htmlFor="fileUpload">
-                                               Please attach any documentation to support your application.
+                                                Please attach any documentation to support your application.
                                             </label>
                                             <input
                                                 ref={fileInputRef}
@@ -370,12 +533,12 @@ export const TemplateForm = () => {
                                                 accept=".pdf, .doc, .docx, .ppt, .pptx, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation"
                                                 className={`form-control ${errors.fileUpload && touched.fileUpload ? 'is-invalid' : ''}`}
                                                 onChange={e => {
-                                                        const file = e.currentTarget.files[0];
-                                                        if (file) {
-                                                            setFieldValue('fileUpload', file);
-                                                        }
-                                                    }}
-                                                />
+                                                    const file = e.currentTarget.files[0];
+                                                    if (file) {
+                                                        setFieldValue('fileUpload', file);
+                                                    }
+                                                }}
+                                            />
 
                                             <ErrorMessage name="fileUpload" component="div" className="invalid-feedback small" />
                                         </div>
@@ -406,23 +569,25 @@ export const TemplateForm = () => {
                                     )}
 
                                     <Box className="d-flex justify-content-end w-100 my-2">
-
+                                        
                                         <Button
                                             variant="contained"
                                             color="primary"
-                                            disabled={false}
+                                            disabled={!phoneRegistered}
                                             type="submit"
+
                                             style={{ pointerEvents: 'auto', opacity: 1, width: '100%', textTransform: 'none' }}
 
                                         >
-                                            {isSubmitting ? 
+                                            {isSubmitting ?
                                                 <CircularProgress
                                                     size={20}
                                                     color="inherit"
                                                 />
-                                             : target.send_button_text}
+                                                : target.send_button_text}
                                         </Button>
                                     </Box>
+
 
 
                                 </Form>

@@ -380,7 +380,7 @@ app.post("/registration-config-access", upload.none(), async (req, res) => {
             return res.status(401).json({ status: false, message: "Invalid Authorization Code" });
         }
 
-        await sendOtpToPhone(data.mobile_number, req, res, client);
+        // await sendOtpToPhone(data.mobile_number, req, res, client);
         // await dbService.create("registration_client_access", data);
 
         return res.status(200).json({
@@ -394,6 +394,34 @@ app.post("/registration-config-access", upload.none(), async (req, res) => {
     } catch (error) {
         console.error(error);
         return res.status(500).json({ status: false, message: "Server error" });
+    }
+});
+
+
+app.post("/send-otp", upload.none(), async (req, res) => {
+    try {
+        const data = req.body;
+
+       const response = await sendOtpToPhone(data.whatsapp, req, res, client);
+       
+       if(response.status){
+           return res.status(200).json({
+               status: true,
+               message: "Login Success",
+               // data: data.page_data,
+               session: req.session,
+           });
+       }else{
+        return res.status(response.code).json({
+               status: false,
+               message: response.message,
+           });
+       }
+
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ status: false, message: error.message });
     }
 });
 
@@ -420,7 +448,7 @@ app.post("/otp-check", upload.none(), async (req, res) => {
 
         res.status(200).json({
             status: true,
-            message: "Login Success",
+            message: "Phone number registered successfully.",
             data: page_data
         });
 
@@ -446,11 +474,11 @@ const sendOtpToPhone = async (mobile_number, req, res, twilioClient) => {
     req.session.otpExpires = Date.now() + 1 * 59 * 1000; // expires in 1 mins
 
     try {
-        await twilioClient.messages.create({
-            body: `Your OTP code is: ${otp}`,
-            from: twilioPhone,
-            to: `whatsapp:${mobile_number}`,
-        });
+        // await twilioClient.messages.create({
+        //     body: `Your OTP code is: ${otp}`,
+        //     from: twilioPhone,
+        //     to: `whatsapp:${mobile_number}`,
+        // });
 
         return { status: true, code: 200, message: 'OTP sent successfully' };
     } catch (error) {

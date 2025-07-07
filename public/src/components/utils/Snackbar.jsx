@@ -61,16 +61,18 @@ const SimpleSnackbar = forwardRef((_, ref) => {
                 <div className='d-flex align-items-center'>
                         <div className='row'>
                             <div className='col-1 d-flex justify-content-center align-items-center'>
-                                {
-                                    messageType === 'success' ?
-                                
-                                        <div className="swal2-success" >
-                                            <div className="swal2-success-line-tip"></div>
-                                            <div className="swal2-success-line-long"></div>
-                                        </div>
-                                        :
-                                        <div className="swal2-error" ></div>
-                                }
+                                <div className="d-flex justify-content-center align-items-center">
+                                    {
+                                        messageType === 'success' ?
+                                    
+                                            <div className="swal2-success" >
+                                                <div className="swal2-success-line-tip"></div>
+                                                <div className="swal2-success-line-long"></div>
+                                            </div>
+                                            :
+                                            <div className="swal2-error" ></div>
+                                    }
+                                </div>
                             </div>
                             <div className='col-10 d-flex justify-content-center align-items-center' >
                                 {message}

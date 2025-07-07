@@ -57,15 +57,13 @@
   > div:nth-of-type(2) {
     width: calc(33% - 32px);
     padding: 20px;
-    padding-top: 50px;
-    padding-bottom: 50px;
+    /* padding-top: 50px;
+    padding-bottom: 50px; */
     /* max-width: 400px; */
     height: 100dvh !important;
     position: relative;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    align-content: center;
+    flex-direction: column;
     overflow-y: scroll !important;
     > a {
       width: 96px;
@@ -79,11 +77,14 @@
     }
 
     > div {
+      flex-grow: 1;
+      min-height: 0; /* Required for overflow to work properly inside flex container */
       > button {
         display: none;
       }
       > form {
-        margin: 0 auto;
+        
+        padding-bottom: 40px;
         width: 100%;
 
         > h1 {

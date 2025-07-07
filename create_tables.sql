@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS Member (
 
   firstName VARCHAR(100) NOT NULL,
   lastName VARCHAR(100) NOT NULL,
-
+  email VARCHAR(255) NOT NULL,
   phoneNumber VARCHAR(20) NOT NULL UNIQUE,
   whatsapp VARCHAR(20) NOT NULL,
   avatar TEXT,
