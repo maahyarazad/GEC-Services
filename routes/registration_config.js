@@ -154,9 +154,26 @@ router.post("/registration-config-access", upload.none(), async (req, res) => {
     try {
 
         const data = req.body;
+        const registration_code =  data.registration_code.replace(/\s+/g, ' ').trim();
         // Check duplicate
-        const page_data = await dbService.findExact("registration_config", "registration_code", data.registration_code);
-        if (!page_data) {
+
+        const key = await dbService.findExact("registration_keys", "key", registration_code);
+        if(key && key.length > 0){
+            const page_data = await dbService.findExact("registration_config", "id", key[0].registration_config_id);
+            page_data[0].registration_code = registration_code;
+
+            if (page_data) {
+                return res.status(200).json({
+                    status: true,
+                    message: "Login Success",
+                    data: page_data,
+                    session: req.session,
+                });
+            }
+        }
+
+        const page_data = await dbService.findExact("registration_config", "registration_code", registration_code);
+        if (!page_data || page_data.length == 0) {
             return res.status(401).json({ status: false, message: "Invalid Authorization Code" });
         }
 

@@ -9,8 +9,8 @@ import { DataGrid } from '@mui/x-data-grid';
 const columns = [
   // { field: 'id', headerName: 'ID', width: 70 },
   // { field: 'registration_config_id', headerName: 'Config ID', width: 110 },
-  { field: 'key', headerName: 'Key', flex: 1, minWidth: 200 },
-  { field: 'tokenCount', headerName: 'Token Count', width: 130 },
+  { field: 'key', headerName: 'Key', minWidth: 10, width: 200 },
+  { field: 'tokenCount', headerName: 'Used Token Count', width: 150 },
   // { field: 'memberId', headerName: 'Member ID', width: 110 },
   { field: 'createdAt', headerName: 'Created At', width: 200 },
 ];

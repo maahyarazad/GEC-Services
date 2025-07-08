@@ -181,7 +181,7 @@ export const TemplateForm = () => {
 
             setIsSubmitting(true);
 
-            const { textarea, consent, registration_code, ...data } = {
+            const { textarea, consent, ...data } = {
                 ...values,
                 event: target.page,
             };
@@ -194,6 +194,10 @@ export const TemplateForm = () => {
                 formData.append(key, data[key]);
             }
 
+            formData.append('registration_code', target.registration_code);
+            formData.append('title', target.title);
+            formData.append('event_date', target.event_date);
+            debugger;
             // file attachment logic goes here
             if (target.fileUpload && data.fileUpload && typeof data.fileUpload !== 'string') {
 
@@ -215,7 +219,7 @@ export const TemplateForm = () => {
 
 
             const registration_response_data = await registration_response.json();
-            // debugger;
+            debugger;
             if (registration_response_data.status) {
 
                 snackbarRef.current?.openSnackbar(registration_response_data.message, 'success');
@@ -225,13 +229,14 @@ export const TemplateForm = () => {
                 setFieldValue("whatsapp", target.mobile_number);
 
                 // Optionally clear file input manually if you're using ref
-                if (fileInputRef) {
+                if (fileInputRef?.current && fileInputRef.current.value) {
                     fileInputRef.current.value = "";
                 }
 
-                if (identityConsentRef.current) {
+                if (identityConsentRef?.current && identityConsentRef.current.checked) {
                     identityConsentRef.current.checked = false;
                 }
+
             } else {
                 snackbarRef.current?.openSnackbar(registration_response_data.message, '');
             }
@@ -255,9 +260,9 @@ export const TemplateForm = () => {
             <div className={`template-form ${target.lockRegistration === 'true' ? "locked-template-form" : ""}`}>
                 <div>
                     <div
-                        className="target-description"
-                        dangerouslySetInnerHTML={{ __html: target.description }}
-                    />
+                        className={`target-description ${!target.description ? 'd-none' : ''}`}
+                        dangerouslySetInnerHTML={{ __html: target.description || '' }}
+                        />
                     <img
                         src={`${import.meta.env.VITE_SERVERURL}/uploads/${target.Image}`}
                         alt={target.title}

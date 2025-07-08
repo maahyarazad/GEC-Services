@@ -312,7 +312,26 @@ const dbService = {
             });
         });
     });
+},
+findByConditions: (table, conditions) => {
+    const keys = Object.keys(conditions);
+    const values = Object.values(conditions);
+
+    if (keys.length === 0) {
+        return Promise.reject(new Error("At least one condition is required."));
+    }
+
+    const whereClause = keys.map(key => `${key} = ?`).join(" AND ");
+    const sql = `SELECT * FROM ${table} WHERE ${whereClause}`;
+
+    return new Promise((resolve, reject) => {
+        db.all(sql, values, (err, rows) => {
+            if (err) return reject(err);
+            resolve(rows);
+        });
+    });
 }
+
 
 };
 

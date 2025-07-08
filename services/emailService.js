@@ -87,7 +87,7 @@ async function comfirm_message_email({ reqBody }) {
 
 async function event_confirm_registration_email(reqBody) {
   const tempPath = path.join(__dirname, "qr-files");
-  const filePath = path.join(tempPath, `${reqBody.timestamp}.png`);
+  const filePath = path.join(tempPath, `${reqBody.event_id}.png`);
 
   // Read and encode the image file as base64
   let attachment;
@@ -99,21 +99,21 @@ async function event_confirm_registration_email(reqBody) {
 
     try {
       const base64Image = fileBuffer.toString("base64");
-
-      attachment = {
+      const currentYear = new Date().getFullYear();
+      const attachment = {
         content: base64Image,
         filename: `${reqBody.timestamp}.png`,
         type: "image/png",
-        // disposition: "inline",
-        // content_id: "qrimage",
+        disposition: "inline",
+        content_id: "qr-code", // ✅ MUST match the cid in <img src="cid:qr-code">
       };
 
-      const htmlBody = `
+const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>German Forum 2025 Registration</title>
+    <title>${reqBody.title} Registration</title>
   </head>
   <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
@@ -123,7 +123,7 @@ async function event_confirm_registration_email(reqBody) {
             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1); margin:40px auto;">
               <tr>
                 <td bgcolor="#D9B144" style="color:#ffffff; text-align:center; padding:20px; font-size:22px; font-weight:bold; border-top-left-radius:8px; border-top-right-radius:8px;">
-                  German Forum 2025 – Registration Confirmed
+                  Registration Confirmed
                 </td>
               </tr>
             </table>
@@ -136,15 +136,15 @@ async function event_confirm_registration_email(reqBody) {
             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; padding:0 30px 30px;">
               <tr>
                 <td style="padding:20px; font-size:16px; color:#333333; line-height:1.6;">
-                  <p>Thank you for registering for the <strong>German Forum 2025</strong>. We appreciate your interest and look forward to your participation.</p>
-                  <p><strong>Date:</strong> 17th June 2025</p>
+                  <p>Thank you for registering for the <strong>${reqBody.title}</strong>. We appreciate your interest and look forward to your participation.</p>
+                  <p><strong>Date:</strong> ${reqBody.event_date}</p>
                   <p><strong>Time:</strong> 7 PM (Gates open at 6:30 PM)</p>
                   <p><strong>Location:</strong> Solar Ballroom, One & Only Zabeel</p>
                 </td>
               </tr>
               <tr>
                 <td align="center" style="padding:20px;">
-                  <p><strong>Please save the attachment and present it at the venue:</strong></p>
+                  <p><strong>Please keep this email so we can scan your QR code:</strong></p>
                   <img src="cid:qr-code" alt="QR Code" width="200" height="200" style="display:block;" />
                 </td>
               </tr>
@@ -159,7 +159,7 @@ async function event_confirm_registration_email(reqBody) {
               </tr>
               <tr>
                 <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
-                  &copy; 2025 German Emirates Club. All rights reserved.
+                  &copy; ${currentYear} German Emirates Club. All rights reserved.
                 </td>
               </tr>
             </table>
@@ -175,7 +175,7 @@ async function event_confirm_registration_email(reqBody) {
       const msg = {
         to: reqBody.email,
         from: process.env.EMAIL_SENDER,
-        subject: "Participant Registration – German Forum 2025",
+        subject: `Registration Completed – ${reqBody.title}`,
         html: htmlBody,
         attachments: [attachment],
       };
