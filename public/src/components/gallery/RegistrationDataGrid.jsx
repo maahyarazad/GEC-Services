@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { Box, CircularProgress, Tooltip, Button } from '@mui/material';
 import { BsFiletypeCsv } from "react-icons/bs";
@@ -24,26 +24,32 @@ export const RegistrationDataGrid = () => {
     const [registrationList, setRegistrationList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isDownloading, setIsDownloadings] = useState(false);
-
+    const [filterModel, setFilterModel] = useState({
+        items: [],
+    });
+        const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
     const [rowCount, setRowCount] = useState(0);
     const [sortModel, setSortModel] = useState([]);
-    const [filterModel, setFilterModel] = useState({});
     const [paginationModel, setPaginationModel] = useState({
         page: 0,
         pageSize: 25,
     });
-    const fetchData = async (paginationModel, sortModel = [], filterModel = {}) => {
+
+    const fetchData = useCallback(async (paginationModel, sortModel = [], filterModel = {}) => {
         setLoading(true);
         try {
 
-            const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
+                const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
+                const sortField = sort.field || '';
+                const sortOrder = sort.sort || '';
 
-            const sortField = sort.field || '';
-            const sortOrder = sort.sort || '';
-
-            const filterParams = Object.entries(filterModel).map(
-                ([field, { value }]) => `filter_${field}=${encodeURIComponent(value)}`
-            ).join('&');
+            // Parse filters from filterModel.items
+            const filterParams = Array.isArray(filterModel.items)
+                ? filterModel.items
+                    .filter(item => item?.field && item?.value) // Ensure valid filters
+                    .map(item => `filter_${item.field}=${encodeURIComponent(item.value)}`)
+                    .join('&')
+                : '';
 
             const queryParams = [
                 `page=${paginationModel.page + 1}`,
@@ -64,11 +70,13 @@ export const RegistrationDataGrid = () => {
         } finally {
             setLoading(false);
         }
-    };
+    },[])
 
     useEffect(() => {
-        fetchData(paginationModel, sortModel, filterModel);
-    }, [paginationModel, sortModel, filterModel]);
+            fetchData(paginationModel, sortModel, filterModel);
+        }, [paginationModel, sortModel, applyFilterTrigger]);
+
+
 
 
     const handleExport = async () => {
@@ -107,7 +115,7 @@ export const RegistrationDataGrid = () => {
 
         <Box sx={{ padding: 1 }}>
             <div className="d-flex justify-content-start mb-1">
-                <div className="">
+                <div className="me-2">
                     <Tooltip title="Download CSV data" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
                     </Tooltip>
                     {isDownloading ? <div className='d-flex'>
@@ -131,6 +139,16 @@ export const RegistrationDataGrid = () => {
                     }
 
                 </div>
+                <div className="">
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
+                                        sx={{ fontSize: 14, textTransform: 'none' }}
+                                    >
+                                        Apply Filters
+                                    </Button>
+                                </div>
             </div>
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -156,24 +174,14 @@ export const RegistrationDataGrid = () => {
                             // console.log('Sort model changed:', newModel);
                             setSortModel(newModel)
                         }}
-                        filterModel={{
-                            items: Object.entries(filterModel).map(([field, { value }]) => ({
-                                field,
-                                value,
-                                operator: 'contains' // optionally specify operator
-                            }))
-                        }}
+                        filterModel={filterModel}    
                         onFilterModelChange={(newModel) => {
-                            const filters = {};
-                            newModel.items.forEach(item => {
-                                if (item.value && item.field) {
-                                    filters[item.field] = { value: item.value };
-                                }
-                            });
-                            setFilterModel(filters);
+                            setFilterModel(newModel); // use the raw model now
                         }}
                         sortModel={sortModel}
+                        disableRowSelectionOnClick
                         disableSelectionOnClick
+                        showToolbar
                         pagination
                     />
 

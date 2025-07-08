@@ -139,7 +139,14 @@ const htmlBody = `
                   <p>Thank you for registering for the <strong>${reqBody.title}</strong>. We appreciate your interest and look forward to your participation.</p>
                   <p><strong>Date:</strong> ${reqBody.event_date}</p>
                   <p><strong>Time:</strong> 7 PM (Gates open at 6:30 PM)</p>
-                  <p><strong>Location:</strong> Solar Ballroom, One & Only Zabeel</p>
+                  <a href="https://maps.google.com/?q=One%20%26%20Only%20Zabeel,Dubai" target="_blank">
+                    <img
+                      src="https://maps.googleapis.com/maps/api/staticmap?center=One%20%26%20Only%20Zabeel,Dubai&zoom=15&size=600x300&markers=color:red|label:E|One%20%26%20Only%20Zabeel,Dubai&key=YOUR_REAL_API_KEY"
+                      alt="Event Location"
+                      width="100%"
+                      style="max-width:600px;"
+                    />
+                  </a>
                 </td>
               </tr>
               <tr>

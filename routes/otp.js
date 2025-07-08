@@ -53,11 +53,11 @@ const sendOtpToPhone = async (mobile_number, req, res, twilioClient) => {
     req.session.otpExpires = Date.now() + 1 * 59 * 1000; // expires in 1 mins
 
     try {
-        // await twilioClient.messages.create({
-        //     body: `Your OTP code is: ${otp}`,
-        //     from: twilioPhone,
-        //     to: `whatsapp:${mobile_number}`,
-        // });
+        await twilioClient.messages.create({
+            body: `Your OTP code is: ${otp}`,
+            from: twilioPhone,
+            to: `whatsapp:${mobile_number}`,
+        });
 
         return { status: true, code: 200, message: 'OTP sent successfully' };
     } catch (error) {

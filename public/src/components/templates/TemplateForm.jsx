@@ -176,6 +176,8 @@ export const TemplateForm = () => {
         }
     }, []);
 
+    
+
     const handleSubmitRegistration = async (values, { resetForm, setFieldValue }) => {
         try {
 
@@ -245,6 +247,7 @@ export const TemplateForm = () => {
         } catch (e) {
             snackbarRef.current?.openSnackbar(e.message);
         } finally {
+            
             setIsSubmitting(false);
         }
 

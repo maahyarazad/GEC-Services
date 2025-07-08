@@ -99,7 +99,7 @@ router.post("/member", upload.single('attachment_file'), async (req, res) => {
         if (data.id) {
             const edit_member = await dbService.findById("member", data.id);
             if (edit_member) {
-
+                dbService.update(table_name, edit_member.id, data);
             }
             return res.json({ status: true, message: "Your request has been successfully processed.", edit_member });
 
