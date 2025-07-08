@@ -41,7 +41,7 @@ const getColumns = ({ onEdit, onLock }) => [
     { field: 'registration_code', headerName: 'Registration Code', width: 150 },
     {
         field: 'actions',
-        headerName: 'Actions',
+        headerName: 'Actions - Page Lock',
         width: 180,
         sortable: false,
         filterable: false,
@@ -120,10 +120,7 @@ export const RegistrationList = () => {
             }
 
             const configData = await response.json();
-            console.log('Fetched config:', configData);
             fetchData();
-
-
 
         } catch (err) {
             console.error('Error fetching data:', err);

@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS Member (
   language VARCHAR(10) CHECK(language IN ('en', 'de', 'ar')),
 
   uniqueIdentifier VARCHAR(64),
-
+  active_member BOOLEAN,  
   createdAt DATETIME NOT NULL DEFAULT (datetime('now')),
   modifiedAt DATETIME DEFAULT NULL
 );
