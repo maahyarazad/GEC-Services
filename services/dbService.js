@@ -220,14 +220,16 @@ const dbService = {
         const pageNumber = Math.max(0, parseInt(page, 10) - 1);
         const limit = parseInt(pageSize, 10);
 
-        // Build filters from query parameters like filter_email, filter_gender, etc.
+        // Extract filters sent as filter_<field>=value
         const filters = {};
-        for (const key in queryFilters) {
+        Object.entries(queryFilters).forEach(([key, value]) => {
             if (key.startsWith('filter_')) {
                 const field = key.replace('filter_', '');
-                filters[field] = queryFilters[key];
+                if (value !== undefined && value !== "") {
+                    filters[field] = value;
+                }
             }
-        }
+        });
 
         const data = await dbService.getPaginatedFilteredData(
             table_name,

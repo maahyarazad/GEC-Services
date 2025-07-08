@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridToolbar, GridToolbarFilterButton } from '@mui/x-data-grid';
 import { Box, CircularProgress, Tooltip, Button, Switch } from '@mui/material';
 import { BsFiletypeCsv } from "react-icons/bs";
 import MemberRequestForm from "../../components/admin/Member/MemberRequestForm";
 import { MdFormatListBulletedAdd } from "react-icons/md";
 import Modal from "../../components/Modal";
+import debounce from 'lodash/debounce';
 
 const columns = ({ onEdit, onSwitchActive }) => [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -54,20 +55,27 @@ export const MemberDataGrid = () => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [sortModel, setSortModel] = useState([]);
-    const [filterModel, setFilterModel] = useState({});
+    const [filterModel, setFilterModel] = useState({
+        items: [],
+    });
+    const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
 
     const fetchData = useCallback(
-        async (paginationModel, sortModel = [], filterModel = {}) => {
+        async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
             setLoading(true);
             try {
                 const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
                 const sortField = sort.field || '';
                 const sortOrder = sort.sort || '';
 
-                const filterParams = Object.entries(filterModel)
-                    .map(([field, { value }]) => `filter_${field}=${encodeURIComponent(value)}`)
-                    .join('&');
+                // Parse filters from filterModel.items
+                const filterParams = Array.isArray(filterModel.items)
+                    ? filterModel.items
+                        .filter(item => item?.field && item?.value) // Ensure valid filters
+                        .map(item => `filter_${item.field}=${encodeURIComponent(item.value)}`)
+                        .join('&')
+                    : '';
 
                 const queryParams = [
                     `page=${paginationModel.page + 1}`,
@@ -88,12 +96,20 @@ export const MemberDataGrid = () => {
                 setLoading(false);
             }
         },
-        [setLoading, setMembers, setRowCount] // dependencies
+        [setLoading, setMembers, setRowCount]
     );
+
+    const debouncedFetch = useCallback(
+        debounce((pagination, sort, filter) => {
+            fetchData(pagination, sort, filter);
+        }, 500),
+        []
+    );
+
 
     useEffect(() => {
         fetchData(paginationModel, sortModel, filterModel);
-    }, [paginationModel, sortModel, filterModel]);
+    }, [paginationModel, sortModel, applyFilterTrigger]);
 
     const handleExport = async () => {
         try {
@@ -125,8 +141,8 @@ export const MemberDataGrid = () => {
             formData.append('id', row.id);
             formData.append('active-member-switch', row.active_member);
         };
-       
-        
+
+
 
         const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member`, {
             method: 'POST',
@@ -140,7 +156,7 @@ export const MemberDataGrid = () => {
             formData.append('id', row.id);
             formData.append('active_member', row.active_member);
         };
-       
+
         const response = await fetch(`${import.meta.env.VITE_SERVERURL}/active-member-switch`, {
             method: 'POST',
             body: formData,
@@ -153,33 +169,45 @@ export const MemberDataGrid = () => {
 
 
             <div className="d-flex justify-content-start mb-1">
-                <div className="">
+                <div className="me-2">
                     <Button
                         variant="outlined"
                         startIcon={<MdFormatListBulletedAdd size={24} />}
                         onClick={() => setNewReg(true)}
-                        sx={{ fontSize: 14, textTransform: 'none', marginRight: 1 }}
+                        sx={{ fontSize: 14, textTransform: 'none' }}
                     >
                         Add Member
                     </Button>
                 </div>
-                <Tooltip title="Download CSV data" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
-                </Tooltip>
-                {isDownloading ? (
-                    <div className='d-flex'>
-                        <span className='me-2'>Downloading</span>
-                        <CircularProgress size={20} color="inherit" />
-                    </div>
-                ) : (
+
+                <div className='me-2'>
+
+                    {isDownloading ? (
+                        <div className='d-flex mw-2'>
+                            <span className=''>Downloading</span>
+                            <CircularProgress size={20} color="inherit" />
+                        </div>
+                    ) : (
+                        <Button
+                            variant="outlined"
+                            startIcon={<BsFiletypeCsv size={20} />}
+                            onClick={handleExport}
+                            sx={{ fontSize: 14, color: 'primary.main', textTransform: 'none' }}
+                        >
+                            Download (All Records) CSV
+                        </Button>
+                    )}
+                </div>
+                <div className="">
                     <Button
-                        variant="outlined"
-                        startIcon={<BsFiletypeCsv size={20} />}
-                        onClick={handleExport}
-                        sx={{ fontSize: 14, color: 'primary.main', textTransform: 'none' }}
+                        variant="contained"
+                        color="primary"
+                        onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
+                        sx={{ fontSize: 14, textTransform: 'none' }}
                     >
-                        Download CSV
+                        Apply Filters
                     </Button>
-                )}
+                </div>
 
             </div>
 
@@ -192,33 +220,23 @@ export const MemberDataGrid = () => {
                     <DataGrid
                         rows={members}
                         columns={columns({ onEdit: openEdit, onSwitchActive: switchActive })}
+                        rowCount={rowCount}
                         rowsPerPageOptions={[25, 50, 100]}
                         paginationMode="server"
                         sortingMode="server"
                         filterMode="server"
-                        rowCount={rowCount}
                         paginationModel={paginationModel}
+                        sortModel={sortModel}
                         onPaginationModelChange={setPaginationModel}
                         onSortModelChange={setSortModel}
-                        filterModel={{
-                            items: Object.entries(filterModel).map(([field, { value }]) => ({
-                                field,
-                                value,
-                                operator: 'contains',
-                            })),
-                        }}
+                        filterModel={filterModel}              // ✅ Pass full model
                         onFilterModelChange={(newModel) => {
-                            const filters = {};
-                            newModel.items.forEach(item => {
-                                if (item.value && item.field) {
-                                    filters[item.field] = { value: item.value };
-                                }
-                            });
-                            setFilterModel(filters);
+                            setFilterModel(newModel); // use the raw model now
                         }}
-                        sortModel={sortModel}
+                        // ✅ Accept full model
+                        disableRowSelectionOnClick
                         disableSelectionOnClick
-                        pagination
+                        showToolbar
                     />
                 </div>
             )}

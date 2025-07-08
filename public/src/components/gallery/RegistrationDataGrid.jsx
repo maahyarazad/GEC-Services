@@ -96,7 +96,7 @@ export const RegistrationDataGrid = () => {
 
         } catch (error) {
             console.error("Download failed", error);
-        }finally{
+        } finally {
             setIsDownloadings(false);
         }
     };
@@ -109,27 +109,27 @@ export const RegistrationDataGrid = () => {
             <div className="d-flex justify-content-start mb-1">
                 <div className="">
                     <Tooltip title="Download CSV data" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
-</Tooltip>
-                        {isDownloading ? <div className='d-flex'>
-                            <span className='me-2'>Downloading</span>
-                            <CircularProgress
-                                                        size={20}
-                                                        color="inherit"
-                                                    />
-                        </div>
-                        
-                                             
-                                        : 
+                    </Tooltip>
+                    {isDownloading ? <div className='d-flex'>
+                        <span className='me-2'>Downloading</span>
+                        <CircularProgress
+                            size={20}
+                            color="inherit"
+                        />
+                    </div>
+
+
+                        :
                         <Button
-  variant="outlined"
-  startIcon={<BsFiletypeCsv size={20} />}
-  onClick={handleExport}
-  sx={{ fontSize: 14, color: 'primary.main', textTransform: 'none' }}
->
-  Download CSV
-</Button>
-                        }
-                    
+                            variant="outlined"
+                            startIcon={<BsFiletypeCsv size={20} />}
+                            onClick={handleExport}
+                            sx={{ fontSize: 14, color: 'primary.main', textTransform: 'none' }}
+                        >
+                            Download (All Records) CSV
+                        </Button>
+                    }
+
                 </div>
             </div>
             {loading ? (

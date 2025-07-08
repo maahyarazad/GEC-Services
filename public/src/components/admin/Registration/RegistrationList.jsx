@@ -209,6 +209,7 @@ export const RegistrationList = () => {
                             pageSize={5}
                             rowsPerPageOptions={[5]}
                             disableSelectionOnClick
+                            disableRowSelectionOnClick
                         />
                     </div>
                     :
