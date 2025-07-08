@@ -60,7 +60,8 @@ export const MemberDataGrid = () => {
     });
     const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
-
+    const [editReg, setEditReg] = useState(false);
+    const [initialData, setInitialData] = useState(null);
     const fetchData = useCallback(
         async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
             setLoading(true);
@@ -134,33 +135,62 @@ export const MemberDataGrid = () => {
     };
 
 
-    const openEdit = async (row) => {
-        const formData = new FormData();
-
-        if (row) {
-            formData.append('id', row.id);
-            formData.append('active-member-switch', row.active_member);
-        };
-
-
-
-        const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member`, {
-            method: 'POST',
-            body: formData,
-        });
+    const openEdit = (row) => {
+        const selectedRow = members?.find((x) => x.id === row.id);
+        debugger;
+        if (selectedRow) {
+            setInitialData(selectedRow);
+            setEditReg(true);
+        }
     };
+    // const openEdit = async (row) => {
+    //     try{
+
+    //         initialData = row;
+    //         const formData = new FormData();
+    
+    //         if (row) {
+    //             formData.append('id', row.id);
+    //             formData.append('active-member-switch', row.active_member);
+    //         };
+    
+    
+    
+    //         const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member`, {
+    //             method: 'POST',
+    //             body: formData,
+    //         });
+
+
+    //         if(!response.ok) throw new Error('Failed to modify the member.');
+
+    //         fetchData(paginationModel, sortModel, filterModel);
+
+    //     }catch (err) {
+    //         console.error('Error fetching data:', err);
+    //     }
+    // };
 
     const switchActive = async (row) => {
-        const formData = new FormData();
-        if (row) {
-            formData.append('id', row.id);
-            formData.append('active_member', row.active_member);
-        };
+        try{
+            const formData = new FormData();
+            if (row) {
+                formData.append('id', row.id);
+                formData.append('active_member', row.active_member);
+            };
+    
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/active-member-switch`, {
+                method: 'POST',
+                body: formData,
+            });
 
-        const response = await fetch(`${import.meta.env.VITE_SERVERURL}/active-member-switch`, {
-            method: 'POST',
-            body: formData,
-        });
+            if(!response.ok) throw new Error('Failed to switch member activation.');
+
+            fetchData(paginationModel, sortModel, filterModel);
+
+        }catch (err) {
+            console.error('Error fetching data:', err);
+        }
     };
 
     return (
@@ -251,6 +281,17 @@ export const MemberDataGrid = () => {
                         fetchData();
 
                     }} />
+            </Modal>
+
+            <Modal isOpen={editReg}
+                onRequestClose={() => { setEditReg(false); setInitialData(null); }}
+                title={`Modify ${initialData?.title}`}>
+                <MemberRequestForm initialData={initialData} modalSwitch={() => {
+                    setEditReg(false);
+                    fetchData(paginationModel, sortModel, filterModel);
+
+                    setInitialData(null);
+                }} />
             </Modal>
         </Box>
     );

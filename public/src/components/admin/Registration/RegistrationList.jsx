@@ -77,6 +77,7 @@ export const RegistrationList = () => {
     const [newReg, setNewReg] = useState(false);
     const [editReg, setEditReg] = useState(false);
     const [initialData, setInitialData] = useState(null);
+    const [memberCount, setMemberCount] = useState(0);
     const dialogRef = useRef();
 
     const fetchData = useCallback(async () => {
@@ -92,7 +93,6 @@ export const RegistrationList = () => {
             const values = await response.json();
 
             setRegistrationList(values);
-            console.log('Fetched registrations:', values);
         } catch (err) {
             console.error('Error fetching data:', err);
         }
@@ -100,9 +100,33 @@ export const RegistrationList = () => {
 
 
 
+    const getMemberCount = useCallback(async () => {
+        try {
+
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-get-count/`, {
+                method: 'GET',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch registration data');
+            }
+
+            const values = await response.json();
+            setMemberCount(values.total.count)
+
+        } catch (err) {
+            console.error('Error fetching data:', err);
+        }
+    }, [])
+
+
+
+
     useEffect(() => {
         fetchData();
-    }, [fetchData]);
+        getMemberCount();
+    }, [fetchData, getMemberCount]);
+
 
     const handleEdit = async (selectedRow) => {
         try {
@@ -154,32 +178,32 @@ export const RegistrationList = () => {
                 }
             },
             () => {
-                
+
             }
         );
 
     };
 
-  const [assignEventCode, setAssignEventCode] = useState(false);
+    const [assignEventCode, setAssignEventCode] = useState(false);
 
     const steps = [
-    'Step 1: Select Initial Event Configuration',
-    'Step 2: Registration'
+        'Step 1: Select Initial Event Configuration',
+        'Step 2: Registration'
     ];
 
-  const [activeStep, setActiveStep] = useState(0);
-  const handleNext = () => {
-    setActiveStep((prev) => prev + 1);
-  };
+    const [activeStep, setActiveStep] = useState(0);
+    const handleNext = () => {
+        setActiveStep((prev) => prev + 1);
+    };
 
-  const handleBack = () => {
-    setActiveStep((prev) => prev - 1);
-  };
+    const handleBack = () => {
+        setActiveStep((prev) => prev - 1);
+    };
 
-  const handleClose = () => {
-    setNewReg(false);
-    setActiveStep(0); // reset step on close
-  };
+    const handleClose = () => {
+        setNewReg(false);
+        setActiveStep(0); // reset step on close
+    };
     return (
         <Box sx={{ padding: 1 }}>
             <AlertDialog ref={dialogRef} />
@@ -187,111 +211,111 @@ export const RegistrationList = () => {
                 <div className="">
                     <Tooltip title="Add New Registration Page" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
                     </Tooltip>
-                       <Button
-                         variant="outlined"
-                         startIcon={<MdFormatListBulletedAdd size={24} />}
-                         onClick={() => setNewReg(true)}
-                         sx={{ fontSize: 14, textTransform: 'none' }}
-                       >
-                         Add Registration
-                       </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<MdFormatListBulletedAdd size={24} />}
+                        onClick={() => setNewReg(true)}
+                        sx={{ fontSize: 14, textTransform: 'none' }}
+                    >
+                        Add Registration
+                    </Button>
                 </div>
             </div>
 
 
-          
-                {registrationList
-                    ?
-                    <div style={{ height: '100%' }}>
-                        <DataGrid
-                            rows={registrationList.rows}
-                            columns={getColumns({ onEdit: openEdit, onLock: switchLock })}
-                            pageSize={5}
-                            rowsPerPageOptions={[5]}
-                            disableSelectionOnClick
-                            disableRowSelectionOnClick
-                        />
-                    </div>
-                    :
-                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                        <CircularProgress />
-                    </Box>
-                }
 
-                <Modal isOpen={editReg}
-                    onRequestClose={() => {setEditReg(false);  setInitialData(null);}}
-                    title={`Modify ${initialData?.title}`}>
-                    <RegistrationRequestForm initialData={initialData} modalSwitch={() => {
-                        setEditReg(false);
-                        fetchData();
-                        setInitialData(null);
-                    }} />
-                </Modal>
-
-           
-
-
-    <Modal isOpen={newReg} onRequestClose={() => setNewReg(false)} title="New Registration Page">
-  <Stepper activeStep={activeStep} alternativeLabel>
-    {steps.map((label) => (
-      <Step key={label}>
-        <StepLabel>{label}</StepLabel>
-      </Step>
-    ))}
-  </Stepper>
-
-  <div className="my-4">
-    {activeStep === 0 && (
-      <>
-        <div className="mb-4">
-          <p>
-            There are currently <strong>10 active members</strong> in the system.
-            Do you want to <strong>enable event code assignment</strong> for each member?
-          </p>
-          <p>
-            Enabling this option will generate a <strong>unique access code</strong> for each member.
-            Later, you can limit the number of registrations allowed per code.
-          </p>
-
-          <FormControlLabel
-            control={
-              <Switch
-                checked={assignEventCode}
-                onChange={(e) => setAssignEventCode(e.target.checked)}
-                color="primary"
-              />
+            {registrationList
+                ?
+                <div style={{ height: '100%' }}>
+                    <DataGrid
+                        rows={registrationList.rows}
+                        columns={getColumns({ onEdit: openEdit, onLock: switchLock })}
+                        pageSize={5}
+                        rowsPerPageOptions={[5]}
+                        disableSelectionOnClick
+                        disableRowSelectionOnClick
+                    />
+                </div>
+                :
+                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <CircularProgress />
+                </Box>
             }
-            label="Enable unique event codes for members"
-          />
-        </div>
 
-        <div className="mt-4 text-end">
-          <Button variant="contained" color="primary" onClick={handleNext}>
-            Next
-          </Button>
-        </div>
-      </>
-    )}
+            <Modal isOpen={editReg}
+                onRequestClose={() => { setEditReg(false); setInitialData(null); }}
+                title={`Modify ${initialData?.title}`}>
+                <RegistrationRequestForm initialData={initialData} modalSwitch={() => {
+                    setEditReg(false);
+                    fetchData();
+                    setInitialData(null);
+                }} />
+            </Modal>
 
-    {activeStep === 1 && (
-      <>
-        <RegistrationRequestForm
-          initialData={null}
-          assignEventCode={assignEventCode}
-          modalSwitch={() => {
-            handleClose();
-            fetchData();
-          }}
-        />
-        <div className="mt-4 text-end">
-          <Button variant="outlined" onClick={handleBack} className="me-2">
-            Back
-          </Button>
-        </div>
-      </>
-    )}
-  </div>
-</Modal>
+
+
+
+            <Modal isOpen={newReg} onRequestClose={() => setNewReg(false)} title="New Registration Page">
+                <Stepper activeStep={activeStep} alternativeLabel>
+                    {steps.map((label) => (
+                        <Step key={label}>
+                            <StepLabel>{label}</StepLabel>
+                        </Step>
+                    ))}
+                </Stepper>
+
+                <div className="my-4">
+                    {activeStep === 0 && (
+                        <>
+                            <div className="mb-4">
+                                <p>
+                                    There are currently <strong>{memberCount} active members</strong> in the system.
+                                    Do you want to <strong>enable event code assignment</strong> for each member?
+                                </p>
+                                <p>
+                                    Enabling this option will generate a <strong>unique access code</strong> for each member.
+                                    Later, you can limit the number of registrations allowed per code.
+                                </p>
+
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={assignEventCode}
+                                            onChange={(e) => setAssignEventCode(e.target.checked)}
+                                            color="primary"
+                                        />
+                                    }
+                                    label="Enable unique event codes for members"
+                                />
+                            </div>
+
+                            <div className="mt-4 text-end">
+                                <Button variant="contained" color="primary" onClick={handleNext}>
+                                    Next
+                                </Button>
+                            </div>
+                        </>
+                    )}
+
+                    {activeStep === 1 && (
+                        <>
+                            <RegistrationRequestForm
+                                initialData={null}
+                                assignEventCode={assignEventCode}
+                                modalSwitch={() => {
+                                    handleClose();
+                                    fetchData();
+                                }}
+                            />
+                            <div className="mt-4 text-end">
+                                <Button variant="outlined" onClick={handleBack} className="me-2">
+                                    Back
+                                </Button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </Modal>
         </Box>
     );
 };

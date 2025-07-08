@@ -76,7 +76,7 @@ router.get('/member', async (req, res) => {
 router.get('/member-get-count', async (req, res) => {
     try {
 
-        const total = await dbService.countExact("member", "active_member", 1);
+        const total = await dbService.countExact("member", "active_member", true);
 
         return res.json({
             status: true,
