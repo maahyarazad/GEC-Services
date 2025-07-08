@@ -17,6 +17,15 @@ CREATE TABLE IF NOT EXISTS registration (
   metadata_modifiedAt DATETIME
 );
 
+CREATE TABLE IF NOT EXISTS registration_keys (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  registration_config_id INTEGER,
+  key TEXT NOT NULL,
+  tokenCount INTEGER NOT NULL DEFAULT 0,
+  memberId INTEGER,
+  createdAt DATETIME DEFAULT (datetime('now')),
+  FOREIGN KEY (registration_config_id) REFERENCES registration_config(id) ON DELETE CASCADE
+);
 
 CREATE TABLE IF NOT EXISTS registration_config (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

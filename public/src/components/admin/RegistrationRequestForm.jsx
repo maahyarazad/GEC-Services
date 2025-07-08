@@ -44,7 +44,7 @@ const validationSchema = Yup.object({
 });
 
 
-export default function NewRegistrationPage({ initialData = null, modalSwitch }) {
+export default function NewRegistrationPage({ initialData = null, modalSwitch, uniqeCodeAccess= 1 }) {
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [slug, setSlug] = useState(null);
     const [submitError, setSubmitError] = useState('');
@@ -81,6 +81,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
         tokensPerGuest: initialData?.maxTokensPerGuest || '',
         description: initialData?.description || '',
         event_date: initialData?.event_date || '',
+        uniqeCodeAccess: uniqeCodeAccess
     };
 
     useEffect(() => {
@@ -124,6 +125,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch })
             formData.append('event_date', values.event_date);
             formData.append('maxTokensPerGuest', values.tokensPerGuest);
             formData.append('description', values.description);
+            formData.append('uniqeCodeAccess', values.uniqeCodeAccess);
 
             if (values.image) {
                 formData.append('image', values.image); // file object directly

@@ -120,7 +120,7 @@ const dbService = {
         const param = `${pattern}`;
 
         return new Promise((resolve, reject) => {
-            db.get(sql, [param], (err, rows) => {
+            db.all(sql, [param], (err, rows) => {
                 if (err) return reject(err);
                 resolve(rows);
             });
@@ -159,15 +159,15 @@ const dbService = {
         return new Promise((resolve, reject) => {
             const keys = Object.keys(filters);
             const whereClause = keys.length
-            ? "WHERE " + keys.map(key => `${key} LIKE ?`).join(" AND ")
-            : "";
+                ? "WHERE " + keys.map(key => `${key} LIKE ?`).join(" AND ")
+                : "";
             const params = keys.map(key => `%${filters[key]}%`);
 
             const sql = `SELECT COUNT(*) AS count FROM ${table} ${whereClause}`;
 
             db.get(sql, params, (err, row) => {
-            if (err) return reject(err);
-            resolve(row.count);
+                if (err) return reject(err);
+                resolve(row.count);
             });
         });
     }
@@ -240,8 +240,79 @@ const dbService = {
             sortOrder
         );
         return { filters, data };
-    }
-    
+    },
+
+    createRegistrationKeys: (registration_config_id, keys) => {
+        if (!Array.isArray(keys) || keys.length === 0) {
+            return Promise.resolve([]); // return empty if no keys
+        }
+
+        const placeholders = keys.map(() => '(?, ?)').join(', ');
+        const values = keys.flatMap(key => [registration_config_id, key]);
+
+        const sql = `
+            INSERT INTO registration_keys (registration_config_id, key)
+            VALUES ${placeholders}
+        `;
+
+        return new Promise((resolve, reject) => {
+            db.run(sql, values, function (err) {
+                if (err) return reject(err);
+                resolve({ inserted: keys.length });
+            });
+        });
+    },
+
+    insertWithKeys: async (table_name, registration_data, code_list) => {
+    return new Promise((resolve, reject) => {
+        db.serialize(() => {
+            db.run('BEGIN TRANSACTION');
+
+            // Insert the main registration_config
+            const keys = Object.keys(registration_data);
+            const values = Object.values(registration_data);
+            const placeholders = keys.map(() => "?").join(", ");
+            const sql = `INSERT INTO ${table_name} (${keys.join(", ")}) VALUES (${placeholders})`;
+
+            db.run(sql, values, function (err) {
+                if (err) {
+                    db.run('ROLLBACK');
+                    return reject(err);
+                }
+
+                const registration_config_id = this.lastID;
+
+                if (code_list.length > 0) {
+                    const stmt = db.prepare(`
+                        INSERT INTO registration_keys (registration_config_id, key, memberId) 
+                        VALUES (?, ?, ?)
+                    `);
+
+                    try {
+                        for (const item of code_list) {
+                            stmt.run(registration_config_id, item.key, item.memberId);
+                        }
+
+                        stmt.finalize((finalizeErr) => {
+                            if (finalizeErr) {
+                                db.run('ROLLBACK');
+                                return reject(finalizeErr);
+                            }
+                            db.run('COMMIT');
+                            resolve({ id: registration_config_id });
+                        });
+                    } catch (insertErr) {
+                        db.run('ROLLBACK');
+                        return reject(insertErr);
+                    }
+                } else {
+                    db.run('COMMIT');
+                    resolve({ id: registration_config_id });
+                }
+            });
+        });
+    });
+}
 
 };
 

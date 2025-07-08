@@ -16,12 +16,12 @@ const generateRecordId = (eventName, codeLength = null, useGecPrefix = true) => 
     return words.map(w => w[0]).join(''); // e.g. "german breakfast" → "gb"
   };
 
-  const createID = (val= 0 ) => {
-      const currentDate = new Date();
-      const id = Math.floor(currentDate.getTime() / 1000);
-      const idString = id.toString();
-      return idString.slice(val);
-  };
+const createID = (val = 0) => {
+  const currentDate = new Date();
+  const timestamp = currentDate.getTime(); // milliseconds
+  const random = Math.floor(Math.random() * 10000); // 0 to 9999
+  return (timestamp.toString() + random.toString()).slice(val);
+};
 
   const cleaned = sanitize(eventName);
   const idSuffix = createAcronym(cleaned);

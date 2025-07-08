@@ -302,6 +302,7 @@ export const RegistrationList = () => {
                             <RegistrationRequestForm
                                 initialData={null}
                                 assignEventCode={assignEventCode}
+                                uniqeCodeAccess={memberCount}
                                 modalSwitch={() => {
                                     handleClose();
                                     fetchData();
