@@ -61,7 +61,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                     event: data.event
                 });
 
-                currentCount = Number(count_token.count);
+                currentCount = Number(count_token.length);
             }
             
             

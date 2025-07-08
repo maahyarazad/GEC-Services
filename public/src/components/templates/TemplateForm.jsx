@@ -226,14 +226,18 @@ export const TemplateForm = () => {
 
                 snackbarRef.current?.openSnackbar(registration_response_data.message, 'success');
                 resetForm(); // 👈 Reset the form after submission
-
-                setFieldValue("phone", target.mobile_number);
-                setFieldValue("whatsapp", target.mobile_number);
+                setPhoneRegistered(false);
+                setValidOtp(false);
+                otpRef.current.clear();
+                
+                // setFieldValue("phone", target.mobile_number);
+                // setFieldValue("whatsapp", target.mobile_number);
 
                 // Optionally clear file input manually if you're using ref
                 if (fileInputRef?.current && fileInputRef.current.value) {
                     fileInputRef.current.value = "";
                 }
+
 
                 if (identityConsentRef?.current && identityConsentRef.current.checked) {
                     identityConsentRef.current.checked = false;
