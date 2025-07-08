@@ -7,6 +7,37 @@ const authToken = '169c6a86516341663e70d61cf416fe3f';
 const twilioPhone = "whatsapp:+14155238886";
 const client = require('twilio')(accountSid, authToken);
 
+const multer = require("multer");
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "file_storage/");
+    },
+    filename: async (req, file, cb) => {
+        const originalName = path.parse(file.originalname).name;
+        const extension = path.extname(file.originalname);
+        let newFileName = originalName;
+        let counter = 1;
+        // Check if the file already exists
+        let filePath = path.join("file_storage", file.originalname);
+        try {
+            while (true) {
+                try {
+                    await fs.access(filePath);
+                    newFileName = `${originalName} (${counter})`;
+                    filePath = path.join("file_storage", `${newFileName}${extension}`);
+                    counter++;
+                } catch (err) {
+                    break;
+                }
+            }
+            cb(null, `${newFileName}${extension}`);
+        } catch (error) {
+            cb(error);
+        }
+    },
+});
+const upload = multer({ storage: storage });
+
 const sendOtpToPhone = async (mobile_number, req, res, twilioClient) => {
     if (!mobile_number) {
         return { status: false, code: 400, message: 'Mobile number required' };
@@ -35,7 +66,7 @@ const sendOtpToPhone = async (mobile_number, req, res, twilioClient) => {
     }
 };
 
-router.post("/send-otp", async (req, res) => {
+router.post("/send-otp",upload.none() ,async (req, res) => {
     try {
         const data = req.body;
 
@@ -62,7 +93,7 @@ router.post("/send-otp", async (req, res) => {
     }
 });
 
-router.post("/otp-check", async (req, res) => {
+router.post("/otp-check",upload.none(), async (req, res) => {
     try {
         const data = req.body;
         const otp = req.session.otp;

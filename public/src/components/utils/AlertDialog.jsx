@@ -58,8 +58,8 @@ const AlertDialog = React.forwardRef((props, ref) => {
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleCancel} style={{ textTransform: 'none' }}>Cancel</Button>
-        <Button onClick={handleProceed} style={{ textTransform: 'none' }} autoFocus>
+        <Button onClick={handleCancel} style={{ textTransform: 'none' }} autoFocus variant='contained' >Cancel</Button>
+        <Button onClick={handleProceed} style={{ textTransform: 'none' }}  variant="outlined" >
           Proceed
         </Button>
       </DialogActions>

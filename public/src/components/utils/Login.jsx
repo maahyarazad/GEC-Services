@@ -96,7 +96,7 @@ export const Login = () => {
             if (response_data.status) {
                 console.log(response_data.status)
                 debugger;
-                setEncryptedCookie("gec-registration", response_data.data);
+                setEncryptedCookie("gec-registration", response_data.data[0]);
                 statusRef.current.textContent = "Login successful, please wait.... ";
 
                 setTimeout(() => {

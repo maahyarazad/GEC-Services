@@ -10,9 +10,11 @@ import lockRegistrationImage from '../../../assets/media/lock_registration.png'
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
+import RegistrationKeyList from '../Registration/RegistrationKeyList'
 
 
-const getColumns = ({ onEdit, onLock }) => [
+
+const getColumns = ({ onEdit, onLock, onShowCode }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'page', headerName: 'Page', width: 130 },
     {
@@ -38,7 +40,44 @@ const getColumns = ({ onEdit, onLock }) => [
         filterable: false,
     },
     { field: 'maxTokensPerGuest', headerName: 'Max Tokens/Guest', width: 150, type: 'number' },
-    { field: 'registration_code', headerName: 'Registration Code', width: 150 },
+{
+  field: 'registration_code',
+  headerName: 'Registration Code',
+  width: 150,
+  renderCell: (params) => {
+    const code = params?.row?.registration_code;
+
+    if (code) {
+      return (
+        <Box>
+          {/* You can optionally show a placeholder or a "No Code" message */}
+          <span>{code}</span>
+        </Box>
+      );
+    } else {
+      return (
+        <Box>
+          <Tooltip
+            title="Show the Registration Code"
+            componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}
+          >
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              style={{ textTransform: 'none' }}
+              onClick={() => onShowCode(params.row)}
+            >
+              Code List
+            </Button>
+          </Tooltip>
+        </Box>
+      );
+    }
+  },
+},
+
+
     {
         field: 'actions',
         headerName: 'Actions - Page Lock',
@@ -76,7 +115,10 @@ export const RegistrationList = () => {
     const [registrationList, setRegistrationList] = useState(null);
     const [newReg, setNewReg] = useState(false);
     const [editReg, setEditReg] = useState(false);
+    const [codeModal, setCodeModal] = useState(false);
     const [initialData, setInitialData] = useState(null);
+    const [codeList, setCodeList] = useState(null);
+    const [codeEventTitle, setCodeEventTitle] = useState(null);
     const [memberCount, setMemberCount] = useState(0);
     const dialogRef = useRef();
 
@@ -128,7 +170,7 @@ export const RegistrationList = () => {
     }, [fetchData, getMemberCount]);
 
 
-    const handleEdit = async (selectedRow) => {
+    const handleSwitchLock = async (selectedRow) => {
         try {
             const formData = new FormData();
             for (const key in selectedRow) {
@@ -152,6 +194,31 @@ export const RegistrationList = () => {
     };
 
 
+    const showCodeList = async (row) =>{
+        try {
+
+             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-keys`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: row.id }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch registration keys');
+            }
+
+            const result = await response.json();
+            if(result.data){
+                setCodeEventTitle(row.title);
+                setCodeList(result.data);
+                setCodeModal(true);
+            } 
+
+        } catch (err) {
+            console.error('Error fetching data:', err);
+        }
+    }
+
     const openEdit = (row) => {
         const selectedRow = registrationList?.rows?.find((x) => x.id === row.id);
 
@@ -174,7 +241,7 @@ export const RegistrationList = () => {
                 const selectedRow = registrationList?.rows?.find((x) => x.id === row.id);
                 if (selectedRow) {
                     selectedRow.Image = null;
-                    handleEdit(selectedRow)
+                    handleSwitchLock(selectedRow)
                 }
             },
             () => {
@@ -204,6 +271,8 @@ export const RegistrationList = () => {
         setNewReg(false);
         setActiveStep(0); // reset step on close
     };
+
+
     return (
         <Box sx={{ padding: 1 }}>
             <AlertDialog ref={dialogRef} />
@@ -229,7 +298,7 @@ export const RegistrationList = () => {
                 <div style={{ height: '100%' }}>
                     <DataGrid
                         rows={registrationList.rows}
-                        columns={getColumns({ onEdit: openEdit, onLock: switchLock })}
+                        columns={getColumns({ onEdit: openEdit, onLock: switchLock, onShowCode: showCodeList })}
                         pageSize={5}
                         rowsPerPageOptions={[5]}
                         disableSelectionOnClick
@@ -252,6 +321,12 @@ export const RegistrationList = () => {
                 }} />
             </Modal>
 
+
+            <Modal isOpen={codeModal}
+                onRequestClose={() => { setCodeList(null); setCodeModal(false); }}
+                title={`${codeEventTitle} Registration Keys`}>
+                <RegistrationKeyList data={codeList} />
+            </Modal>
 
 
 
@@ -290,7 +365,7 @@ export const RegistrationList = () => {
                             </div>
 
                             <div className="mt-4 text-end">
-                                <Button variant="contained" color="primary" onClick={handleNext}>
+                                <Button variant="contained" color="primary" onClick={handleNext} sx={{textTransform: 'none'}}>
                                     Next
                                 </Button>
                             </div>
@@ -308,8 +383,8 @@ export const RegistrationList = () => {
                                     fetchData();
                                 }}
                             />
-                            <div className="mt-4 text-end">
-                                <Button variant="outlined" onClick={handleBack} className="me-2">
+                            <div className="mt-2 text-end">
+                                <Button variant="outlined" onClick={handleBack} className="me-2" sx={{textTransform: 'none'}}>
                                     Back
                                 </Button>
                             </div>

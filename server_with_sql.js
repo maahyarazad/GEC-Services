@@ -12,6 +12,7 @@ const otp = require('./routes/otp');
 const registration_config = require('./routes/registration_config');
 const registration = require('./routes/registration');
 const member = require('./routes/member');
+const registration_keys = require('./routes/registration_keys');
 
 // Setup DB connection
 const db = new sqlite3.Database("./app.db", (err) => {
@@ -57,7 +58,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
     console.log(`Received request for: ${req.url}`);
@@ -70,6 +71,7 @@ app.use('/', otp);
 app.use('/', registration_config);
 app.use('/', registration);
 app.use('/', member);
+app.use('/', registration_keys);
 
 
 // Start the server
