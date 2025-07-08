@@ -1,0 +1,100 @@
+const express = require('express');
+const router = express.Router();
+const { generateRecordId, generateOTP } = require("../services/generatorService");
+const dbService = require("../services/dbService");
+const accountSid = 'ACf20c6fdcff4554153d18e319b1741de5';
+const authToken = '169c6a86516341663e70d61cf416fe3f';
+const twilioPhone = "whatsapp:+14155238886";
+const client = require('twilio')(accountSid, authToken);
+
+const sendOtpToPhone = async (mobile_number, req, res, twilioClient) => {
+    if (!mobile_number) {
+        return { status: false, code: 400, message: 'Mobile number required' };
+    }
+
+    if (req.session.otp) {
+        delete req.session.otp;
+        delete req.session.otpExpires;
+    }
+
+    const otp = generateOTP();
+    req.session.otp = otp;
+    req.session.otpExpires = Date.now() + 1 * 59 * 1000; // expires in 1 mins
+
+    try {
+        // await twilioClient.messages.create({
+        //     body: `Your OTP code is: ${otp}`,
+        //     from: twilioPhone,
+        //     to: `whatsapp:${mobile_number}`,
+        // });
+
+        return { status: true, code: 200, message: 'OTP sent successfully' };
+    } catch (error) {
+        console.error("Failed to send OTP:", error.message);
+        return { status: false, code: 500, message: 'Failed to send OTP' };
+    }
+};
+
+router.post("/send-otp", async (req, res) => {
+    try {
+        const data = req.body;
+
+       const response = await sendOtpToPhone(data.whatsapp, req, res, client);
+       
+       if(response.status){
+           return res.status(200).json({
+               status: true,
+               message: "Login Success",
+               // data: data.page_data,
+               session: req.session,
+           });
+       }else{
+        return res.status(response.code).json({
+               status: false,
+               message: response.message,
+           });
+       }
+
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ status: false, message: error.message });
+    }
+});
+
+router.post("/otp-check", async (req, res) => {
+    try {
+        const data = req.body;
+        const otp = req.session.otp;
+        const now = Date.now();
+        if (Date.now() > req.session.otpExpires) {
+            return res.status(401).json({ status: false, message: 'OTP has expired please try again' });
+        }
+
+        if (data.otp !== otp) {
+            return res.status(401).json({
+                status: false,
+                message: "Invalid OTP code",
+            });
+        }
+
+        const page_data = await dbService.findByColumn("registration_config", "registration_code", data.registration_code);
+
+        delete data.otp;
+        await dbService.create("registration_client_access", data);
+
+        res.status(200).json({
+            status: true,
+            message: "Phone number registered successfully.",
+            data: page_data
+        });
+
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ status: false, message: "Server error" });
+    }
+});
+
+
+module.exports = router;
