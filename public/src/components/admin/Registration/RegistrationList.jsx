@@ -26,7 +26,19 @@ const getColumns = ({ onEdit, onLock, onShowCode }) => [
     );
    
   }, },
-    { field: 'page', headerName: 'Page', width: 130 },
+    { field: 'page', headerName: 'Page', width: 130, renderCell: (params) => {
+        const url = params?.row?.page;
+        
+        if (url) {
+            const _url = `/registration/${url}`;
+        return (
+           <a href={_url} style={{ textDecoration: 'none' }} target='_black'>
+               {url}
+            </a>
+        )
+        
+        }
+    } },
     {
         field: 'paymentRequired',
         headerName: 'Payment Required',
