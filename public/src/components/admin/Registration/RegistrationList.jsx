@@ -16,6 +16,16 @@ import RegistrationKeyList from '../Registration/RegistrationKeyList'
 
 const getColumns = ({ onEdit, onLock, onShowCode }) => [
     { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'lockRegistration', headerName: 'Active Page', width: 150,renderCell: (params) => {
+    const value = params?.row?.lockRegistration === "true";
+        
+    return (
+      <Box>
+        <span>{value ? "Not Active" : "Active"}</span>
+      </Box>
+    );
+   
+  }, },
     { field: 'page', headerName: 'Page', width: 130 },
     {
         field: 'paymentRequired',
@@ -24,7 +34,6 @@ const getColumns = ({ onEdit, onLock, onShowCode }) => [
         valueFormatter: (params) => (params.value === "true" ? "Yes" : "No"),
     },
     { field: 'title', headerName: 'Title', width: 130 },
-    { field: 'description', headerName: 'Description', width: 150 },
     {
         field: 'Image',
         headerName: 'Image',
@@ -251,7 +260,7 @@ export const RegistrationList = () => {
 
     };
 
-    const [assignEventCode, setAssignEventCode] = useState(false);
+    const [enableUniqueMemberCode, setEnableUniqueMemberCode] = useState(false);
 
     const steps = [
         'Step 1: Select Initial Event Configuration',
@@ -355,8 +364,8 @@ export const RegistrationList = () => {
                                 <FormControlLabel
                                     control={
                                         <Switch
-                                            checked={assignEventCode}
-                                            onChange={(e) => setAssignEventCode(e.target.checked)}
+                                            checked={enableUniqueMemberCode}
+                                            onChange={(e) => setEnableUniqueMemberCode(e.target.checked)}
                                             color="primary"
                                         />
                                     }
@@ -376,8 +385,8 @@ export const RegistrationList = () => {
                         <>
                             <RegistrationRequestForm
                                 initialData={null}
-                                assignEventCode={assignEventCode}
                                 uniqeCodeAccess={memberCount}
+                                enableUniqueMemberCode={enableUniqueMemberCode}
                                 modalSwitch={() => {
                                     handleClose();
                                     fetchData();

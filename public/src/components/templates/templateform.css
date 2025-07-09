@@ -63,7 +63,9 @@
     height: 100dvh !important;
     position: relative;
     display: flex;
+    flex-wrap: nowrap;
     flex-direction: column;
+    align-content: center;
     overflow-y: scroll !important;
     > a {
       width: 96px;
@@ -78,12 +80,16 @@
 
     > div {
       flex-grow: 1;
-      min-height: 0; /* Required for overflow to work properly inside flex container */
+      min-height: 0;
+      align-content: center; /* Required for overflow to work properly inside flex container */
       > button {
         display: none;
       }
       > form {
-        
+            align-content: center;
+                position: relative;
+    
+    
         padding-bottom: 40px;
         width: 100%;
 

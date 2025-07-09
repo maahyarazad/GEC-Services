@@ -278,7 +278,7 @@ export const MemberDataGrid = () => {
                     initialData={null}
                     modalSwitch={() => {
                         setNewReg(false);
-                        fetchData();
+                        fetchData(paginationModel, sortModel, filterModel);
 
                     }} />
             </Modal>

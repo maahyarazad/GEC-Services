@@ -33,6 +33,7 @@ export default function MemberNewForm({ initialData = null, modalSwitch }) {
     email: initialData?.email || '',
     avatar: initialData?.avatar || null,
     language: initialData?.language || 'en',
+    active_member: true,
   };
 
   useEffect(() => {

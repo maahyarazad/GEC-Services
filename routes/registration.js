@@ -6,6 +6,8 @@ const multer = require("multer");
 const  {generateQRWithText} = require("../services/qrGenerator");
 const {comfirm_message_email, event_confirm_registration_email} = require("../services/emailService");
 const { generateRecordId } = require("../services/generatorService");
+const path = require("path");
+const fs = require("fs").promises;
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {

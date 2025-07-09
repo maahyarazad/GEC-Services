@@ -44,7 +44,7 @@ const validationSchema = Yup.object({
 });
 
 
-export default function NewRegistrationPage({ initialData = null, modalSwitch, uniqeCodeAccess= 1 }) {
+export default function NewRegistrationPage({ initialData = null, modalSwitch, uniqeCodeAccess, enableUniqueMemberCode  }) {
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [slug, setSlug] = useState(null);
     const [submitError, setSubmitError] = useState('');
@@ -81,7 +81,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
         tokensPerGuest: initialData?.maxTokensPerGuest || '',
         description: initialData?.description || '',
         event_date: initialData?.event_date || '',
-        uniqeCodeAccess: uniqeCodeAccess
+        uniqeCodeAccess: enableUniqueMemberCode ? uniqeCodeAccess : 1
     };
 
     useEffect(() => {

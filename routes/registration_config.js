@@ -73,7 +73,7 @@ router.post("/registration-config", upload.single('image'), async (req, res) => 
 
 
         if (req.file) {
-            data.image = String(req.file.filename);
+            registration_data.image = String(req.file.filename);
         }
         
         // uniqeCodeAccess Logic goes here
@@ -88,8 +88,6 @@ router.post("/registration-config", upload.single('image'), async (req, res) => 
                     memberId: members[i].id
                 });
             }
-
-
         }
 
 
@@ -99,7 +97,7 @@ router.post("/registration-config", upload.single('image'), async (req, res) => 
             res.json({ status: true, message: "Data saved successfully", insert_data });
         }else{
             registration_data.registration_code = generateRecordId(data.page, -6, false);
-            const insert_data = await dbService.create(table_name, registration_data);
+            const insert_data =  dbService.create(table_name, registration_data);
             res.json({ status: true, message: "Data saved successfully", insert_data });
         }
 
