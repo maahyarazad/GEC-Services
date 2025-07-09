@@ -56,7 +56,7 @@ const SimpleSnackbar = forwardRef((_, ref) => {
                     }
                 }}
                 open={open}
-                autoHideDuration={999999}
+                autoHideDuration={10000}
                 onClose={handleClose}
                 message={
                

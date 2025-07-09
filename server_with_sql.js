@@ -1,11 +1,10 @@
+require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
-const multer = require("multer");
 const path = require("path");
 const fs = require("fs").promises;
 const sqlite3 = require("sqlite3").verbose();
 const app = express();
-const bcrypt = require("bcrypt");
 const PORT = process.env.PORT || 5500;
 const session = require('express-session');
 const otp = require('./routes/otp');
@@ -53,7 +52,7 @@ app.use(session({
 }));
 
 app.use(cors({
-    origin: 'http://localhost:5173', // your frontend URL
+    origin: process.env.CLIENT_ORIGIN,
     credentials: true
 }));
 
