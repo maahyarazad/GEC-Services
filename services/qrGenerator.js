@@ -1,5 +1,6 @@
 // qrGenerator.js
 const QRCode = require('qrcode');
+require("dotenv").config();
 const path = require('path');
 const fs = require('fs');
 
@@ -9,22 +10,21 @@ const fs = require('fs');
  */
 async function generateQRWithText(event_page, code) {
 
-
-  const tempPath = path.join(__dirname, 'qr-files');
-   if (!fs.existsSync(tempPath)) {
-      fs.mkdirSync(tempPath, { recursive: true });
+    const tempPath = path.join(__dirname, '..',  'qr-files');
+    if (!fs.existsSync(tempPath)) {
+        fs.mkdirSync(tempPath, { recursive: true });
     }
-    
-  const filePath = path.join(tempPath, `${code}.png`)
-  try {
-    
-    const qeValue = `${process.env.VITE_SERVER_URL}/guest-registration/${event_page}?guest-code=${code}`;
-    await QRCode.toFile(filePath, qeValue);
 
-  } catch (error) {
-    console.error('Error generating QR with text:', error);
-    throw error;
-  }
+    const filePath = path.join(tempPath, `${code}.png`)
+    try {
+
+        const qeValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event_page}?guest-code=${code}`;
+        await QRCode.toFile(filePath, qeValue);
+
+    } catch (error) {
+        console.error('Error generating QR with text:', error);
+        throw error;
+    }
 }
 
-module.exports = {generateQRWithText};
+module.exports = { generateQRWithText };

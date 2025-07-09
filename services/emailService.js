@@ -140,7 +140,7 @@ const htmlBody = `
                   <p><strong>Date:</strong> ${reqBody.event_date}</p>
                   <p><strong>Time:</strong> ${reqBody.event_time}</p>
                   <p><strong>Location:</strong> ${reqBody.event_location}</p>
-<a href="https://www.google.com/maps/search/?api=1&query=Zabeel%20One%20and%20Only" target="_blank" rel="noopener noreferrer">
+<a href="https://www.google.com/maps/search/?api=1&query=Zabeel%20One%20and%20Only&nl=en" target="_blank" rel="noopener noreferrer">
   <img
     src="https://camo.githubusercontent.com/dfdb73f781c6fd9c0928463d2af86b7e4ba91866101dd1b680ede491d213f75b/68747470733a2f2f7374657068616e67656f72672e6769746875622e696f2f7374617469636d6170732f73616d706c652f706f6c796c696e652e706e673f7261773d747275653d38303078323830"
     alt="Event Location"
@@ -160,7 +160,7 @@ const htmlBody = `
               <tr>
                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
                   <p>
-                    If you have any questions, feel free to contact us at
+                    If you have any questions, feel free to contact us at </br>
                     <a href="mailto:info@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">info@german-emirates-club.com</a>.
                   </p>
                   <p>Warm regards,<br />The German Emirates Club Team</p>

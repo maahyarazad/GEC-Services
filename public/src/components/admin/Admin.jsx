@@ -38,7 +38,7 @@ export const Admin = ({ data }) => {
     useEffect(() => {
 
         const existingUser = getCookie("a-usr");
-        if (existingUser) {
+        if (existingUser === `${import.meta.env.VITE_ADMIN_PASSWORD}`) {
             setAdminUser(true); // Only store flag
         }
         setIsCheckingAuth(false);
@@ -49,7 +49,7 @@ export const Admin = ({ data }) => {
             setSubmitting(true);
 
             if (values.login_code === `${import.meta.env.VITE_ADMIN_PASSWORD}`) {
-                setEncryptedCookie("a-usr", "1"); // Just set a flag, not the code itself
+                setEncryptedCookie("a-usr", values.login_code); // Just set a flag, not the code itself
                 setAdminUser(true);               // Mark as logged in
                 resetForm();
             } else {
@@ -142,7 +142,6 @@ export const Admin = ({ data }) => {
                             <Field
                                 onChange={(e) => {
                                     setFieldValue('login_code', e.target.value);
-                                    setRegistration_code(e.target.value);
                                 }}
                                 name="login_code"
                                 type={showPassword ? 'text' : 'password'}
@@ -194,7 +193,7 @@ export const Admin = ({ data }) => {
             </Formik>
             <p
                 ref={statusRef}
-                className={`mt-1 ${statusRef.current ? "" : "text-danger"}`}
+                className="text-danger"
             ></p>
         </div>
     </div>

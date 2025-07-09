@@ -167,4 +167,40 @@ router.get('/registration-csv-data', async (req, res) => {
   }
 });
 
+function formatDateToMySQL(date) {
+  const pad = (n) => n.toString().padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+         `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+router.post("/complete-registration", upload.none(), async (req, res) => {
+    try {
+        const table_name = "registration";
+        const data = req.body;
+        const result = await dbService.findExact(table_name, "event_id", data.event_id);
+
+        if(result && result.length > 0){
+            const record = result[0];
+            record.metadata_modifiedAt = formatDateToMySQL(new Date(Date.now()));
+            dbService.update(table_name, record.id,record )
+            return res.json({ 
+                status: true, 
+                message: "Guest registration completed successfully. Thank you for your submission.",
+                record
+            });
+
+        }
+        
+        // If no result found
+        return res.json({ 
+            status: false, 
+            message: "No registration record found for the provided event ID." 
+        });
+
+    } catch (error) {
+        console.error("Edit error:", error);
+        res.status(500).json({ status: false, message: "Server error" });
+    }
+});
+
 module.exports = router;
