@@ -138,15 +138,17 @@ const htmlBody = `
                 <td style="padding:20px; font-size:16px; color:#333333; line-height:1.6;">
                   <p>Thank you for registering for the <strong>${reqBody.title}</strong>. We appreciate your interest and look forward to your participation.</p>
                   <p><strong>Date:</strong> ${reqBody.event_date}</p>
-                  <p><strong>Time:</strong> 7 PM (Gates open at 6:30 PM)</p>
-                  <a href="https://maps.google.com/?q=One%20%26%20Only%20Zabeel,Dubai" target="_blank">
-                    <img
-                      src="https://maps.googleapis.com/maps/api/staticmap?center=One%20%26%20Only%20Zabeel,Dubai&zoom=15&size=600x300&markers=color:red|label:E|One%20%26%20Only%20Zabeel,Dubai&key=YOUR_REAL_API_KEY"
-                      alt="Event Location"
-                      width="100%"
-                      style="max-width:600px;"
-                    />
-                  </a>
+                  <p><strong>Time:</strong> ${reqBody.event_time}</p>
+                  <p><strong>Location:</strong> ${reqBody.event_location}</p>
+<a href="https://www.google.com/maps/search/?api=1&query=Zabeel%20One%20and%20Only" target="_blank" rel="noopener noreferrer">
+  <img
+    src="https://camo.githubusercontent.com/dfdb73f781c6fd9c0928463d2af86b7e4ba91866101dd1b680ede491d213f75b/68747470733a2f2f7374657068616e67656f72672e6769746875622e696f2f7374617469636d6170732f73616d706c652f706f6c796c696e652e706e673f7261773d747275653d38303078323830"
+    alt="Event Location"
+    width="600"
+    height="400"
+    style="border:0; display:block;"
+  />
+</a>
                 </td>
               </tr>
               <tr>

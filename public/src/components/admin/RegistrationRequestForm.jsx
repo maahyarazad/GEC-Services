@@ -4,6 +4,8 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import slugify from 'slugify';
 import QuillField from '../utils/QuillField'
+import eventTime from '../../assets/media/event_time.png'
+import { Tooltip } from '@mui/material';
 
 const validationSchema = Yup.object({
     title: Yup.string().required('Title is required'),
@@ -44,7 +46,7 @@ const validationSchema = Yup.object({
 });
 
 
-export default function NewRegistrationPage({ initialData = null, modalSwitch, uniqeCodeAccess, enableUniqueMemberCode  }) {
+export default function NewRegistrationPage({ initialData = null, modalSwitch, uniqeCodeAccess, enableUniqueMemberCode }) {
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [slug, setSlug] = useState(null);
     const [submitError, setSubmitError] = useState('');
@@ -81,6 +83,8 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
         tokensPerGuest: initialData?.maxTokensPerGuest || '',
         description: initialData?.description || '',
         event_date: initialData?.event_date || '',
+        event_time: initialData?.event_time || '',
+        event_location: initialData?.event_location || '',
         uniqeCodeAccess: enableUniqueMemberCode ? uniqeCodeAccess : 1
     };
 
@@ -123,6 +127,8 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
             formData.append('title', values.title);
             formData.append('send_button_text', values.send_button_text);
             formData.append('event_date', values.event_date);
+            formData.append('event_time', values.event_time);
+            formData.append('event_location', values.event_location);
             formData.append('maxTokensPerGuest', values.tokensPerGuest);
             formData.append('description', values.description);
             formData.append('uniqeCodeAccess', values.uniqeCodeAccess);
@@ -158,7 +164,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
 
                 }, 3000);
 
-               
+
 
                 if (fileInputRef.current) {
                     fileInputRef.current.value = null;
@@ -197,7 +203,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                 enableReinitialize={true}
                 onSubmit={handleSubmit}
             >
-                {({ setFieldValue, errors, touched }) => (
+                {({ setFieldValue, errors, touched, values }) => (
                     <Form>
                         {slug && (<span className="text-muted">
                             <strong>Url will be: /{slug}</strong>
@@ -303,7 +309,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                                             type="date"
                                             className={`form-control ${errors.event_date && touched.event_date ? 'is-invalid' : ''}`}
                                             placeholder="Select event date"
-                                            style={{minHeight: 38}}
+                                            style={{ minHeight: 38 }}
                                         />
                                         <div style={{ minHeight: 30 }}>
                                             <ErrorMessage
@@ -317,6 +323,85 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                             </div>
 
                         </div>
+
+
+                        {values.fileUpload === false && (
+                            <div className="col-12">
+                                <div className='row'>
+
+                                    <div className='col-6'>
+                                        <div className="align-items-center">
+                                            <label htmlFor="event_time" className="form-label">
+                                                Event Time
+                                            </label>
+                                            <Tooltip
+                                                title={
+                                                    <div className="d-flex flex-column align-items-center text-center">
+                                                        <img src={eventTime} alt="Lock icon" style={{
+                                                                width: 300,
+                                                                height: 140,
+                                                                objectFit: 'contain', // or 'cover', depending on your need
+                                                                imageRendering: 'auto' // or 'crisp-edges' or 'pixelated' for specific use cases
+                                                            }}
+                                                            className=''/>
+                                                        <span>This filed will also use in the registration email</span>
+                                                    </div>
+                                                }
+                                                componentsProps={{
+                                                    tooltip: {
+                                                        sx: { fontSize: 14 }
+                                                    }
+                                                }}
+                                            >
+                                                
+                                            <Field
+                                                
+                                                name="event_time"
+                                                type="text"
+                                                className={`form-control ${errors.event_time && touched.event_time ? 'is-invalid' : ''}`}
+                                                placeholder="Event Time"
+                                            />
+                                            </Tooltip>
+                                            <div style={{ minHeight: 30 }}>
+                                                <ErrorMessage
+                                                    name="event_time"
+                                                    component="div"
+                                                    
+                                                    className="text-danger small mt-1"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className='col-6'>
+
+                                        <div className="align-items-center">
+                                            <label htmlFor="event_location" className="form-label">
+                                                Event Location
+                                            </label>
+                                            
+                                                <Field
+                                                    name="event_location"
+                                                    type="text"
+                                                    className={`form-control ${errors.event_location && touched.event_location ? 'is-invalid' : ''}`}
+                                                    placeholder="Event Location"
+                                                    style={{ minHeight: 38 }}
+                                                />
+                                        
+
+                                            <div style={{ minHeight: 30 }}>
+                                                <ErrorMessage
+                                                    name="event_location"
+                                                    component="div"
+                                                    className="text-danger small mt-1"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        )}
 
                         {/* Description */}
                         <div className="col-12">
@@ -493,7 +578,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
 
                                     </div>
 
-                                   
+
                                 </div>
                                 <div className='col-6'>
 
@@ -539,7 +624,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
 
                                     </div>
 
-                                     <div className="form-check form-switch mb-3">
+                                    <div className="form-check form-switch mb-3">
                                         <Field name="companyRequired">
                                             {({ field }) => (
                                                 <input
@@ -559,7 +644,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
 
                                     </div>
 
-                                    
+
                                 </div>
 
                             </div>

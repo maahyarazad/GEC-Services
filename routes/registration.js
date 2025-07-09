@@ -43,15 +43,19 @@ const upload = multer({ storage: storage });
 router.post("/registration", upload.single('attachment_file'), async (req, res) => {
     try {
         const table_name = "registration";
-        const {registration_code, title,event_date,  ...data} = req.body;
+        const {registration_code, title, event_date, ...data} = req.body;
         const file = req.file; 
-
+        let event_time;
+        let event_location;
 
         const key = await dbService.findExact("registration_keys", "key", registration_code);
 
         // Max token doesn't mean anything for sending out documents like applying for Golden Adler Ward 
         if(!file){
             const max_token_value = await dbService.findExact("registration_config", "page", data.event);
+            event_time = max_token_value[0]?.event_time;
+            event_location = max_token_value[0]?.event_location;
+
             // Convert to numbers
             const maxTokens = Number(max_token_value[0]?.maxTokensPerGuest);
             let currentCount = 0;
@@ -107,6 +111,8 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                 // Add Title for email
                 data.title = title;
                 data.event_date = event_date;
+                data.event_time = event_time;
+                data.event_location = event_location;
                 await event_confirm_registration_email(data);
             }
             

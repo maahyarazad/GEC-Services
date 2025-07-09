@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS registration_config (
   title VARCHAR(255),
   send_button_text VARCHAR(255),
   event_date DATETIME, 
+  event_time VARCHAR(255), 
+  event_location VARCHAR(255), 
   description TEXT,
   Image TEXT,
   maxTokensPerGuest INT,

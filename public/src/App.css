@@ -590,7 +590,7 @@ tr.eventhide {
   border-radius: 8px;
   width: 80%;
   max-width: 720px;
-  max-height: 80dvh;
+  max-height: 90dvh;
   overflow: hidden; /* important: control scroll only in body */
   display: flex;
   flex-direction: column;
@@ -631,7 +631,7 @@ tr.eventhide {
 /* Modal Body (scrollable area) */
 .modal-body {
   overflow-y: auto;
-  max-height: calc(80dvh - 4rem); /* subtract header/footer if any */
+  max-height: calc(90dvh - 4rem); /* subtract header/footer if any */
 }
 
 

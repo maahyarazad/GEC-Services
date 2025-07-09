@@ -16,6 +16,21 @@ const columns = [
     { field: 'companyName', headerName: 'Company Name', width: 100, filterable: true },
     { field: 'birthday', headerName: 'Birthday', width: 100, filterable: true },
     { field: 'event_id', headerName: 'Event ID', width: 100, filterable: true },
+    { field: 'attachment_file', headerName: 'Attachment', width: 100,   renderCell: (params) => {
+        const filename = params?.row?.attachment_file;
+        
+        if (filename) {
+            const fileUrl = `${import.meta.env.VITE_SERVERURL}/uploads/${filename}`;
+        return (
+           <a href={fileUrl} download style={{ textDecoration: 'none' }} target='_black'>
+                <Button variant="contained" color="primary" sx={{textTransform: 'none', fontSize: 12, padding: 0}}> 
+                    Download
+                </Button>
+            </a>
+        )
+        
+        }
+    }},
     { field: 'metadata_createdAt', headerName: 'Creation Datetime', width: 160, filterable: true },
     { field: 'metadata_modifiedAt', headerName: 'Last Modified Datetime', width: 160, filterable: true }
 ];
@@ -61,7 +76,7 @@ export const RegistrationDataGrid = () => {
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration?${queryParams}`);
             const response_data = await response.json();
-
+            debugger;
             setRegistrationList(response_data.data || []);
             setRowCount(response_data.total || 0);
 
