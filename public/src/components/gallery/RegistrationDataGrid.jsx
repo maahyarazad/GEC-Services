@@ -2,13 +2,31 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { Box, CircularProgress, Tooltip, Button } from '@mui/material';
 import { BsFiletypeCsv } from "react-icons/bs";
-
+import { FaCircleCheck } from "react-icons/fa6";
 
 const PAGE_SIZE = 10;
 
 const columns = [
-    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'id', headerName: 'ID', width: 50 },
+    {
+        field: '',
+        headerName: 'Complete',
+        width: 100,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        renderCell: (params) => {
+            const modified = params?.row?.metadata_modifiedAt;
+            return modified ? (
+            <Tooltip title="Modified">
+                <FaCircleCheck size={16} color="#28a745" /> {/* Bootstrap green */}
+            </Tooltip>
+            ) : null;
+        }
+        },
     { field: 'event', headerName: 'Event', width: 130, filterable: true },
+    { field: 'firstName', headerName: 'Firstname', width: 130, filterable: true },
+    { field: 'lastName', headerName: 'Lastname', width: 130, filterable: true },
     { field: 'email', headerName: 'Email', width: 160, filterable: true },
     { field: 'phone', headerName: 'Phone', width: 150, filterable: true },
     { field: 'whatsapp', headerName: 'WhatsApp', width: 150, filterable: true },
@@ -36,6 +54,8 @@ const columns = [
 ];
 
 export const RegistrationDataGrid = () => {
+    const defaultSortModel = [{ field: 'id', sort: 'desc' }];
+
     const [registrationList, setRegistrationList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isDownloading, setIsDownloadings] = useState(false);
@@ -44,7 +64,7 @@ export const RegistrationDataGrid = () => {
     });
         const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
     const [rowCount, setRowCount] = useState(0);
-    const [sortModel, setSortModel] = useState([]);
+    const [sortModel, setSortModel] = useState(defaultSortModel);
     const [paginationModel, setPaginationModel] = useState({
         page: 0,
         pageSize: 25,

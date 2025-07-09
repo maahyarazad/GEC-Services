@@ -49,12 +49,13 @@ const columns = ({ onEdit, onSwitchActive }) => [
 ];
 
 export const MemberDataGrid = () => {
+    const defaultSortModel = [{ field: 'id', sort: 'desc' }];
     const [newReg, setNewReg] = useState(false);
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [rowCount, setRowCount] = useState(0);
-    const [sortModel, setSortModel] = useState([]);
+    const [sortModel, setSortModel] = useState(defaultSortModel);
     const [filterModel, setFilterModel] = useState({
         items: [],
     });

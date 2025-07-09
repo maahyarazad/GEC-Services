@@ -225,7 +225,10 @@ export const GuestRegistration = () => {
                                         <Typography variant="body1" sx={{ mt: 2 }}>
                                             <strong>Registrant:</strong> {registrant.firstName} {registrant.lastName}
                                         </Typography>
-                                        {/* Add more fields as needed */}
+                                        {/* <Typography variant="body1" sx={{ mt: 2 }}>
+                                            <strong>Phone Number:</strong> {registrant.phone}
+                                        </Typography>    */}
+                                        
                                     </>
                                 ) : (
                                     <Typography variant="h6" color="text.secondary">
