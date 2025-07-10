@@ -243,6 +243,8 @@ export const TemplateForm = () => {
                     identityConsentRef.current.checked = false;
                 }
 
+                setSelectedDate('')
+
             } else {
                 snackbarRef.current?.openSnackbar(registration_response_data.message, '');
             }

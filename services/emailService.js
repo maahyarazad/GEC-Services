@@ -1,8 +1,8 @@
 require("dotenv").config();
 const path = require("path");
 const fs = require("fs");
-// const sgMail = require("@sendgrid/mail");
-// sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const sgMail = require("@sendgrid/mail");
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const { SESClient, SendEmailCommand } = require("@aws-sdk/client-ses");
 
 const ses = new SESClient({
@@ -122,29 +122,58 @@ async function comfirm_message_email({ reqBody }) {
 }
 
 async function event_confirm_registration_email(reqBody) {
-  const tempPath = path.join(__dirname, "qr-files");
+  const tempPath = path.join(__dirname, "..", "qr-files");
+  const mapRoot = path.join(__dirname, "..", "maps");
   const filePath = path.join(tempPath, `${reqBody.event_id}.png`);
+  const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
 
-  // Read and encode the image file as base64
-  let attachment;
+  try {
+    // Read both images
+    const qrBuffer = fs.readFileSync(filePath);
+    const mapBuffer = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : null;
 
-  fs.readFile(filePath, async (err, fileBuffer) => {
-    if (err) {
-      throw err;
-    }
+    const attachments = [];
 
-    try {
-      const base64Image = fileBuffer.toString("base64");
-      const currentYear = new Date().getFullYear();
-      const attachment = {
-        content: base64Image,
-        filename: `${reqBody.timestamp}.png`,
+    if (qrBuffer) {
+      attachments.push({
+        content: qrBuffer.toString("base64"),
+        filename: `${reqBody.timestamp}-qr.png`,
         type: "image/png",
         disposition: "inline",
-        content_id: "qr-code", // ✅ MUST match the cid in <img src="cid:qr-code">
-      };
+        content_id: "qr-code",
+      });
+    }
 
-const htmlBody = `
+    if (mapBuffer) {
+      attachments.push({
+        content: mapBuffer.toString("base64"),
+        filename: `${reqBody.timestamp}-map.png`,
+        type: "image/png",
+        disposition: "inline",
+        content_id: "event-location",
+      });
+    }
+
+    const currentYear = new Date().getFullYear();
+
+    const eventTimeSection = reqBody.event_time
+      ? `<p><strong>Time:</strong> ${reqBody.event_time}</p>`
+      : '';
+
+    const eventLocationSection =
+      reqBody.event && reqBody.event_location
+        ? `
+        <tr>
+          <td align="center" style="padding:20px;">
+            <p><strong>Event location — tap the map below for navigation:</strong></p>
+            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(reqBody.event_location)}" target="_blank" rel="noopener noreferrer">
+              <img src="cid:event-location" alt="Event Location Map" width="200" height="200" style="border:0; display:block;" />
+            </a>
+          </td>
+        </tr>`
+        : '';
+
+    const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -174,19 +203,10 @@ const htmlBody = `
                 <td style="padding:20px; font-size:16px; color:#333333; line-height:1.6;">
                   <p>Thank you for registering for the <strong>${reqBody.title}</strong>. We appreciate your interest and look forward to your participation.</p>
                   <p><strong>Date:</strong> ${reqBody.event_date}</p>
-                  <p><strong>Time:</strong> ${reqBody.event_time}</p>
-                  <p><strong>Location:</strong> ${reqBody.event_location}</p>
-<a href="https://www.google.com/maps/search/?api=1&query=Zabeel%20One%20and%20Only&nl=en" target="_blank" rel="noopener noreferrer">
-  <img
-    src="https://camo.githubusercontent.com/dfdb73f781c6fd9c0928463d2af86b7e4ba91866101dd1b680ede491d213f75b/68747470733a2f2f7374657068616e67656f72672e6769746875622e696f2f7374617469636d6170732f73616d706c652f706f6c796c696e652e706e673f7261773d747275653d38303078323830"
-    alt="Event Location"
-    width="600"
-    height="400"
-    style="border:0; display:block;"
-  />
-</a>
+                  ${eventTimeSection}
                 </td>
               </tr>
+              ${eventLocationSection}
               <tr>
                 <td align="center" style="padding:20px;">
                   <p><strong>Please keep this email so we can scan your QR code:</strong></p>
@@ -196,7 +216,7 @@ const htmlBody = `
               <tr>
                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
                   <p>
-                    If you have any questions, feel free to contact us at </br>
+                    If you have any questions, feel free to contact us at <br/>
                     <a href="mailto:info@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">info@german-emirates-club.com</a>.
                   </p>
                   <p>Warm regards,<br />The German Emirates Club Team</p>
@@ -216,21 +236,20 @@ const htmlBody = `
 </html>
 `;
 
+    const msg = {
+      to: reqBody.email,
+      from: process.env.EMAIL_SENDER,
+      subject: `Registration Completed – ${reqBody.title}`,
+      html: htmlBody,
+      attachments,
+    };
 
-      const msg = {
-        to: reqBody.email,
-        from: process.env.EMAIL_SENDER,
-        subject: `Registration Completed – ${reqBody.title}`,
-        html: htmlBody,
-        attachments: [attachment],
-      };
-
-      const response = await sgMail.send(msg);
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  });
+    const response = await sgMail.send(msg);
+    return response;
+  } catch (error) {
+    console.error("Failed to send registration email:", error);
+    throw error;
+  }
 }
 
 module.exports = { comfirm_message_email, event_confirm_registration_email };

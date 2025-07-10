@@ -4,6 +4,7 @@ const { exportTableAsCSV } = require("../services/csvParser");
 const dbService = require("../services/dbService");
 const multer = require("multer");
 const  {generateQRWithText} = require("../services/qrGenerator");
+const  {reverseGeocode} = require("../services/mapService");
 const {comfirm_message_email, event_confirm_registration_email} = require("../services/emailService");
 const { generateRecordId } = require("../services/generatorService");
 const path = require("path");
@@ -113,6 +114,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                 data.event_date = event_date;
                 data.event_time = event_time;
                 data.event_location = event_location;
+    
                 await event_confirm_registration_email(data);
             }
             

@@ -29,4 +29,21 @@ async function generateMapImage({ lat, lon, event_name }, outputFolder = './maps
 
 }
 
-module.exports = { generateMapImage };
+async function reverseGeocode(lat, lon) {
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lat},${lon}.json?access_token=${token}`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Failed to reverse geocode: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  const placeName = data?.features?.[0]?.place_name;
+
+  return placeName || null;
+}
+
+module.exports = {
+  generateMapImage,
+  reverseGeocode
+};
