@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { Box, CircularProgress, Tooltip, Button } from '@mui/material';
+import { Box, CircularProgress, Tooltip, Button, Modal } from '@mui/material';
 import { BsFiletypeCsv } from "react-icons/bs";
 import { FaCircleCheck } from "react-icons/fa6";
-
+import MessageModalTrigger from '../utils/MessageModalTrigger';
 const PAGE_SIZE = 10;
 
 const columns = [
@@ -34,6 +34,21 @@ const columns = [
     { field: 'companyName', headerName: 'Company Name', width: 100, filterable: true },
     { field: 'birthday', headerName: 'Birthday', width: 100, filterable: true },
     { field: 'event_id', headerName: 'Event ID', width: 100, filterable: true },
+   {
+    field: 'message',
+    headerName: 'Message',
+    width: 120,
+    sortable: false,
+    filterable: false,
+    disableColumnMenu: true,
+    renderCell: (params) => {
+        const filename = params?.row?.message;
+        if (!filename) return null;
+
+        return <MessageModalTrigger message={filename} />;
+    }
+    },
+
     { field: 'attachment_file', headerName: 'Attachment', width: 100,   renderCell: (params) => {
         const filename = params?.row?.attachment_file;
         

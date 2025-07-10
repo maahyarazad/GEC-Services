@@ -99,6 +99,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
             // Todo: send email
             if (file) {
                 data.attachment_file = file.originalname
+                await comfirm_message_email(data)
             } else{
                 
                 // Increment the tokenCount here
@@ -115,7 +116,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                 data.event_time = event_time;
                 data.event_location = event_location;
     
-                await event_confirm_registration_email_aws(data);
+                await event_confirm_registration_email(data);
             }
             
             return res.json({ status: true, message: "Your request has been successfully processed.", create_result });

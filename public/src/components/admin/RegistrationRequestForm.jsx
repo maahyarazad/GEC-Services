@@ -217,7 +217,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                 enableReinitialize={true}
                 onSubmit={handleSubmit}
             >
-                {({ setFieldValue, errors, touched, values }) => (
+                {({ setFieldValue, errors, touched, values, isSubmitting }) => (
                     <Form>
                         {slug && (<span className="text-muted">
                             <strong>Url will be: /{slug}</strong>
@@ -683,8 +683,9 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                                 <button
                                     type="submit"
                                     className="btn btn-primary"
+                                    disabled={isSubmitting}
                                 >
-                                    Save Registration Page
+                                    {isSubmitting ? "Submitting" : "Save Registration Page"}
                                 </button>
                             </div>
                         </div>
