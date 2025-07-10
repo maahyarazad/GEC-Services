@@ -16,13 +16,19 @@ const MapModal = ({ isOpen, onClose, onSelect, isParentModalOpen, initialLon , i
     const centerLng = initialLon ?? 55.2708;
     const centerLat = initialLat ?? 25.2048;
 
-    debugger;
+    
     const map = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v11',
-      center: [55.2708, 25.2048], // Default to Dubai
-      zoom: 10,
+      center: [centerLng, centerLat], // Default to Dubai
+      zoom: 11,
     });
+
+    if (markerRef.current) {
+        debugger;
+        markerRef.current.remove();
+        markerRef.current = null;
+    }
 
     // If initial coordinates exist, add marker at that position
     if (initialLon != null && initialLat != null) {
@@ -46,6 +52,8 @@ const MapModal = ({ isOpen, onClose, onSelect, isParentModalOpen, initialLon , i
 
   useEffect(() => {
     if (!isParentModalOpen) {
+        
+        debugger;
       onClose();
     }
   }, [isParentModalOpen, onClose]);

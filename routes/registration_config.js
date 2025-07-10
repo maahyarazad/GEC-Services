@@ -33,6 +33,8 @@ const storage = multer.diskStorage({
         }
     },
 });
+const {generateMapImage} = require("../services/mapService")
+
 
 const upload = multer({ storage: storage });
 router.post("/registration-config", upload.single('image'), async (req, res) => {
@@ -57,7 +59,14 @@ router.post("/registration-config", upload.single('image'), async (req, res) => 
             if (req.file) {
                 registration_data.image = req.file.filename;
             }
+
+            if(data.event_location){
+                const parts = data.event_location.split(", ");
+                await generateMapImage({lat:parts[0], lon:parts[1], event_name: data.page});
+            }
+
             // Update record (registration_code should not change if not re-generated)
+
             const updated = await dbService.update(table_name, registration_data.id, {
                 ...registration_data,
                 modifiedAt: new Date().toISOString(),
@@ -76,6 +85,11 @@ router.post("/registration-config", upload.single('image'), async (req, res) => 
             registration_data.image = String(req.file.filename);
         }
         
+        if(data.event_location){
+            const parts = data.event_location.split(", ");
+            await generateMapImage({lat:parts[0], lon:parts[1], event_name: data.page});
+        }
+
         // uniqeCodeAccess Logic goes here
 
         const code_list = [];

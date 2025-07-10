@@ -101,7 +101,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
 
         if (initialValues.event_location && typeof initialValues.event_location === 'string') {
             const parts = initialValues.event_location.split(", ");
-            debugger;
+            
             setInitialLat(parts[0]);
             setInitialLon(parts[1]);
         }
