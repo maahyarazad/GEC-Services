@@ -1,13 +1,13 @@
+require('dotenv').config();
 const express = require('express');
 const router = express.Router();
 const { generateRecordId, generateOTP } = require("../services/generatorService");
 const dbService = require("../services/dbService");
-const accountSid = 'ACf20c6fdcff4554153d18e319b1741de5';
-const authToken = '169c6a86516341663e70d61cf416fe3f';
-const twilioPhone = "whatsapp:+14155238886";
-const client = require('twilio')(accountSid, authToken);
+
+const twilioClient = require('twilio')(process.env.TWILIO_ACOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 const multer = require("multer");
+const { config } = require('dotenv');
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, "file_storage/");
@@ -38,7 +38,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-const sendOtpToPhone = async (mobile_number, req, res, twilioClient) => {
+const sendOtpToPhone = async (mobile_number, req, res) => {
     if (!mobile_number) {
         return { status: false, code: 400, message: 'Mobile number required' };
     }
@@ -55,7 +55,7 @@ const sendOtpToPhone = async (mobile_number, req, res, twilioClient) => {
     try {
         await twilioClient.messages.create({
             body: `Your OTP code is: ${otp}`,
-            from: twilioPhone,
+            from: process.env.TWILIO_PHONE  ,
             to: `whatsapp:${mobile_number}`,
         });
 
@@ -70,7 +70,7 @@ router.post("/send-otp",upload.none() ,async (req, res) => {
     try {
         const data = req.body;
 
-       const response = await sendOtpToPhone(data.whatsapp, req, res, client);
+       const response = await sendOtpToPhone(data.whatsapp, req, res);
        
        if(response.status){
            return res.status(200).json({

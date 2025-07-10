@@ -4,8 +4,12 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import slugify from 'slugify';
 import QuillField from '../utils/QuillField'
-import eventTime from '../../assets/media/event_time.png'
+import eventTime from '../../assets/media/event_time.png';
+
 import { Tooltip } from '@mui/material';
+import EventLocationInput from '../utils/EventLocationInput';
+
+
 
 const validationSchema = Yup.object({
     title: Yup.string().required('Title is required'),
@@ -46,7 +50,7 @@ const validationSchema = Yup.object({
 });
 
 
-export default function NewRegistrationPage({ initialData = null, modalSwitch, uniqeCodeAccess, enableUniqueMemberCode }) {
+export default function NewRegistrationPage({ initialData = null, modalSwitch, uniqeCodeAccess, enableUniqueMemberCode, isParentModalOpen }) {
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [slug, setSlug] = useState(null);
     const [submitError, setSubmitError] = useState('');
@@ -338,13 +342,14 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                                                 title={
                                                     <div className="d-flex flex-column align-items-center text-center">
                                                         <img src={eventTime} alt="Lock icon" style={{
-                                                                width: 300,
-                                                                height: 140,
+                                                                width: 290,
+                                                                height: 150,
+                                                                borderRadius: 10,
                                                                 objectFit: 'contain', // or 'cover', depending on your need
                                                                 imageRendering: 'auto' // or 'crisp-edges' or 'pixelated' for specific use cases
                                                             }}
                                                             className=''/>
-                                                        <span>This filed will also use in the registration email</span>
+                                                        <span>This field will also be used in the registration email. If filled, the map image shown above will appear in the email sent to the registrant.</span>
                                                     </div>
                                                 }
                                                 componentsProps={{
@@ -372,8 +377,9 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                                             </div>
                                         </div>
                                     </div>
-
-                                    <div className='col-6'>
+                                           
+                                                <EventLocationInput errors={errors} touched={touched} setFieldValue={setFieldValue} isParentModalOpen={isParentModalOpen}/>
+                                    {/* <div className='col-6'>
 
                                         <div className="align-items-center">
                                             <label htmlFor="event_location" className="form-label">
@@ -397,7 +403,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                                                 />
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> */}
                                 </div>
 
                             </div>

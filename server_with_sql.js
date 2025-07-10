@@ -12,6 +12,7 @@ const registration_config = require('./routes/registration_config');
 const registration = require('./routes/registration');
 const member = require('./routes/member');
 const registration_keys = require('./routes/registration_keys');
+const maps = require('./routes/maps');
 
 // Setup DB connection
 const db = new sqlite3.Database("./app.db", (err) => {
@@ -71,6 +72,7 @@ app.use('/', registration_config);
 app.use('/', registration);
 app.use('/', member);
 app.use('/', registration_keys);
+app.use('/', maps);
 
 
 // Start the server

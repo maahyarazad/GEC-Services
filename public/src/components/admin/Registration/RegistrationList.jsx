@@ -141,6 +141,7 @@ export const RegistrationList = () => {
     const [codeList, setCodeList] = useState(null);
     const [codeEventTitle, setCodeEventTitle] = useState(null);
     const [memberCount, setMemberCount] = useState(0);
+    const [isParentModalOpen, setIsParentModalOpen] = useState(false);
     const dialogRef = useRef();
 
     const fetchData = useCallback(async () => {
@@ -247,6 +248,7 @@ export const RegistrationList = () => {
 
             setInitialData(selectedRow);
             setEditReg(true);
+            setIsParentModalOpen(true);
         }
     };
 
@@ -333,10 +335,11 @@ export const RegistrationList = () => {
             }
 
             <Modal isOpen={editReg}
-                onRequestClose={() => { setEditReg(false); setInitialData(null); }}
+                onRequestClose={() => { setEditReg(false);  ;setInitialData(null); setIsParentModalOpen(false)}}
                 title={`Modify ${initialData?.title}`}>
-                <RegistrationRequestForm initialData={initialData} modalSwitch={() => {
+                <RegistrationRequestForm initialData={initialData} isParentModalOpen={isParentModalOpen} modalSwitch={() => {
                     setEditReg(false);
+                    setIsParentModalOpen(false);
                     fetchData();
                     setInitialData(null);
                 }} />
@@ -344,7 +347,7 @@ export const RegistrationList = () => {
 
 
             <Modal isOpen={codeModal}
-                onRequestClose={() => { setCodeList(null); setCodeModal(false); }}
+                onRequestClose={() => { setCodeList(null); setCodeModal(false);setIsParentModalOpen(false); }}
                 title={`${codeEventTitle} Registration Keys`}>
                 <RegistrationKeyList data={codeList} />
             </Modal>

@@ -1,9 +1,45 @@
-const sgMail = require("@sendgrid/mail");
 require("dotenv").config();
 const path = require("path");
 const fs = require("fs");
+// const sgMail = require("@sendgrid/mail");
+// sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const { SESClient, SendEmailCommand } = require("@aws-sdk/client-ses");
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const ses = new SESClient({
+  region: process.env.AWS_REGION, // e.g. "us-east-1"
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
+
+async function sendEmail({ to, subject, html, text }) {
+  const params = {
+    Source: process.env.SES_FROM_EMAIL, // Must be verified in SES
+    Destination: {
+      ToAddresses: [to],
+    },
+    Message: {
+      Subject: { Data: subject },
+      Body: {
+        Html: { Data: html },
+        Text: { Data: text || '' },
+      },
+    },
+  };
+
+  try {
+    const command = new SendEmailCommand(params);
+    const response = await ses.send(command);
+    console.log("Email sent:", response.MessageId);
+    return response;
+  } catch (err) {
+    console.error("Email send error:", err);
+    throw err;
+  }
+}
+
 
 async function comfirm_message_email({ reqBody }) {
   const { fullname, email } = reqBody;

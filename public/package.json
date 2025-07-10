@@ -39,6 +39,7 @@
     "crypto-js": "^4.2.0",
     "formik": "^2.4.6",
     "lodash": "^4.17.21",
+    "mapbox-gl": "^3.13.0",
     "mui-tiptap": "^1.19.0",
     "nprogress": "^0.2.0",
     "prop-types": "^15.8.1",
