@@ -5,7 +5,7 @@ const dbService = require("../services/dbService");
 const multer = require("multer");
 const  {generateQRWithText} = require("../services/qrGenerator");
 const  {reverseGeocode} = require("../services/mapService");
-const {comfirm_message_email, event_confirm_registration_email} = require("../services/emailService");
+const {comfirm_message_email, event_confirm_registration_email, event_confirm_registration_email_aws} = require("../services/emailService");
 const { generateRecordId } = require("../services/generatorService");
 const path = require("path");
 const fs = require("fs").promises;
@@ -115,7 +115,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                 data.event_time = event_time;
                 data.event_location = event_location;
     
-                await event_confirm_registration_email(data);
+                await event_confirm_registration_email_aws(data);
             }
             
             return res.json({ status: true, message: "Your request has been successfully processed.", create_result });
