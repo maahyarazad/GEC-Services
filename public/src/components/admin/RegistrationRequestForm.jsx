@@ -55,6 +55,8 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
     const [slug, setSlug] = useState(null);
     const [submitError, setSubmitError] = useState('');
     const [preview, setPreview] = useState(null);
+    const [initialLat, setInitialLat] = useState(null);
+    const [initialLon, setInitialLon] = useState(null);
 
     const fileInputRef = useRef(null);
     const containerRef = useRef(null);
@@ -96,7 +98,15 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
         if (initialValues.image && typeof initialValues.image === 'string') {
             setPreview(`${import.meta.env.VITE_SERVERURL}/uploads/${initialValues.image}`);
         }
-    }, [initialValues.image]);
+
+        if (initialValues.event_location && typeof initialValues.event_location === 'string') {
+            const parts = initialValues.event_location.split(", ");
+            debugger;
+            setInitialLat(parts[0]);
+            setInitialLon(parts[1]);
+        }
+
+    }, [initialValues.image, initialValues.event_location]);
 
 
     useEffect(() => {
@@ -378,7 +388,13 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                                         </div>
                                     </div>
                                            
-                                                <EventLocationInput errors={errors} touched={touched} setFieldValue={setFieldValue} isParentModalOpen={isParentModalOpen}/>
+                                    <EventLocationInput 
+                                        initialLat={initialLat}
+                                        initialLon={initialLon}
+                                        errors={errors} 
+                                        touched={touched} 
+                                        setFieldValue={setFieldValue} 
+                                        isParentModalOpen={isParentModalOpen}/>
                                     {/* <div className='col-6'>
 
                                         <div className="align-items-center">

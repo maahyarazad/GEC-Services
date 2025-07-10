@@ -4,7 +4,7 @@ import MapModal from './MapModal';
 import { Tooltip } from '@mui/material';
 import eventLocation from '../../assets/media/Mapbox.png';
 
-const EventLocationInput = ({ errors, touched, setFieldValue, isParentModalOpen }) => {
+const EventLocationInput = ({ errors, touched, setFieldValue, isParentModalOpen, initialLon, initialLat }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const handleLocationSelect = ({ lat, lng }) => {
@@ -59,6 +59,8 @@ const EventLocationInput = ({ errors, touched, setFieldValue, isParentModalOpen 
                 onClose={() => setIsModalOpen(false)}
                 onSelect={handleLocationSelect}
                 isParentModalOpen={isParentModalOpen}
+                initialLon={initialLon}
+                initialLat={initialLat}
             />
             
                 {/* <MapModal
