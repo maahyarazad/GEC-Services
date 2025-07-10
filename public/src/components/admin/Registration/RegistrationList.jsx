@@ -284,6 +284,7 @@ export const RegistrationList = () => {
     const [activeStep, setActiveStep] = useState(0);
     const handleNext = () => {
         setActiveStep((prev) => prev + 1);
+        setIsParentModalOpen(true);
     };
 
     const handleBack = () => {
@@ -291,8 +292,8 @@ export const RegistrationList = () => {
     };
 
     const handleClose = () => {
-        setNewReg(false);
-        setActiveStep(0); // reset step on close
+        debugger;
+        
     };
 
 
@@ -347,14 +348,18 @@ export const RegistrationList = () => {
 
 
             <Modal isOpen={codeModal}
-                onRequestClose={() => { setCodeList(null); setCodeModal(false);setIsParentModalOpen(false); }}
+                onRequestClose={() => { setCodeList(null); setCodeModal(false);}}
                 title={`${codeEventTitle} Registration Keys`}>
                 <RegistrationKeyList data={codeList} />
             </Modal>
 
 
 
-            <Modal isOpen={newReg} onRequestClose={() => setNewReg(false)} title="New Registration Page">
+            <Modal isOpen={newReg} onRequestClose={() => {setNewReg(false);
+                                    setIsParentModalOpen(false);
+                                    setActiveStep(0); // reset step on close
+
+                                    fetchData();}} title="New Registration Page">
                 <Stepper activeStep={activeStep} alternativeLabel>
                     {steps.map((label) => (
                         <Step key={label}>
@@ -399,11 +404,15 @@ export const RegistrationList = () => {
                     {activeStep === 1 && (
                         <>
                             <RegistrationRequestForm
+                                isParentModalOpen={isParentModalOpen}
                                 initialData={null}
                                 uniqeCodeAccess={memberCount}
                                 enableUniqueMemberCode={enableUniqueMemberCode}
                                 modalSwitch={() => {
-                                    handleClose();
+                                    setNewReg(false);
+                                    setIsParentModalOpen(false);
+                                    setActiveStep(0); // reset step on close
+
                                     fetchData();
                                 }}
                             />
