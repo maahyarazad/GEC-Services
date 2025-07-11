@@ -7,7 +7,7 @@ import MessageModalTrigger from '../utils/MessageModalTrigger';
 const PAGE_SIZE = 10;
 
 const columns = [
-    { field: 'id', headerName: 'ID', width: 50 },
+    { field: 'id', headerName: 'ID', width: 60 },
     {
         field: '',
         headerName: 'Complete',
@@ -56,7 +56,7 @@ const columns = [
             const fileUrl = `${import.meta.env.VITE_SERVERURL}/uploads/${filename}`;
         return (
            <a href={fileUrl} download style={{ textDecoration: 'none' }} target='_black'>
-                <Button variant="contained" color="primary" sx={{textTransform: 'none', fontSize: 12, padding: 0}}> 
+                <Button variant="contained" className='px-1' color="primary" sx={{textTransform: 'none', fontSize: 12, padding: 0}}> 
                     Download
                 </Button>
             </a>

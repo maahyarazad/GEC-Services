@@ -10,7 +10,8 @@ const MessageModalTrigger = ({ message }) => {
     <>
       <Button
         variant="contained"
-        color="secondary"
+        color="warning"
+        className='px-1'
         sx={{ textTransform: 'none', fontSize: 12, padding: 0 }}
         onClick={() => setOpen(true)}
       >
