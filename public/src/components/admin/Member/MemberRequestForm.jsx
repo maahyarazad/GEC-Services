@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-
+import { Button } from '@mui/material';
 const validationSchema = Yup.object({
   firstName: Yup.string().required('First name is required'),
   lastName: Yup.string().required('Last name is required'),
@@ -154,9 +154,17 @@ export default function MemberNewForm({ initialData = null, modalSwitch }) {
             </div>
 
             <div className="d-flex justify-content-end mt-3 w-100">
-              <button type="submit" className="btn btn-primary">
-                {isSubmitting ? "Saving..." : "Save Member" }
-              </button>
+
+              <Button
+                                variant='contained'
+                                    type="submit"
+                                    className="btn btn-primary"
+                                    disabled={isSubmitting}
+                                    sx={{textTransform: 'none'}}
+                                >
+                                    {isSubmitting ? "Submitting" : "Save Registration Page"}
+                                </Button>
+              
             </div>
           </Form>
         )}

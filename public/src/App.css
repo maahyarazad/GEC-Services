@@ -1,6 +1,8 @@
 @font-face {
   font-family: "Atkinson";
-  src: url(/font/AtkinsonHyperlegibleNext-VariableFont_wght.ttf);
+  src: url("https://cdn.jsdelivr.net/gh/google/fonts/ofl/atkinsonhyperlegible/AtkinsonHyperlegible-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
 }
 
 @font-face {

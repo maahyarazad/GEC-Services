@@ -6,7 +6,7 @@ import slugify from 'slugify';
 import QuillField from '../utils/QuillField'
 import eventTime from '../../assets/media/event_time.png';
 
-import { Tooltip } from '@mui/material';
+import { Button, Tooltip } from '@mui/material';
 import EventLocationInput from '../utils/EventLocationInput';
 import LockRegistrationSwitch from '../utils/LockRegistrationSwitch';
 
@@ -682,13 +682,15 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                         <div className='col-12'>
                             <div className='d-flex justify-content-end'>
 
-                                <button
+                                <Button
+                                variant='contained'
                                     type="submit"
                                     className="btn btn-primary"
                                     disabled={isSubmitting}
+                                    sx={{textTransform: 'none'}}
                                 >
                                     {isSubmitting ? "Submitting" : "Save Registration Page"}
-                                </button>
+                                </Button>
                             </div>
                         </div>
 
