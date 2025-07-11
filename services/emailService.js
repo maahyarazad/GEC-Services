@@ -335,11 +335,11 @@ async function event_confirm_registration_email(reqBody) {
       : '';
 
     const eventLocationSection =
-      reqBody.event && reqBody.event_location
+      reqBody.  event && reqBody.event_location
         ? `
         <tr>
-          <td align="center" style="padding:20px;">
-            <p><strong>Event location — tap the map below for navigation:</strong></p>
+          <td align="center" style="padding:20px; font-size:16px; color:#333333;">
+            <p style="padding-bottom: 10px;"><strong>Event location - tap the map below for navigation:</strong></p>
             <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(reqBody.event_location)}" target="_blank" rel="noopener noreferrer">
               <img src="cid:event-location" alt="Event Location Map" width="200" height="200" style="border:0; display:block;" />
             </a>
@@ -382,8 +382,8 @@ async function event_confirm_registration_email(reqBody) {
               </tr>
               ${eventLocationSection}
               <tr>
-                <td align="center" style="padding:20px;">
-                  <p><strong>Please keep this email so we can scan your QR code:</strong></p>
+                <td align="center" style="padding:20px; font-size:16px; color:#333333;">
+                  <p"><strong>Please keep this email so we can scan your QR code:</strong></p>
                   <img src="cid:qr-code" alt="QR Code" width="200" height="200" style="display:block;" />
                 </td>
               </tr>
