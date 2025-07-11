@@ -53,7 +53,7 @@ const AlertDialog = React.forwardRef((props, ref) => {
     >
       <DialogTitle id="alert-dialog-title">{actionTitle}</DialogTitle>
       <DialogContent>
-        <DialogContentText id="alert-dialog-description">
+        <DialogContentText id="alert-dialog-description" sx={{color: 'black'}}>
           {message}
         </DialogContentText>
       </DialogContent>

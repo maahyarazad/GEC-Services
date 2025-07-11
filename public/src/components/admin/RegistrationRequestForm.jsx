@@ -8,7 +8,7 @@ import eventTime from '../../assets/media/event_time.png';
 
 import { Tooltip } from '@mui/material';
 import EventLocationInput from '../utils/EventLocationInput';
-
+import LockRegistrationSwitch from '../utils/LockRegistrationSwitch';
 
 
 const validationSchema = Yup.object({
@@ -201,6 +201,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
 
     return (
         <div className="container py-4" ref={containerRef}>
+            
             {submitSuccess && (
                 <div className="alert alert-success">
                     Registration page saved successfully!
@@ -559,11 +560,12 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
 
                                     </div>
 
-
-                                    <div className="form-check form-switch mb-3">
+                                    <LockRegistrationSwitch/>        
+                                    {/* <div className="form-check form-switch mb-3">
                                         <Field name="lockRegistration">
                                             {({ field }) => (
                                                 <input
+
                                                     name={field.name}
                                                     checked={field.value}
                                                     onChange={field.onChange}
@@ -578,7 +580,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                                             Lock Registration
                                         </label>
 
-                                    </div>
+                                    </div> */}
 
                                     <div className="form-check form-switch mb-3">
                                         <Field name="paymentRequired">
@@ -694,6 +696,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
 
                 )}
             </Formik>
+            
         </div>
     );
 }
