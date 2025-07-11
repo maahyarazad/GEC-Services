@@ -255,7 +255,7 @@ export const RegistrationList = () => {
     const switchLock = (row) => {
         dialogRef.current.openDialog(
             <div>
-                Enabling this option will lock the registration page and prevent further submissions. Are you sure you want to proceed?
+                <p>Enabling this option will lock the registration page and prevent further submissions. Are you sure you want to proceed?</p>
                 <img src={lockRegistrationImage} alt="Lock" style={{ maxWidth: '100%', marginTop: 8 }} />
             </div>,
             'Confirm Action',

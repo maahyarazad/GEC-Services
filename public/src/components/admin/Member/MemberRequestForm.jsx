@@ -95,7 +95,7 @@ export default function MemberNewForm({ initialData = null, modalSwitch }) {
         enableReinitialize={true}
         onSubmit={handleSubmit}
       >
-        {({ setFieldValue, errors, touched }) => (
+        {({ setFieldValue, errors, touched, isSubmitting }) => (
           <Form>
             <div className="row">
               <div className="col-6">
@@ -153,9 +153,9 @@ export default function MemberNewForm({ initialData = null, modalSwitch }) {
               </div>
             </div>
 
-            <div className="d-flex justify-content-end mt-3">
+            <div className="d-flex justify-content-end mt-3 w-100">
               <button type="submit" className="btn btn-primary">
-                Save Member
+                {isSubmitting ? "Saving..." : "Save Member" }
               </button>
             </div>
           </Form>
