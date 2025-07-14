@@ -155,7 +155,7 @@ router.get("/registration-config", async (req, res) => {
         const rows = await dbService.findAll(table_name);
 
 
-        res.json({ status: true, message: "Data saved successfully", rows });
+        res.json({ status: true, message: "Data fetched successfully", rows });
     } catch (error) {
         console.error(error);
         res.status(500).json({ status: false, message: "Server error" });

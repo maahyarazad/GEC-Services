@@ -143,9 +143,12 @@ export const RegistrationList = () => {
     const [memberCount, setMemberCount] = useState(0);
     const [isParentModalOpen, setIsParentModalOpen] = useState(false);
     const dialogRef = useRef();
+    const [loading, setLoading] = useState(false);
+    const [rowCount, setRowCount] = useState(0);
 
     const fetchData = useCallback(async () => {
         try {
+            setLoading(true);
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config`, {
                 method: 'GET',
             });
@@ -155,10 +158,16 @@ export const RegistrationList = () => {
             }
 
             const values = await response.json();
+            debugger;
+            if(values){
 
-            setRegistrationList(values);
+                setRegistrationList(values.rows);
+                setRowCount(values.rows.length)
+            }
         } catch (err) {
             console.error('Error fetching data:', err);
+        }finally{
+             setLoading(false);
         }
     }, []);
 
@@ -242,7 +251,7 @@ export const RegistrationList = () => {
     }
 
     const openEdit = (row) => {
-        const selectedRow = registrationList?.rows?.find((x) => x.id === row.id);
+        const selectedRow = registrationList?.find((x) => x.id === row.id);
 
         if (selectedRow) {
 
@@ -317,11 +326,15 @@ export const RegistrationList = () => {
 
 
 
-            {registrationList
-                ?
-                <div style={{ height: '100%' }}>
+        {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <CircularProgress />
+                </Box>
+            ) : (
+                <div style={{ width: '100%', height: '82dvh' }}>
                     <DataGrid
-                        rows={registrationList.rows}
+                        rowCount={rowCount}
+                        rows={registrationList}
                         columns={getColumns({ onEdit: openEdit, onLock: switchLock, onShowCode: showCodeList })}
                         pageSize={5}
                         rowsPerPageOptions={[5]}
@@ -329,11 +342,9 @@ export const RegistrationList = () => {
                         disableRowSelectionOnClick
                     />
                 </div>
-                :
-                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                    <CircularProgress />
-                </Box>
-            }
+            )}
+
+        
 
             <Modal isOpen={editReg}
                 onRequestClose={() => { setEditReg(false);  ;setInitialData(null); setIsParentModalOpen(false)}}

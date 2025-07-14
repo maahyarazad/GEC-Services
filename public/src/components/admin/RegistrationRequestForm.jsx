@@ -370,7 +370,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                                                                 imageRendering: 'crisp-edges' // or 'crisp-edges' or 'pixelated' for specific use cases
                                                             }}
                                                             className=''/>
-                                                        <span>This field will also be used in the registration email. If filled, the map image shown above will appear in the email sent to the registrant.</span>
+                                                        <span>This field will also be used in the registration email. If filled in, the event time (e.g., "9:00 PM — Gates open at 9:15 PM") will appear in the email sent to the registrant.</span>
                                                     </div>
                                                 }
                                                 componentsProps={{
@@ -450,7 +450,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                                                                 imageRendering: 'crisp-edges' // or 'crisp-edges' or 'pixelated' for specific use cases
                                                             }}
                                                             className=''/>
-                                                        <span>This field will also be used in the registration email. If filled, the location name shown above will appear in the email sent to the registrant.</span>
+                                                        <span>This field will also be used in the registration email. If filled in, the location name shown above will appear in the email sent to the registrant.</span>
                                                     </div>
                                                 }
                                                 componentsProps={{
