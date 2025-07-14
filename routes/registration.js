@@ -4,48 +4,40 @@ const { exportTableAsCSV } = require("../services/csvParser");
 const dbService = require("../services/dbService");
 const multer = require("multer");
 const  {generateQRWithText} = require("../services/qrGenerator");
-const  {reverseGeocode} = require("../services/mapService");
+const  {validateFileMimeType} = require("../services/validateFileType");
 const {comfirm_message_email, event_confirm_registration_email, event_confirm_registration_email_aws} = require("../services/emailService");
 const { generateRecordId } = require("../services/generatorService");
 const path = require("path");
-const fs = require("fs").promises;
+const fs = require("fs");
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, "file_storage/");
-    },
-    filename: async (req, file, cb) => {
-        const originalName = path.parse(file.originalname).name;
-        const extension = path.extname(file.originalname);
-        let newFileName = originalName;
-        let counter = 1;
-        // Check if the file already exists
-        let filePath = path.join("file_storage", file.originalname);
-        try {
-            while (true) {
-                try {
-                    await fs.access(filePath);
-                    newFileName = `${originalName} (${counter})`;
-                    filePath = path.join("file_storage", `${newFileName}${extension}`);
-                    counter++;
-                } catch (err) {
-                    break;
-                }
-            }
-            cb(null, `${newFileName}${extension}`);
-        } catch (error) {
-            cb(error);
-        }
-    },
-});
 
-const upload = multer({ storage: storage });
+const upload = multer({ 
+    storage: multer.memoryStorage()
+    , limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB max
 
 router.post("/registration", upload.single('attachment_file'), async (req, res) => {
     try {
+        
+
+
         const table_name = "registration";
         const {registration_code, title, event_date, ...data} = req.body;
         const file = req.file; 
+        let uniqueFileName = null;
+        // Validate file type
+        if(file){
+            const result = await validateFileMimeType(req.file);
+            if (!result.valid) {
+                return res.status(400).json({ status: false, message: result.reason });
+            }
+    
+             // Save file after validation
+            uniqueFileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(req.file.originalname)}`;
+            const targetPath = path.join("file_storage", uniqueFileName);
+            fs.writeFileSync(targetPath, req.file.buffer);
+        }
+
+
         let event_time;
         let event_location;
         let event_location_name;
@@ -92,7 +84,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
 
         // You can check if file was sent
         if (file) {
-            data.attachment_file = file.originalname
+            data.attachment_file = uniqueFileName;
         } 
 
         data.event_id = generateRecordId(data.event, false);
@@ -100,8 +92,8 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
         if(create_result.status){
             // Todo: send email
             if (file) {
-                data.attachment_file = file.originalname
-                await comfirm_message_email(data)
+                
+                await comfirm_message_email(data);
             } else{
                 
                 // Increment the tokenCount here

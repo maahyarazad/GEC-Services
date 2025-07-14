@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Field, ErrorMessage } from 'formik';
 import MapModal from './MapModal';
 import { Tooltip } from '@mui/material';
-import eventLocation from '../../assets/media/Mapbox.png';
+import eventLocation from '../../assets/media/event_navigation.png';
 import { IoClose } from "react-icons/io5";
 const EventLocationInput = ({ errors, touched, setFieldValue, isParentModalOpen, initialLon, initialLat }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,7 +24,7 @@ const EventLocationInput = ({ errors, touched, setFieldValue, isParentModalOpen,
                                 height: 200,
                                 borderRadius: 5,
                                 objectFit: 'contain', // or 'cover', depending on your need
-                                imageRendering: 'auto' // or 'crisp-edges' or 'pixelated' for specific use cases
+                                imageRendering: 'crisp-edges' // or 'crisp-edges' or 'pixelated' for specific use cases
                             }}
                                 className='' />
                             <span>This field will generate a map image in the confirmation email received by the registrant, which can be used for navigation.</span>

@@ -113,6 +113,9 @@ async function event_confirm_registration_email_aws(reqBody) {
   const eventTimeSection = reqBody.event_time
     ? `<p><strong>Time:</strong> ${reqBody.event_time}</p>`
     : '';
+  const eventLocationName = reqBody.event_location_name
+    ? `<p><strong>Time:</strong> ${reqBody.event_location_name}</p>`
+    : '';
 
   const eventLocationSection =
     reqBody.event && reqBody.event_location
@@ -158,6 +161,7 @@ async function event_confirm_registration_email_aws(reqBody) {
                   <p>Thank you for registering for the <strong>${reqBody.title}</strong>. We appreciate your interest and look forward to your participation.</p>
                   <p><strong>Date:</strong> ${reqBody.event_date}</p>
                   ${eventTimeSection}
+                  ${eventLocationName}
                 </td>
               </tr>
               ${eventLocationSection}
@@ -333,24 +337,21 @@ async function event_confirm_registration_email(reqBody) {
     const eventTimeSection = reqBody.event_time
       ? `<p><strong>Time:</strong> ${reqBody.event_time}</p>`
       : '';
+    const eventLocationName = reqBody.event_location_name
+      ? `<p><strong>Event Location</strong> ${reqBody.event_location_name}</p>`
+      : '';
 
     const eventLocationSection =
       reqBody.event && reqBody.event_location_name && reqBody.event_location
         ? `
           <tr>
-            <td style="padding:20px; font-size:16px; color:#333333; line-height:1.6;">
-                <p><strong>Event Location:</strong> ${reqBody.event_location_name}</p>
-              </td>
+            <td align="center" style="padding:20px; font-size:16px; color:#333333;">
+              <p style="padding-bottom: 10px;"><strong>Event location - tap the map below for navigation:</strong></p>
+              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(reqBody.event_location_name)}" target="_blank" rel="noopener noreferrer">
+                <img src="cid:event-location" alt="Event Location Map" width="200" height="200" style="border:0; display:block;" />
+              </a>
+            </td>
           </tr>
-          <tr>
-
-          <td align="center" style="padding:20px; font-size:16px; color:#333333;">
-            <p style="padding-bottom: 10px;"><strong>Event location - tap the map below for navigation:</strong></p>
-            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(reqBody.event_location_name)}" target="_blank" rel="noopener noreferrer">
-              <img src="cid:event-location" alt="Event Location Map" width="200" height="200" style="border:0; display:block;" />
-            </a>
-          </td>
-        </tr>
         `
         : '';
 
@@ -385,6 +386,7 @@ async function event_confirm_registration_email(reqBody) {
                   <p>Thank you for registering for the <strong>${reqBody.title}</strong>. We appreciate your interest and look forward to your participation.</p>
                   <p><strong>Date:</strong> ${reqBody.event_date}</p>
                   ${eventTimeSection}
+                  ${eventLocationName}
                 </td>
               </tr>
               ${eventLocationSection}

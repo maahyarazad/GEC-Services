@@ -5,6 +5,9 @@ import * as Yup from 'yup';
 import slugify from 'slugify';
 import QuillField from '../utils/QuillField'
 import eventTime from '../../assets/media/event_time.png';
+import eventLocationName from '../../assets/media/event_location_name.png';
+import eventNavigation from '../../assets/media/event_location_name.png';
+
 
 import { Button, Tooltip } from '@mui/material';
 import EventLocationInput from '../utils/EventLocationInput';
@@ -364,7 +367,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                                                                 height: 150,
                                                                 borderRadius: 10,
                                                                 objectFit: 'contain', // or 'cover', depending on your need
-                                                                imageRendering: 'auto' // or 'crisp-edges' or 'pixelated' for specific use cases
+                                                                imageRendering: 'crisp-edges' // or 'crisp-edges' or 'pixelated' for specific use cases
                                                             }}
                                                             className=''/>
                                                         <span>This field will also be used in the registration email. If filled, the map image shown above will appear in the email sent to the registrant.</span>
@@ -439,15 +442,15 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                                             <Tooltip
                                                 title={
                                                     <div className="d-flex flex-column align-items-center text-center">
-                                                        <img src={eventTime} alt="Lock icon" style={{
+                                                        <img src={eventLocationName} alt="Lock icon" style={{
                                                                 width: 290,
                                                                 height: 150,
                                                                 borderRadius: 10,
                                                                 objectFit: 'contain', // or 'cover', depending on your need
-                                                                imageRendering: 'auto' // or 'crisp-edges' or 'pixelated' for specific use cases
+                                                                imageRendering: 'crisp-edges' // or 'crisp-edges' or 'pixelated' for specific use cases
                                                             }}
                                                             className=''/>
-                                                        <span>This field will also be used in the registration email. If filled, the map image shown above will appear in the email sent to the registrant.</span>
+                                                        <span>This field will also be used in the registration email. If filled, the location name shown above will appear in the email sent to the registrant.</span>
                                                     </div>
                                                 }
                                                 componentsProps={{
