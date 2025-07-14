@@ -12,7 +12,7 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 });
 
 // Reusable AlertDialog component
-const AlertDialog = React.forwardRef((props, ref) => {
+const AlertDialog = ({ref}) => {
   const [open, setOpen] = React.useState(false);
   const [message, setMessage] = React.useState('');
   const [actionTitle, setActionTitle] = React.useState('');
@@ -65,6 +65,6 @@ const AlertDialog = React.forwardRef((props, ref) => {
       </DialogActions>
     </Dialog>
   );
-});
+};
 
 export default AlertDialog;

@@ -39,6 +39,9 @@ const validationSchema = Yup.object({
         .required('Event date is required')
         .min(new Date(), 'Event date must be in the future'),
 
+        // event_location_name: Yup.string()
+        // .required('Event Location Name is required'),
+        
     paymentRequired: Yup.boolean(),
     birthdayRequired: Yup.boolean(),
     companyRequired: Yup.boolean(),
@@ -83,6 +86,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
         fileUpload: initialData?.fileUpload === "true",
         textarea: initialData?.textarea === "true",
         fieldIcon: initialData?.fieldIcon === "true",
+        countDown: initialData?.countDown === "true",
         title: initialData?.title || '',
         send_button_text: initialData?.send_button_text || 'Submit',
         image: initialData?.Image || null,
@@ -91,6 +95,7 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
         event_date: initialData?.event_date || '',
         event_time: initialData?.event_time || '',
         event_location: initialData?.event_location || '',
+        event_location_name: initialData?.event_location_name || '',
         uniqeCodeAccess: enableUniqueMemberCode ? uniqeCodeAccess : 1
     };
 
@@ -138,11 +143,13 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
             formData.append('fileUpload', values.fileUpload);
             formData.append('textarea', values.textarea);
             formData.append('fieldIcon', values.fieldIcon);
+            formData.append('countDown', values.countDown);
             formData.append('title', values.title);
             formData.append('send_button_text', values.send_button_text);
             formData.append('event_date', values.event_date);
             formData.append('event_time', values.event_time);
             formData.append('event_location', values.event_location);
+            formData.append('event_location_name', values.event_location_name);
             formData.append('maxTokensPerGuest', values.tokensPerGuest);
             formData.append('description', values.description);
             formData.append('uniqeCodeAccess', values.uniqeCodeAccess);
@@ -423,6 +430,52 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                                     </div> */}
                                 </div>
 
+                                <div className='row'>
+                                    <div className='col-6'>
+                                        <div className="align-items-center">
+                                            <label htmlFor="event_location_name" className="form-label">
+                                                Event Location Name
+                                            </label>
+                                            <Tooltip
+                                                title={
+                                                    <div className="d-flex flex-column align-items-center text-center">
+                                                        <img src={eventTime} alt="Lock icon" style={{
+                                                                width: 290,
+                                                                height: 150,
+                                                                borderRadius: 10,
+                                                                objectFit: 'contain', // or 'cover', depending on your need
+                                                                imageRendering: 'auto' // or 'crisp-edges' or 'pixelated' for specific use cases
+                                                            }}
+                                                            className=''/>
+                                                        <span>This field will also be used in the registration email. If filled, the map image shown above will appear in the email sent to the registrant.</span>
+                                                    </div>
+                                                }
+                                                componentsProps={{
+                                                    tooltip: {
+                                                        sx: { fontSize: 14 }
+                                                    }
+                                                }}
+                                            >
+                                                
+                                            <Field
+                                                
+                                                name="event_location_name"
+                                                type="text"
+                                                className={`form-control ${errors.event_location_name && touched.event_location_name ? 'is-invalid' : ''}`}
+                                                placeholder="Event Location Name"
+                                            />
+                                            </Tooltip>
+                                            <div style={{ minHeight: 30 }}>
+                                                <ErrorMessage
+                                                    name="event_location_name"
+                                                    component="div"
+                                                    
+                                                    className="text-danger small mt-1"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
@@ -607,6 +660,27 @@ export default function NewRegistrationPage({ initialData = null, modalSwitch, u
                                 <div className='col-6'>
 
                                     <div className='pb-3'>Optional Fields</div>
+
+
+                                    <div className="form-check form-switch mb-3">
+                                        <Field name="countDown">
+                                            {({ field }) => (
+                                                <input
+                                                    name={field.name}
+                                                    checked={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    id="countDown"
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                />
+                                            )}
+                                        </Field>
+                                        <label className="form-check-label" htmlFor="countDown">
+                                            Enable Countdown Timer
+                                        </label>
+
+                                    </div>
 
                                     <div className="form-check form-switch mb-3">
                                         <Field name="fieldIcon">

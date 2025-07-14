@@ -38,6 +38,7 @@
     "axios": "^1.10.0",
     "crypto-js": "^4.2.0",
     "formik": "^2.4.6",
+    "framer-motion": "^12.23.5",
     "lodash": "^4.17.21",
     "mapbox-gl": "^3.13.0",
     "mui-tiptap": "^1.19.0",

@@ -62,7 +62,7 @@ async function sendRawEmailWithAttachments({ to, subject, html, text = '', attac
       pass: process.env.SENDGRID_API_KEY, // Your actual SendGrid API Key
     },
     streamTransport: true,
-      buffer: true,
+    buffer: true,
   });
 
   const mailOptions = {
@@ -99,11 +99,11 @@ async function sendRawEmailWithAttachments({ to, subject, html, text = '', attac
 }
 
 async function event_confirm_registration_email_aws(reqBody) {
-  const tempPath =  path.join(__dirname, "..", "qr-files");
+  const tempPath = path.join(__dirname, "..", "qr-files");
   const mapRoot = path.join(__dirname, "..", "maps");
   const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
   const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
- 
+
 
   const [mapBuffer, qrBuffer] = await Promise.all([
     fsPromise.readFile(mapPath),
@@ -111,12 +111,12 @@ async function event_confirm_registration_email_aws(reqBody) {
   ]);
   const currentYear = new Date().getFullYear();
   const eventTimeSection = reqBody.event_time
-      ? `<p><strong>Time:</strong> ${reqBody.event_time}</p>`
-      : '';
+    ? `<p><strong>Time:</strong> ${reqBody.event_time}</p>`
+    : '';
 
-    const eventLocationSection =
-      reqBody.event && reqBody.event_location
-        ? `
+  const eventLocationSection =
+    reqBody.event && reqBody.event_location
+      ? `
         <tr>
           <td align="center" style="padding:20px;">
             <p><strong>Event location — tap the map below for navigation:</strong></p>
@@ -125,9 +125,9 @@ async function event_confirm_registration_email_aws(reqBody) {
             </a>
           </td>
         </tr>`
-        : '';
+      : '';
 
-    const htmlBody = `
+  const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -216,7 +216,7 @@ async function comfirm_message_email(reqBody) {
   const { firstName, lastName, email } = reqBody;
   try {
     const currentYear = new Date().getFullYear();
-    
+
     const fullname = `${firstName} ${lastName}`
     const htmlBody = `
 <!DOCTYPE html>
@@ -335,16 +335,23 @@ async function event_confirm_registration_email(reqBody) {
       : '';
 
     const eventLocationSection =
-      reqBody.  event && reqBody.event_location
+      reqBody.event && reqBody.event_location_name && reqBody.event_location
         ? `
-        <tr>
+          <tr>
+            <td style="padding:20px; font-size:16px; color:#333333; line-height:1.6;">
+                <p><strong>Event Location:</strong> ${reqBody.event_location_name}</p>
+              </td>
+          </tr>
+          <tr>
+
           <td align="center" style="padding:20px; font-size:16px; color:#333333;">
             <p style="padding-bottom: 10px;"><strong>Event location - tap the map below for navigation:</strong></p>
-            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(reqBody.event_location)}" target="_blank" rel="noopener noreferrer">
+            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(reqBody.event_location_name)}" target="_blank" rel="noopener noreferrer">
               <img src="cid:event-location" alt="Event Location Map" width="200" height="200" style="border:0; display:block;" />
             </a>
           </td>
-        </tr>`
+        </tr>
+        `
         : '';
 
     const htmlBody = `
@@ -428,113 +435,113 @@ async function event_confirm_registration_email(reqBody) {
     return response;
 
 
- 
 
-//   const [mapBuffer, qrBuffer] = await Promise.all([
-//     fsPromise.readFile(mapPath),
-//     fsPromise.readFile(qrPath)
-//   ]);
-//   const currentYear = new Date().getFullYear();
-//   const eventTimeSection = reqBody.event_time
-//       ? `<p><strong>Time:</strong> ${reqBody.event_time}</p>`
-//       : '';
 
-//     const eventLocationSection =
-//       reqBody.event && reqBody.event_location
-//         ? `
-//         <tr>
-//           <td align="center" style="padding:20px;">
-//             <p><strong>Event location — tap the map below for navigation:</strong></p>
-//             <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(reqBody.event_location)}" target="_blank" rel="noopener noreferrer">
-//               <img src="cid:event-location" alt="Event Location Map" width="200" height="200" style="border:0; display:block;" />
-//             </a>
-//           </td>
-//         </tr>`
-//         : '';
+    //   const [mapBuffer, qrBuffer] = await Promise.all([
+    //     fsPromise.readFile(mapPath),
+    //     fsPromise.readFile(qrPath)
+    //   ]);
+    //   const currentYear = new Date().getFullYear();
+    //   const eventTimeSection = reqBody.event_time
+    //       ? `<p><strong>Time:</strong> ${reqBody.event_time}</p>`
+    //       : '';
 
-//     const htmlBody = `
-// <!DOCTYPE html>
-// <html>
-//   <head>
-//     <meta charset="UTF-8" />
-//     <title>${reqBody.title} Registration</title>
-//   </head>
-//   <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
-//     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
-//       <thead>
-//         <tr>
-//           <td align="center">
-//             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1); margin:40px auto;">
-//               <tr>
-//                 <td bgcolor="#D9B144" style="color:#ffffff; text-align:center; padding:20px; font-size:22px; font-weight:bold; border-top-left-radius:8px; border-top-right-radius:8px;">
-//                   Registration Confirmed
-//                 </td>
-//               </tr>
-//             </table>
-//           </td>
-//         </tr>
-//       </thead>
-//       <tbody>
-//         <tr>
-//           <td align="center">
-//             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; padding:0 30px 30px;">
-//               <tr>
-//                 <td style="padding:20px; font-size:16px; color:#333333; line-height:1.6;">
-//                   <p>Thank you for registering for the <strong>${reqBody.title}</strong>. We appreciate your interest and look forward to your participation.</p>
-//                   <p><strong>Date:</strong> ${reqBody.event_date}</p>
-//                   ${eventTimeSection}
-//                 </td>
-//               </tr>
-//               ${eventLocationSection}
-//               <tr>
-//                 <td align="center" style="padding:20px;">
-//                   <p><strong>Please keep this email so we can scan your QR code:</strong></p>
-//                   <img src="cid:qr-code" alt="QR Code" width="200" height="200" style="display:block;" />
-//                 </td>
-//               </tr>
-//               <tr>
-//                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
-//                   <p>
-//                     If you have any questions, feel free to contact us at <br/>
-//                     <a href="mailto:info@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">info@german-emirates-club.com</a>.
-//                   </p>
-//                   <p>Warm regards,<br />The German Emirates Club Team</p>
-//                 </td>
-//               </tr>
-//               <tr>
-//                 <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
-//                   &copy; ${currentYear} German Emirates Club. All rights reserved.
-//                 </td>
-//               </tr>
-//             </table>
-//           </td>
-//         </tr>
-//       </tbody>
-//     </table>
-//   </body>
-// </html>
-// `;
+    //     const eventLocationSection =
+    //       reqBody.event && reqBody.event_location
+    //         ? `
+    //         <tr>
+    //           <td align="center" style="padding:20px;">
+    //             <p><strong>Event location — tap the map below for navigation:</strong></p>
+    //             <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(reqBody.event_location)}" target="_blank" rel="noopener noreferrer">
+    //               <img src="cid:event-location" alt="Event Location Map" width="200" height="200" style="border:0; display:block;" />
+    //             </a>
+    //           </td>
+    //         </tr>`
+    //         : '';
 
-//   await sendRawEmailWithAttachments({
-//     to: reqBody.email,
-//     subject: `Registration Completed – ${reqBody.title}`,
-//     html: htmlBody, // your HTML with <img src="cid:event-location"> and <img src="cid:qr-code">
-//     text: 'Your registration is confirmed.', // fallback text
-//     attachments: [
-//       {
-//         filename: 'map.png',
-//         content: mapBuffer,
-//         contentType: 'image/png',
-//         cid: 'event-location',
-//       },
-//       {
-//         filename: 'qr.png',
-//         content: qrBuffer,
-//         contentType: 'image/png',
-//         cid: 'qr-code',
-//       }
-//     ]
-//   });
+    //     const htmlBody = `
+    // <!DOCTYPE html>
+    // <html>
+    //   <head>
+    //     <meta charset="UTF-8" />
+    //     <title>${reqBody.title} Registration</title>
+    //   </head>
+    //   <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
+    //     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
+    //       <thead>
+    //         <tr>
+    //           <td align="center">
+    //             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1); margin:40px auto;">
+    //               <tr>
+    //                 <td bgcolor="#D9B144" style="color:#ffffff; text-align:center; padding:20px; font-size:22px; font-weight:bold; border-top-left-radius:8px; border-top-right-radius:8px;">
+    //                   Registration Confirmed
+    //                 </td>
+    //               </tr>
+    //             </table>
+    //           </td>
+    //         </tr>
+    //       </thead>
+    //       <tbody>
+    //         <tr>
+    //           <td align="center">
+    //             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; padding:0 30px 30px;">
+    //               <tr>
+    //                 <td style="padding:20px; font-size:16px; color:#333333; line-height:1.6;">
+    //                   <p>Thank you for registering for the <strong>${reqBody.title}</strong>. We appreciate your interest and look forward to your participation.</p>
+    //                   <p><strong>Date:</strong> ${reqBody.event_date}</p>
+    //                   ${eventTimeSection}
+    //                 </td>
+    //               </tr>
+    //               ${eventLocationSection}
+    //               <tr>
+    //                 <td align="center" style="padding:20px;">
+    //                   <p><strong>Please keep this email so we can scan your QR code:</strong></p>
+    //                   <img src="cid:qr-code" alt="QR Code" width="200" height="200" style="display:block;" />
+    //                 </td>
+    //               </tr>
+    //               <tr>
+    //                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
+    //                   <p>
+    //                     If you have any questions, feel free to contact us at <br/>
+    //                     <a href="mailto:info@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">info@german-emirates-club.com</a>.
+    //                   </p>
+    //                   <p>Warm regards,<br />The German Emirates Club Team</p>
+    //                 </td>
+    //               </tr>
+    //               <tr>
+    //                 <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
+    //                   &copy; ${currentYear} German Emirates Club. All rights reserved.
+    //                 </td>
+    //               </tr>
+    //             </table>
+    //           </td>
+    //         </tr>
+    //       </tbody>
+    //     </table>
+    //   </body>
+    // </html>
+    // `;
+
+    //   await sendRawEmailWithAttachments({
+    //     to: reqBody.email,
+    //     subject: `Registration Completed – ${reqBody.title}`,
+    //     html: htmlBody, // your HTML with <img src="cid:event-location"> and <img src="cid:qr-code">
+    //     text: 'Your registration is confirmed.', // fallback text
+    //     attachments: [
+    //       {
+    //         filename: 'map.png',
+    //         content: mapBuffer,
+    //         contentType: 'image/png',
+    //         cid: 'event-location',
+    //       },
+    //       {
+    //         filename: 'qr.png',
+    //         content: qrBuffer,
+    //         contentType: 'image/png',
+    //         cid: 'qr-code',
+    //       }
+    //     ]
+    //   });
   } catch (error) {
     console.error("Failed to send registration email:", error);
     throw error;

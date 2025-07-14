@@ -48,6 +48,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
         const file = req.file; 
         let event_time;
         let event_location;
+        let event_location_name;
 
         const key = await dbService.findExact("registration_keys", "key", registration_code);
 
@@ -56,6 +57,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
             const max_token_value = await dbService.findExact("registration_config", "page", data.event);
             event_time = max_token_value[0]?.event_time;
             event_location = max_token_value[0]?.event_location;
+            event_location_name = max_token_value[0]?.event_location_name;
 
             // Convert to numbers
             const maxTokens = Number(max_token_value[0]?.maxTokensPerGuest);
@@ -115,6 +117,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                 data.event_date = event_date;
                 data.event_time = event_time;
                 data.event_location = event_location;
+                data.event_location_name = event_location_name;
     
                 await event_confirm_registration_email(data);
             }

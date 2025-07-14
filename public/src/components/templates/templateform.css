@@ -118,7 +118,7 @@
   }
 }
 
-@media only screen and (max-width: 767px) {
+@media only screen and (max-width: 850px) {
   .template-form {
     position: relative;
     overflow: scroll !important;

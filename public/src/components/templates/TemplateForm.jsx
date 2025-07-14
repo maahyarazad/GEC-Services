@@ -1,5 +1,5 @@
-import "./templateform.css";
 import { Login } from "../utils/Login";
+import "./templateform.css";
 import { useEffect, useState } from "react";
 import { UseCreateRecord } from "../hooks/UseCreateRecord";
 import { Link } from "react-router-dom";
@@ -20,7 +20,7 @@ import { useRef } from "react";
 import CircularProgress from '@mui/material/CircularProgress';
 import OtpTimer from "../utils/OtpTimer";
 import OtpInput from "../utils/OtpInput"
-
+import CountDownComponent from "../utils/TenDayCountdown";
 
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
 //     const { setFieldValue } = useFormikContext();
@@ -170,7 +170,7 @@ export const TemplateForm = () => {
 
     useEffect(() => {
         const gecuser = getCookie("gec-registration");
-
+        debugger;
         if (gecuser) {
             setTarget(gecuser);
         }
@@ -272,14 +272,19 @@ export const TemplateForm = () => {
                         className={`target-description ${!target.description ? 'd-none' : ''}`}
                         dangerouslySetInnerHTML={{ __html: target.description || '' }}
                         />
+
                     <img
                         src={`${import.meta.env.VITE_SERVERURL}/uploads/${target.Image}`}
                         alt={target.title}
-                    />
+                        />
                 </div>
 
                 <div>
                     <div>
+                        <div style={{position: "relative", paddingBottom: 20}}>
+                            {/* <CountDownComponent props={{event_date: "2025-07-20T00:00:00Z"}}/> */}
+                            <CountDownComponent props={{event_date: target.event_date}}/>
+                        </div>
                         <Formik
                             enableReinitialize={true}
                             initialValues={initialValues}
@@ -288,6 +293,7 @@ export const TemplateForm = () => {
                         >
                             {({ setFieldValue, errors, touched, values, validateForm, setTouched }) => (
                                 <Form>
+                
                                     {/* Autofill phone and whatsapp fields */}
                                     {/* <AutofillPhoneAndWhatsapp mobileNumber={target.mobile_number} /> */}
 

@@ -17,7 +17,9 @@ import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import CircularProgress from '@mui/material/CircularProgress';
 import { GoShieldLock } from "react-icons/go";
 import { Button } from "@mui/material";
-
+import { GiArchiveRegister } from "react-icons/gi";
+import { BsCalendar2Event } from "react-icons/bs";
+import { BsPeopleFill } from "react-icons/bs";
 
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
@@ -116,9 +118,21 @@ export const Admin = ({ data }) => {
                             }
                         }}
                     >
-                        <Tab label="Registration Management" style={{ textTransform: 'none' }} />
-                        <Tab label="Event Management" style={{ textTransform: 'none' }} />
-                        <Tab label="Member Management" style={{ textTransform: 'none' }} />
+                        <Tab 
+                            icon={<GiArchiveRegister size={20}/>}
+                            iconPosition="start"
+                            label="Registration Management" 
+                            style={{ textTransform: 'none' }} />
+                        <Tab 
+                            icon={<BsCalendar2Event size={20}/>}
+                            iconPosition="start"
+                            label="Event Management" 
+                            style={{ textTransform: 'none' , alignContent: 'flex-start' }} />
+                        <Tab 
+                            icon={<BsPeopleFill size={20}/>}
+                            iconPosition="start"
+                            label="Member Management" 
+                           style={{ textTransform: 'none' }} />
                     </Tabs>
                 </Box>
             </div>
