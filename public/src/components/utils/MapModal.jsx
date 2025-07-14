@@ -25,7 +25,7 @@ const MapModal = ({ isOpen, onClose, onSelect, isParentModalOpen, initialLon , i
     });
 
     if (markerRef.current) {
-        debugger;
+        
         markerRef.current.remove();
         markerRef.current = null;
     }
@@ -53,7 +53,7 @@ const MapModal = ({ isOpen, onClose, onSelect, isParentModalOpen, initialLon , i
   useEffect(() => {
     if (!isParentModalOpen) {
         
-        debugger;
+        
       onClose();
     }
   }, [isParentModalOpen, onClose]);

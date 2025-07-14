@@ -54,7 +54,7 @@ export const TemplateForm = () => {
             for (const key in values) {
                 if(key === "whatsapp") formData.append(key, values[key]);
             }
-            debugger;
+            
             const otp_response = await fetch(`${import.meta.env.VITE_SERVERURL}/send-otp`, {
                 method: 'POST',
                 body: formData,
@@ -74,11 +74,11 @@ export const TemplateForm = () => {
     
                 setCurrentResponseMessage(response_data.message);
             }
-            debugger;
+            
 
             
         }catch(e){
-            debugger;
+            
             statusRef.current.innerText = e.message;
 
 
@@ -170,7 +170,7 @@ export const TemplateForm = () => {
 
     useEffect(() => {
         const gecuser = getCookie("gec-registration");
-        debugger;
+        
         if (gecuser) {
             setTarget(gecuser);
         }
@@ -199,7 +199,7 @@ export const TemplateForm = () => {
             formData.append('registration_code', target.registration_code);
             formData.append('title', target.title);
             formData.append('event_date', target.event_date);
-            debugger;
+            
             // file attachment logic goes here
             if (target.fileUpload && data.fileUpload && typeof data.fileUpload !== 'string') {
 
@@ -208,7 +208,7 @@ export const TemplateForm = () => {
                         type: data.fileUpload.type,
                     });
 
-                debugger;
+                
                 formData.append('attachment_file', renamedFile);
             }
 
@@ -221,7 +221,7 @@ export const TemplateForm = () => {
 
 
             const registration_response_data = await registration_response.json();
-            debugger;
+            
             if (registration_response_data.status) {
 
                 snackbarRef.current?.openSnackbar(registration_response_data.message, 'success');

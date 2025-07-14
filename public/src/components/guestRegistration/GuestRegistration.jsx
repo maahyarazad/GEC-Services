@@ -104,13 +104,13 @@ export const GuestRegistration = () => {
 
             const response_data = await response.json();
             if (response_data.status) {
-                debugger;
+                
                 setRegistrant(response_data.record)
                 snackbarRef.current?.openSnackbar(response_data.message, 'success');
             }
 
         } catch (err) {
-            debugger;
+            
             snackbarRef.current?.openSnackbar(err.message);
             setError("Failed to fetch registration.");
         } finally {

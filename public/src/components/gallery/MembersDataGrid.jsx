@@ -138,7 +138,7 @@ export const MemberDataGrid = () => {
 
     const openEdit = (row) => {
         const selectedRow = members?.find((x) => x.id === row.id);
-        debugger;
+        
         if (selectedRow) {
             setInitialData(selectedRow);
             setEditReg(true);

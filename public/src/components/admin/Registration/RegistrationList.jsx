@@ -292,7 +292,7 @@ export const RegistrationList = () => {
     };
 
     const handleClose = () => {
-        debugger;
+        
         
     };
 
