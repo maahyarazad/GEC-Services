@@ -162,7 +162,7 @@ export default function MemberNewForm({ initialData = null, modalSwitch }) {
                                     disabled={isSubmitting}
                                     sx={{textTransform: 'none'}}
                                 >
-                                    {isSubmitting ? "Submitting" : "Save Registration Page"}
+                                    {isSubmitting ? "Submitting..." : "Save Member"}
                                 </Button>
               
             </div>

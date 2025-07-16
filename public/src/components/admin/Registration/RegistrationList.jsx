@@ -158,7 +158,7 @@ export const RegistrationList = () => {
             }
 
             const values = await response.json();
-            debugger;
+            
             if(values){
 
                 setRegistrationList(values.rows);
@@ -198,7 +198,7 @@ export const RegistrationList = () => {
     useEffect(() => {
         fetchData();
         getMemberCount();
-    }, [fetchData, getMemberCount]);
+    }, [fetchData, getMemberCount, setRowCount]);
 
 
     const handleSwitchLock = async (selectedRow) => {
@@ -340,6 +340,7 @@ export const RegistrationList = () => {
                         rowsPerPageOptions={[5]}
                         disableSelectionOnClick
                         disableRowSelectionOnClick
+                        paginationMode="server"
                     />
                 </div>
             )}

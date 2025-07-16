@@ -84,18 +84,18 @@ CREATE TABLE IF NOT EXISTS Member (
 
 
 INSERT INTO Member (
-  id, firstName, lastName, email, phoneNumber, whatsapp,
+  firstName, lastName, email, phoneNumber, whatsapp,
   avatar, language, uniqueIdentifier, createdAt, modifiedAt, active_member
 )
 VALUES
-(1, 'Abusufean', 'Ali', 'abusufean@falkenherz.com', '00971-564003932', '00971-564003932', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
-(2, 'Amina', 'Darmandeh', 'amina.darmandeh@falcrealestate.com', '00971-521022278', '00971-521022278', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
-(3, 'Andreas', 'Simon', 'Simon.consulting@outlook.com', '00971-547604760', '00971-547604760', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
-(4, 'Angela', 'Thomas', 'dubai@angela-thomas.de', '00971-503670592', '00971-503670592', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
-(5, 'Basel', 'Khalifa', 'basel.khalifa@khalifapartners.com', '00971-503550204', '00971-503550204', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
-(6, 'David F.', 'Raetz', 'david.raetz@prodvant.com', '00971-567146057', '00971-567146057', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
-(7, 'Diana', 'Marks', 'dianamarks@gmx.net', '0049-15229144155', '0049-15229144155', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
-(8, 'Dr. Maximilian', 'Riewer', 'drmaxriewer@gmail.com', '00971-504692572', '00971-504692572', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
-(9, 'Elisabeth', 'Müllner', 'funnelfairy@lisa-muellner.com', '00971-585822040', '00971-585822040', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
-(10, 'Isabel', 'Kellerhals', 'isabel@ambienzahomedesign.com', '00971-542644555', '00971-542644555', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL,'true'),
-(11, 'Johannes', 'Schoenborn', 'Johannes@xplt.com', '00971-585648976', '00971-585648976', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true');
+( 'Abusufean', 'Ali', 'abusufean@falkenherz.com', '00971-564003932', '00971-564003932', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
+( 'Amina', 'Darmandeh', 'amina.darmandeh@falcrealestate.com', '00971-521022278', '00971-521022278', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
+( 'Andreas', 'Simon', 'Simon.consulting@outlook.com', '00971-547604760', '00971-547604760', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
+( 'Angela', 'Thomas', 'dubai@angela-thomas.de', '00971-503670592', '00971-503670592', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
+('Basel', 'Khalifa', 'basel.khalifa@khalifapartners.com', '00971-503550204', '00971-503550204', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
+( 'David F.', 'Raetz', 'david.raetz@prodvant.com', '00971-567146057', '00971-567146057', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
+('Diana', 'Marks', 'dianamarks@gmx.net', '0049-15229144155', '0049-15229144155', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
+( 'Dr. Maximilian', 'Riewer', 'drmaxriewer@gmail.com', '00971-504692572', '00971-504692572', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
+( 'Elisabeth', 'Müllner', 'funnelfairy@lisa-muellner.com', '00971-585822040', '00971-585822040', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'),
+( 'Isabel', 'Kellerhals', 'isabel@ambienzahomedesign.com', '00971-542644555', '00971-542644555', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL,'true'),
+( 'Johannes', 'Schoenborn', 'Johannes@xplt.com', '00971-585648976', '00971-585648976', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true');
