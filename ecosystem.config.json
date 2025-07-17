@@ -4,7 +4,13 @@
       "name": "Services",
       "script": "server_with_sql.js",
       "watch": true,
-      "ignore_watch": ["node_modules", "logs", "public", "data"],
+      "ignore_watch": [
+        "node_modules",
+        "logs",
+        "public",
+        "data",
+        "file_storage"
+      ],
       "log_file": "logs/my-app.log",
       "error_file": "logs/my-app-error.log",
       "restart_delay": 1000,
