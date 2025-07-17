@@ -9,117 +9,104 @@ const nodemailer = require("nodemailer");
 const { PassThrough } = require("stream");
 
 const ses = new SESClient({
-  region: process.env.AWS_REGION, // e.g. "us-east-1"
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
+    region: process.env.AWS_REGION, // e.g. "us-east-1"
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
 });
 
 
 async function sendEmail({ to, subject, html, text }) {
-  const params = {
-    Source: process.env.SES_FROM_EMAIL, // Must be verified in SES
-    Destination: {
-      ToAddresses: [to],
-    },
-    Message: {
-      Subject: { Data: subject },
-      Body: {
-        Html: { Data: html },
-        Text: { Data: text || '' },
-      },
-    },
-  };
+    const params = {
+        Source: process.env.SES_FROM_EMAIL, // Must be verified in SES
+        Destination: {
+            ToAddresses: [to],
+        },
+        Message: {
+            Subject: { Data: subject },
+            Body: {
+                Html: { Data: html },
+                Text: { Data: text || '' },
+            },
+        },
+    };
 
-  try {
-    const response = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', response.messageId);
-    return response;
-  } catch (error) {
-    console.error('SendGrid SMTP error:', error);
-    throw error;
-  }
-  // try {
-  //   const command = new SendEmailCommand(params);
-  //   const response = await ses.send(command);
-  //   console.log("Email sent:", response.MessageId);
-  //   return response;
-  // } catch (err) {
-  //   console.error("Email send error:", err);
-  //   throw err;
-  // }
+    try {
+        const response = await transporter.sendMail(mailOptions);
+        console.log('Email sent:', response.messageId);
+        return response;
+    } catch (error) {
+        console.error('SendGrid SMTP error:', error);
+        throw error;
+    }
+    // try {
+    //   const command = new SendEmailCommand(params);
+    //   const response = await ses.send(command);
+    //   console.log("Email sent:", response.MessageId);
+    //   return response;
+    // } catch (err) {
+    //   console.error("Email send error:", err);
+    //   throw err;
+    // }
 }
 
 
 
 async function sendRawEmailWithAttachments({ to, subject, html, text = '', attachments = [] }) {
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.sendgrid.net',
-    port: 587,
-    auth: {
-      user: 'apikey', // This MUST be the literal string 'apikey'
-      pass: process.env.SENDGRID_API_KEY, // Your actual SendGrid API Key
-    },
-    streamTransport: true,
-    buffer: true,
-  });
+    const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        auth: {
+            user: process.env.SMPT_USER, // This MUST be the literal string 'apikey'
+            pass: process.env.SMTP_PASS, // Your actual SendGrid API Key
+        },
+        streamTransport: true,
+        buffer: true,
+    });
 
-  const mailOptions = {
-    from: process.env.SES_FROM_EMAIL,
-    to,
-    subject,
-    text,
-    html,
-    attachments, // Example format below
-  };
+    const mailOptions = {
+        from: process.env.EMAIL_SENDER,
+        to,
+        subject,
+        text,
+        html,
+        attachments, // Example format below
+    };
 
-  try {
-    const response = await transporter.sendMail(mailOptions);
-    console.log('Email sent:', response.messageId);
-    return response;
-  } catch (error) {
-    console.error('SendGrid SMTP error:', error);
-    throw error;
-  }
-  // try {
-  //   const message = await transporter.sendMail(mailOptions);
-
-  //   const command = new SendRawEmailCommand({
-  //     RawMessage: { Data: message.message },
-  //   });
-
-  //   const response = await ses.send(command);
-  //   console.log("Raw email sent:", response.MessageId);
-  //   return response;
-  // } catch (error) {
-  //   console.error("Error sending raw email:", error);
-  //   throw error;
-  // }
+    try {
+        const response = await transporter.sendMail(mailOptions);
+        console.log('Email sent:', response.messageId);
+        return response;
+    } catch (error) {
+        console.error('SendGrid SMTP error:', error);
+        throw error;
+    }
 }
 
+
 async function event_confirm_registration_email_aws(reqBody) {
-  const tempPath = path.join(__dirname, "..", "qr-files");
-  const mapRoot = path.join(__dirname, "..", "maps");
-  const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
-  const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
+    const tempPath = path.join(__dirname, "..", "qr-files");
+    const mapRoot = path.join(__dirname, "..", "maps");
+    const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
+    const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
 
 
-  const [mapBuffer, qrBuffer] = await Promise.all([
-    fsPromise.readFile(mapPath),
-    fsPromise.readFile(qrPath)
-  ]);
-  const currentYear = new Date().getFullYear();
-  const eventTimeSection = reqBody.event_time
-    ? `<p><strong>Time:</strong> ${reqBody.event_time}</p>`
-    : '';
-  const eventLocationName = reqBody.event_location_name
-    ? `<p><strong>Time:</strong> ${reqBody.event_location_name}</p>`
-    : '';
+    const [mapBuffer, qrBuffer] = await Promise.all([
+        fsPromise.readFile(mapPath),
+        fsPromise.readFile(qrPath)
+    ]);
+    const currentYear = new Date().getFullYear();
+    const eventTimeSection = reqBody.event_time
+        ? `<p><strong>Time:</strong> ${reqBody.event_time}</p>`
+        : '';
+    const eventLocationName = reqBody.event_location_name
+        ? `<p><strong>Time:</strong> ${reqBody.event_location_name}</p>`
+        : '';
 
-  const eventLocationSection =
-    reqBody.event && reqBody.event_location
-      ? `
+    const eventLocationSection =
+        reqBody.event && reqBody.event_location
+            ? `
         <tr>
           <td align="center" style="padding:20px;">
             <p><strong>Event location — tap the map below for navigation:</strong></p>
@@ -128,9 +115,9 @@ async function event_confirm_registration_email_aws(reqBody) {
             </a>
           </td>
         </tr>`
-      : '';
+            : '';
 
-  const htmlBody = `
+    const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -194,40 +181,47 @@ async function event_confirm_registration_email_aws(reqBody) {
 </html>
 `;
 
-  await sendRawEmailWithAttachments({
-    to: reqBody.email,
-    subject: `Registration Completed – ${reqBody.title}`,
-    html: htmlBody, // your HTML with <img src="cid:event-location"> and <img src="cid:qr-code">
-    text: 'Your registration is confirmed.', // fallback text
-    attachments: [
-      {
-        filename: 'map.png',
-        content: mapBuffer,
-        contentType: 'image/png',
-        cid: 'event-location',
-      },
-      {
-        filename: 'qr.png',
-        content: qrBuffer,
-        contentType: 'image/png',
-        cid: 'qr-code',
-      }
-    ]
-  });
+    await sendRawEmailWithAttachments({
+        to: reqBody.email,
+        subject: `Registration Completed – ${reqBody.title}`,
+        html: htmlBody, // your HTML with <img src="cid:event-location"> and <img src="cid:qr-code">
+        text: 'Your registration is confirmed.', // fallback text
+        attachments: [
+            {
+                filename: 'map.png',
+                content: mapBuffer,
+                contentType: 'image/png',
+                cid: 'event-location',
+            },
+            {
+                filename: 'qr.png',
+                content: qrBuffer,
+                contentType: 'image/png',
+                cid: 'qr-code',
+            }
+        ]
+    });
 }
 
-async function comfirm_message_email(reqBody) {
-  const { firstName, lastName, email } = reqBody;
-  try {
-    const currentYear = new Date().getFullYear();
+function slugToTitle(slug) {
+  return slug
+    .replace(/-/g, ' ')                // Replace dashes with spaces
+    .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word
+}
 
-    const fullname = `${firstName} ${lastName}`
-    const htmlBody = `
+
+async function comfirm_message_email(reqBody) {
+    const { firstName, lastName, email, event } = reqBody;
+    try {
+        const currentYear = new Date().getFullYear();
+        const event_name = slugToTitle(event);
+        const fullname = `${firstName} ${lastName}`
+        const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Golden Adler Award Registration</title>
+    <title>${event_name}</title>
   </head>
   <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
@@ -237,7 +231,7 @@ async function comfirm_message_email(reqBody) {
             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); overflow: hidden; margin: 40px auto;">
               <tr>
                 <td bgcolor="#D9B144" style="color: #ffffff; text-align: center; padding: 20px; font-size: 22px; font-weight: bold; border-top-left-radius: 8px; border-top-right-radius: 8px;">
-                  Goldener Adler Award Registration Confirmed
+                  ${event_name} - Application Submitted
                 </td>
               </tr>
             </table>
@@ -278,72 +272,77 @@ async function comfirm_message_email(reqBody) {
 </html>
 `;
 
-    const msg = {
-      to: email,
-      from: process.env.EMAIL_SENDER,
-      subject: "Golden Eagle Award Registration",
-      html: htmlBody,
-      mailSettings: {
-        sandboxMode: {
-          enable: false // ❌ true = testing only, ✅ false = real email is sent
-        }
-      }
-    };
+        // const msg = {
+        //     to: email,
+        //     from: process.env.EMAIL_SENDER,
+        //     subject: "Golden Eagle Award Registration",
+        //     html: htmlBody,
+        //     mailSettings: {
+        //         sandboxMode: {
+        //             enable: false // ❌ true = testing only, ✅ false = real email is sent
+        //         }
+        //     }
+        // };
 
-    const response = await sgMail.send(msg);
-    console.log(response);
-    // return response;
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
+        return await sendRawEmailWithAttachments({
+            to: reqBody.email,
+            subject: `Application Submitted – ${event_name}`,
+            html: htmlBody,
+            text: 'Your application has been submitted.',
+
+        });
+
+        // const response = await sgMail.send(msg);
+        // console.log(response);
+        // // return response;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
 }
 
 async function event_confirm_registration_email(reqBody) {
-  const tempPath = path.join(__dirname, "..", "qr-files");
-  const mapRoot = path.join(__dirname, "..", "maps");
-  const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
-  const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
+    const tempPath = path.join(__dirname, "..", "qr-files");
+    const mapRoot = path.join(__dirname, "..", "maps");
+    const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
+    const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
 
-  try {
-    // Read both images
-    const qrBuffer = fs.readFileSync(qrPath);
-    const mapBuffer = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : null;
+    try {
+        const qrBuffer = fs.readFileSync(qrPath);
+        const mapBuffer = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : null;
 
-    const attachments = [];
+        const attachments = [];
 
-    if (qrBuffer) {
-      attachments.push({
-        content: qrBuffer.toString("base64"),
-        filename: `${reqBody.timestamp}-qr.png`,
-        type: "image/png",
-        disposition: "inline",
-        content_id: "qr-code",
-      });
-    }
+        if (qrBuffer) {
+            attachments.push({
+                filename: `${reqBody.timestamp}-qr.png`,
+                content: qrBuffer,
+                contentType: 'image/png',
+                cid: 'qr-code',
+            });
+        }
 
-    if (mapBuffer) {
-      attachments.push({
-        content: mapBuffer.toString("base64"),
-        filename: `${reqBody.timestamp}-map.png`,
-        type: "image/png",
-        disposition: "inline",
-        content_id: "event-location",
-      });
-    }
+        if (mapBuffer) {
+            attachments.push({
+                filename: `${reqBody.timestamp}-map.png`,
+                content: mapBuffer,
+                contentType: 'image/png',
+                cid: 'event-location',
+            });
+        }
 
-    const currentYear = new Date().getFullYear();
+        const currentYear = new Date().getFullYear();
 
-    const eventTimeSection = reqBody.event_time
-      ? `<p><strong>Time:</strong> ${reqBody.event_time}</p>`
-      : '';
-    const eventLocationName = reqBody.event_location_name
-      ? `<p><strong>Event Location</strong> ${reqBody.event_location_name}</p>`
-      : '';
+        const eventTimeSection = reqBody.event_time
+            ? `<p><strong>Time:</strong> ${reqBody.event_time}</p>`
+            : '';
+        const eventLocationName = reqBody.event_location_name
+            ? `<p><strong>Event Location</strong> ${reqBody.event_location_name}</p>`
+            : '';
 
-    const eventLocationSection =
-      reqBody.event && reqBody.event_location_name && reqBody.event_location
-        ? `
+        const eventLocationSection =
+            reqBody.event && reqBody.event_location_name && reqBody.event_location
+                ? `
           <tr>
             <td align="center" style="padding:20px; font-size:16px; color:#333333;">
               <p style="padding-bottom: 10px;"><strong>Event location - tap the map below for navigation:</strong></p>
@@ -353,9 +352,9 @@ async function event_confirm_registration_email(reqBody) {
             </td>
           </tr>
         `
-        : '';
+                : '';
 
-    const htmlBody = `
+        const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -392,7 +391,7 @@ async function event_confirm_registration_email(reqBody) {
               ${eventLocationSection}
               <tr>
                 <td align="center" style="padding:20px; font-size:16px; color:#333333;">
-                  <p"><strong>Please keep this email so we can scan your QR code:</strong></p>
+                  <p><strong>Please keep this email so we can scan your QR code:</strong></p>
                   <img src="cid:qr-code" alt="QR Code" width="200" height="200" style="display:block;" />
                 </td>
               </tr>
@@ -419,135 +418,19 @@ async function event_confirm_registration_email(reqBody) {
 </html>
 `;
 
-    const msg = {
-      to: reqBody.email,
-      from: process.env.EMAIL_SENDER,
-      subject: `Registration Completed – ${reqBody.title}`,
-      html: htmlBody,
-      attachments,
-      mailSettings: {
-        sandboxMode: {
-          enable: false // ❌ true = testing only, ✅ false = real email is sent
-        }
-      }
-    };
+        // ✅ Send email using your own SMTP function
+        return await sendRawEmailWithAttachments({
+            to: reqBody.email,
+            subject: `Registration Completed – ${reqBody.title}`,
+            html: htmlBody,
+            text: 'Your registration is confirmed.',
+            attachments
+        });
 
-    const response = await sgMail.send(msg);
-    console.log(response);
-    return response;
-
-
-
-
-    //   const [mapBuffer, qrBuffer] = await Promise.all([
-    //     fsPromise.readFile(mapPath),
-    //     fsPromise.readFile(qrPath)
-    //   ]);
-    //   const currentYear = new Date().getFullYear();
-    //   const eventTimeSection = reqBody.event_time
-    //       ? `<p><strong>Time:</strong> ${reqBody.event_time}</p>`
-    //       : '';
-
-    //     const eventLocationSection =
-    //       reqBody.event && reqBody.event_location
-    //         ? `
-    //         <tr>
-    //           <td align="center" style="padding:20px;">
-    //             <p><strong>Event location — tap the map below for navigation:</strong></p>
-    //             <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(reqBody.event_location)}" target="_blank" rel="noopener noreferrer">
-    //               <img src="cid:event-location" alt="Event Location Map" width="200" height="200" style="border:0; display:block;" />
-    //             </a>
-    //           </td>
-    //         </tr>`
-    //         : '';
-
-    //     const htmlBody = `
-    // <!DOCTYPE html>
-    // <html>
-    //   <head>
-    //     <meta charset="UTF-8" />
-    //     <title>${reqBody.title} Registration</title>
-    //   </head>
-    //   <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
-    //     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
-    //       <thead>
-    //         <tr>
-    //           <td align="center">
-    //             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1); margin:40px auto;">
-    //               <tr>
-    //                 <td bgcolor="#D9B144" style="color:#ffffff; text-align:center; padding:20px; font-size:22px; font-weight:bold; border-top-left-radius:8px; border-top-right-radius:8px;">
-    //                   Registration Confirmed
-    //                 </td>
-    //               </tr>
-    //             </table>
-    //           </td>
-    //         </tr>
-    //       </thead>
-    //       <tbody>
-    //         <tr>
-    //           <td align="center">
-    //             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; padding:0 30px 30px;">
-    //               <tr>
-    //                 <td style="padding:20px; font-size:16px; color:#333333; line-height:1.6;">
-    //                   <p>Thank you for registering for the <strong>${reqBody.title}</strong>. We appreciate your interest and look forward to your participation.</p>
-    //                   <p><strong>Date:</strong> ${reqBody.event_date}</p>
-    //                   ${eventTimeSection}
-    //                 </td>
-    //               </tr>
-    //               ${eventLocationSection}
-    //               <tr>
-    //                 <td align="center" style="padding:20px;">
-    //                   <p><strong>Please keep this email so we can scan your QR code:</strong></p>
-    //                   <img src="cid:qr-code" alt="QR Code" width="200" height="200" style="display:block;" />
-    //                 </td>
-    //               </tr>
-    //               <tr>
-    //                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
-    //                   <p>
-    //                     If you have any questions, feel free to contact us at <br/>
-    //                     <a href="mailto:info@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">info@german-emirates-club.com</a>.
-    //                   </p>
-    //                   <p>Warm regards,<br />The German Emirates Club Team</p>
-    //                 </td>
-    //               </tr>
-    //               <tr>
-    //                 <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
-    //                   &copy; ${currentYear} German Emirates Club. All rights reserved.
-    //                 </td>
-    //               </tr>
-    //             </table>
-    //           </td>
-    //         </tr>
-    //       </tbody>
-    //     </table>
-    //   </body>
-    // </html>
-    // `;
-
-    //   await sendRawEmailWithAttachments({
-    //     to: reqBody.email,
-    //     subject: `Registration Completed – ${reqBody.title}`,
-    //     html: htmlBody, // your HTML with <img src="cid:event-location"> and <img src="cid:qr-code">
-    //     text: 'Your registration is confirmed.', // fallback text
-    //     attachments: [
-    //       {
-    //         filename: 'map.png',
-    //         content: mapBuffer,
-    //         contentType: 'image/png',
-    //         cid: 'event-location',
-    //       },
-    //       {
-    //         filename: 'qr.png',
-    //         content: qrBuffer,
-    //         contentType: 'image/png',
-    //         cid: 'qr-code',
-    //       }
-    //     ]
-    //   });
-  } catch (error) {
-    console.error("Failed to send registration email:", error);
-    throw error;
-  }
+    } catch (error) {
+        console.error("Failed to send registration email:", error);
+        throw error;
+    }
 }
 
 module.exports = { comfirm_message_email, event_confirm_registration_email, event_confirm_registration_email_aws };

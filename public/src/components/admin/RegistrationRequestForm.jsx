@@ -72,6 +72,7 @@ export default function NewRegistrationPage({
   const [slug, setSlug] = useState(null);
   const [submitError, setSubmitError] = useState("");
   const [preview, setPreview] = useState(null);
+  const [file, setFile] = useState(null);
   const [initialLat, setInitialLat] = useState(null);
   const [initialLon, setInitialLon] = useState(null);
 
@@ -114,10 +115,21 @@ export default function NewRegistrationPage({
 
   useEffect(() => {
     if (initialValues.image && typeof initialValues.image === "string") {
-      setPreview(
-        `${import.meta.env.VITE_SERVERURL}/uploads/${initialValues.image}`
-      );
-    }
+    const url = `${import.meta.env.VITE_SERVERURL}/uploads/${initialValues.image}`;
+    setPreview(url);
+
+    // Optionally fetch image and convert to File object
+    fetch(url)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], initialValues.image, { type: blob.type });
+        setFile(file);
+      })
+      .catch(() => {
+        // fallback, just clear file or ignore error
+        setFile(null);
+      });
+  }
 
     if (
       initialValues.event_location &&
@@ -551,39 +563,48 @@ export default function NewRegistrationPage({
             <div className="col-12">
               <div className="align-items-center">
                 <label htmlFor="image" className="form-label">
-                  Image
+                  Image | Video
                 </label>
-                {preview && (
-                  <div className="mb-2">
-                    <label>Current Image:</label>
-                    <img
-                      src={preview}
-                      alt="Current"
-                      style={{
-                        width: "150px",
-                        height: "auto",
-                        display: "block",
-                        marginBottom: "10px",
-                      }}
-                    />
-                  </div>
-                )}
+                {preview && file && (
+                    <div className="mb-2">
+                        <label>Current Media:</label>
+                        {file.type.startsWith('video') ? (
+                        <video
+                            src={preview}
+                            loop
+                            autoPlay
+                            muted
+                            playsInline
+                            style={{ width: '150px', height: 'auto', display: 'block', marginBottom: '10px' }}
+                        />
+                        ) : (
+                        <img
+                            src={preview}
+                            alt="Current"
+                            style={{ width: '150px', height: 'auto', display: 'block', marginBottom: '10px' }}
+                        />
+                        )}
+                    </div>
+                    )}
+              
+
                 <input
                   ref={fileInputRef}
                   id="image"
                   name="image"
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   className={`form-control ${
                     errors.image && touched.image ? "is-invalid" : ""
                   }`}
                   onChange={(e) => {
-                    const file = e.currentTarget.files[0];
-                    if (file) {
-                      setFieldValue("image", file); // Store the File object, NOT base64
-                      setPreview(URL.createObjectURL(file)); // Set live preview
-                    }
-                  }}
+                        const file = e.currentTarget.files[0];
+                        if (file) {
+                            setFile(file); // store file to check type later
+                            setFieldValue("image", file);
+                            setPreview(URL.createObjectURL(file));
+                        }
+                        }}
                 />
 
                 <div style={{ minHeight: 30 }}>

@@ -40,57 +40,59 @@ export const TemplateForm = () => {
     const [showOtpInput, setShowOtpInput] = useState(false);
     const otpRef = useRef();
     const statusRef = useRef();
+    const timeoutRef = useRef(null);
     const [currentResponseStatus, setCurrentResponseStatus] = useState(null);
     const [currentResponseMessage, setCurrentResponseMessage] = useState('');
     const [phoneRegistered, setPhoneRegistered] = useState(false)
-    const [validOtp, setValidOtp] = useState(null)   
+    const [validOtp, setValidOtp] = useState(null)
     const [global_whatsapp, setGlobalWhatsapp] = useState('');
     const handleSendOtp = async (values) => {
-        try{
+        try {
             setShowOtpInput(true);
             const formData = new FormData();
 
 
             for (const key in values) {
-                if(key === "whatsapp") formData.append(key, values[key]);
+                if (key === "whatsapp") formData.append(key, values[key]);
             }
-            
+
             const otp_response = await fetch(`${import.meta.env.VITE_SERVERURL}/send-otp`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'include'
             });
 
-            
-            if(otp_response.ok){
+
+            if (otp_response.ok) {
 
                 setGlobalWhatsapp(values["whatsapp"])
                 setCurrentResponseStatus(otp_response.ok);
                 setValidOtp(true);
 
                 statusRef.current.innerText = "OTP sent to " + values.whatsapp;
-    
+
                 const response_data = await otp_response.json();
-    
+
                 setCurrentResponseMessage(response_data.message);
             }
-            
 
-            
-        }catch(e){
-            
+
+
+        } catch (e) {
+
             statusRef.current.innerText = e.message;
 
 
-        }finally{
+        } finally {
 
         }
-        
+
     };
 
-    const handleExpiredChange = (val) =>{
+    const handleExpiredChange = (val) => {
         setValidOtp(false)
     }
+
     const handlePostOTP = async (value) => {
         try {
 
@@ -127,7 +129,8 @@ export const TemplateForm = () => {
                 setPhoneRegistered(true);
                 setShowOtpInput(false);
                 snackbarRef.current?.openSnackbar(otp_response_data.message, 'success');
-                
+
+
             } else {
 
                 statusRef.current.textContent = otp_response_data.message;
@@ -139,10 +142,11 @@ export const TemplateForm = () => {
                 statusRef.current.textContent = `Login failed: ${err.message}`;
             }
         } finally {
-            
+
         }
 
     };
+
 
 
     const [target, setTarget] = useState(null);
@@ -170,13 +174,13 @@ export const TemplateForm = () => {
 
     useEffect(() => {
         const gecuser = getCookie("gec-registration");
-        
+
         if (gecuser) {
             setTarget(gecuser);
         }
     }, []);
 
-    
+
 
     const handleSubmitRegistration = async (values, { resetForm, setFieldValue }) => {
         try {
@@ -199,7 +203,7 @@ export const TemplateForm = () => {
             formData.append('registration_code', target.registration_code);
             formData.append('title', target.title);
             formData.append('event_date', target.event_date);
-            
+
             // file attachment logic goes here
             if (target.fileUpload && data.fileUpload && typeof data.fileUpload !== 'string') {
 
@@ -208,7 +212,7 @@ export const TemplateForm = () => {
                         type: data.fileUpload.type,
                     });
 
-                
+
                 formData.append('attachment_file', renamedFile);
             }
 
@@ -221,7 +225,7 @@ export const TemplateForm = () => {
 
 
             const registration_response_data = await registration_response.json();
-            
+
             if (registration_response_data.status) {
 
                 snackbarRef.current?.openSnackbar(registration_response_data.message, 'success');
@@ -229,7 +233,11 @@ export const TemplateForm = () => {
                 setPhoneRegistered(false);
                 setValidOtp(false);
                 otpRef.current.clear();
-                
+                timeoutRef.current = setTimeout(() => {
+                    document.cookie = "gec-registration=; path=/; max-age=0";
+                }, 10000);
+
+
                 // setFieldValue("phone", target.mobile_number);
                 // setFieldValue("whatsapp", target.mobile_number);
 
@@ -253,11 +261,20 @@ export const TemplateForm = () => {
         } catch (e) {
             snackbarRef.current?.openSnackbar(e.message);
         } finally {
-            
+
             setIsSubmitting(false);
         }
 
     };
+
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+
 
     if (!target) {
         return <Login />;
@@ -268,22 +285,58 @@ export const TemplateForm = () => {
             <SimpleSnackbar ref={snackbarRef} />
             <div className={`template-form ${target.lockRegistration === 'true' ? "locked-template-form" : ""}`}>
                 <div>
-                    <div
-                        className={`target-description ${!target.description ? 'd-none' : ''}`}
-                        dangerouslySetInnerHTML={{ __html: target.description || '' }}
-                        />
+                    {(() => {
+                        const trimmedDescription = (target.description || '').trim();
 
-                    <img
-                        src={`${import.meta.env.VITE_SERVERURL}/uploads/${target.Image}`}
-                        alt={target.title}
-                        />
+                        // Strip HTML tags and check if there's meaningful content
+                        const plainText = trimmedDescription.replace(/<[^>]*>/g, '').trim();
+
+                        if (plainText) {
+                            return (
+                                <div
+                                    className="target-description"
+                                    dangerouslySetInnerHTML={{ __html: trimmedDescription }}
+                                />
+                            );
+                        }
+
+                        return null;
+                    })()}
+
+                    {(() => {
+                        const file = target.Image || '';
+                        const extension = file.split('.').pop().toLowerCase();
+                        const isVideo = ['mp4', 'webm', 'ogg'].includes(extension);
+                        const fileUrl = `${import.meta.env.VITE_SERVERURL}/uploads/${file}`;
+
+                        if (isVideo) {
+                            return (
+                                <video
+                                    src={fileUrl}
+                                    loop
+                                    autoPlay
+                                    muted
+                                    playsInline
+
+                                />
+                            );
+                        } else {
+                            return (
+                                <img
+                                    src={fileUrl}
+                                    alt={target.title}
+
+                                />
+                            );
+                        }
+                    })()}
                 </div>
 
                 <div>
                     <div>
-                        <div style={{position: "relative", paddingBottom: 20}}>
+                        <div style={{ position: "relative", paddingBottom: 20 }}>
                             {/* <CountDownComponent props={{event_date: "2025-07-20T00:00:00Z"}}/> */}
-                            <CountDownComponent props={{event_date: target.event_date}}/>
+                            <CountDownComponent props={{ event_date: target.event_date }} />
                         </div>
                         <Formik
                             enableReinitialize={true}
@@ -293,7 +346,7 @@ export const TemplateForm = () => {
                         >
                             {({ setFieldValue, errors, touched, values, validateForm, setTouched }) => (
                                 <Form>
-                
+
                                     {/* Autofill phone and whatsapp fields */}
                                     {/* <AutofillPhoneAndWhatsapp mobileNumber={target.mobile_number} /> */}
 
@@ -386,34 +439,34 @@ export const TemplateForm = () => {
                                         )}
                                     </div>
 
-                                        {!phoneRegistered && (
+                                    {!phoneRegistered && (
 
-                                            <Button
-                                                variant="contained"
-                                                color="primary"
-                                                disabled={validOtp === true}
-                                                type="button"
-                                                onClick={async()=>{
-                                                    const formErrors = await validateForm(); // validate entire form
-                                                    
-                                                    if (formErrors.whatsapp) {
-                                                        setTouched({ whatsapp: true });
-                                                    }
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            disabled={validOtp === true}
+                                            type="button"
+                                            onClick={async () => {
+                                                const formErrors = await validateForm(); // validate entire form
 
-                                                    if (!formErrors.whatsapp && values.whatsapp) {
-                                                        handleSendOtp(values);
-                                                    }
-                                                }}
-                                                style={{ pointerEvents: 'auto', opacity: 1, width: '100%', textTransform: 'none' }}
+                                                if (formErrors.whatsapp) {
+                                                    setTouched({ whatsapp: true });
+                                                }
 
-                                            >
-                                                Send OTP
-                                            </Button>
-                                        )}
+                                                if (!formErrors.whatsapp && values.whatsapp) {
+                                                    handleSendOtp(values);
+                                                }
+                                            }}
+                                            style={{ pointerEvents: 'auto', opacity: 1, width: '100%', textTransform: 'none' }}
+
+                                        >
+                                            Send OTP
+                                        </Button>
+                                    )}
 
 
-                                       
-                                       
+
+
 
                                     <div className="spacer"></div>
 
@@ -586,7 +639,7 @@ export const TemplateForm = () => {
                                     )}
 
                                     <Box className="d-flex justify-content-end w-100 my-2">
-                                        
+
                                         <Button
                                             variant="contained"
                                             color="primary"

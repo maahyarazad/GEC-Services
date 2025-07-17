@@ -16,29 +16,33 @@ import RegistrationKeyList from '../Registration/RegistrationKeyList'
 
 const getColumns = ({ onEdit, onLock, onShowCode }) => [
     { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'lockRegistration', headerName: 'Active Page', width: 150,renderCell: (params) => {
-    const value = params?.row?.lockRegistration === "true";
-        
-    return (
-      <Box>
-        <span>{value ? "Not Active" : "Active"}</span>
-      </Box>
-    );
-   
-  }, },
-    { field: 'page', headerName: 'Page', width: 130, renderCell: (params) => {
-        const url = params?.row?.page;
-        
-        if (url) {
-            const _url = `/registration/${url}`;
-        return (
-           <a href={_url} style={{ textDecoration: 'none' }} target='_black'>
-               {url}
-            </a>
-        )
-        
+    {
+        field: 'lockRegistration', headerName: 'Active Page', width: 150, renderCell: (params) => {
+            const value = params?.row?.lockRegistration === "true";
+
+            return (
+                <Box>
+                    <span>{value ? "Not Active" : "Active"}</span>
+                </Box>
+            );
+
+        },
+    },
+    {
+        field: 'page', headerName: 'Page', width: 130, renderCell: (params) => {
+            const url = params?.row?.page;
+
+            if (url) {
+                const _url = `/registration/${url}`;
+                return (
+                    <a href={_url} style={{ textDecoration: 'none' }} target='_black'>
+                        {url}
+                    </a>
+                )
+
+            }
         }
-    } },
+    },
     {
         field: 'paymentRequired',
         headerName: 'Payment Required',
@@ -48,55 +52,77 @@ const getColumns = ({ onEdit, onLock, onShowCode }) => [
     { field: 'title', headerName: 'Title', width: 130 },
     {
         field: 'Image',
-        headerName: 'Image',
+        headerName: 'Media',
         width: 100,
-        renderCell: (params) => (
-            <img
-                src={`${import.meta.env.VITE_SERVERURL}/uploads/${params.value}`}
-                alt="thumbnail"
-                style={{ width: 50, height: 50, objectFit: 'contain', borderRadius: 4 }}
-            />
-        ),
+        renderCell: (params) => {
+            const fileUrl = `${import.meta.env.VITE_SERVERURL}/uploads/${params.value}`;
+            const extension = params.value?.split('.').pop().toLowerCase();
+
+            const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'];
+
+            if (videoExtensions.includes(extension)) {
+                return (
+                <video
+                    src={fileUrl}
+                    style={{ width: 50, height: 50, objectFit: 'contain', borderRadius: 4 }}
+                    loop
+                    autoPlay
+                    muted
+                    playsInline
+                    preload="metadata"
+                />
+                );
+            } else {
+                return (
+                <img
+                    src={fileUrl}
+                    alt="thumbnail"
+                    style={{ width: 50, height: 50, objectFit: 'contain', borderRadius: 4 }}
+                />
+                );
+            }
+            },
+
         sortable: false,
         filterable: false,
     },
     { field: 'maxTokensPerGuest', headerName: 'Max Tokens/Guest', width: 150, type: 'number' },
-{
-  field: 'registration_code',
-  headerName: 'Registration Code',
-  width: 150,
-  renderCell: (params) => {
-    const code = params?.row?.registration_code;
+    {
+        field: 'registration_code',
+        headerName: 'Registration Code',
+        width: 150,
+        renderCell: (params) => {
+            const code = params?.row?.registration_code;
 
-    if (code) {
-      return (
-        <Box>
-          {/* You can optionally show a placeholder or a "No Code" message */}
-          <span>{code}</span>
-        </Box>
-      );
-    } else {
-      return (
-        <Box>
-          <Tooltip
-            title="Show the Registration Code"
-            componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}
-          >
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              style={{ textTransform: 'none' }}
-              onClick={() => onShowCode(params.row)}
-            >
-              Code List
-            </Button>
-          </Tooltip>
-        </Box>
-      );
-    }
-  },
-},
+            if (code) {
+                return (
+                    <Box>
+                        {/* You can optionally show a placeholder or a "No Code" message */}
+                        <span>{code}</span>
+                    </Box>
+                );
+            } else {
+                return (
+                    <Box>
+                        <Tooltip
+                            title="Show the Registration Code"
+                            componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}
+                        >
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                size="small"
+                                style={{ textTransform: 'none' }}
+                                onClick={() => onShowCode(params.row)}
+                            >
+                                Code List
+                            </Button>
+                        </Tooltip>
+                    </Box>
+                );
+            }
+        },
+    },
 
 
     {
@@ -158,16 +184,16 @@ export const RegistrationList = () => {
             }
 
             const values = await response.json();
-            
-            if(values){
+
+            if (values) {
 
                 setRegistrationList(values.rows);
                 setRowCount(values.rows.length)
             }
         } catch (err) {
             console.error('Error fetching data:', err);
-        }finally{
-             setLoading(false);
+        } finally {
+            setLoading(false);
         }
     }, []);
 
@@ -225,10 +251,10 @@ export const RegistrationList = () => {
     };
 
 
-    const showCodeList = async (row) =>{
+    const showCodeList = async (row) => {
         try {
 
-             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-keys`, {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-keys`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: row.id }),
@@ -239,11 +265,11 @@ export const RegistrationList = () => {
             }
 
             const result = await response.json();
-            if(result.data){
+            if (result.data) {
                 setCodeEventTitle(row.title);
                 setCodeList(result.data);
                 setCodeModal(true);
-            } 
+            }
 
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -300,11 +326,23 @@ export const RegistrationList = () => {
         setActiveStep((prev) => prev - 1);
     };
 
-    const handleClose = () => {
-        
-        
+    const timeoutRef = useRef(null);
+
+    const handleModalClose = () => {
+        setEditReg(false);
+        setIsParentModalOpen(false);
+        timeoutRef.current = setTimeout(() => {
+            setInitialData(null);
+        }, 200);
     };
 
+        useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
 
     return (
         <Box sx={{ padding: 1 }}>
@@ -326,7 +364,7 @@ export const RegistrationList = () => {
 
 
 
-        {loading ? (
+            {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                     <CircularProgress />
                 </Box>
@@ -345,10 +383,10 @@ export const RegistrationList = () => {
                 </div>
             )}
 
-        
+
 
             <Modal isOpen={editReg}
-                onRequestClose={() => { setEditReg(false);  ;setInitialData(null); setIsParentModalOpen(false)}}
+                onRequestClose={handleModalClose}
                 title={`Modify ${initialData?.title}`}>
                 <RegistrationRequestForm initialData={initialData} isParentModalOpen={isParentModalOpen} modalSwitch={() => {
                     setEditReg(false);
@@ -360,18 +398,20 @@ export const RegistrationList = () => {
 
 
             <Modal isOpen={codeModal}
-                onRequestClose={() => { setCodeList(null); setCodeModal(false);}}
+                onRequestClose={() => { setCodeList(null); setCodeModal(false); }}
                 title={`${codeEventTitle} Registration Keys`}>
                 <RegistrationKeyList data={codeList} />
             </Modal>
 
 
 
-            <Modal isOpen={newReg} onRequestClose={() => {setNewReg(false);
-                                    setIsParentModalOpen(false);
-                                    setActiveStep(0); // reset step on close
+            <Modal isOpen={newReg} onRequestClose={() => {
+                setNewReg(false);
+                setIsParentModalOpen(false);
+                setActiveStep(0); // reset step on close
 
-                                    fetchData();}} title="New Registration Page">
+                fetchData();
+            }} title="New Registration Page">
                 <Stepper activeStep={activeStep} alternativeLabel>
                     {steps.map((label) => (
                         <Step key={label}>
@@ -406,7 +446,7 @@ export const RegistrationList = () => {
                             </div>
 
                             <div className="mt-4 text-end">
-                                <Button variant="contained" color="primary" onClick={handleNext} sx={{textTransform: 'none'}}>
+                                <Button variant="contained" color="primary" onClick={handleNext} sx={{ textTransform: 'none' }}>
                                     Next
                                 </Button>
                             </div>
@@ -429,7 +469,7 @@ export const RegistrationList = () => {
                                 }}
                             />
                             <div className="mt-2 text-end">
-                                <Button variant="outlined" onClick={handleBack} className="me-2" sx={{textTransform: 'none'}}>
+                                <Button variant="outlined" onClick={handleBack} className="me-2" sx={{ textTransform: 'none' }}>
                                     Back
                                 </Button>
                             </div>

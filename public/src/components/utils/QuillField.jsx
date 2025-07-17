@@ -15,7 +15,7 @@ const QuillField = ({ name }) => {
   };
 
   return (
-    <div>
+    <div className='mb-2'>
       <QuillEditor
         ref={editorRef}
         value={field.value || ''}
