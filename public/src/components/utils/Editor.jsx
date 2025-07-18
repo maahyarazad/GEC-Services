@@ -51,6 +51,33 @@ const Editor = forwardRef(
         theme: "snow",
       });
 
+      const toolbar = quill.getModule("toolbar");
+      toolbar.addHandler("image", () => {
+        const input = document.createElement("input");
+        input.setAttribute("type", "file");
+        input.setAttribute("accept", "image/png, image/jpeg, image/webp"); // Specify allowed file types
+        input.click();
+
+        input.onchange = () => {
+          const file = input.files[0];
+          if (file) {
+            const fileType = file.type;
+            const validTypes = ["image/png", "image/jpeg", "image/webp"];
+
+            if (validTypes.includes(fileType)) {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const range = quill.getSelection();
+                quill.insertEmbed(range.index, "image", reader.result);
+              };
+              reader.readAsDataURL(file);
+            } else {
+              alert("Invalid file type. Please upload a PNG or JPEG image.");
+            }
+          }
+        };
+      });
+
       // Set direction explicitly
       quill.root.style.direction = "ltr";
       quill.root.style.textAlign = "left";
