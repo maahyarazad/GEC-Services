@@ -190,7 +190,7 @@ export const TemplateForm = () => {
 
   const clearLocalStorage = () => {
     removeEncryptedLocalStorage("gec-registration");
-    window.location.assign(`${import.meta.env.VITE_SERVERURL}/registration`);
+    window.location.assign(`/registration`);
   };
 
   const handleSubmitRegistration = async (

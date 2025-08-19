@@ -11,7 +11,7 @@ export const getValidationSchema = (target) => {
       .required("Phone number is required."),
 
     whatsapp: Yup.string()
-      .matches(/^\+?[0-9]{10,15}$/, "WhatsApp number must be 10–15 digits, and may start with +.")
+      .matches(/^\+[1-9]\d{9,14}$/, "WhatsApp number must start with a country code (e.g., +971) and be 10–15 digits in total.")
       .required("WhatsApp number is required."),
 
     firstName: Yup.string()
