@@ -1,11 +1,16 @@
 /* atkinson-hyperlegible-latin-400-normal */
 @font-face {
-  font-family: 'Atkinson Hyperlegible';
+  font-family: "Atkinson Hyperlegible";
   font-style: normal;
   font-display: swap;
   font-weight: 400;
-  src: url(https://cdn.jsdelivr.net/fontsource/fonts/atkinson-hyperlegible@latest/latin-400-normal.woff2) format('woff2'), url(https://cdn.jsdelivr.net/fontsource/fonts/atkinson-hyperlegible@latest/latin-400-normal.woff) format('woff');
-  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+  src: url(https://cdn.jsdelivr.net/fontsource/fonts/atkinson-hyperlegible@latest/latin-400-normal.woff2)
+      format("woff2"),
+    url(https://cdn.jsdelivr.net/fontsource/fonts/atkinson-hyperlegible@latest/latin-400-normal.woff)
+      format("woff");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 @font-face {
@@ -21,7 +26,7 @@
 }
 
 :root {
-  --primary: #E57D38;
+  --primary: #e57d38;
   /* --primary: #f58545; */
   --dark: #1b1b1b;
   --littledark: #676767;
@@ -56,7 +61,6 @@ select {
 select option {
   font-size: 0.75rem;
 }
-
 
 .clearance-flat {
   display: block;
@@ -471,7 +475,6 @@ form {
   justify-content: flex-start;
   gap: 4px 12px;
 
-
   > span {
     margin-top: 32px;
     display: flex;
@@ -511,7 +514,7 @@ form {
     display: flex;
     > p {
       font-size: 0.75rem;
-      width: 33%;
+      width: 100%;
     }
 
     > input,
@@ -625,12 +628,12 @@ tr.eventhide {
   align-self: flex-end;
 }
 
-.modal-header{
-      display: flex !important
+.modal-header {
+  display: flex !important
 ;
-    justify-content: space-between;
-    align-items: center;
-    flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
 }
 
 /* Modal Body (scrollable area) */
@@ -638,7 +641,6 @@ tr.eventhide {
   overflow-y: auto;
   max-height: calc(90dvh - 4rem); /* subtract header/footer if any */
 }
-
 
 /* Add to your global CSS or module */
 .otp-slide {
@@ -652,7 +654,6 @@ tr.eventhide {
   max-height: 500px; /* adjust based on content */
   opacity: 1;
 }
-
 
 /* SweetAlert2 - Custom Success Icon */
 .swal2-success {
@@ -669,7 +670,7 @@ tr.eventhide {
 
 .swal2-success::before,
 .swal2-success::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 100%;
   height: 100%;
@@ -737,26 +738,25 @@ tr.eventhide {
   }
 }
 
-
 .swal2-error {
   display: inline-block;
   position: relative;
   box-sizing: content-box;
-  width: 40px;               /* 80 → 40 */
+  width: 40px; /* 80 → 40 */
   height: 40px;
   border: 2px solid #f27474; /* 4 → 2 */
   border-radius: 50%;
-  animation: swal2-rotate-error .5s ease-in;
+  animation: swal2-rotate-error 0.5s ease-in;
 }
 
 .swal2-error:before,
 .swal2-error:after {
-  content: '';
+  content: "";
   position: absolute;
-  height: 2.5px;            /* 5 → 2.5 */
+  height: 2.5px; /* 5 → 2.5 */
   background-color: #f27474;
-  top: 18.5px;              /* centered vertically (40/2 - 1.25) */
-  width: 28px;              /* 56 → 28 */
+  top: 18.5px; /* centered vertically (40/2 - 1.25) */
+  width: 28px; /* 56 → 28 */
   left: 6px;
 }
 
@@ -791,8 +791,6 @@ tr.eventhide {
     top: 18.5px;
   }
 }
-
-
 
 .MuiDataGrid-toolbarQuickFilter {
   display: none !important;

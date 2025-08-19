@@ -51,6 +51,7 @@ export const TemplateForm = () => {
   const [phoneRegistered, setPhoneRegistered] = useState(false);
   const [validOtp, setValidOtp] = useState(null);
   const [global_whatsapp, setGlobalWhatsapp] = useState("");
+  const [showDivFirst, setShowDivFirst] = useState(false);
   const handleSendOtp = async (values) => {
     try {
       setShowOtpInput(true);
@@ -82,7 +83,6 @@ export const TemplateForm = () => {
       }
     } catch (e) {
       statusRef.current.innerText = e.message;
-    } finally {
     }
   };
 
@@ -299,12 +299,22 @@ export const TemplateForm = () => {
   return (
     <>
       <SimpleSnackbar ref={snackbarRef} />
+
       <div
         className={`template-form ${
           target.lockRegistration === "true" ? "locked-template-form" : ""
         }`}
       >
-        <div>
+        <button
+          onClick={() => setShowDivFirst((prev) => !prev)}
+          className="cta-button simple"
+        >
+          <img src="/info.svg"></img>
+        </button>
+        <button onClick={clearLocalStorage} className="cta-button simple">
+          <img src="/close-info.svg"></img>
+        </button>
+        <div className={showDivFirst ? "active" : ""}>
           {(() => {
             const trimmedDescription = (target.description || "").trim();
 
@@ -366,7 +376,7 @@ export const TemplateForm = () => {
                 setTouched,
               }) => (
                 <Form>
-                  <Button
+                  {/* <Button
                     variant="contained"
                     color="primary"
                     onClick={clearLocalStorage}
@@ -379,7 +389,7 @@ export const TemplateForm = () => {
                     }}
                   >
                     Clear Cache and Exit
-                  </Button>
+                  </Button> */}
 
                   {/* Autofill phone and whatsapp fields */}
                   {/* <AutofillPhoneAndWhatsapp mobileNumber={target.mobile_number} /> */}
@@ -397,7 +407,9 @@ export const TemplateForm = () => {
 
                   <div className="full">
                     <div className="w-100">
-                      <label>Email</label>
+                      <label>
+                        <p>Email</p>
+                      </label>
                       <div className="input-group">
                         {target.fieldIcon === "true" && (
                           <span className="input-group-text">
@@ -422,7 +434,9 @@ export const TemplateForm = () => {
                   </div>
 
                   <div className="full">
-                    <label>Phone Number</label>
+                    <label>
+                      <p>Phone Number</p>
+                    </label>
                     <div className="input-group">
                       {target.fieldIcon === "true" && (
                         <span className="input-group-text">
@@ -446,7 +460,9 @@ export const TemplateForm = () => {
                   </div>
 
                   <div className="full">
-                    <label>Whatsapp Number</label>
+                    <label>
+                      <p>Whatsapp Number</p>
+                    </label>
                     <div className="input-group">
                       {target.fieldIcon === "true" && (
                         <span className="input-group-text">
@@ -516,14 +532,16 @@ export const TemplateForm = () => {
                         textTransform: "none",
                       }}
                     >
-                      Send OTP
+                      <p>Send OTP</p>
                     </Button>
                   )}
 
                   <div className="spacer"></div>
 
                   <div className="full">
-                    <label>Gender</label>
+                    <label>
+                      <p>Gender</p>
+                    </label>
                     <div className="input-group">
                       {target.fieldIcon === "true" && (
                         <span className="input-group-text">
@@ -539,7 +557,9 @@ export const TemplateForm = () => {
                   </div>
 
                   <div className="full">
-                    <label>First Name</label>
+                    <label>
+                      <p>First Name</p>
+                    </label>
                     <div className="input-group">
                       {target.fieldIcon === "true" && (
                         <span className="input-group-text">
@@ -565,7 +585,9 @@ export const TemplateForm = () => {
                   </div>
 
                   <div className="full">
-                    <label>Last Name</label>
+                    <label>
+                      <p>Last Name</p>
+                    </label>
                     <div className="input-group">
                       {target.fieldIcon === "true" && (
                         <span className="input-group-text">
@@ -592,7 +614,9 @@ export const TemplateForm = () => {
 
                   {target.birthdayRequired === "true" && (
                     <div className="full">
-                      <label>Birthday</label>
+                      <label>
+                        <p>Birthday</p>
+                      </label>
                       <div className="input-group">
                         <span className="input-group-text">
                           <MdOutlineCalendarMonth />
@@ -622,7 +646,9 @@ export const TemplateForm = () => {
 
                   {target.companyRequired === "true" && (
                     <div className="full">
-                      <label>Company Name</label>
+                      <label>
+                        <p>Company Name</p>
+                      </label>
                       <div className="input-group">
                         {target.fieldIcon === "true" && (
                           <span className="input-group-text">
@@ -649,7 +675,9 @@ export const TemplateForm = () => {
 
                   {target.textarea === "true" && (
                     <div className="full">
-                      <label htmlFor="textarea">Message</label>
+                      <label htmlFor="textarea">
+                        <p>Message</p>
+                      </label>
                       <div className="input-group">
                         <Field
                           as="textarea"
@@ -672,9 +700,12 @@ export const TemplateForm = () => {
 
                   {target.fileUpload === "true" && (
                     <div className="full">
-                      <label htmlFor="fileUpload">
-                        Please attach any documentation to support your
-                        application.
+                      <div className="clearance"></div>
+                      <label className="full" htmlFor="fileUpload">
+                        <p>
+                          Please attach any documentation to support your
+                          application.
+                        </p>
                       </label>
                       <input
                         ref={fileInputRef}

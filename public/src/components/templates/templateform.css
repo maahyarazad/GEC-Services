@@ -10,6 +10,52 @@
   justify-content: flex-start;
   gap: 0 32px;
 
+  > button:nth-of-type(1),
+  > button:nth-of-type(2) {
+    position: absolute;
+    z-index: 3;
+    top: 16px;
+    right: 16px;
+    transition: 0.3s all ease;
+    border: unset;
+
+    > img {
+      width: 16px;
+      height: 16px;
+      filter: invert(24%) sepia(90%) saturate(2738%) hue-rotate(218deg)
+        brightness(103%) contrast(105%) grayscale(0.5);
+    }
+  }
+
+  > button:nth-of-type(1) {
+    left: 16px;
+    right: unset;
+    display: none;
+  }
+
+  button:nth-of-type(2):hover {
+  }
+
+  > button:nth-of-type(2)::before {
+    content: "Click to clear your cache and exit this page";
+    position: absolute;
+    top: 0;
+    right: 40px;
+    width: 320px;
+    display: block;
+    text-align: right;
+    font-size: 0, 75rem;
+    color: var(--gray);
+    font-style: italic;
+    opacity: 0;
+    transition: 0.3s all ease;
+  }
+
+  > button:nth-of-type(2):hover::before {
+    opacity: 1;
+    right: 32px;
+  }
+
   height: 100vh;
 
   > div {
@@ -30,13 +76,13 @@
     > .target-description {
       position: relative;
       width: 90%;
-      max-width: 800px !important;
-      max-height: 60dvh !important;
+      max-width: 800px;
+      max-height: 60dvh;
       height: auto;
 
       z-index: 10;
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.4); /* semi-transparent background */
+      background: rgba(255, 255, 255, 0.75); /* semi-transparent background */
       backdrop-filter: blur(2px); /* <--- the blur effect */
       -webkit-backdrop-filter: blur(2px); /* for Safari support */
       color: #000;
@@ -106,13 +152,16 @@
         width: 100%;
 
         > h1 {
-          font-size: 1.3rem;
+          font-size: 2rem;
           color: var(--primary);
+          width: 100%;
+          margin-bottom: 0 !important;
         }
 
         > h4 {
           font-size: 0.75rem;
-          color: var(--dark);
+          width: 100%;
+          color: #787878;
           font-weight: 600;
         }
 
@@ -131,9 +180,41 @@
 }
 
 @media only screen and (max-width: 850px) {
+  .animated-digit {
+    > div {
+      color: var(--white);
+    }
+  }
+
+  .animated-separator {
+  }
+
+  .animated-label {
+    color: var(--white);
+  }
   .template-form {
     position: relative;
-    overflow: scroll !important;
+
+    > button:nth-of-type(1) {
+      display: block;
+      right: unset;
+    }
+
+    > button:nth-of-type(1),
+    > button:nth-of-type(2) {
+      top: 8px;
+      right: 8px;
+      > img {
+        filter: unset;
+        filter: invert(1);
+      }
+    }
+
+    > button:nth-of-type(2)::before {
+      content: "";
+      color: var(--white);
+    }
+
     > div {
       border-radius: 8px;
     }
@@ -141,8 +222,15 @@
     > div:first-of-type {
       position: absolute !important;
       width: 100% !important;
-      > div {
-        display: none;
+      > .target-description {
+        width: calc(100% - 48px);
+        height: calc(100dvh - 64px);
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        max-height: unset;
+        border-radius: 4px;
+        box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
       }
     }
 
@@ -150,6 +238,7 @@
       width: calc(100% - 40px);
       margin: 0 auto;
       overflow: hidden !important;
+      padding: 0;
       > a {
         width: 80px;
         height: auto;
@@ -180,6 +269,12 @@
           border-radius: 12px;
           background-color: var(--white);
           box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+          height: 80dvh;
+          overflow-y: scroll;
+
+          > h1 {
+            font-size: 1.3rem;
+          }
         }
       }
     }
