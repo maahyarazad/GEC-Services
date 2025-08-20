@@ -13,6 +13,7 @@ const registration = require('./routes/registration');
 const member = require('./routes/member');
 const registration_keys = require('./routes/registration_keys');
 const maps = require('./routes/maps');
+const googleWallet = require('./routes/google_wallet.js');
 
 // Setup DB connection
 const db = new sqlite3.Database("./app.db", (err) => {
@@ -73,6 +74,7 @@ app.use('/', registration);
 app.use('/', member);
 app.use('/', registration_keys);
 app.use('/', maps);
+app.use('/', googleWallet);
 
 
 // Start the server

@@ -5,7 +5,7 @@ const dbService = require("../services/dbService");
 const multer = require("multer");
 const  {generateQRWithText} = require("../services/qrGenerator");
 const  {validateFileMimeType} = require("../services/validateFileType");
-const {comfirm_message_email, event_confirm_registration_email, event_confirm_registration_email_aws} = require("../services/emailService");
+const {comfirm_message_email, event_confirm_registration_email, company_data_confirmation_email} = require("../services/emailService");
 const { generateRecordId } = require("../services/generatorService");
 const path = require("path");
 const fs = require("fs");
@@ -21,7 +21,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
 
 
         const table_name = "registration";
-        const {registration_code, title, event_date, ...data} = req.body;
+        const {registration_code, title, event_date ,...data} = req.body;
         const file = req.file; 
         let uniqueFileName = null;
         // Validate file type
@@ -44,7 +44,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
 
         const key = await dbService.findExact("registration_keys", "key", registration_code);
 
-        // Max token doesn't mean anything for sending out documents like applying for Golden Adler Ward 
+        // Max token doesn't mean anything for sending out documents like applying for Golden Adler award 
         if(!file){
             const max_token_value = await dbService.findExact("registration_config", "page", data.event);
             event_time = max_token_value[0]?.event_time;
@@ -90,28 +90,41 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
         data.event_id = generateRecordId(data.event, false);
         const create_result = await dbService.createSafe(table_name, data);
         if(create_result.status){
-            // Todo: send email
-            if (file) {
-                
-                await comfirm_message_email(data);
-            } else{
-                
-                // Increment the tokenCount here
-
-                if(key && key.length > 0){
-                    key[0].tokenCount++; 
-                    dbService.update("registration_keys", key[0].id, key[0]);
+            switch (true) {
+                case !!file: {
+                    // Case 1: File exists
+                    await comfirm_message_email(data);
+                    break;
                 }
 
-                await generateQRWithText(data.event, data.event_id);
-                // Add Title for email
-                data.title = title;
-                data.event_date = event_date;
-                data.event_time = event_time;
-                data.event_location = event_location;
-                data.event_location_name = event_location_name;
-    
-                await event_confirm_registration_email(data);
+                case !!data.company_data: {
+                    // Case 2: company_data exists
+                    
+                    await company_data_confirmation_email(data);
+                    break;
+                }
+
+                default: {
+                    // Case 3: Default (no file, no company_data)
+
+                    // Increment the tokenCount here
+                    if (key && key.length > 0) {
+                        key[0].tokenCount++;
+                        dbService.update("registration_keys", key[0].id, key[0]);
+                    }
+
+                    await generateQRWithText(data.event, data.event_id);
+
+                    // Add Title for email
+                    data.title = title;
+                    data.event_date = event_date;
+                    data.event_time = event_time;
+                    data.event_location = event_location;
+                    data.event_location_name = event_location_name;
+
+                    await event_confirm_registration_email(data);
+                    break;
+                }
             }
             
             return res.json({ status: true, message: "Your request has been successfully processed.", create_result });

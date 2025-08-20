@@ -1,7 +1,56 @@
 import * as Yup from 'yup';
 
+const phoneSchema = Yup.string()
+  .matches(/^\+?[0-9]{10,15}$/, "Phone number must be 10–15 digits, and may start with +.");
+
+const companyInfoSchema = Yup.object().shape({
+  company_partnerBrand: Yup.string()
+    .min(2, "Partber brand must be at least 2 characters.")
+    .required("Partber brand is required."),
+  company_partnerName: Yup.string()
+    .min(2, "Partner name must be at least 2 characters.")
+    .required("Partner name is required."),
+  company_cityCountry: Yup.string().required("City/Country is required."),
+  company_phone: phoneSchema.notRequired(),
+  company_mobile: phoneSchema.required("Company mobile number is required."),
+  company_email: Yup.string()
+    .email("Please enter a valid email address.")
+    .required("Company email is required."),
+  company_website: Yup.string()
+    .url("Please enter a valid website URL.")
+    .required("Company website is required."),
+  company_employeeCount: Yup.string()
+    .oneOf(["small", "medium", "large"], "Invalid employee count selection.")
+    .required("Employee count is required."),
+  company_industry: Yup.string().required("Industry is required."),
+
+  // company role fields
+  company_ceoOwnerGm: Yup.string()
+    .min(2, "CEO/Owner/GM name must be at least 2 characters.")
+    .required("CEO/Owner/GM is required."),
+
+  company_ceoOwnerGm_contactNumber: phoneSchema.required("CEO/Owner/GM mobile number is required."),
+
+  company_ceoOwnerGm_email: Yup.string()
+    .email("Please enter a valid email address.")
+    .required("CEO/Owner/GM email is required."),
+
+  // company_hrHead: Yup.string()
+  //   .min(2, "HR Head name must be at least 2 characters.")
+  //   .required("HR Head is required."),
+  // company_accountingHead: Yup.string()
+  //   .min(2, "Accounting Head name must be at least 2 characters.")
+  //   .required("Accounting Head is required."),
+  // company_marketingHead: Yup.string()
+  //   .min(2, "Marketing Head name must be at least 2 characters.")
+  //   .required("Marketing Head is required."),
+  // company_pa: Yup.string()
+  //   .min(2, "PA name must be at least 2 characters.")
+  //   .required("PA is required."),
+});
+
 export const getValidationSchema = (target) => {
-  return Yup.object().shape({
+  let baseSchema = Yup.object().shape({
     email: Yup.string()
       .email("Please enter a valid email address.")
       .required("Email is required."),
@@ -34,12 +83,11 @@ export const getValidationSchema = (target) => {
           .required("Birthday is required.")
       : Yup.date().nullable().notRequired(),
 
-    consent: target?.IdentityConsent === 'true'?
-      Yup.boolean()
-      .oneOf([true], "You must agree to the terms and conditions.")
-      :Yup.boolean().notRequired(),
+    consent: target?.IdentityConsent === 'true'
+      ? Yup.boolean().oneOf([true], "You must agree to the terms and conditions.")
+      : Yup.boolean().notRequired(),
 
-     fileUpload: target?.fileUpload === 'true'
+    fileUpload: target?.fileUpload === 'true'
       ? Yup.mixed()
           .required("Attachment is required.")
           .test("fileSize", "Attachment file should be less than 5MB", (value) => {
@@ -51,5 +99,12 @@ export const getValidationSchema = (target) => {
     textarea: target?.textarea === 'true'
       ? Yup.string().required("Message is required.")
       : Yup.string().notRequired(),
-      });
+  });
+
+  // Merge company schema
+  if (target?.surveyForm === 'true') {
+    baseSchema = baseSchema.concat(companyInfoSchema);
+  }
+
+  return baseSchema;
 };

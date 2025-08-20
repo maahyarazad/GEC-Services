@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { generateRecordId, generateOTP } = require("../services/generatorService");
 const dbService = require("../services/dbService");
-
+const {email_otp} = require("../services/emailService");
 const twilioClient = require('twilio')(process.env.TWILIO_ACOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 const multer = require("multer");
@@ -38,6 +38,33 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+
+const sendOtpToEmail = async (data, req, res) => {
+    if (!data.email) {
+        return { status: false, code: 400, message: 'Email is required' };
+    }
+
+    if (req.session.otp) {
+        delete req.session.otp;
+        delete req.session.otpExpires;
+    }
+
+    const otp = generateOTP();
+    data.otp = otp;
+    req.session.otp = otp;
+    req.session.otpExpires = Date.now() + 1 * 59 * 1000; // expires in 1 mins
+
+    try {
+        await email_otp(data)
+
+        return { status: true, code: 200, message: 'OTP sent successfully' };
+    } catch (error) {
+        console.error("Failed to send OTP:", error.message);
+        return { status: false, code: 500, message: 'Failed to send OTP' };
+    }
+};
+
+
 const sendOtpToPhone = async (mobile_number, req, res) => {
     if (!mobile_number) {
         return { status: false, code: 400, message: 'Mobile number required' };
@@ -70,7 +97,8 @@ router.post("/send-otp",upload.none() ,async (req, res) => {
     try {
         const data = req.body;
 
-       const response = await sendOtpToPhone(data.whatsapp, req, res);
+    //    const response = await sendOtpToPhone(data.whatsapp, req, res);
+       const response = await sendOtpToEmail(data, req, res);
        
        if(response.status){
            return res.status(200).json({
@@ -116,7 +144,7 @@ router.post("/otp-check",upload.none(), async (req, res) => {
 
         res.status(200).json({
             status: true,
-            message: "Phone number registered successfully.",
+            message: "Verification successful",
             data: page_data
         });
 

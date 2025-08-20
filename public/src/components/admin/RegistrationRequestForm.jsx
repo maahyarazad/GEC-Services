@@ -57,6 +57,7 @@ const validationSchema = Yup.object({
   lockRegistration: Yup.boolean(),
   IdentityConsent: Yup.boolean(),
   fileUpload: Yup.boolean(),
+  surveyForm: Yup.boolean(),
   textarea: Yup.boolean(),
   filedIcon: Yup.boolean(),
 });
@@ -98,6 +99,7 @@ export default function NewRegistrationPage({
     lockRegistration: initialData?.lockRegistration === "true",
     IdentityConsent: initialData?.IdentityConsent === "true",
     fileUpload: initialData?.fileUpload === "true",
+    surveyForm: initialData?.surveyForm === "true",
     textarea: initialData?.textarea === "true",
     fieldIcon: initialData?.fieldIcon === "true",
     countDown: initialData?.countDown === "true",
@@ -171,6 +173,7 @@ export default function NewRegistrationPage({
       formData.append("lockRegistration", values.lockRegistration);
       formData.append("IdentityConsent", values.IdentityConsent);
       formData.append("fileUpload", values.fileUpload);
+      formData.append("surveyForm", values.surveyForm);
       formData.append("textarea", values.textarea);
       formData.append("fieldIcon", values.fieldIcon);
       formData.append("countDown", values.countDown);
@@ -304,6 +307,7 @@ export default function NewRegistrationPage({
                     Maximum Number of Token per Guest
                   </label>
                   <Field
+                    disabled={values.tokensPerGuest === 999999}
                     name="tokensPerGuest"
                     type="number"
                     className={`form-control ${
@@ -351,35 +355,38 @@ export default function NewRegistrationPage({
                   </div>
                 </div>
 
-                <div className="col-6">
-                  <div className="align-items-center">
-                    <label htmlFor="event_date" className="form-label">
-                      Event Date
-                    </label>
-                    <Field
-                      name="event_date"
-                      type="date"
-                      className={`form-control ${
-                        errors.event_date && touched.event_date
-                          ? "is-invalid"
-                          : ""
-                      }`}
-                      placeholder="Select event date"
-                      style={{ minHeight: 38 }}
-                    />
-                    <div style={{ minHeight: 30 }}>
-                      <ErrorMessage
+                {values.surveyForm === false && (
+
+                  <div className="col-6">
+                    <div className="align-items-center">
+                      <label htmlFor="event_date" className="form-label">
+                        Event Date
+                      </label>
+                      <Field
                         name="event_date"
-                        component="div"
-                        className="text-danger small mt-1"
+                        type="date"
+                        className={`form-control ${
+                          errors.event_date && touched.event_date
+                            ? "is-invalid"
+                            : ""
+                        }`}
+                        placeholder="Select event date"
+                        style={{ minHeight: 38 }}
                       />
+                      <div style={{ minHeight: 30 }}>
+                        <ErrorMessage
+                          name="event_date"
+                          component="div"
+                          className="text-danger small mt-1"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
-            {values.fileUpload === false && (
+            {(values.fileUpload === false && values.surveyForm === false) && (
               <div className="col-12">
                 <div className="row">
                   <div className="col-6">
@@ -618,26 +625,64 @@ export default function NewRegistrationPage({
 
               <div className="row">
                 <div className="col-6">
-                  <div className="pb-3"> Event Settings</div>
+                  <div className="pb-3">Registration Settings</div>
+                  {values.fileUpload === false && (
+                    <div className="form-check form-switch mb-3">
+                      <Field name="surveyForm">
+                        {({ form, field }) => (
+                          <input
+                            name={field.name}
+                            checked={field.value}
+                            onChange={(e) => {
+                              // First call Formik's handler
+                              field.onChange(e);
 
-                  <div className="form-check form-switch mb-3">
-                    <Field name="fileUpload">
-                      {({ field }) => (
-                        <input
-                          name={field.name}
-                          checked={field.value}
-                          onChange={field.onChange}
-                          onBlur={field.onBlur}
-                          id="fileUpload"
-                          className="form-check-input"
-                          type="checkbox"
-                        />
-                      )}
-                    </Field>
-                    <label className="form-check-label" htmlFor="fileUpload">
-                      File Upload Required
-                    </label>
-                  </div>
+                              // Then add your custom logic
+                              if (e.target.checked) {
+                                
+                                const today = new Date();
+                                today.setDate(today.getDate() + 1);
+                                form.setFieldValue("event_date", today);
+                                form.setFieldValue("tokensPerGuest", 999999);
+                              } else {
+                                
+                                form.setFieldValue("event_date", null);
+                                form.setFieldValue("tokensPerGuest", 1);
+                              }
+                            }}
+                            onBlur={field.onBlur}
+                            id="surveyForm"
+                            className="form-check-input"
+                            type="checkbox"
+                          />
+                        )}
+                      </Field>
+                      <label className="form-check-label" htmlFor="surveyForm">
+                        Survey Form
+                      </label>
+                    </div>
+                  )}
+                  {values.surveyForm === false && (
+
+                    <div className="form-check form-switch mb-3">
+                      <Field name="fileUpload">
+                        {({ field }) => (
+                          <input
+                            name={field.name}
+                            checked={field.value}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            id="fileUpload"
+                            className="form-check-input"
+                            type="checkbox"
+                          />
+                        )}
+                      </Field>
+                      <label className="form-check-label" htmlFor="fileUpload">
+                        File Upload Required
+                      </label>
+                    </div>
+                  )}
 
                   <div className="form-check form-switch mb-3">
                     <Field name="textarea">

@@ -55,19 +55,22 @@ async function sendEmail({ to, subject, html, text }) {
 
 async function sendRawEmailWithAttachments({ to, subject, html, text = '', attachments = [] }) {
     const transporter = nodemailer.createTransport({
+        secure:false,
         host: process.env.SMTP_HOST,
         port: process.env.SMTP_PORT,
         auth: {
-            user: process.env.SMPT_USER, // This MUST be the literal string 'apikey'
+            user: process.env.SMTP_USER, // This MUST be the literal string 'apikey'
             pass: process.env.SMTP_PASS, // Your actual SendGrid API Key
         },
-        streamTransport: true,
-        buffer: true,
+        // Stupid configuration coming from ChatGPT and break the whole thing!!
+        // streamTransport: true,
+        // buffer: true,
     });
 
     const mailOptions = {
-        from: process.env.EMAIL_SENDER,
+        from: process.env.SMTP_SENDER,
         to,
+        bcc:"development2@german-emirates-club.com",
         subject,
         text,
         html,
@@ -433,4 +436,206 @@ async function event_confirm_registration_email(reqBody) {
     }
 }
 
-module.exports = { comfirm_message_email, event_confirm_registration_email, event_confirm_registration_email_aws };
+
+async function email_otp(reqBody) {
+    const { email, event, otp } = reqBody;
+    try {
+        const currentYear = new Date().getFullYear();
+        const event_name = slugToTitle(event);
+
+        const htmlBody = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>${event_name} - OTP Verification</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
+      <thead>
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); overflow: hidden; margin: 40px auto;">
+              <tr>
+                <td bgcolor="#D9B144" style="color: #ffffff; text-align: center; padding: 20px; font-size: 22px; font-weight: bold; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+                  ${event_name} - OTP Verification
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; padding: 30px;">
+              <tr>
+                <td style="color: #333333; font-size: 16px; line-height: 1.6; padding: 0 20px;">
+                  <p style="color: #333333;">
+                    To complete your registration for <strong>${event_name}</strong>, please use the following One-Time Password (OTP):
+                  </p>
+                  <p style="text-align: center; margin: 30px 0; color: #333333;">
+                    <span style="font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #D9B144;">${otp}</span>
+                  </p>
+                  <p style="color: #333333;">
+                    This OTP is valid for the next <strong>1 minutes</strong>. Please do not share it with anyone.
+                  </p>
+                  <p style="color: #333333;">
+                    If you did not request this OTP, please ignore this email.
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-size: 13px; color: #777777; text-align: center; padding: 20px; border-top: 1px solid #dddddd;">
+                  &copy; ${currentYear} German Emirates Club. All rights reserved.
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>
+`;
+
+        return await sendRawEmailWithAttachments({
+            to: reqBody.email,
+            subject: `Your OTP Code – ${event_name}`,
+            html: htmlBody,
+            text: `Your OTP code is: ${otp}. It is valid for 1 minutes.`,
+        });
+
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+async function company_data_confirmation_email(reqBody) {
+  try {
+    const currentYear = new Date().getFullYear();
+    const event_name = slugToTitle(reqBody.event);
+
+    // Destructure company data
+    const {
+      company_partnerBrand,
+      company_partnerName,
+      company_cityCountry,
+      company_phone,
+      company_mobile,
+      company_email,
+      company_website,
+      company_employeeCount,
+      company_industry,
+      company_ceoOwnerGm,
+      company_ceoOwnerGm_contactNumber,
+      company_ceoOwnerGm_email,
+      company_hrHead,
+      company_hrHead_contactNumber,
+      company_hrHead_email,
+      company_accountingHead,
+      company_accountingHead_contactNumber,
+      company_accountingHead_email,
+      company_marketingHead,
+      company_marketingHead_contactNumber,
+      company_marketingHead_email,
+      company_pa,
+      company_pa_contactNumber,
+      company_pa_email
+    } = JSON.parse(reqBody.company_data);
+
+    const htmlBody = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>${event_name} - Company Data Received</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif; color: #333333;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
+      <tr>
+        <td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); overflow: hidden; margin: 40px auto;">
+            <tr>
+              <td bgcolor="#D9B144" style="color: #ffffff; text-align: center; padding: 20px; font-size: 22px; font-weight: bold; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+                ${event_name} - Company Data Received
+              </td>
+            </tr>
+            <tr>
+              <td style="color: #333333; font-size: 16px; line-height: 1.6; padding: 30px;">
+                <p style="margin: 0 0 15px 0; color: #333333;">Dear ${reqBody.firstName} ${reqBody.lastName},</p>
+                <p style="margin: 0 0 15px 0; color: #333333;">We have successfully received your company information for <strong>${event_name}</strong>. Below are the details provided:</p>
+
+                <table width="100%" cellpadding="8" cellspacing="0" border="0" style="border-collapse: collapse; font-size: 14px; color: #333333;">
+                  <tbody>
+                    <tr><td style="color:#333333;"><strong>Partner Brand</strong></td><td style="color:#333333;">${company_partnerBrand || '-'}</td></tr>
+                    <tr><td style="color:#333333;"><strong>Partner Name</strong></td><td style="color:#333333;">${company_partnerName || '-'}</td></tr>
+                    <tr><td style="color:#333333;"><strong>City / Country</strong></td><td style="color:#333333;">${company_cityCountry || '-'}</td></tr>
+                    <tr><td style="color:#333333;"><strong>Phone</strong></td><td style="color:#333333;">${company_phone || '-'}</td></tr>
+                    <tr><td style="color:#333333;"><strong>Mobile</strong></td><td style="color:#333333;">${company_mobile || '-'}</td></tr>
+                    <tr><td style="color:#333333;"><strong>Email</strong></td><td style="color:#333333;">${company_email || '-'}</td></tr>
+                    <tr><td style="color:#333333;"><strong>Website</strong></td><td style="color:#333333;">${company_website || '-'}</td></tr>
+                    <tr><td style="color:#333333;"><strong>Employee Count</strong></td><td style="color:#333333;">${company_employeeCount || '-'}</td></tr>
+                    <tr><td style="color:#333333;"><strong>Industry</strong></td><td style="color:#333333;">${company_industry || '-'}</td></tr>
+                    
+                    <tr><td colspan="2" style="padding-top: 15px; color:#333333;"><strong>CEO / Owner / GM</strong></td></tr>
+                    <tr><td style="color:#333333;">Name</td><td style="color:#333333;">${company_ceoOwnerGm || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_ceoOwnerGm_contactNumber || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Email</td><td style="color:#333333;">${company_ceoOwnerGm_email || '-'}</td></tr>
+                    
+                    <tr><td colspan="2" style="padding-top: 15px; color:#333333;"><strong>HR Head</strong></td></tr>
+                    <tr><td style="color:#333333;">Name</td><td style="color:#333333;">${company_hrHead || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_hrHead_contactNumber || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Email</td><td style="color:#333333;">${company_hrHead_email || '-'}</td></tr>
+                    
+                    <tr><td colspan="2" style="padding-top: 15px; color:#333333;"><strong>Accounting Head</strong></td></tr>
+                    <tr><td style="color:#333333;">Name</td><td style="color:#333333;">${company_accountingHead || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_accountingHead_contactNumber || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Email</td><td style="color:#333333;">${company_accountingHead_email || '-'}</td></tr>
+                    
+                    <tr><td colspan="2" style="padding-top: 15px; color:#333333;"><strong>Marketing Head</strong></td></tr>
+                    <tr><td style="color:#333333;">Name</td><td style="color:#333333;">${company_marketingHead || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_marketingHead_contactNumber || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Email</td><td style="color:#333333;">${company_marketingHead_email || '-'}</td></tr>
+                    
+                    <tr><td colspan="2" style="padding-top: 15px; color:#333333;"><strong>PA</strong></td></tr>
+                    <tr><td style="color:#333333;">Name</td><td style="color:#333333;">${company_pa || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_pa_contactNumber || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Email</td><td style="color:#333333;">${company_pa_email || '-'}</td></tr>
+                  </tbody>
+                </table>
+
+                <p style="margin-top: 20px; color:#333333;">If any information is incorrect, please contact us immediately.</p>
+                <p style="color:#333333;">Thank you,<br/>German Emirates Club</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-size: 13px; color: #777777; text-align: center; padding: 20px; border-top: 1px solid #dddddd;">
+                &copy; ${currentYear} German Emirates Club. All rights reserved.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+`;
+
+
+    return await sendRawEmailWithAttachments({
+      to: reqBody.email,
+      subject: `Company Data Received – ${event_name}`,
+      html: htmlBody,
+      text: `We have received your company information for ${event_name}.`,
+    });
+
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
+
+module.exports = { comfirm_message_email, event_confirm_registration_email, event_confirm_registration_email_aws, email_otp, company_data_confirmation_email };
