@@ -625,7 +625,7 @@ async function company_data_confirmation_email(reqBody) {
 
 
     return await sendRawEmailWithAttachments({
-      to: reqBody.email,
+      to: company_email,
       subject: `Company Data Received – ${event_name}`,
       html: htmlBody,
       text: `We have received your company information for ${event_name}.`,

@@ -1,78 +1,54 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { Box, CircularProgress, Tooltip, Button, Typography } from '@mui/material';
-import { BsFiletypeCsv } from "react-icons/bs";
-import { FaCircleCheck } from "react-icons/fa6";
-import MessageModalTrigger from '../utils/MessageModalTrigger';
+import { Box, CircularProgress, Button } from '@mui/material';
 const PAGE_SIZE = 10;
 
 const columns = [
-    { field: 'id', headerName: 'ID', width: 60 },
-    {
-        field: '',
-        headerName: 'Complete',
-        width: 100,
-        sortable: false,
-        filterable: false,
-        disableColumnMenu: true,
-        renderCell: (params) => {
-            const modified = params?.row?.metadata_modifiedAt;
-            return modified ? (
-                <Tooltip title="Modified">
-                    <FaCircleCheck size={16} color="#28a745" /> {/* Bootstrap green */}
-                </Tooltip>
-            ) : null;
-        }
-    },
-    { field: 'event', headerName: 'Event', width: 130, filterable: true },
-    { field: 'firstName', headerName: 'Firstname', width: 130, filterable: true },
-    { field: 'lastName', headerName: 'Lastname', width: 130, filterable: true },
-    { field: 'email', headerName: 'Email', width: 160, filterable: true },
-    { field: 'phone', headerName: 'Phone', width: 150, filterable: true },
-    { field: 'whatsapp', headerName: 'WhatsApp', width: 150, filterable: true },
-    { field: 'gender', headerName: 'Gender', width: 100, filterable: true },
-    { field: 'birthday', headerName: 'Birthday', width: 100, filterable: true },
-    { field: 'event_id', headerName: 'Event ID', width: 100, filterable: true },
-    {
-        field: 'message',
-        headerName: 'Message',
-        width: 120,
-        sortable: false,
-        filterable: false,
-        disableColumnMenu: true,
-        renderCell: (params) => {
-            const filename = params?.row?.message;
-            if (!filename) return null;
+  { field: 'id', headerName: 'ID', width: 60 },
+  { field: 'event', headerName: 'Event', width: 130, filterable: true },
 
-            return <MessageModalTrigger message={filename} />;
-        }
-    },
+  { field: 'partnerBrand', headerName: 'Partner Brand', width: 160, filterable: true },
+  { field: 'partnerName', headerName: 'Partner Name', width: 160, filterable: true },
+  { field: 'cityCountry', headerName: 'City / Country', width: 160, filterable: true },
+  { field: 'phone', headerName: 'Phone', width: 150, filterable: true },
+  { field: 'mobile', headerName: 'Mobile', width: 150, filterable: true },
+  { field: 'email', headerName: 'Email', width: 180, filterable: true },
+  { field: 'website', headerName: 'Website', width: 180, filterable: true },
+  { field: 'employeeCount', headerName: 'Employee Count', width: 150, filterable: true },
+  { field: 'industry', headerName: 'Industry', width: 160, filterable: true },
 
-    {
-        field: 'attachment_file', headerName: 'Attachment', width: 100, renderCell: (params) => {
-            const filename = params?.row?.attachment_file;
+  { field: 'ceoOwnerGm', headerName: 'CEO / Owner / GM', width: 180, filterable: true },
+  { field: 'ceoOwnerGm_contactNumber', headerName: 'CEO Contact Number', width: 180, filterable: true },
+  { field: 'ceoOwnerGm_email', headerName: 'CEO Email', width: 180, filterable: true },
 
-            if (filename) {
-                const fileUrl = `${import.meta.env.VITE_SERVERURL}/uploads/${filename}`;
-                return (
-                    <a href={fileUrl} download style={{ textDecoration: 'none' }} target='_black'>
-                        <Button variant="contained" className='px-1' color="primary" sx={{ textTransform: 'none', fontSize: 12, padding: 0 }}>
-                            Download
-                        </Button>
-                    </a>
-                )
+  { field: 'hrHead', headerName: 'HR Head', width: 160, filterable: true },
+  { field: 'hrHead_contactNumber', headerName: 'HR Contact Number', width: 180, filterable: true },
+  { field: 'hrHead_email', headerName: 'HR Email', width: 180, filterable: true },
 
-            }
-        }
-    },
-    { field: 'metadata_createdAt', headerName: 'Creation Datetime', width: 160, filterable: true },
-    { field: 'metadata_modifiedAt', headerName: 'Last Modified Datetime', width: 160, filterable: true }
+  { field: 'accountingHead', headerName: 'Accounting Head', width: 180, filterable: true },
+  { field: 'accountingHead_contactNumber', headerName: 'Accounting Contact Number', width: 200, filterable: true },
+  { field: 'accountingHead_email', headerName: 'Accounting Email', width: 180, filterable: true },
+
+  { field: 'marketingHead', headerName: 'Marketing Head', width: 180, filterable: true },
+  { field: 'marketingHead_contactNumber', headerName: 'Marketing Contact Number', width: 200, filterable: true },
+  { field: 'marketingHead_email', headerName: 'Marketing Email', width: 180, filterable: true },
+
+  { field: 'pa', headerName: 'PA', width: 160, filterable: true },
+  { field: 'pa_contactNumber', headerName: 'PA Contact Number', width: 180, filterable: true },
+  { field: 'pa_email', headerName: 'PA Email', width: 180, filterable: true },
+
+  { field: 'createdAt', headerName: 'Created At', width: 200, filterable: true },
+  { field: 'modifiedAt', headerName: 'Modified At', width: 200, filterable: true },
+
+  { field: 'event_id', headerName: 'Event ID', width: 100, filterable: true }
 ];
 
-export const RegistrationDataGrid = () => {
+
+
+export const SurveyDataGrid = () => {
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];
 
-    const [registrationList, setRegistrationList] = useState([]);
+    const [surveyList, setSurveyList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isDownloading, setIsDownloadings] = useState(false);
     const [filterModel, setFilterModel] = useState({
@@ -110,10 +86,10 @@ export const RegistrationDataGrid = () => {
                 filterParams
             ].filter(Boolean).join('&');
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration?${queryParams}`);
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/survey?${queryParams}`);
             const response_data = await response.json();
 
-            setRegistrationList(response_data.data || []);
+            setSurveyList(response_data.data || []);
             setRowCount(response_data.total || 0);
 
         } catch (err) {
@@ -134,7 +110,7 @@ export const RegistrationDataGrid = () => {
         try {
             setIsDownloadings(true);
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-csv-data`);
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/survey-csv-data`);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch CSV file');
@@ -145,7 +121,7 @@ export const RegistrationDataGrid = () => {
 
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'registration.csv'); // Set desired file name
+            link.setAttribute('download', 'survey.csv'); // Set desired file name
             document.body.appendChild(link);
             link.click();
 
@@ -166,30 +142,7 @@ export const RegistrationDataGrid = () => {
 
         <Box sx={{ padding: 1 }}>
             <div className="d-flex justify-content-start mb-1">
-                <div className="me-2">
-                    <Tooltip title="Download CSV data" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
-                    </Tooltip>
-                    {isDownloading ? <div className='d-flex'>
-                        <span className='me-2'>Downloading</span>
-                        <CircularProgress
-                            size={20}
-                            color="inherit"
-                        />
-                    </div>
-
-
-                        :
-                        <Button
-                            variant="outlined"
-                            startIcon={<BsFiletypeCsv size={20} />}
-                            onClick={handleExport}
-                            sx={{ fontSize: 14, color: 'primary.main', textTransform: 'none' }}
-                        >
-                            Download (All Records) CSV
-                        </Button>
-                    }
-
-                </div>
+                
                 <div className="">
                     <Button
                         variant="contained"
@@ -209,7 +162,7 @@ export const RegistrationDataGrid = () => {
 
                 <div style={{ width: '100%', height: '82dvh' }}>
                     <DataGrid
-                        rows={registrationList}
+                        rows={surveyList}
                         columns={columns}
                         getRowHeight={(params) => {
                             const companyData = params?.row?.company_data;

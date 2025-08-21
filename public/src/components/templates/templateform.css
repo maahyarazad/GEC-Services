@@ -238,6 +238,7 @@
       width: calc(100% - 40px);
       margin: 0 auto;
       overflow: hidden !important;
+      
       padding: 0;
       > a {
         width: 80px;
@@ -253,6 +254,9 @@
 
       > div {
         position: relative;
+        height: 100dvh;
+        overflow-y: scroll;
+        
         > button {
           position: absolute;
           top: 16px;
@@ -269,8 +273,8 @@
           border-radius: 12px;
           background-color: var(--white);
           box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
-          height: 80dvh;
-          overflow-y: scroll;
+          /* height: 80dvh;
+          overflow-y: scroll; */
 
           > h1 {
             font-size: 1.3rem;

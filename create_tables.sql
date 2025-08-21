@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS registration (
   firstName VARCHAR(100),
   lastName VARCHAR(100),
   companyName VARCHAR(255),
-    company_data TEXT, 
   birthday DATE,
   event_id VARCHAR(20),
   metadata_createdAt DATETIME DEFAULT (datetime('now')),
@@ -83,6 +82,47 @@ CREATE TABLE IF NOT EXISTS Member (
   createdAt DATETIME NOT NULL DEFAULT (datetime('now')),
   modifiedAt DATETIME DEFAULT NULL
 );
+
+
+CREATE TABLE Company (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    partnerBrand VARCHAR(300),
+    partnerName VARCHAR(300),
+    cityCountry VARCHAR(300),
+    phone VARCHAR(300),
+    mobile VARCHAR(300),
+    email VARCHAR(300),
+    website VARCHAR(300),
+    employeeCount VARCHAR(300),
+    industry VARCHAR(300),
+
+    ceoOwnerGm VARCHAR(300),
+    ceoOwnerGm_contactNumber VARCHAR(300),
+    ceoOwnerGm_email VARCHAR(300),
+
+    hrHead VARCHAR(300),
+    hrHead_contactNumber VARCHAR(300),
+    hrHead_email VARCHAR(300),
+
+    accountingHead VARCHAR(300),
+    accountingHead_contactNumber VARCHAR(300),
+    accountingHead_email VARCHAR(300),
+
+    marketingHead VARCHAR(300),
+    marketingHead_contactNumber VARCHAR(300),
+    marketingHead_email VARCHAR(300),
+
+    pa VARCHAR(300),
+    pa_contactNumber VARCHAR(300),
+    pa_email VARCHAR(300),
+
+    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    modifiedAt DATETIME DEFAULT NULL,
+    event VARCHAR(100),
+    event_id VARCHAR(100)
+);
+
+
 
 
 INSERT INTO Member (

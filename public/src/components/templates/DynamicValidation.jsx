@@ -103,7 +103,7 @@ export const getValidationSchema = (target) => {
 
   // Merge company schema
   if (target?.surveyForm === 'true') {
-    baseSchema = baseSchema.concat(companyInfoSchema);
+    return companyInfoSchema;
   }
 
   return baseSchema;

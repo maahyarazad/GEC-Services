@@ -88,7 +88,23 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
         } 
 
         data.event_id = generateRecordId(data.event, false);
-        const create_result = await dbService.createSafe(table_name, data);
+        let create_result;
+
+        if(data.company_data){
+            const {event, event_id, company_data} = data;
+            const company_data_ = JSON.parse(company_data);
+            const company_data__ = Object.fromEntries(
+                Object.entries(company_data_)
+                    .map(([key, value]) => [key.replace(/^company_/, ""), value])
+                );
+            company_data__.event = event;
+            company_data__.event_id = event_id;
+
+            create_result = await dbService.createSafe("Company", company_data__);
+        }else{
+            create_result = await dbService.createSafe(table_name, data);
+        }
+
         if(create_result.status){
             switch (true) {
                 case !!file: {

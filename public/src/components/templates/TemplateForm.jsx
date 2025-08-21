@@ -1,17 +1,12 @@
 import { Login } from "../utils/Login";
 import "./templateform.css";
 import { useEffect, useState } from "react";
-import { UseCreateRecord } from "../hooks/UseCreateRecord";
-import { Link } from "react-router-dom";
-import { Formik, Form, Field, ErrorMessage, useFormikContext } from "formik";
-import * as Yup from "yup";
+import { Formik, Form, Field, ErrorMessage } from "formik";
 import {
-    decryptQueryParam,
-    encryptQueryParam,
     getEncryptedLocalStorage,
     removeEncryptedLocalStorage,
 } from "../utils/cookieUtils";
-import { Switch, Button, Box, Tooltip } from "@mui/material";
+import { Button, Box } from "@mui/material";
 import { getValidationSchema } from "./dynamicValidation";
 import { FaWhatsapp } from "react-icons/fa6";
 import { MdEmail } from "react-icons/md";
@@ -26,12 +21,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import OtpTimer from "../utils/OtpTimer";
 import OtpInput from "../utils/OtpInput";
 import CountDownComponent from "../utils/TenDayCountdown";
-import { BiWorld } from "react-icons/bi";
-import { FaMobileAlt } from "react-icons/fa";
-import { VscOrganization } from "react-icons/vsc";
-import { LiaIndustrySolid } from "react-icons/lia";
-import Misc from "../../assets/misc.json";
-
+import { SurveyTemplateForm } from "./SurveyTemplateForm";
+import { initialValues } from "./InitialValues";
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
 //     const { setFieldValue } = useFormikContext();
 
@@ -152,47 +143,14 @@ export const TemplateForm = () => {
     const fileInputRef = useRef();
     const identityConsentRef = useRef();
 
-    const initialValues = {
-        email: "",
-        phone: "",
-        whatsapp: "",
-        gender: "male",
-        firstName: "",
-        lastName: "",
-        companyName: "",
-        birthday: "",
-        textarea: "",
-        fileUpload: null,
-        consent: false,
-        company_partnerBrand:"",
-        company_partnerName:"",
-        company_cityCountry:"",
-        company_phone:"",
-        company_mobile:"",
-        company_email:"",
-        company_website:"",
-        company_employeeCount:"",
-        company_industry:"",
-        company_ceoOwnerGm:"",
-        company_ceoOwnerGm_contactNumber:"",
-        company_ceoOwnerGm_email:"",
-        company_hrHead:"",
-        company_hrHead_contactNumber:"",
-        company_hrHead_email:"",
-        company_accountingHead:"",
-        company_accountingHead_contactNumber:"",
-        company_accountingHead_email:"",
-        company_marketingHead:"",
-        company_marketingHead_contactNumber:"",
-        company_marketingHead_email:"",
-        company_pa:"",
-        company_pa_contactNumber:"",
-        company_pa_email:"",
-    };
 
     useEffect(() => {
         const gecuser = getEncryptedLocalStorage("gec-registration");
         if (gecuser) {
+            if(gecuser.surveyForm === "true"){
+                setPhoneRegistered(true);
+            }
+
             setTarget(gecuser);
         }
     }, []);
@@ -266,50 +224,24 @@ export const TemplateForm = () => {
                 formData.append("attachment_file", renamedFile);
             }
 
-            const companyData = {
-                company_partnerBrand: values.company_partnerBrand,
-                company_partnerName: values.company_partnerName,
-                company_cityCountry: values.company_cityCountry,
-                company_phone: values.company_phone,
-                company_mobile: values.company_mobile,
-                company_email: values.company_email,
-                company_website: values.company_website,
-                company_employeeCount: values.company_employeeCount,
-                company_industry: values.company_industry,
+            // Start Handle SurveyFormLogic   
+            const dataObj = Object.fromEntries(formData.entries());
+            const company_data = Object.fromEntries(
+                Object.entries(dataObj).filter(([key]) => key.startsWith("company_"))
+            );
 
-                company_ceoOwnerGm: values.company_ceoOwnerGm,
-                company_ceoOwnerGm_contactNumber: values.company_ceoOwnerGm_contactNumber,
-                company_ceoOwnerGm_email: values.company_ceoOwnerGm_email,
+            if (target.surveyForm === "true") {
 
-                company_hrHead: values.company_hrHead,
-                company_hrHead_contactNumber: values.company_hrHead_contactNumber,
-                company_hrHead_email: values.company_hrHead_email,
+                Object.entries(formData).filter(([key]) => !key.startsWith("company_"));
 
-                company_accountingHead: values.company_accountingHead,
-                company_accountingHead_contactNumber: values.company_accountingHead_contactNumber,
-                company_accountingHead_email: values.company_accountingHead_email,
-
-                company_marketingHead: values.company_marketingHead,
-                company_marketingHead_contactNumber: values.company_marketingHead_contactNumber,
-                company_marketingHead_email: values.company_marketingHead_email,
-
-                company_pa: values.company_pa,
-                company_pa_contactNumber: values.company_pa_contactNumber,
-                company_pa_email: values.company_pa_email,
-            };
-
-
-            Object.keys(companyData).forEach((key) => {
-                formData.delete(key); // remove if present
-            });
-
-            if (target.surveyForm) {
-                // Pick out only the company-related fields from values
-
-                // Append JSON string to FormData
-                formData.append("company_data", JSON.stringify(companyData));
+                formData.append("company_data", JSON.stringify(company_data));
             }
 
+            Object.keys(company_data).forEach((key) => {
+                formData.delete(key);
+            });
+            // End Handle SurveyFormLogic   
+            
             const registration_response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/registration`,
                 {
@@ -319,7 +251,7 @@ export const TemplateForm = () => {
             );
 
             const registration_response_data = await registration_response.json();
-            debugger;
+
             if (registration_response_data.status) {
                 snackbarRef.current?.openSnackbar(
                     registration_response_data.message,
@@ -437,6 +369,7 @@ export const TemplateForm = () => {
                             validationSchema={getValidationSchema(target)}
                             onSubmit={async (values, { resetForm, setFieldValue }) => {
                                 await handleSubmitRegistration(values, {
+
                                     resetForm,
                                     setFieldValue,
                                 });
@@ -483,210 +416,214 @@ export const TemplateForm = () => {
                                     )}
                                     <div className="clearance-flat"></div>
 
-                                    <div className="full">
-                                        <div className="w-100">
-                                            <label>
-                                                <p>Email</p>
-                                            </label>
-                                            <div className="input-group">
-                                                {target.fieldIcon === "true" && (
-                                                    <span className="input-group-text">
-                                                        <MdEmail />
-                                                    </span>
-                                                )}
+                                    {target.surveyForm === "false" && (
 
-                                                <Field
-                                                    className={`form-control ${errors.email && touched.email ? "is-invalid" : ""
-                                                        }`}
-                                                    type="email"
+                                        <>
+                                            <div className="full">
+                                                <div className="w-100">
+                                                    <label>
+                                                        <p>Email</p>
+                                                    </label>
+                                                    <div className="input-group">
+                                                        {target.fieldIcon === "true" && (
+                                                            <span className="input-group-text">
+                                                                <MdEmail />
+                                                            </span>
+                                                        )}
+
+                                                        <Field
+                                                            className={`form-control ${errors.email && touched.email ? "is-invalid" : ""
+                                                                }`}
+                                                            type="email"
+                                                            name="email"
+                                                            disabled={phoneRegistered}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <ErrorMessage
                                                     name="email"
-                                                    disabled={phoneRegistered}
+                                                    component="div"
+                                                    className="text-danger small"
                                                 />
                                             </div>
-                                        </div>
-                                        <ErrorMessage
-                                            name="email"
-                                            component="div"
-                                            className="text-danger small"
-                                        />
-                                    </div>
 
-                                    <div className="full">
-                                        <label>
-                                            <p>Phone Number</p>
-                                        </label>
-                                        <div className="input-group">
-                                            {target.fieldIcon === "true" && (
-                                                <span className="input-group-text">
-                                                    <FaPhoneAlt />
-                                                </span>
-                                            )}
-                                            <Field
-                                                className={`form-control ${errors.phone && touched.phone ? "is-invalid" : ""
-                                                    }`}
-                                                type="tel"
-                                                name="phone"
-                                                disabled={false}
-                                            />
-                                        </div>
-                                        <ErrorMessage
-                                            name="phone"
-                                            component="div"
-                                            className="text-danger small"
-                                        />
-                                    </div>
-
-                                    <div className="full">
-                                        <label>
-                                            <p>Whatsapp Number</p>
-                                        </label>
-                                        <div className="input-group">
-                                            {target.fieldIcon === "true" && (
-                                                <span className="input-group-text">
-                                                    <FaWhatsapp />
-                                                </span>
-                                            )}
-                                            <Field
-                                                className={`form-control ${errors.whatsapp && touched.whatsapp
-                                                    ? "is-invalid"
-                                                    : ""
-                                                    }`}
-                                                type="tel"
-                                                name="whatsapp"
-                                                // We are using email verification
-                                                // disabled={phoneRegistered}
-                                            />
-                                        </div>
-                                        <ErrorMessage
-                                            name="whatsapp"
-                                            component="div"
-                                            className="text-danger small"
-                                        />
-                                    </div>
-
-                                    <div className={`otp-slide ${showOtpInput ? "show" : ""}`}>
-                                        <div ref={statusRef}></div>
-
-                                        {currentResponseStatus && (
-                                            <>
-                                                <OtpInput
-                                                    ref={otpRef}
-                                                    onComplete={(val) => {
-                                                        handlePostOTP(val);
-                                                    }}
-                                                />
-                                                {validOtp && (
-                                                    <OtpTimer
-                                                        loginResponseData={currentResponseStatus}
-                                                        onExpiredChange={handleExpiredChange}
+                                            <div className="full">
+                                                <label>
+                                                    <p>Phone Number</p>
+                                                </label>
+                                                <div className="input-group">
+                                                    {target.fieldIcon === "true" && (
+                                                        <span className="input-group-text">
+                                                            <FaPhoneAlt />
+                                                        </span>
+                                                    )}
+                                                    <Field
+                                                        className={`form-control ${errors.phone && touched.phone ? "is-invalid" : ""
+                                                            }`}
+                                                        type="tel"
+                                                        name="phone"
+                                                        disabled={false}
                                                     />
+                                                </div>
+                                                <ErrorMessage
+                                                    name="phone"
+                                                    component="div"
+                                                    className="text-danger small"
+                                                />
+                                            </div>
+
+                                            <div className="full">
+                                                <label>
+                                                    <p>Whatsapp Number</p>
+                                                </label>
+                                                <div className="input-group">
+                                                    {target.fieldIcon === "true" && (
+                                                        <span className="input-group-text">
+                                                            <FaWhatsapp />
+                                                        </span>
+                                                    )}
+                                                    <Field
+                                                        className={`form-control ${errors.whatsapp && touched.whatsapp
+                                                            ? "is-invalid"
+                                                            : ""
+                                                            }`}
+                                                        type="tel"
+                                                        name="whatsapp"
+                                                    // We are using email verification
+                                                    // disabled={phoneRegistered}
+                                                    />
+                                                </div>
+                                                <ErrorMessage
+                                                    name="whatsapp"
+                                                    component="div"
+                                                    className="text-danger small"
+                                                />
+                                            </div>
+
+                                            <div className={`otp-slide ${showOtpInput ? "show" : ""}`}>
+                                                <div ref={statusRef}></div>
+
+                                                {currentResponseStatus && (
+                                                    <>
+                                                        <OtpInput
+                                                            ref={otpRef}
+                                                            onComplete={(val) => {
+                                                                handlePostOTP(val);
+                                                            }}
+                                                        />
+                                                        {validOtp && (
+                                                            <OtpTimer
+                                                                loginResponseData={currentResponseStatus}
+                                                                onExpiredChange={handleExpiredChange}
+                                                            />
+                                                        )}
+                                                    </>
                                                 )}
-                                            </>
-                                        )}
-                                    </div>
+                                            </div>
 
-                                    {!target.surveyForm  &&!phoneRegistered  && (
-                                        <Button
-                                            variant="contained"
-                                            color="primary"
-                                            disabled={validOtp === true}
-                                            type="button"
-                                            onClick={async () => {
-                                                const formErrors = await validateForm(); // validate entire form
+                                            {!phoneRegistered && (
+                                                <Button
+                                                    variant="contained"
+                                                    color="primary"
+                                                    disabled={validOtp === true}
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        const formErrors = await validateForm(); // validate entire form
 
-                                                if (formErrors.email) {
-                                                    setTouched({ email: true });
-                                                }
+                                                        if (formErrors.email) {
+                                                            setTouched({ email: true });
+                                                        }
 
-                                                if (!formErrors.email && values.email) {
-                                                    handleSendOtp(values);
-                                                }
-                                            }}
-                                            style={{
-                                                pointerEvents: "auto",
-                                                opacity: 1,
-                                                width: "100%",
-                                                textTransform: "none",
-                                            }}
-                                        >
-                                            <p>Send OTP</p>
-                                        </Button>
+                                                        if (!formErrors.email && values.email) {
+                                                            handleSendOtp(values);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        pointerEvents: "auto",
+                                                        opacity: 1,
+                                                        width: "100%",
+                                                        textTransform: "none",
+                                                    }}
+                                                >
+                                                    <p>Send OTP</p>
+                                                </Button>
+                                            )}
+
+                                            <div className="spacer"></div>
+
+                                            <div className="full">
+                                                <label>
+                                                    <p>Gender</p>
+                                                </label>
+                                                <div className="input-group">
+                                                    {target.fieldIcon === "true" && (
+                                                        <span className="input-group-text">
+                                                            <BsGenderAmbiguous />
+                                                        </span>
+                                                    )}
+
+                                                    <Field as="select" name="gender">
+                                                        <option value="male">Male</option>
+                                                        <option value="female">Female</option>
+                                                    </Field>
+                                                </div>
+                                            </div>
+
+                                            <div className="full">
+                                                <label>
+                                                    <p>First Name</p>
+                                                </label>
+                                                <div className="input-group">
+                                                    {target.fieldIcon === "true" && (
+                                                        <span className="input-group-text">
+                                                            <MdDriveFileRenameOutline />
+                                                        </span>
+                                                    )}
+
+                                                    <Field
+                                                        className={`form-control ${errors.firstName && touched.firstName
+                                                            ? "is-invalid"
+                                                            : ""
+                                                            }`}
+                                                        type="text"
+                                                        name="firstName"
+                                                    />
+                                                </div>
+                                                <ErrorMessage
+                                                    name="firstName"
+                                                    component="div"
+                                                    className="text-danger small"
+                                                />
+                                            </div>
+
+                                            <div className="full">
+                                                <label>
+                                                    <p>Last Name</p>
+                                                </label>
+                                                <div className="input-group">
+                                                    {target.fieldIcon === "true" && (
+                                                        <span className="input-group-text">
+                                                            <MdDriveFileRenameOutline />
+                                                        </span>
+                                                    )}
+
+                                                    <Field
+                                                        className={`form-control ${errors.lastName && touched.lastName
+                                                            ? "is-invalid"
+                                                            : ""
+                                                            }`}
+                                                        type="text"
+                                                        name="lastName"
+                                                    />
+                                                </div>
+                                                <ErrorMessage
+                                                    name="lastName"
+                                                    component="div"
+                                                    className="text-danger small"
+                                                />
+                                            </div>
+                                        </>
                                     )}
-
-                                    <div className="spacer"></div>
-
-                                    <div className="full">
-                                        <label>
-                                            <p>Gender</p>
-                                        </label>
-                                        <div className="input-group">
-                                            {target.fieldIcon === "true" && (
-                                                <span className="input-group-text">
-                                                    <BsGenderAmbiguous />
-                                                </span>
-                                            )}
-
-                                            <Field as="select" name="gender">
-                                                <option value="male">Male</option>
-                                                <option value="female">Female</option>
-                                            </Field>
-                                        </div>
-                                    </div>
-
-                                    <div className="full">
-                                        <label>
-                                            <p>First Name</p>
-                                        </label>
-                                        <div className="input-group">
-                                            {target.fieldIcon === "true" && (
-                                                <span className="input-group-text">
-                                                    <MdDriveFileRenameOutline />
-                                                </span>
-                                            )}
-
-                                            <Field
-                                                className={`form-control ${errors.firstName && touched.firstName
-                                                    ? "is-invalid"
-                                                    : ""
-                                                    }`}
-                                                type="text"
-                                                name="firstName"
-                                            />
-                                        </div>
-                                        <ErrorMessage
-                                            name="firstName"
-                                            component="div"
-                                            className="text-danger small"
-                                        />
-                                    </div>
-
-                                    <div className="full">
-                                        <label>
-                                            <p>Last Name</p>
-                                        </label>
-                                        <div className="input-group">
-                                            {target.fieldIcon === "true" && (
-                                                <span className="input-group-text">
-                                                    <MdDriveFileRenameOutline />
-                                                </span>
-                                            )}
-
-                                            <Field
-                                                className={`form-control ${errors.lastName && touched.lastName
-                                                    ? "is-invalid"
-                                                    : ""
-                                                    }`}
-                                                type="text"
-                                                name="lastName"
-                                            />
-                                        </div>
-                                        <ErrorMessage
-                                            name="lastName"
-                                            component="div"
-                                            className="text-danger small"
-                                        />
-                                    </div>
-
                                     {target.birthdayRequired === "true" && (
                                         <div className="full">
                                             <label>
@@ -838,693 +775,33 @@ export const TemplateForm = () => {
                                     )}
 
                                     {target.surveyForm === "true" && (
-                                        <div className="full">
-                                            <h2 className="py-3">Company Information</h2>
-                                            {/* <div className="clearance"></div> */}
-                                            <label className="full" htmlFor="fileUpload">
-                                                <p>
-                                                    To ensure our CRM system remains accurate and up to date, we kindly ask you to provide the current contact details for your organization. This information helps the GEC team reach the right person directly when needed – whether it concerns management matters, HR requests, marketing content, or finance and billing.<br /><br />
-
-                                                    The requested data will be used strictly for internal purposes within the German Emirates Club and will not be shared or published externally. If your company is small and does not have separate contacts for certain functions, please select “same as above” rather than leaving fields blank.<br /><br />
-
-                                                    Thank you very much for your support in keeping our records current.<br /><br />
-
-                                                </p>
-                                            </label>
-
-                                            {/* Partner Brand */}
-                                            <div className="full">
-                                                <label>
-                                                    <p>Partner Brand</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <LuBriefcaseBusiness />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_partnerBrand && touched.company_partnerBrand
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_partnerBrand"
-                                                    />
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_partnerBrand"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                            </div>
-
-                                            {/* Partner Name */}
-                                            <div className="full">
-                                                <label>
-                                                    <p>Partner Name</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <MdDriveFileRenameOutline />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_partnerName && touched.company_partnerName
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_partnerName"
-                                                    />
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_partnerName"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                            </div>
-
-                                            {/* City / Country */}
-                                            <div className="full">
-                                                <label>
-                                                    <p>City / Country</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <BiWorld />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_cityCountry && touched.company_cityCountry
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_cityCountry"
-                                                    />
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_cityCountry"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                            </div>
-
-                                            {/* Phone */}
-                                            <div className="full">
-                                                <label>
-                                                    <p>Company Phone</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <FaPhoneAlt />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_phone && touched.company_phone ? "is-invalid" : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_phone"
-                                                    />
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_phone"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                            </div>
-
-                                            {/* Mobile */}
-                                            <div className="full">
-                                                <label>
-                                                    <p>Company Mobile</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <FaMobileAlt />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_mobile && touched.company_mobile ? "is-invalid" : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_mobile"
-                                                    />
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_mobile"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                            </div>
-
-                                            {/* Email */}
-                                            <div className="full">
-                                                <label>
-                                                    <p>Company Email</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <MdEmail />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_email && touched.company_email ? "is-invalid" : ""
-                                                            }`}
-                                                        type="email"
-                                                        name="company_email"
-                                                    />
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_email"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                            </div>
-
-                                            {/* Website */}
-                                            <div className="full">
-                                                <label>
-                                                    <p>Company Website</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <LuBriefcaseBusiness />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_website && touched.company_website ? "is-invalid" : ""
-                                                            }`}
-                                                        type="url"
-                                                        name="company_website"
-                                                    />
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_website"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                            </div>
-
-                                            {/* Employee Count */}
-                                            <div className="full">
-                                                <label>
-                                                    <p>Employee Count</p>
-                                                </label>
-                                                <div className="input-group">
-                                                     {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <VscOrganization />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        as="select"
-                                                        className={`form-control ${errors.company_employeeCount && touched.company_employeeCount
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        name="company_employeeCount"
-                                                    >
-                                                        <option value="">Select...</option>
-                                                        <option value="small">Small</option>
-                                                        <option value="medium">Medium</option>
-                                                        <option value="large">Large</option>
-                                                    </Field>
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_employeeCount"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                            </div>
-
-                                            {/* Industry */}
-                                            <div className="full">
-                                                <label>
-                                                    <p>Industry</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <LiaIndustrySolid />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_industry && touched.company_industry
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        as="select"
-                                                        name="company_industry"
-                                                    >
-                                                        <option value="">Select...</option>
-                                                        {Misc[0].industries.map((item) => (
-                                                            <option key={item} value={item}>{item}</option>
-                                                        ))}
-                                                    </Field>
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_industry"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                            </div>
-
-                                            <h2 className="py-3">Contact Information</h2>      
-                                                   
-                                            {/* CEO/Owner/GM */}
-                                            <div className="full border-1 border p-3">
-                                                <label>
-                                                    <h5>1. Main Contact (Owner / CEO / GM / Country Manager)</h5>
-                                                </label>
-                                                <label>
-                                                    <p>Fullname</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <MdDriveFileRenameOutline />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_ceoOwnerGm && touched.company_ceoOwnerGm
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_ceoOwnerGm"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_ceoOwnerGm"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                                
-                                                <label>
-                                                    <p>Email</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <MdEmail />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_ceoOwnerGm_email && touched.company_ceoOwnerGm_email
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_ceoOwnerGm_email"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_ceoOwnerGm_email"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-
-                                                            <label>
-                                                    <p>Contact Number</p>
-                                                </label>
-                                                 <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <FaMobileAlt />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_ceoOwnerGm_contactNumber && touched.company_ceoOwnerGm_contactNumber
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_ceoOwnerGm_contactNumber"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_ceoOwnerGm_contactNumber"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-
-                                            </div>
-
-                                             {/* HR Head */}
-                                            <div className="full border-1 border p-3 my-2">
-                                                <label>
-                                                    <h5>2. HR Contact</h5>
-                                                </label>
-                                                <label>
-                                                    <p>Fullname</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <MdDriveFileRenameOutline />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_hrHead && touched.company_hrHead
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_hrHead"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_hrHead"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                                
-                                                <label>
-                                                    <p>Email</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <MdEmail />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_hrHead_email && touched.company_hrHead_email
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_hrHead_email"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_hrHead_email"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-
-                                                            <label>
-                                                    <p>Contact Number</p>
-                                                </label>
-                                                 <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <FaMobileAlt />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_hrHead_contactNumber && touched.company_hrHead_contactNumber
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_hrHead_contactNumber"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_hrHead_contactNumber"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-
-                                            </div>
-
-                                            {/* company_marketingHead */}
-                                            <div className="full border-1 border p-3 my-2">
-                                                <label>
-                                                    <h5>3. Marketing Contact</h5>
-                                                </label>
-                                                <label>
-                                                    <p>Fullname</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <MdDriveFileRenameOutline />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_marketingHead && touched.company_marketingHead
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_marketingHead"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_marketingHead"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                                
-                                                <label>
-                                                    <p>Email</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <MdEmail />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_marketingHead_email && touched.company_marketingHead_email
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_marketingHead_email"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_marketingHead_email"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-
-                                                            <label>
-                                                    <p>Contact Number</p>
-                                                </label>
-                                                 <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <FaMobileAlt />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_marketingHead_contactNumber && touched.company_marketingHead_contactNumber
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_marketingHead_contactNumber"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_marketingHead_contactNumber"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-
-                                            </div>
-
-
-                                            {/* company_accountingHead */}
-                                            <div className="full border-1 border p-3 my-2">
-                                                <label>
-                                                    <h5>4. Accounting / Billing Contact</h5>
-                                                </label>
-                                                <label>
-                                                    <p>Fullname</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <MdDriveFileRenameOutline />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_accountingHead && touched.company_accountingHead
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_accountingHead"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_accountingHead"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                                
-                                                <label>
-                                                    <p>Email</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <MdEmail />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_accountingHead_email && touched.company_accountingHead_email
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_accountingHead_email"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_accountingHead_email"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-
-                                                            <label>
-                                                    <p>Contact Number</p>
-                                                </label>
-                                                 <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <FaMobileAlt />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_accountingHead_contactNumber && touched.company_accountingHead_contactNumber
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_accountingHead_contactNumber"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_accountingHead_contactNumber"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-
-                                            </div>
-
-
-                                           
-
-                                             {/* company_pa */}
-                                            <div className="full border-1 border p-3 my-2">
-                                                <label>
-                                                    <h5>5. PA</h5>
-                                                </label>
-                                                <label>
-                                                    <p>Fullname</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <MdDriveFileRenameOutline />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_pa && touched.company_pa
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_pa"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_pa"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                                
-                                                <label>
-                                                    <p>Email</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <MdEmail />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_pa_email && touched.company_marketingHcompany_pa_emailead_email
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_pa_email"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_pa_email"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-
-                                                            <label>
-                                                    <p>Contact Number</p>
-                                                </label>
-                                                 <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <FaMobileAlt />
-                                                        </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.company_pa_contactNumber && touched.company_pa_contactNumber
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="company_pa_contactNumber"
-                                                    />
-                                                    
-                                                </div>
-                                                <ErrorMessage
-                                                    name="company_pa_contactNumber"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-
-                                            </div>
-                                           
-                                        </div>
-
-
+                                        <SurveyTemplateForm errors={errors} touched={touched} target={target} />
                                     )}
-
-
 
                                     <Box className="d-flex justify-content-end w-100 my-2">
                                         <Button
+                                            onClick={async () => {
+
+                                                const formErrors = await validateForm();
+
+                                                const errorFields = Object.keys(formErrors);
+                                                if (errorFields.length > 0) {
+
+                                                    const firstErrorField = document.querySelector(
+                                                        `[name="${errorFields[0]}"]`
+                                                    );
+
+                                                    if (firstErrorField) {
+                                                        firstErrorField.scrollIntoView({ behavior: "smooth", block: "start" });
+                                                        // firstErrorField.focus();
+                                                    }
+
+                                                    return;
+                                                }
+                                            }}
                                             variant="contained"
                                             color="primary"
-                                            disabled={!target.surveyForm && !phoneRegistered}
+                                            disabled={!phoneRegistered}
                                             type="submit"
                                             style={{
                                                 pointerEvents: "auto",

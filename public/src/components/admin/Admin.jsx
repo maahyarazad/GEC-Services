@@ -9,6 +9,7 @@ import { useState, useEffect, useRef } from "react";
 import { RegistrationList } from "./Registration/RegistrationList";
 import { RegistrationDataGrid } from "../gallery/RegistrationDataGrid"
 import { MemberDataGrid } from "../gallery/MembersDataGrid"
+import { SurveyDataGrid } from "../gallery/SurveyDataGrid"
 import "../utils/login.css";
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -20,7 +21,7 @@ import { Button } from "@mui/material";
 import { GiArchiveRegister } from "react-icons/gi";
 import { BsCalendar2Event } from "react-icons/bs";
 import { BsPeopleFill } from "react-icons/bs";
-
+import { FcSurvey } from "react-icons/fc";
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
 });
@@ -83,6 +84,9 @@ export const Admin = ({ data }) => {
             content = <RegistrationDataGrid />;
             break;
         case 2:
+            content = <SurveyDataGrid />;
+            break;
+        case 3:
             content = <MemberDataGrid />;
             break;
         default:
@@ -128,6 +132,13 @@ export const Admin = ({ data }) => {
                             iconPosition="start"
                             label="Event Management" 
                             style={{ textTransform: 'none' , alignContent: 'flex-start' }} />
+
+                        <Tab 
+                            icon={<FcSurvey size={24}/>}
+                            iconPosition="start"
+                            label="Survey Management" 
+                            style={{ textTransform: 'none' }} />
+
                         <Tab 
                             icon={<BsPeopleFill size={20}/>}
                             iconPosition="start"

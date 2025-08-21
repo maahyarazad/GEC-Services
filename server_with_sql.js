@@ -14,6 +14,7 @@ const member = require('./routes/member');
 const registration_keys = require('./routes/registration_keys');
 const maps = require('./routes/maps');
 const googleWallet = require('./routes/google_wallet.js');
+const survey = require('./routes/survey.js');
 
 // Setup DB connection
 const db = new sqlite3.Database("./app.db", (err) => {
@@ -66,15 +67,31 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use((req, res, next) => {
+  console.log('Received request for: ${req.url}');
+  next();
+});
+
 app.use('/uploads', express.static(path.join(__dirname, 'file_storage')));
 
 app.use('/', otp);
 app.use('/', registration_config);
 app.use('/', registration);
+app.use('/', survey);
 app.use('/', member);
 app.use('/', registration_keys);
 app.use('/', maps);
 app.use('/', googleWallet);
+
+// Route to serve your main HTML file
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
 
 
 // Start the server
