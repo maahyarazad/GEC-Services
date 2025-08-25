@@ -30,6 +30,7 @@ const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
                   case "gic_gender":
                     return (
                       <Field
+                        label= {GICTemplate[key].label}
                         as="select"
                         className={`form-control ${
                           errors[GICTemplate[key].name] && touched[GICTemplate[key].name] ? "is-invalid" : ""
@@ -45,6 +46,7 @@ const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
                   case "gic_industry":
                     return (
                       <Field
+                       label= {GICTemplate[key].label}
                         as="select"
                         className={`form-control ${
                           errors[GICTemplate[key].name] && touched[GICTemplate[key].name] ? "is-invalid" : ""
@@ -63,6 +65,7 @@ const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
                   case "gic_address_emirate":
                     return (
                       <Field
+                       label= {GICTemplate[key].label}
                         as="select"
                         className={`form-control ${
                           errors[GICTemplate[key].name] && touched[GICTemplate[key].name] ? "is-invalid" : ""
@@ -81,6 +84,7 @@ const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
                   case "gic_address_country":
                     return (
                       <Field
+                       label= {GICTemplate[key].label}
                         as="select"
                         className={`form-control ${
                           errors[GICTemplate[key].name] && touched[GICTemplate[key].name] ? "is-invalid" : ""
@@ -99,6 +103,8 @@ const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
                   default:
                     return (
                       <Field
+                      
+                       label= {GICTemplate[key].label}
                         className={`form-control ${
                           errors[GICTemplate[key].name] && touched[GICTemplate[key].name] ? "is-invalid" : ""
                         }`}

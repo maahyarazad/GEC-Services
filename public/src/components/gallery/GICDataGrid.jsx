@@ -1,0 +1,147 @@
+import { useEffect, useState, useCallback } from 'react';
+import { DataGrid } from '@mui/x-data-grid';
+import { Box, CircularProgress, Button } from '@mui/material';
+import { MdFormatListBulletedAdd } from "react-icons/md";
+
+
+const columns = () => [
+  { field: 'id', headerName: 'ID', width: 70 },
+  
+  // Base fields
+  { field: 'email', headerName: 'Email', width: 200, filterable: true },
+  { field: 'created_at', headerName: 'Created At', width: 180, filterable: true },
+
+  // Extra fields
+  { field: 'firstName', headerName: 'First Name', width: 150, filterable: true },
+  { field: 'lastName', headerName: 'Last Name', width: 150, filterable: true },
+  { field: 'phone', headerName: 'Phone', width: 150, filterable: true },
+  { field: 'mobile', headerName: 'Mobile', width: 150, filterable: true },
+  { field: 'gender', headerName: 'Gender', width: 120, filterable: true },
+  { field: 'industry', headerName: 'Industry', width: 180, filterable: true },
+  { field: 'company', headerName: 'Company', width: 200, filterable: true },
+  { field: 'website', headerName: 'Website', width: 200, filterable: true },
+  { field: 'address_street', headerName: 'Street', width: 200, filterable: true },
+  { field: 'address_area', headerName: 'Area', width: 180, filterable: true },
+  { field: 'address_city', headerName: 'City', width: 150, filterable: true },
+  { field: 'address_emirate', headerName: 'Emirate', width: 150, filterable: true },
+  { field: 'address_country', headerName: 'Country', width: 150, filterable: true },
+];
+
+
+export const GICDataGrid = () => {
+    const defaultSortModel = [{ field: 'id', sort: 'desc' }];
+    
+    const [members, setMembers] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [rowCount, setRowCount] = useState(0);
+    const [sortModel, setSortModel] = useState(defaultSortModel);
+    const [filterModel, setFilterModel] = useState({
+        items: [],
+    });
+    const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
+    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
+    
+    const [initialData, setInitialData] = useState(null);
+    const fetchData = useCallback(
+        async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
+            setLoading(true);
+            try {
+                const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
+                const sortField = sort.field || '';
+                const sortOrder = sort.sort || '';
+
+                // Parse filters from filterModel.items
+                const filterParams = Array.isArray(filterModel.items)
+                    ? filterModel.items
+                        .filter(item => item?.field && item?.value) // Ensure valid filters
+                        .map(item => `filter_${item.field}=${encodeURIComponent(item.value)}`)
+                        .join('&')
+                    : '';
+
+                const queryParams = [
+                    `page=${paginationModel.page + 1}`,
+                    `pageSize=${paginationModel.pageSize}`,
+                    sortField ? `sortField=${sortField}` : '',
+                    sortOrder ? `sortOrder=${sortOrder}` : '',
+                    filterParams,
+                ].filter(Boolean).join('&');
+
+                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/gic-user?${queryParams}`);
+                const data = await response.json();
+                debugger;
+                setMembers(data.data || []);
+                setRowCount(data.total || 0);
+            } catch (err) {
+                console.error('Failed to fetch:', err);
+            } finally {
+                setLoading(false);
+            }
+        },
+        [setLoading, setMembers, setRowCount]
+    );
+
+
+
+    useEffect(() => {
+        fetchData(paginationModel, sortModel, filterModel);
+    }, [paginationModel, sortModel, applyFilterTrigger]);
+
+
+
+   
+
+    return (
+        <Box sx={{ padding: 1 }}>
+
+
+
+            <div className="d-flex justify-content-start mb-1">
+            
+                <div className="">
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
+                        sx={{ fontSize: 14, textTransform: 'none' }}
+                    >
+                        Apply Filters
+                    </Button>
+                </div>
+
+            </div>
+
+            {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <CircularProgress />
+                </Box>
+            ) : (
+                <div style={{ width: '100%', height: '82dvh' }}>
+                    <DataGrid
+                        rows={members}
+                        columns={columns()}
+                        rowCount={rowCount}
+                        rowsPerPageOptions={[25, 50, 100]}
+                        paginationMode="server"
+                        sortingMode="server"
+                        filterMode="server"
+                        paginationModel={paginationModel}
+                        sortModel={sortModel}
+                        onPaginationModelChange={setPaginationModel}
+                        onSortModelChange={setSortModel}
+                        filterModel={filterModel}              // ✅ Pass full model
+                        onFilterModelChange={(newModel) => {
+                            setFilterModel(newModel); // use the raw model now
+                        }}
+                        // ✅ Accept full model
+                        disableRowSelectionOnClick
+                        disableSelectionOnClick
+                        showToolbar
+                    />
+                </div>
+            )}
+
+          
+        </Box>
+    );
+};

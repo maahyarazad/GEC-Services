@@ -22,6 +22,7 @@ import { GiArchiveRegister } from "react-icons/gi";
 import { BsCalendar2Event } from "react-icons/bs";
 import { BsPeopleFill } from "react-icons/bs";
 import { FcSurvey } from "react-icons/fc";
+import { GICDataGrid } from "../gallery/GICDataGrid";
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
 });
@@ -87,6 +88,9 @@ export const Admin = ({ data }) => {
             content = <SurveyDataGrid />;
             break;
         case 3:
+            content = <GICDataGrid />;
+            break;    
+        case 4:
             content = <MemberDataGrid />;
             break;
         default:
@@ -140,10 +144,16 @@ export const Admin = ({ data }) => {
                             style={{ textTransform: 'none' }} />
 
                         <Tab 
+                        icon={<BsPeopleFill size={20}/>}
+                        iconPosition="start"
+                        label="GIC Management" 
+                        style={{ textTransform: 'none' }} />   
+                        <Tab 
                             icon={<BsPeopleFill size={20}/>}
                             iconPosition="start"
                             label="Member Management" 
                            style={{ textTransform: 'none' }} />
+
                     </Tabs>
                 </Box>
             </div>
