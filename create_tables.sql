@@ -146,7 +146,8 @@ CREATE TABLE IF NOT EXISTS GIC_Users (
     address_area TEXT,
     address_city TEXT,
     address_emirate TEXT,
-    address_country TEXT
+    address_country TEXT,
+    change_password_required BOOLEAN
 );
 
 INSERT INTO Member (

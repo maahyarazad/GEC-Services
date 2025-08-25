@@ -124,7 +124,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
 
             const initialPassword = generatePassword();
             gic_data__.password_hash = await hashPassword(initialPassword);
-
+            gic_data__.change_password_required = "true";
             const create_result = await dbService.createSafe(table_name, gic_data__);
 
         if (create_result.status) {

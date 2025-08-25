@@ -2,58 +2,75 @@ import { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { Box, CircularProgress, Button, Tooltip } from '@mui/material';
 import { MdLockReset } from "react-icons/md";
-
-
+import { IoShieldCheckmarkSharp } from "react-icons/io5";
+import { FaExclamation } from "react-icons/fa";
 const columns = ({ onResendPasswordReset, loadingRowId }) => [
-  { field: 'id', headerName: 'ID', width: 70 },
-  {
-          field: 'actions',
-          headerName: 'Actions',
-          width: 120,
-          sortable: false,
-          filterable: false,
-          renderCell: (params) => (
-              <Box>
+    { field: 'id', headerName: 'ID', width: 70 },
+    {
+        field: 'change_password_required',
+        headerName: 'Password Changed',
+        width: 150,
+        sortable: true,
+        filterable: true,
+        renderCell: (params) =>
+            params.row.change_password_required ? (
+                <Tooltip title="User has not updated the temporary password yet">
+                    <FaExclamation color="red" size={20} />
+                </Tooltip>
+            ) : (
+                <Tooltip title="User has successfully updated their password">
+                    <IoShieldCheckmarkSharp color="green" size={20} />
+                </Tooltip>
+            ),
+    },
+    {
+        field: 'actions',
+        headerName: 'Actions',
+        width: 120,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => (
+            <Box>
                 <Tooltip title="Send reset password email to this user">
-                    
+
                     <Button
                         variant="contained"
                         color="primary"
                         size="small"
-                        startIcon={<MdLockReset/>}
-                        sx={{textTransform: 'none'}}
+                        startIcon={<MdLockReset />}
+                        sx={{ textTransform: 'none' }}
                         onClick={() => onResendPasswordReset(params.row)}
                     >
-                        
-                      {loadingRowId === params.row.id ? (
-                        <CircularProgress size={18} color="inherit" />
+
+                        {loadingRowId === params.row.id ? (
+                            <CircularProgress size={18} color="inherit" />
                         ) : (
-                        "Password"
+                            "Password"
                         )}
                     </Button>
                 </Tooltip>
-                 
-              </Box>
-          ),
-      },
-  // Base fields
-  { field: 'email', headerName: 'Email', width: 200, filterable: true },
-  { field: 'created_at', headerName: 'Created At', width: 180, filterable: true },
 
-  // Extra fields
-  { field: 'firstName', headerName: 'First Name', width: 150, filterable: true },
-  { field: 'lastName', headerName: 'Last Name', width: 150, filterable: true },
-  { field: 'phone', headerName: 'Phone', width: 150, filterable: true },
-  { field: 'mobile', headerName: 'Mobile', width: 150, filterable: true },
-  { field: 'gender', headerName: 'Gender', width: 120, filterable: true },
-  { field: 'industry', headerName: 'Industry', width: 180, filterable: true },
-  { field: 'company', headerName: 'Company', width: 200, filterable: true },
-  { field: 'website', headerName: 'Website', width: 200, filterable: true },
-  { field: 'address_street', headerName: 'Street', width: 200, filterable: true },
-  { field: 'address_area', headerName: 'Area', width: 180, filterable: true },
-  { field: 'address_city', headerName: 'City', width: 150, filterable: true },
-  { field: 'address_emirate', headerName: 'Emirate', width: 150, filterable: true },
-  { field: 'address_country', headerName: 'Country', width: 150, filterable: true },
+            </Box>
+        ),
+    },
+    // Base fields
+    { field: 'email', headerName: 'Email', width: 200, filterable: true },
+    { field: 'created_at', headerName: 'Created At', width: 180, filterable: true },
+
+    // Extra fields
+    { field: 'firstName', headerName: 'First Name', width: 150, filterable: true },
+    { field: 'lastName', headerName: 'Last Name', width: 150, filterable: true },
+    { field: 'phone', headerName: 'Phone', width: 150, filterable: true },
+    { field: 'mobile', headerName: 'Mobile', width: 150, filterable: true },
+    { field: 'gender', headerName: 'Gender', width: 120, filterable: true },
+    { field: 'industry', headerName: 'Industry', width: 180, filterable: true },
+    { field: 'company', headerName: 'Company', width: 200, filterable: true },
+    { field: 'website', headerName: 'Website', width: 200, filterable: true },
+    { field: 'address_street', headerName: 'Street', width: 200, filterable: true },
+    { field: 'address_area', headerName: 'Area', width: 180, filterable: true },
+    { field: 'address_city', headerName: 'City', width: 150, filterable: true },
+    { field: 'address_emirate', headerName: 'Emirate', width: 150, filterable: true },
+    { field: 'address_country', headerName: 'Country', width: 150, filterable: true },
 ];
 
 
@@ -70,24 +87,24 @@ export const GICDataGrid = () => {
     });
     const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
-    
-   const handleResetPassword = async (row) => {
+
+    const handleResetPassword = async (row) => {
         try {
-            setLoadingRowId(row.id); 
+            setLoadingRowId(row.id);
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/gic-user/send-reset-password`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ email: row.email }),
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email: row.email }),
             });
 
             const data = await response.json();
-          
+
         } catch (error) {
             console.error("Error resetting password:", error);
-        }finally{
-             setLoadingRowId(null);
+        } finally {
+            setLoadingRowId(null);
         }
     };
 
@@ -117,9 +134,9 @@ export const GICDataGrid = () => {
                 ].filter(Boolean).join('&');
 
                 const response = await fetch(`${import.meta.env.VITE_SERVERURL}/gic-user?${queryParams}`);
-                
+
                 const data = await response.json();
-                
+
                 setMembers(data.data || []);
                 setRowCount(data.total || 0);
             } catch (err) {
@@ -139,7 +156,7 @@ export const GICDataGrid = () => {
     return (
         <Box sx={{ padding: 1 }}>
             <div className="d-flex justify-content-start mb-1">
-            
+
                 <div className="">
                     <Button
                         variant="contained"
@@ -161,7 +178,7 @@ export const GICDataGrid = () => {
                 <div style={{ width: '100%', height: '82dvh' }}>
                     <DataGrid
                         rows={members}
-                        columns={columns({onResendPasswordReset: handleResetPassword, loadingRowId: loadingRowId})}
+                        columns={columns({ onResendPasswordReset: handleResetPassword, loadingRowId: loadingRowId })}
                         rowCount={rowCount}
                         rowsPerPageOptions={[25, 50, 100]}
                         paginationMode="server"
@@ -183,7 +200,7 @@ export const GICDataGrid = () => {
                 </div>
             )}
 
-          
+
         </Box>
     );
 };

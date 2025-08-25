@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 
+
 const hashPassword = async (plainPassword) => {
     const saltRounds = 10; // recommended 10–12
     const hashedPassword = await bcrypt.hash(plainPassword, saltRounds);

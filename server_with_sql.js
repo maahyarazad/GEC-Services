@@ -55,9 +55,23 @@ app.use(session({
     }
 }));
 
+const allowedOrigins = [
+  process.env.CLIENT_ORIGIN,    // e.g., http://localhost:5175
+  process.env.CLIENT_ORIGIN_GIC // e.g., http://localhost:5173
+];
+
 app.use(cors({
-    origin: process.env.CLIENT_ORIGIN,
-    credentials: true
+  origin: function (origin, callback) {
+    // allow requests with no origin like mobile apps or curl
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
 
 app.use(express.json());

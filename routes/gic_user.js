@@ -4,6 +4,8 @@ const dbService = require("../services/dbService");
 const multer = require("multer");
 const {generatePassword, hashPassword} = require("../services/userService");
 const {gic__reset_password} = require("../services/emailService")
+const bcrypt = require("bcrypt");
+const jwt = require('jsonwebtoken');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -89,5 +91,29 @@ router.post('/gic-user/send-reset-password', async (req, res) => {
     }
 });
 
+
+router.post('/gic-user/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await dbService.findExact('GIC_Users', 'email', email);
+    if (!user) {
+      return res.json({ status: false, message: 'User not found' });
+    }
+    
+    const isPasswordValid = await bcrypt.compare(password, user[0].password_hash);
+    if (!isPasswordValid) {
+      return res.status(401).json({ status: false, message: 'Invalid credentials' });
+    }
+
+   // Generate JWT (expires in 7 days)
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+    // Send HTTP-only cookie
+    res.cookie('gic-token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
+    res.json({ status: true, message: 'Login successful' });
+  } catch (error) {
+    res.status(500).json({ status: false, message: 'Server error' });
+  }
+});
 
 module.exports = router;
