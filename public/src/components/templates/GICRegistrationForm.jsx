@@ -42,13 +42,13 @@ const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
                                                         </InputAdornment>
                                                     ),
                                                 }}
-                                                 SelectProps={{
+                                                  SelectProps={{
                                                     displayEmpty: true,
                                                     renderValue: (selected) =>
-                                                    selected ? (
-                                                       misc[0].industries[selected]
+                                                    selected && selected.length > 0 ? (
+                                                        selected
                                                     ) : (
-                                                        <span style={{ color: '#9e9e9e', fontSize: '0.8rem' }}>
+                                                        <span style={{ color: "#9e9e9e", fontSize: "0.8rem" }}>
                                                         Select {GICTemplate[key].label}
                                                         </span>
                                                     ),
@@ -84,10 +84,10 @@ const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
                                                  SelectProps={{
                                                     displayEmpty: true,
                                                     renderValue: (selected) =>
-                                                    selected ? (
-                                                       misc[0].industries[selected]
+                                                    selected && selected.length > 0 ? (
+                                                        selected
                                                     ) : (
-                                                        <span style={{ color: '#9e9e9e', fontSize: '0.8rem' }}>
+                                                        <span style={{ color: "#9e9e9e", fontSize: "0.8rem" }}>
                                                         Select {GICTemplate[key].label}
                                                         </span>
                                                     ),
@@ -124,13 +124,13 @@ const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
                                                         </InputAdornment>
                                                     ),
                                                 }}
-                                                 SelectProps={{
+                                                SelectProps={{
                                                     displayEmpty: true,
                                                     renderValue: (selected) =>
-                                                    selected ? (
-                                                       misc[0].emirate[selected]
+                                                    selected && selected.length > 0 ? (
+                                                        selected
                                                     ) : (
-                                                        <span style={{ color: '#9e9e9e', fontSize: '0.8rem' }}>
+                                                        <span style={{ color: "#9e9e9e", fontSize: "0.8rem" }}>
                                                         Select {GICTemplate[key].label}
                                                         </span>
                                                     ),

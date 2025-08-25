@@ -668,7 +668,6 @@ const htmlBody = `
             <!-- Body -->
             <tr>
               <td style="color: #0D1B2A; font-size: 16px; line-height: 1.6; padding: 30px;">
-                <p style="color: #0D1B2A;">Hello,</p>
                 <p style="color: #0D1B2A;">
                   Please use the following temporary password to reset your password:
                 </p>
