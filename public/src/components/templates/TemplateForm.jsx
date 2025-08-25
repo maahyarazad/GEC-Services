@@ -23,6 +23,8 @@ import OtpInput from "../utils/OtpInput";
 import CountDownComponent from "../utils/TenDayCountdown";
 import { SurveyTemplateForm } from "./SurveyTemplateForm";
 import { initialValues } from "./InitialValues";
+import GICRegistrationForm from './GICRegistrationForm';
+
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
 //     const { setFieldValue } = useFormikContext();
 
@@ -151,6 +153,10 @@ export const TemplateForm = () => {
                 setPhoneRegistered(true);
             }
 
+            if(gecuser.gic === "true"){
+                setPhoneRegistered(true);
+            }
+
             setTarget(gecuser);
         }
     }, []);
@@ -241,6 +247,8 @@ export const TemplateForm = () => {
                 formData.delete(key);
             });
             // End Handle SurveyFormLogic   
+
+            debugger;
             
             const registration_response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/registration`,
@@ -365,7 +373,7 @@ export const TemplateForm = () => {
 
                         <Formik
                             enableReinitialize={true}
-                            initialValues={initialValues}
+                            initialValues={initialValues }
                             validationSchema={getValidationSchema(target)}
                             onSubmit={async (values, { resetForm, setFieldValue }) => {
                                 await handleSubmitRegistration(values, {
@@ -416,7 +424,9 @@ export const TemplateForm = () => {
                                     )}
                                     <div className="clearance-flat"></div>
 
-                                    {target.surveyForm === "false" && (
+                                    {target.gic === "false" && (
+                                        <>
+                                        {target.surveyForm === "false" && (
 
                                         <>
                                             <div className="full">
@@ -655,7 +665,7 @@ export const TemplateForm = () => {
                                         </div>
                                     )}
 
-                                    {target.companyRequired === "true" && (
+                                     {target.companyRequired === "true" && (
                                         <div className="full">
                                             <label>
                                                 <p>Company Name</p>
@@ -777,11 +787,21 @@ export const TemplateForm = () => {
                                     {target.surveyForm === "true" && (
                                         <SurveyTemplateForm errors={errors} touched={touched} target={target} />
                                     )}
+                                        </>
+                                    )}
+
+                                    {target.gic === "true" && (
+                                        <GICRegistrationForm errors={errors} touched={touched} target={target} initialValues={initialValues} />
+                                    )}
+                                       
+                                    
+
+                                   
 
                                     <Box className="d-flex justify-content-end w-100 my-2">
                                         <Button
                                             onClick={async () => {
-
+                                                
                                                 const formErrors = await validateForm();
 
                                                 const errorFields = Object.keys(formErrors);

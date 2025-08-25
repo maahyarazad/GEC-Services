@@ -1,4 +1,4 @@
-    export const initialValues = {
+export const initialValues = {
         email: "",
         phone: "",
         whatsapp: "",
@@ -34,4 +34,19 @@
         company_pa:"",
         company_pa_contactNumber:"",
         company_pa_email:"",
+        gic_firstName: "",
+        gic_lastName: "",
+        gic_email:"",
+        gic_phone: "",
+        gic_mobile: "",
+        gic_gender: "",
+        gic_industry: "",
+        gic_company: "",
+        gic_website: "",
+        gic_address_street: "",
+        gic_address_area: "",
+        gic_address_city: "",
+        gic_address_emirate: "",
+        gic_address_country: "",
     };
+

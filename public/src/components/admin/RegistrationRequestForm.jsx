@@ -58,6 +58,7 @@ const validationSchema = Yup.object({
   IdentityConsent: Yup.boolean(),
   fileUpload: Yup.boolean(),
   surveyForm: Yup.boolean(),
+  gic: Yup.boolean(),
   textarea: Yup.boolean(),
   filedIcon: Yup.boolean(),
 });
@@ -100,6 +101,7 @@ export default function NewRegistrationPage({
     IdentityConsent: initialData?.IdentityConsent === "true",
     fileUpload: initialData?.fileUpload === "true",
     surveyForm: initialData?.surveyForm === "true",
+    gic: initialData?.gic === "true",
     textarea: initialData?.textarea === "true",
     fieldIcon: initialData?.fieldIcon === "true",
     countDown: initialData?.countDown === "true",
@@ -117,21 +119,21 @@ export default function NewRegistrationPage({
 
   useEffect(() => {
     if (initialValues.image && typeof initialValues.image === "string") {
-    const url = `${import.meta.env.VITE_SERVERURL}/uploads/${initialValues.image}`;
-    setPreview(url);
+      const url = `${import.meta.env.VITE_SERVERURL}/uploads/${initialValues.image}`;
+      setPreview(url);
 
-    // Optionally fetch image and convert to File object
-    fetch(url)
-      .then(res => res.blob())
-      .then(blob => {
-        const file = new File([blob], initialValues.image, { type: blob.type });
-        setFile(file);
-      })
-      .catch(() => {
-        // fallback, just clear file or ignore error
-        setFile(null);
-      });
-  }
+      // Optionally fetch image and convert to File object
+      fetch(url)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], initialValues.image, { type: blob.type });
+          setFile(file);
+        })
+        .catch(() => {
+          // fallback, just clear file or ignore error
+          setFile(null);
+        });
+    }
 
     if (
       initialValues.event_location &&
@@ -174,6 +176,7 @@ export default function NewRegistrationPage({
       formData.append("IdentityConsent", values.IdentityConsent);
       formData.append("fileUpload", values.fileUpload);
       formData.append("surveyForm", values.surveyForm);
+      formData.append("gic", values.gic);
       formData.append("textarea", values.textarea);
       formData.append("fieldIcon", values.fieldIcon);
       formData.append("countDown", values.countDown);
@@ -276,9 +279,8 @@ export default function NewRegistrationPage({
                       <input
                         {...field} // includes value, name, onChange, and onBlur from Formik
                         type="text"
-                        className={`form-control ${
-                          errors.title && touched.title ? "is-invalid" : ""
-                        }`}
+                        className={`form-control ${errors.title && touched.title ? "is-invalid" : ""
+                          }`}
                         placeholder="Enter page title"
                         onBlur={(e) => {
                           field.onBlur(e); // ✅ still call Formik's internal onBlur
@@ -310,11 +312,10 @@ export default function NewRegistrationPage({
                     disabled={values.tokensPerGuest === 999999}
                     name="tokensPerGuest"
                     type="number"
-                    className={`form-control ${
-                      errors.tokensPerGuest && touched.tokensPerGuest
+                    className={`form-control ${errors.tokensPerGuest && touched.tokensPerGuest
                         ? "is-invalid"
                         : ""
-                    }`}
+                      }`}
                     placeholder="e.g. 3"
                   />
                   <div style={{ minHeight: 30 }}>
@@ -338,11 +339,10 @@ export default function NewRegistrationPage({
                     <Field
                       name="send_button_text"
                       type="text"
-                      className={`form-control ${
-                        errors.send_button_text && touched.send_button_text
+                      className={`form-control ${errors.send_button_text && touched.send_button_text
                           ? "is-invalid"
                           : ""
-                      }`}
+                        }`}
                       placeholder=""
                     />
                     <div style={{ minHeight: 30 }}>
@@ -355,7 +355,7 @@ export default function NewRegistrationPage({
                   </div>
                 </div>
 
-                {values.surveyForm === false && (
+                {(values.surveyForm === false && values.gic === false) && (
 
                   <div className="col-6">
                     <div className="align-items-center">
@@ -365,11 +365,10 @@ export default function NewRegistrationPage({
                       <Field
                         name="event_date"
                         type="date"
-                        className={`form-control ${
-                          errors.event_date && touched.event_date
+                        className={`form-control ${errors.event_date && touched.event_date
                             ? "is-invalid"
                             : ""
-                        }`}
+                          }`}
                         placeholder="Select event date"
                         style={{ minHeight: 38 }}
                       />
@@ -386,7 +385,7 @@ export default function NewRegistrationPage({
               </div>
             </div>
 
-            {(values.fileUpload === false && values.surveyForm === false) && (
+            {(values.fileUpload === false && values.surveyForm === false && values.gic === false) && (
               <div className="col-12">
                 <div className="row">
                   <div className="col-6">
@@ -426,11 +425,10 @@ export default function NewRegistrationPage({
                         <Field
                           name="event_time"
                           type="text"
-                          className={`form-control ${
-                            errors.event_time && touched.event_time
+                          className={`form-control ${errors.event_time && touched.event_time
                               ? "is-invalid"
                               : ""
-                          }`}
+                            }`}
                           placeholder="Event Time"
                         />
                       </Tooltip>
@@ -519,12 +517,11 @@ export default function NewRegistrationPage({
                         <Field
                           name="event_location_name"
                           type="text"
-                          className={`form-control ${
-                            errors.event_location_name &&
-                            touched.event_location_name
+                          className={`form-control ${errors.event_location_name &&
+                              touched.event_location_name
                               ? "is-invalid"
                               : ""
-                          }`}
+                            }`}
                           placeholder="Event Location Name"
                         />
                       </Tooltip>
@@ -573,27 +570,27 @@ export default function NewRegistrationPage({
                   Image | Video
                 </label>
                 {preview && file && (
-                    <div className="mb-2">
-                        <label>Current Media:</label>
-                        {file.type.startsWith('video') ? (
-                        <video
-                            src={preview}
-                            loop
-                            autoPlay
-                            muted
-                            playsInline
-                            style={{ width: '150px', height: 'auto', display: 'block', marginBottom: '10px' }}
-                        />
-                        ) : (
-                        <img
-                            src={preview}
-                            alt="Current"
-                            style={{ width: '150px', height: 'auto', display: 'block', marginBottom: '10px' }}
-                        />
-                        )}
-                    </div>
+                  <div className="mb-2">
+                    <label>Current Media:</label>
+                    {file.type.startsWith('video') ? (
+                      <video
+                        src={preview}
+                        loop
+                        autoPlay
+                        muted
+                        playsInline
+                        style={{ width: '150px', height: 'auto', display: 'block', marginBottom: '10px' }}
+                      />
+                    ) : (
+                      <img
+                        src={preview}
+                        alt="Current"
+                        style={{ width: '150px', height: 'auto', display: 'block', marginBottom: '10px' }}
+                      />
                     )}
-              
+                  </div>
+                )}
+
 
                 <input
                   ref={fileInputRef}
@@ -601,17 +598,16 @@ export default function NewRegistrationPage({
                   name="image"
                   type="file"
                   accept="image/*,video/*"
-                  className={`form-control ${
-                    errors.image && touched.image ? "is-invalid" : ""
-                  }`}
+                  className={`form-control ${errors.image && touched.image ? "is-invalid" : ""
+                    }`}
                   onChange={(e) => {
-                        const file = e.currentTarget.files[0];
-                        if (file) {
-                            setFile(file); // store file to check type later
-                            setFieldValue("image", file);
-                            setPreview(URL.createObjectURL(file));
-                        }
-                        }}
+                    const file = e.currentTarget.files[0];
+                    if (file) {
+                      setFile(file); // store file to check type later
+                      setFieldValue("image", file);
+                      setPreview(URL.createObjectURL(file));
+                    }
+                  }}
                 />
 
                 <div style={{ minHeight: 30 }}>
@@ -627,42 +623,87 @@ export default function NewRegistrationPage({
                 <div className="col-6">
                   <div className="pb-3">Registration Settings</div>
                   {values.fileUpload === false && (
-                    <div className="form-check form-switch mb-3">
-                      <Field name="surveyForm">
-                        {({ form, field }) => (
-                          <input
-                            name={field.name}
-                            checked={field.value}
-                            onChange={(e) => {
-                              // First call Formik's handler
-                              field.onChange(e);
+                    <>
+                      {(values.surveyForm === false) && (
 
-                              // Then add your custom logic
-                              if (e.target.checked) {
-                                
-                                const today = new Date();
-                                today.setDate(today.getDate() + 1);
-                                form.setFieldValue("event_date", today);
-                                form.setFieldValue("tokensPerGuest", 999999);
-                              } else {
-                                
-                                form.setFieldValue("event_date", null);
-                                form.setFieldValue("tokensPerGuest", 1);
-                              }
-                            }}
-                            onBlur={field.onBlur}
-                            id="surveyForm"
-                            className="form-check-input"
-                            type="checkbox"
-                          />
-                        )}
-                      </Field>
-                      <label className="form-check-label" htmlFor="surveyForm">
-                        Survey Form
-                      </label>
-                    </div>
+                        <div className="form-check form-switch mb-3">
+                          <Field name="gic">
+                            {({ form, field }) => (
+                              <input
+                                name={field.name}
+                                checked={field.value}
+                                onChange={(e) => {
+                                  // First call Formik's handler
+                                  field.onChange(e);
+
+                                  // Then add your custom logic
+                                  if (e.target.checked) {
+
+                                    const today = new Date();
+                                    today.setDate(today.getDate() + 1);
+                                    form.setFieldValue("event_date", today);
+                                    form.setFieldValue("tokensPerGuest", 999999);
+                                  } else {
+
+                                    form.setFieldValue("event_date", null);
+                                    form.setFieldValue("tokensPerGuest", 1);
+                                  }
+                                }}
+                                onBlur={field.onBlur}
+                                id="gic"
+                                className="form-check-input"
+                                type="checkbox"
+                              />
+                            )}
+                          </Field>
+                          <label className="form-check-label" htmlFor="gic">
+                            German Industrial Club
+                          </label>
+                        </div>
+                      )}
+
+                      {(values.gic === false) && (
+
+                        <div className="form-check form-switch mb-3">
+                          <Field name="surveyForm">
+                            {({ form, field }) => (
+                              <input
+                                name={field.name}
+                                checked={field.value}
+                                onChange={(e) => {
+                                  // First call Formik's handler
+                                  field.onChange(e);
+
+                                  // Then add your custom logic
+                                  if (e.target.checked) {
+
+                                    const today = new Date();
+                                    today.setDate(today.getDate() + 1);
+                                    form.setFieldValue("event_date", today);
+                                    form.setFieldValue("tokensPerGuest", 999999);
+                                  } else {
+
+                                    form.setFieldValue("event_date", null);
+                                    form.setFieldValue("tokensPerGuest", 1);
+                                  }
+                                }}
+                                onBlur={field.onBlur}
+                                id="surveyForm"
+                                className="form-check-input"
+                                type="checkbox"
+                              />
+                            )}
+                          </Field>
+                          <label className="form-check-label" htmlFor="surveyForm">
+                            Survey Form
+                          </label>
+                        </div>
+                      )}
+                    </>
+
+
                   )}
-                  {values.surveyForm === false && (
+                  {(values.surveyForm === false && values.gic === false) && (
 
                     <div className="form-check form-switch mb-3">
                       <Field name="fileUpload">

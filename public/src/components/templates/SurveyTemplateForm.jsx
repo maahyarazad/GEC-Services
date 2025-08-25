@@ -1,38 +1,11 @@
 import "./templateform.css";
 import { Field, ErrorMessage } from "formik";
-import {
-    LuBriefcaseBusiness
-} from "react-icons/lu";
 
-import {
-    MdDriveFileRenameOutline,
-    MdLocationOn,
-    MdPhone,
-    MdSmartphone,
-    MdEmail,
-    MdWeb,
-    MdGroups,
-    MdBusiness,
-    MdPerson
-} from "react-icons/md";
+
 
 import Misc from "../../assets/misc.json";
 import surveyTemplate from "../../assets/surveyTemplate.json";
-
-
-
-export const iconMap = {
-    LuBriefcaseBusiness: <LuBriefcaseBusiness />,
-    MdDriveFileRenameOutline: <MdDriveFileRenameOutline />,
-    MdLocationOn: <MdLocationOn />,
-    MdPhone: <MdPhone />,
-    MdSmartphone: <MdSmartphone />,
-    MdEmail: <MdEmail />,
-    MdWeb: <MdWeb />,
-    MdGroups: <MdGroups />,
-    MdBusiness: <MdBusiness />,
-    MdPerson: <MdPerson />,
-};
+import { IconMap } from "./IconMap";
 
 export const SurveyTemplateForm = ({ target, errors, touched }) => {
     return (
@@ -61,7 +34,7 @@ export const SurveyTemplateForm = ({ target, errors, touched }) => {
                                         <div className="input-group">
                                             {target.fieldIcon === "true" && (
                                                 <span className="input-group-text">
-                                                    {iconMap[sVal.icon]}
+                                                    {IconMap[sVal.icon]}
                                                 </span>
                                             )}
 
@@ -134,7 +107,7 @@ export const SurveyTemplateForm = ({ target, errors, touched }) => {
                                         <div className="input-group">
                                             {target.fieldIcon === "true" && (
                                                 <span className="input-group-text">
-                                                    {iconMap[sVal.icon]}
+                                                    {IconMap[sVal.icon]}
                                                 </span>
                                             )}
 

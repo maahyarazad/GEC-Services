@@ -1,0 +1,16 @@
+[
+      { "label": "First Name", "name": "gic_firstName", "icon": "LuBriefcaseBusiness", "type": "text" },
+      { "label": "Last Name", "name": "gic_lastName", "icon": "MdDriveFileRenameOutline", "type": "text" },
+      { "label": "Email", "name": "gic_email", "icon": "MdEmail", "type": "text" },
+      { "label": "Phone", "name": "gic_phone", "icon": "MdPhone", "type": "text" },
+      { "label": "Mobile", "name": "gic_mobile", "icon": "MdSmartphone", "type": "text" },
+      { "label": "Gender", "name": "gic_gender", "icon": "BsGenderAmbiguous", "type": "email" },
+      { "label": "Industry", "name": "gic_industry", "icon": "MdBusiness", "type": "" },
+      { "label": "Company", "name": "gic_company", "icon": "MdWeb", "type": "text" },
+      { "label": "Website", "name": "gic_website", "icon": "MdWeb", "type": "text" },
+      { "label": "Address Street", "name": "gic_address_street", "icon": "MdGroups", "type": "text" },
+      { "label": "Address Area", "name": "gic_address_area", "icon": "MdBusiness", "type": "text" },
+      { "label": "Address City", "name": "gic_address_city", "icon": "MdBusiness", "type": "text" },
+      { "label": "Address Emirate", "name": "gic_address_emirate", "icon": "MdBusiness", "type": "text" },
+      { "label": "Address Country", "name": "gic_address_country", "icon": "MdBusiness", "type": "text" }
+    ]

@@ -1,5 +1,14 @@
 [
   {
+     "emirate": [
+      "Abu Dhabi",
+      "Dubai",
+      "Sharjah",
+      "Ajman",
+      "Umm Al Quwain",
+      "Ras Al Khaimah",
+      "Fujairah"
+    ],
     "partner_status": [
       "Agreement Sent",
       "Auto-renewal in Process",

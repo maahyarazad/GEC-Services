@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS registration_config (
   IdentityConsent BOOLEAN,
   fileUpload BOOLEAN,
   surveyForm BOOLEAN,
+  gic BOOLEAN,
   countDown BOOLEAN,
   textarea BOOLEAN,
   fieldIcon BOOLEAN,
@@ -123,42 +124,48 @@ CREATE TABLE IF NOT EXISTS Company (
 );
 
 
+CREATE TABLE IF NOT EXISTS GIC_Users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
 
+    -- Base user fields
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role TEXT CHECK(role IN ('user', 'admin')) DEFAULT 'user',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    -- Extra fields
+    firstName TEXT,
+    lastName TEXT,
+    phone TEXT,
+    mobile TEXT,
+    gender TEXT CHECK(gender IN ('Male', 'Female')),
+    industry TEXT,
+    company TEXT,
+    website TEXT,
+    address_street TEXT,
+    address_area TEXT,
+    address_city TEXT,
+    address_emirate TEXT,
+    address_country TEXT
+);
 
 INSERT INTO Member (
-  firstName, lastName, email, phoneNumber, whatsapp,
-  avatar, language, uniqueIdentifier, createdAt, modifiedAt, active_member
+  firstName,lastName,email,phoneNumber,whatsapp,
+  avatar,language,uniqueIdentifier,createdAt,modifiedAt,active_member
 )
-SELECT
-  'Abusufean', 'Ali', 'abusufean@falkenherz.com', '00971-564003932', '00971-564003932', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'
-UNION ALL
-SELECT
-  'Amina', 'Darmandeh', 'amina.darmandeh@falcrealestate.com', '00971-521022278', '00971-521022278', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'
-UNION ALL
-SELECT
-  'Andreas', 'Simon', 'Simon.consulting@outlook.com', '00971-547604760', '00971-547604760', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'
-UNION ALL
-SELECT
-  'Angela', 'Thomas', 'dubai@angela-thomas.de', '00971-503670592', '00971-503670592', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'
-UNION ALL
-SELECT
-  'Basel', 'Khalifa', 'basel.khalifa@khalifapartners.com', '00971-503550204', '00971-503550204', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'
-UNION ALL
-SELECT
-  'David F.', 'Raetz', 'david.raetz@prodvant.com', '00971-567146057', '00971-567146057', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'
-UNION ALL
-SELECT
-  'Diana', 'Marks', 'dianamarks@gmx.net', '0049-15229144155', '0049-15229144155', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'
-UNION ALL
-SELECT
-  'Dr. Maximilian', 'Riewer', 'drmaxriewer@gmail.com', '00971-504692572', '00971-504692572', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'
-UNION ALL
-SELECT
-  'Elisabeth', 'Müllner', 'funnelfairy@lisa-muellner.com', '00971-585822040', '00971-585822040', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'
-UNION ALL
-SELECT
-  'Isabel', 'Kellerhals', 'isabel@ambienzahomedesign.com', '00971-542644555', '00971-542644555', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'
-UNION ALL
-SELECT
-  'Johannes', 'Schoenborn', 'Johannes@xplt.com', '00971-585648976', '00971-585648976', NULL, NULL, NULL, '2025-07-07 07:58:24', NULL, 'true'
+SELECT *
+FROM (
+  SELECT 'Abusufean','Ali','abusufean@falkenherz.com','00971-564003932','00971-564003932',NULL,NULL,NULL,'2025-07-07 07:58:24',NULL,TRUE
+  UNION ALL SELECT 'Amina','Darmandeh','amina.darmandeh@falcrealestate.com','00971-521022278','00971-521022278',NULL,NULL,NULL,'2025-07-07 07:58:24',NULL,TRUE
+  UNION ALL SELECT 'Andreas','Simon','Simon.consulting@outlook.com','00971-547604760','00971-547604760',NULL,NULL,NULL,'2025-07-07 07:58:24',NULL,TRUE
+  UNION ALL SELECT 'Angela','Thomas','dubai@angela-thomas.de','00971-503670592','00971-503670592',NULL,NULL,NULL,'2025-07-07 07:58:24',NULL,TRUE
+  UNION ALL SELECT 'Basel','Khalifa','basel.khalifa@khalifapartners.com','00971-503550204','00971-503550204',NULL,NULL,NULL,'2025-07-07 07:58:24',NULL,TRUE
+  UNION ALL SELECT 'David F.','Raetz','david.raetz@prodvant.com','00971-567146057','00971-567146057',NULL,NULL,NULL,'2025-07-07 07:58:24',NULL,TRUE
+  UNION ALL SELECT 'Diana','Marks','dianamarks@gmx.net','0049-15229144155','0049-15229144155',NULL,NULL,NULL,'2025-07-07 07:58:24',NULL,TRUE
+  UNION ALL SELECT 'Dr. Maximilian','Riewer','drmaxriewer@gmail.com','00971-504692572','00971-504692572',NULL,NULL,NULL,'2025-07-07 07:58:24',NULL,TRUE
+  UNION ALL SELECT 'Elisabeth','Müllner','funnelfairy@lisa-muellner.com','00971-585822040','00971-585822040',NULL,NULL,NULL,'2025-07-07 07:58:24',NULL,TRUE
+  UNION ALL SELECT 'Isabel','Kellerhals','isabel@ambienzahomedesign.com','00971-542644555','00971-542644555',NULL,NULL,NULL,'2025-07-07 07:58:24',NULL,TRUE
+  UNION ALL SELECT 'Johannes','Schoenborn','Johannes@xplt.com','00971-585648976','00971-585648976',NULL,NULL,NULL,'2025-07-07 07:58:24',NULL,TRUE
+) AS seed
 WHERE NOT EXISTS (SELECT 1 FROM Member);
+

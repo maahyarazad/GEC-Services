@@ -49,6 +49,30 @@ const companyInfoSchema = Yup.object().shape({
   //   .required("PA is required."),
 });
 
+
+  const gicSchema = Yup.object().shape({
+        gic_firstName: Yup.string().required("First Name is required"),
+        gic_lastName: Yup.string().required("Last Name is required"),
+            gic_email: Yup.string()
+      .email("Please enter a valid email address.")
+      .required("Email is required."),
+        gic_phone: Yup.string()
+      .matches(/^\+?[0-9]{10,15}$/, "Phone number must be 10–15 digits, and may start with +.")
+      .required("Phone number is required."),
+        gic_mobile: Yup.string()
+      .matches(/^\+?[0-9]{10,15}$/, "Phone number must be 10–15 digits, and may start with +.")
+      .required("Mobile number is required."),
+        gic_gender: Yup.string().oneOf(["Male", "Female"]).required("Gender is required"),
+        gic_industry: Yup.string().required("Industry is required"),
+        gic_company: Yup.string().required("Company is required"),
+        gic_website: Yup.string().url("Invalid URL").required("Website is required"),
+        gic_address_street: Yup.string().required("Street is required"),
+        // address_area: Yup.string().required("Area is required"),
+        gic_address_city: Yup.string().required("City is required"),
+        // address_emirate: Yup.string().required("Emirate is required"),
+        gic_address_country: Yup.string().required("Country is required"),
+    });
+
 export const getValidationSchema = (target) => {
   let baseSchema = Yup.object().shape({
     email: Yup.string()
@@ -104,6 +128,10 @@ export const getValidationSchema = (target) => {
   // Merge company schema
   if (target?.surveyForm === 'true') {
     return companyInfoSchema;
+  }
+
+  if (target?.gic === 'true') {
+    return gicSchema;
   }
 
   return baseSchema;
