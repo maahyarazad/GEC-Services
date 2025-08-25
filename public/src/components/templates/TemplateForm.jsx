@@ -248,7 +248,26 @@ export const TemplateForm = () => {
             });
             // End Handle SurveyFormLogic   
 
-            debugger;
+
+            // Start Handle GICFormLogic   
+            const gic_data = Object.fromEntries(
+                Object.entries(dataObj).filter(([key]) => key.startsWith("gic_"))
+            );
+
+            if (target.gic === "true") {
+
+                Object.entries(formData).filter(([key]) => !key.startsWith("gic_"));
+
+                formData.append("gic_data", JSON.stringify(gic_data));
+            }
+
+            Object.keys(gic_data).forEach((key) => {
+                formData.delete(key);
+            });
+            // End Handle GICFormLogic   
+
+
+            
             
             const registration_response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/registration`,

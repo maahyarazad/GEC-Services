@@ -5,7 +5,8 @@ const dbService = require("../services/dbService");
 const multer = require("multer");
 const  {generateQRWithText} = require("../services/qrGenerator");
 const  {validateFileMimeType} = require("../services/validateFileType");
-const {comfirm_message_email, event_confirm_registration_email, company_data_confirmation_email} = require("../services/emailService");
+const {comfirm_message_email, event_confirm_registration_email, company_data_confirmation_email, gic__reset_password} = require("../services/emailService");
+const {generatePassword, hashPassword} = require("../services/userService");
 const { generateRecordId } = require("../services/generatorService");
 const path = require("path");
 const fs = require("fs");
@@ -20,7 +21,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
         
 
 
-        const table_name = "registration";
+        let table_name = "registration";
         const {registration_code, title, event_date ,...data} = req.body;
         const file = req.file; 
         let uniqueFileName = null;
@@ -90,7 +91,9 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
         data.event_id = generateRecordId(data.event, false);
         let create_result;
 
+
         if(data.company_data){
+            table_name = "Company";
             const {event, event_id, company_data} = data;
             const company_data_ = JSON.parse(company_data);
             const company_data__ = Object.fromEntries(
@@ -100,8 +103,42 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
             company_data__.event = event;
             company_data__.event_id = event_id;
 
-            create_result = await dbService.createSafe("Company", company_data__);
-        }else{
+            create_result = await dbService.createSafe(table_name, company_data__);
+        }else if(data.gic_data){
+
+            table_name = "GIC_Users";
+            const gic_data_ = JSON.parse(data.gic_data);
+            const gic_data__ = Object.fromEntries(
+                Object.entries(gic_data_)
+                    .map(([key, value]) => [key.replace(/^gic_/, ""), value])
+                );
+
+                
+            const duplicateRecord = await dbService.countExact(table_name, 'email', gic_data__.email);
+            if(duplicateRecord.count > 0){
+                return res.json({ 
+                    status: false, 
+                    message: "This email has already been taken. Please use a different one." 
+                });
+            }
+
+            const initialPassword = generatePassword();
+            gic_data__.password_hash = await hashPassword(initialPassword);
+
+            const create_result = await dbService.createSafe(table_name, gic_data__);
+
+        if (create_result.status) {
+                await gic__reset_password({ email: gic_data__.email, password: initialPassword });
+                return res.json({
+                    status: true,
+                    message: "Your account has been created successfully. A temporary password has been sent to your email. Please use it to log in and reset your password.",
+                    create_result
+                });
+            }
+
+            create_result = await dbService.createSafe("3§", gic_data__);
+        }
+        else{
             create_result = await dbService.createSafe(table_name, data);
         }
 
@@ -202,7 +239,7 @@ function formatDateToMySQL(date) {
 
 router.post("/complete-registration", upload.none(), async (req, res) => {
     try {
-        const table_name = "registration";
+        let table_name = "registration";
         const data = req.body;
         const result = await dbService.findExact(table_name, "event_id", data.event_id);
 
