@@ -3,129 +3,228 @@ import { Field, ErrorMessage } from "formik";
 import misc from "../../assets/misc.json";
 import GICTemplate from "../../assets/GICTemplate.json";
 import { getCodeList } from "country-list";
+import InputAdornment from "@mui/material/InputAdornment";
+import { TextField, MenuItem } from "@mui/material";
 import { IconMap } from "./IconMap";
 
+
 const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
-  return (
-    <>
-      {Object.keys(GICTemplate).map((key) => {
-        
-        return (
-          <div className="full" key={key}>
-            <label>
-              <p>
-                {GICTemplate[key].label}
-              </p>
-            </label>
+    return (
+        <>
+            {Object.keys(GICTemplate).map((key) => {
 
-            <div className="input-group">
-              {target.fieldIcon === "true" && (
-                <span className="input-group-text">
-                  {IconMap && IconMap[GICTemplate[key].icon]}
-                </span>
-              )}
+                return (
+                    <div className="full" key={GICTemplate[key].name}>
 
-              {(() => {
-                switch (GICTemplate[key].name) {
-                  case "gic_gender":
-                    return (
-                      <Field
-                        label= {GICTemplate[key].label}
-                        as="select"
-                        className={`form-control ${
-                          errors[GICTemplate[key].name] && touched[GICTemplate[key].name] ? "is-invalid" : ""
-                        }`}
-                        name={GICTemplate[key].name}
-                      >
-                        <option value="">Select...</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                      </Field>
-                    );
+                        <div className="input-group">
 
-                  case "gic_industry":
-                    return (
-                      <Field
-                       label= {GICTemplate[key].label}
-                        as="select"
-                        className={`form-control ${
-                          errors[GICTemplate[key].name] && touched[GICTemplate[key].name] ? "is-invalid" : ""
-                        }`}
-                        name={GICTemplate[key].name}
-                      >
-                        <option value="">Select...</option>
-                        {misc[0].industries.map((item) => (
-                          <option key={item} value={item}>
-                            {item}
-                          </option>
-                        ))}
-                      </Field>
-                    );
+                            {(() => {
+                                switch (GICTemplate[key].name) {
+                                    case "gic_gender":
+                                        return (
+                                            <Field
+                                                className="pb-2"
+                                                select
+                                                size="small"
+                                                as={TextField}
+                                                fullWidth
+                                                error={touched[GICTemplate[key].name] && Boolean(errors[GICTemplate[key].name])}
+                                                label={GICTemplate[key].label}
+                                                name={GICTemplate[key].name}
+                                                helperText={<ErrorMessage name={GICTemplate[key].name} />}
+                                                InputProps={{
+                                                    startAdornment: (
+                                                        <InputAdornment position="start">
+                                                            {target.fieldIcon === "true" && (
 
-                  case "gic_address_emirate":
-                    return (
-                      <Field
-                       label= {GICTemplate[key].label}
-                        as="select"
-                        className={`form-control ${
-                          errors[GICTemplate[key].name] && touched[GICTemplate[key].name] ? "is-invalid" : ""
-                        }`}
-                        name={GICTemplate[key].name}
-                      >
-                        <option value="">Select...</option>
-                        {misc[0].emirate.map((item) => (
-                          <option key={item} value={item}>
-                            {item}
-                          </option>
-                        ))}
-                      </Field>
-                    );
+                                                                IconMap && IconMap[GICTemplate[key].icon]
+                                                            )}
+                                                        </InputAdornment>
+                                                    ),
+                                                }}
+                                                 SelectProps={{
+                                                    displayEmpty: true,
+                                                    renderValue: (selected) =>
+                                                    selected ? (
+                                                       misc[0].industries[selected]
+                                                    ) : (
+                                                        <span style={{ color: '#9e9e9e', fontSize: '0.8rem' }}>
+                                                        Select {GICTemplate[key].label}
+                                                        </span>
+                                                    ),
+                                                }}
+                                            >
+                                                <MenuItem value="Male">Male</MenuItem>
+                                                <MenuItem value="Female">Female</MenuItem>
+                                            </Field>
+                                        );
 
-                  case "gic_address_country":
-                    return (
-                      <Field
-                       label= {GICTemplate[key].label}
-                        as="select"
-                        className={`form-control ${
-                          errors[GICTemplate[key].name] && touched[GICTemplate[key].name] ? "is-invalid" : ""
-                        }`}
-                        name={GICTemplate[key].name}
-                      >
-                        <option value="">Select...</option>
-                        {Object.entries(getCodeList()).map(([name, code]) => (
-                          <option key={code} value={code}>
-                            {name} ({code})
-                          </option>
-                        ))}
-                      </Field>
-                    );
+                                    case "gic_industry":
+                                        return (
+                                            <Field
+                                                className="pb-2"
+                                                select
+                                                size="small"
+                                                as={TextField}
+                                                fullWidth
+                                                error={touched[GICTemplate[key].name] && Boolean(errors[GICTemplate[key].name])}
+                                                label={GICTemplate[key].label}
+                                                name={GICTemplate[key].name}
+                                                helperText={<ErrorMessage name={GICTemplate[key].name} />}
+                                                InputProps={{
+                                                    startAdornment: (
+                                                        <InputAdornment position="start">
+                                                            {target.fieldIcon === "true" && (
 
-                  default:
-                    return (
-                      <Field
-                      
-                       label= {GICTemplate[key].label}
-                        className={`form-control ${
-                          errors[GICTemplate[key].name] && touched[GICTemplate[key].name] ? "is-invalid" : ""
-                        }`}
-                        type="text"
-                        name={GICTemplate[key].name}
-                      />
-                    );
-                }
-              })()}
-            </div>
+                                                                IconMap && IconMap[GICTemplate[key].icon]
+                                                            )}
+                                                        </InputAdornment>
+                                                    ),
+                                                }}
+                                                 SelectProps={{
+                                                    displayEmpty: true,
+                                                    renderValue: (selected) =>
+                                                    selected ? (
+                                                       misc[0].industries[selected]
+                                                    ) : (
+                                                        <span style={{ color: '#9e9e9e', fontSize: '0.8rem' }}>
+                                                        Select {GICTemplate[key].label}
+                                                        </span>
+                                                    ),
+                                                }}
+                                            >
 
-            <ErrorMessage
-              name={GICTemplate[key].name}
-              component="div"
-              className="text-danger small"
-            />
-          </div>
-        );
-      })}
-    </>
-  );
+                                                {misc[0].industries.map((item) => (
+                                                    <MenuItem key={item} value={item}>
+                                                        {item}
+                                                    </MenuItem>
+                                                ))}
+                                            </Field>
+                                        );
+
+                                    case "gic_address_emirate":
+                                        return (
+                                            <Field
+                                                className="pb-2"
+                                                select
+                                                size="small"
+                                                as={TextField}
+                                                fullWidth
+                                                error={touched[GICTemplate[key].name] && Boolean(errors[GICTemplate[key].name])}
+                                                label={GICTemplate[key].label}
+                                                name={GICTemplate[key].name}
+                                                helperText={<ErrorMessage name={GICTemplate[key].name} />}
+                                                InputProps={{
+                                                    startAdornment: (
+                                                        <InputAdornment position="start">
+                                                            {target.fieldIcon === "true" && (
+
+                                                                IconMap && IconMap[GICTemplate[key].icon]
+                                                            )}
+                                                        </InputAdornment>
+                                                    ),
+                                                }}
+                                                 SelectProps={{
+                                                    displayEmpty: true,
+                                                    renderValue: (selected) =>
+                                                    selected ? (
+                                                       misc[0].emirate[selected]
+                                                    ) : (
+                                                        <span style={{ color: '#9e9e9e', fontSize: '0.8rem' }}>
+                                                        Select {GICTemplate[key].label}
+                                                        </span>
+                                                    ),
+                                                }}
+                                            >
+
+                                                {misc[0].emirate.map((item) => (
+                                                    <MenuItem key={item} value={item}>
+                                                        {item}
+                                                    </MenuItem>
+                                                ))}
+                                            </Field>
+                                        );
+
+                                    case "gic_address_country":
+                                        return (
+                                            <Field
+                                            
+                                                select
+                                                className="pb-2"
+                                                size="small"
+                                                as={TextField}
+                                                fullWidth
+                                                error={touched[GICTemplate[key].name] && Boolean(errors[GICTemplate[key].name])}
+                                                label={GICTemplate[key].label}
+                                                name={GICTemplate[key].name}
+                                                helperText={<ErrorMessage name={GICTemplate[key].name} />}
+                                                InputProps={{
+                                                    startAdornment: (
+                                                        <InputAdornment position="start">
+                                                            {target.fieldIcon === "true" && (
+
+                                                                IconMap && IconMap[GICTemplate[key].icon]
+                                                            )}
+                                                        </InputAdornment>
+                                                    ),
+                                                }}
+                                                SelectProps={{
+                                                    displayEmpty: true,
+                                                    renderValue: (selected) =>
+                                                    selected ? (
+                                                        getCodeList()[selected]
+                                                    ) : (
+                                                        <span style={{ color: '#9e9e9e', fontSize: '0.8rem' }}>
+                                                        Select {GICTemplate[key].label}
+                                                        </span>
+                                                    ),
+                                                }}
+                                               >
+
+
+                                                {Object.entries(getCodeList()).map(([name, code]) => (
+                                                    <MenuItem key={name} value={name}>
+                                                        {code}
+                                                    </MenuItem>
+                                                ))}
+                                            </Field>
+                                        );
+
+                                    default:
+                                        return (
+                                            <Field
+                                                placeholder={`Enter ${GICTemplate[key].label}`}
+                                                className="pb-2"
+                                                size="small"
+                                                as={TextField}
+                                                fullWidth
+                                                error={touched[GICTemplate[key].name] && Boolean(errors[GICTemplate[key].name])}
+                                                label={GICTemplate[key].label}
+                                                name={GICTemplate[key].name}
+                                                helperText={<ErrorMessage name={GICTemplate[key].name} />}
+                                                InputProps={{
+                                                    startAdornment: (
+                                                        <InputAdornment position="start">
+                                                            {target.fieldIcon === "true" && (
+
+                                                                IconMap && IconMap[GICTemplate[key].icon]
+                                                            )}
+                                                        </InputAdornment>
+                                                    ),
+                                                }}
+                                            >
+
+                                            </Field>
+                                        );
+                                }
+                            })()}
+                        </div>
+
+                    </div>
+                );
+            })}
+        </>
+    );
 };
 
 export default GICRegistrationForm;

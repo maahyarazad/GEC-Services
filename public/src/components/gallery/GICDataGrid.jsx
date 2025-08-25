@@ -1,12 +1,41 @@
 import { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { Box, CircularProgress, Button } from '@mui/material';
-import { MdFormatListBulletedAdd } from "react-icons/md";
+import { Box, CircularProgress, Button, Tooltip } from '@mui/material';
+import { MdLockReset } from "react-icons/md";
 
 
-const columns = () => [
+const columns = ({ onResendPasswordReset, loadingRowId }) => [
   { field: 'id', headerName: 'ID', width: 70 },
-  
+  {
+          field: 'actions',
+          headerName: 'Actions',
+          width: 120,
+          sortable: false,
+          filterable: false,
+          renderCell: (params) => (
+              <Box>
+                <Tooltip title="Send reset password email to this user">
+                    
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        startIcon={<MdLockReset/>}
+                        sx={{textTransform: 'none'}}
+                        onClick={() => onResendPasswordReset(params.row)}
+                    >
+                        
+                      {loadingRowId === params.row.id ? (
+                        <CircularProgress size={18} color="inherit" />
+                        ) : (
+                        "Password"
+                        )}
+                    </Button>
+                </Tooltip>
+                 
+              </Box>
+          ),
+      },
   // Base fields
   { field: 'email', headerName: 'Email', width: 200, filterable: true },
   { field: 'created_at', headerName: 'Created At', width: 180, filterable: true },
@@ -30,7 +59,7 @@ const columns = () => [
 
 export const GICDataGrid = () => {
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];
-    
+    const [loadingRowId, setLoadingRowId] = useState(null);
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
@@ -42,6 +71,26 @@ export const GICDataGrid = () => {
     const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
     
+   const handleResetPassword = async (row) => {
+        try {
+            setLoadingRowId(row.id); 
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/gic-user/send-reset-password`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email: row.email }),
+            });
+
+            const data = await response.json();
+          
+        } catch (error) {
+            console.error("Error resetting password:", error);
+        }finally{
+             setLoadingRowId(null);
+        }
+    };
+
     const [initialData, setInitialData] = useState(null);
     const fetchData = useCallback(
         async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
@@ -68,8 +117,9 @@ export const GICDataGrid = () => {
                 ].filter(Boolean).join('&');
 
                 const response = await fetch(`${import.meta.env.VITE_SERVERURL}/gic-user?${queryParams}`);
+                
                 const data = await response.json();
-                debugger;
+                
                 setMembers(data.data || []);
                 setRowCount(data.total || 0);
             } catch (err) {
@@ -81,21 +131,13 @@ export const GICDataGrid = () => {
         [setLoading, setMembers, setRowCount]
     );
 
-
-
     useEffect(() => {
         fetchData(paginationModel, sortModel, filterModel);
     }, [paginationModel, sortModel, applyFilterTrigger]);
 
 
-
-   
-
     return (
         <Box sx={{ padding: 1 }}>
-
-
-
             <div className="d-flex justify-content-start mb-1">
             
                 <div className="">
@@ -119,7 +161,7 @@ export const GICDataGrid = () => {
                 <div style={{ width: '100%', height: '82dvh' }}>
                     <DataGrid
                         rows={members}
-                        columns={columns()}
+                        columns={columns({onResendPasswordReset: handleResetPassword, loadingRowId: loadingRowId})}
                         rowCount={rowCount}
                         rowsPerPageOptions={[25, 50, 100]}
                         paginationMode="server"

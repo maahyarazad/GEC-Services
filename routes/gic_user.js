@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { exportTableAsCSV } = require("../services/csvParser");
 const dbService = require("../services/dbService");
 const multer = require("multer");
+const {generatePassword, hashPassword} = require("../services/userService");
+const {gic__reset_password} = require("../services/emailService")
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, "file_storage/");
@@ -54,6 +56,38 @@ router.get('/gic-user', async (req, res) => {
     }
 });
 
+
+router.post('/gic-user/send-reset-password', async (req, res) => {
+    try {
+        const table_name = "GIC_Users";
+        const userCheck = await dbService.countExact(table_name, 'email', req.body.email);
+            if(userCheck.count === 0){
+                return res.json({ 
+                    status: false, 
+                    message: "User not found!" 
+                });
+            }
+
+        const user = await dbService.findExact(table_name, 'email', req.body.email);
+        const initialPassword = generatePassword();
+        user[0].password_hash = await hashPassword(initialPassword);
+
+        const update_result = await dbService.update(table_name, user[0].id, user[0]);
+        if (update_result.changes > 0) {
+                await gic__reset_password({ email: user[0].email, password: initialPassword });
+               return res.json({
+                    status: true,
+                    message: "Password reset successful. A temporary password has been sent to your email. Please log in with it and update your password.",
+                    update_result
+                });
+            }
+       
+
+    } catch (error) {
+        console.error("Error in /member:", error);
+        res.status(500).json({ status: false, message: 'Server error' });
+    }
+});
 
 
 module.exports = router;

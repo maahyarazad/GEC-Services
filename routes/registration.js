@@ -135,8 +135,6 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                     create_result
                 });
             }
-
-            create_result = await dbService.createSafe("3§", gic_data__);
         }
         else{
             create_result = await dbService.createSafe(table_name, data);
