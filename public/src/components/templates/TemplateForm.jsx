@@ -24,7 +24,7 @@ import CountDownComponent from "../utils/TenDayCountdown";
 import { SurveyTemplateForm } from "./SurveyTemplateForm";
 import { initialValues } from "./InitialValues";
 import GICRegistrationForm from './GICRegistrationForm';
-
+import { useNavigate } from "react-router-dom";
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
 //     const { setFieldValue } = useFormikContext();
 
@@ -50,6 +50,8 @@ export const TemplateForm = () => {
     const [validOtp, setValidOtp] = useState(null);
     const [global_whatsapp, setGlobalWhatsapp] = useState("");
     const [showDivFirst, setShowDivFirst] = useState(false);
+    const navigate = useNavigate();
+
     const handleSendOtp = async (values) => {
         try {
             setShowOtpInput(true);
@@ -185,7 +187,7 @@ export const TemplateForm = () => {
 
     const clearLocalStorage = () => {
         removeEncryptedLocalStorage("gec-registration");
-        window.location.assign(`/registration`);
+        navigate(`/`);
     };
 
     const handleSubmitRegistration = async (

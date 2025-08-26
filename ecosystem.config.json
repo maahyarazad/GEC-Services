@@ -2,7 +2,7 @@
   "apps": [
     {
       "name": "Services",
-      "script": "server_with_sql.js",
+      "script": "server.js",
       "watch": true,
       "ignore_watch": [
         "node_modules",

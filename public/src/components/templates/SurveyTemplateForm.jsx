@@ -16,15 +16,7 @@ export const SurveyTemplateForm = ({ target, errors, touched }) => {
                         return (
                             <div key={idx}>
                                 <h2 className="py-3">Company Information</h2>
-                                <label className="full" htmlFor="fileUpload">
-                                    <p>
-                                        To ensure our CRM system remains accurate and up to date, we kindly ask you to provide the current contact details for your organization. This information helps the GEC team reach the right person directly when needed – whether it concerns management matters, HR requests, marketing content, or finance and billing.
-                                        <br /><br />
-                                        The requested data will be used strictly for internal purposes within the German Emirates Club and will not be shared or published externally. If your company is small and does not have separate contacts for certain functions, please select “same as above” rather than leaving fields blank.
-                                        <br /><br />
-                                        Thank you very much for your support in keeping our records current.
-                                    </p>
-                                </label>
+                                
 
                                 {val.fields.map((sVal) => (
                                     <div className="full" key={sVal.name}>

@@ -193,8 +193,8 @@ export default function NewRegistrationPage({
       if (values.image) {
         formData.append("image", values.image); // file object directly
       }
-      console.log(formData);
-
+      
+    
       const response = await fetch(
         `${import.meta.env.VITE_SERVERURL}/registration-config`,
         {
