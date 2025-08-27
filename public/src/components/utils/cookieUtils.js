@@ -10,7 +10,7 @@ export function getCookie(name) {
   const pair = document.cookie
     .split('; ')
     .find(cookie => cookie.startsWith(name + '='));
-
+  
   const ciphertext = pair ? decodeURIComponent(pair.split('=')[1]) : null;
 
   if (ciphertext) {

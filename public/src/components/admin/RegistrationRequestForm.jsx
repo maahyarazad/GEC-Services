@@ -192,35 +192,7 @@ export default function NewRegistrationPage({
         }
       });
               
-      //         if (initialData) {
-      //           formData.append("id", initialData.id);
-      //         }
-      // formData.append("page", slug);
-      // formData.append("paymentRequired", values.paymentRequired);
-      // formData.append("birthdayRequired", values.birthdayRequired);
-      // formData.append("companyRequired", values.companyRequired);
-      // formData.append("lockRegistration", values.lockRegistration);
-      // formData.append("IdentityConsent", values.IdentityConsent);
-      // formData.append("fileUpload", values.fileUpload);
-      // formData.append("surveyForm", values.surveyForm);
-      // formData.append("gic", values.gic);
-      // formData.append("textarea", values.textarea);
-      // formData.append("fieldIcon", values.fieldIcon);
-      // formData.append("countDown", values.countDown);
-      // formData.append("title", values.title);
-      // formData.append("send_button_text", values.send_button_text);
-      // formData.append("event_date", values.event_date);
-      // formData.append("event_time", values.event_time);
-      // formData.append("event_location", values.event_location);
-      // formData.append("event_location_name", values.event_location_name);
-      // formData.append("maxTokensPerGuest", values.tokensPerGuest);
-      // formData.append("description", values.description);
-      // formData.append("uniqeCodeAccess", values.uniqeCodeAccess);
-
-      // if (values.image) {
-      //   formData.append("image", values.image); // file object directly
-      // }
-      
+    
       
       const response = await fetch(
         `${import.meta.env.VITE_SERVERURL}/registration-config`,

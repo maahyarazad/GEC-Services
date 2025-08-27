@@ -46,7 +46,7 @@ export const Admin = ({ data }) => {
                     method: "GET",
                     credentials: "include",
                 });
-                    debugger;
+                    
                 if (!res.ok) {
                     setAdminUser(null);
                     

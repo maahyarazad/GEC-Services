@@ -79,7 +79,7 @@ export const Login = () => {
           credentials: "include",
         }
       );
-      debugger;
+      
       setCurrentResponseStatus(loginResponse.ok);
 
       const response_data = await loginResponse.json();

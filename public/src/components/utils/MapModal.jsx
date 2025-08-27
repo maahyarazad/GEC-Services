@@ -3,12 +3,26 @@ import React, { useRef, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import Modal from '../Modal'; 
 import 'mapbox-gl/dist/mapbox-gl.css';
+import {jwtDecode} from "jwt-decode";
+import Cookies from 'js-cookie';
 
-mapboxgl.accessToken = import.meta.env.VITE_APP_MAPBOX_TOKEN;
 
 const MapModal = ({ isOpen, onClose, onSelect, isParentModalOpen, initialLon , initialLat }) => {
   const mapContainer = useRef(null);
   const markerRef = useRef(null);
+
+
+
+  useEffect(()=> {
+    
+      const token = Cookies.get('a-usr');
+    
+    if (token) {
+      const decoded = jwtDecode(token);
+      const mapboxToken = decoded.mapboxToken;
+      mapboxgl.accessToken = mapboxToken;
+    }
+  }, [])
 
   useEffect(() => {
     if (!isOpen) return;

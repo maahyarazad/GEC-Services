@@ -271,7 +271,7 @@ router.post("/api/admin/login", (req, res) => {
   const { password } = req.body;
 
   if (password === process.env.VITE_ADMIN_PASSWORD) {
-    const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign({ role: "admin",  mapboxToken: process.env.VITE_APP_MAPBOX_TOKEN  }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
     // Set token in secure httpOnly cookie
     res.cookie("a-usr", token, {
@@ -281,6 +281,7 @@ router.post("/api/admin/login", (req, res) => {
       maxAge: 60 * 60 * 1000              // 1 hour
     });
 
+    
     return res.json({ success: true });
   }
 
