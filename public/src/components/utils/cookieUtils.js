@@ -2,7 +2,7 @@
 import CryptoJS from "crypto-js";
 
 // Helper to get the secret key
-const SECRET_KEY = import.meta.env.VITE_LOCAL_STORAGE_KEY;
+const SECRET_KEY = "tw9SLTj6HrYznicP25wgO53YgaEjuKyF"
 
 // ------------------ COOKIE UTILS ------------------
 

@@ -8,7 +8,7 @@ import eventTime from "../../assets/media/event_time.png";
 import eventLocationName from "../../assets/media/event_location_name.png";
 import eventNavigation from "../../assets/media/event_location_name.png";
 
-import { Button, Tooltip } from "@mui/material";
+import { Button, Tooltip, CircularProgress } from "@mui/material";
 import EventLocationInput from "../utils/EventLocationInput";
 import LockRegistrationSwitch from "../utils/LockRegistrationSwitch";
 
@@ -163,38 +163,65 @@ export default function NewRegistrationPage({
 
     try {
       const formData = new FormData();
-
-      if (initialData) {
-        formData.append("id", initialData.id);
-      }
-
-      formData.append("page", slug);
-      formData.append("paymentRequired", values.paymentRequired);
-      formData.append("birthdayRequired", values.birthdayRequired);
-      formData.append("companyRequired", values.companyRequired);
-      formData.append("lockRegistration", values.lockRegistration);
-      formData.append("IdentityConsent", values.IdentityConsent);
-      formData.append("fileUpload", values.fileUpload);
-      formData.append("surveyForm", values.surveyForm);
-      formData.append("gic", values.gic);
-      formData.append("textarea", values.textarea);
-      formData.append("fieldIcon", values.fieldIcon);
-      formData.append("countDown", values.countDown);
-      formData.append("title", values.title);
-      formData.append("send_button_text", values.send_button_text);
-      formData.append("event_date", values.event_date);
-      formData.append("event_time", values.event_time);
-      formData.append("event_location", values.event_location);
-      formData.append("event_location_name", values.event_location_name);
-      formData.append("maxTokensPerGuest", values.tokensPerGuest);
-      formData.append("description", values.description);
-      formData.append("uniqeCodeAccess", values.uniqeCodeAccess);
-
-      if (values.image) {
-        formData.append("image", values.image); // file object directly
-      }
       
-    
+      Object.entries(values).forEach(([key, value]) => {
+        switch (key) {
+          case "id":
+            if (initialData) {
+              formData.append("id", initialData.id);
+            }
+            break;
+
+          case "page":
+            formData.append("page", slug);
+            break;
+
+          case "tokensPerGuest": // map correctly to maxTokensPerGuest
+            formData.append("maxTokensPerGuest", value);
+            break;
+
+          case "image": // handle file object directly
+            if (value) {
+              formData.append("image", value);
+            }
+            break;
+
+          default:
+            formData.append(key, value);
+            break;
+        }
+      });
+              
+      //         if (initialData) {
+      //           formData.append("id", initialData.id);
+      //         }
+      // formData.append("page", slug);
+      // formData.append("paymentRequired", values.paymentRequired);
+      // formData.append("birthdayRequired", values.birthdayRequired);
+      // formData.append("companyRequired", values.companyRequired);
+      // formData.append("lockRegistration", values.lockRegistration);
+      // formData.append("IdentityConsent", values.IdentityConsent);
+      // formData.append("fileUpload", values.fileUpload);
+      // formData.append("surveyForm", values.surveyForm);
+      // formData.append("gic", values.gic);
+      // formData.append("textarea", values.textarea);
+      // formData.append("fieldIcon", values.fieldIcon);
+      // formData.append("countDown", values.countDown);
+      // formData.append("title", values.title);
+      // formData.append("send_button_text", values.send_button_text);
+      // formData.append("event_date", values.event_date);
+      // formData.append("event_time", values.event_time);
+      // formData.append("event_location", values.event_location);
+      // formData.append("event_location_name", values.event_location_name);
+      // formData.append("maxTokensPerGuest", values.tokensPerGuest);
+      // formData.append("description", values.description);
+      // formData.append("uniqeCodeAccess", values.uniqeCodeAccess);
+
+      // if (values.image) {
+      //   formData.append("image", values.image); // file object directly
+      // }
+      
+      
       const response = await fetch(
         `${import.meta.env.VITE_SERVERURL}/registration-config`,
         {
@@ -901,14 +928,27 @@ export default function NewRegistrationPage({
             <div className="col-12">
               <div className="d-flex justify-content-end">
                 <Button
-                  variant="contained"
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={isSubmitting}
-                  sx={{ textTransform: "none" }}
-                >
-                  {isSubmitting ? "Submitting" : "Save Registration Page"}
-                </Button>
+                variant="contained"
+                type="submit"
+                className="btn btn-primary"
+                disabled={isSubmitting}
+                sx={{ textTransform: "none", position: "relative" }}
+              >
+                {isSubmitting ? (
+                  <>
+                    <CircularProgress
+                      size={20}
+                      sx={{
+                        color: "white",
+                        marginRight: 1,
+                      }}
+                    />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Registration Page"
+                )}
+              </Button>
               </div>
             </div>
           </Form>

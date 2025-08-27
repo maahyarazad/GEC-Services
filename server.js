@@ -16,6 +16,7 @@ const maps = require('./routes/maps.js');
 const googleWallet = require('./routes/google_wallet.js');
 const survey = require('./routes/survey.js');
 const gic_user = require('./routes/gic_user.js');
+const cookieParser = require("cookie-parser");
 
 // Setup DB connection
 const db = new sqlite3.Database("./app.db", (err) => {
@@ -75,6 +76,8 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+app.use(cookieParser());
 // app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {

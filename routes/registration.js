@@ -10,6 +10,8 @@ const {generatePassword, hashPassword} = require("../services/userService");
 const { generateRecordId } = require("../services/generatorService");
 const path = require("path");
 const fs = require("fs");
+require('dotenv').config();
+const jwt = require("jsonwebtoken");
 
 
 const upload = multer({ 
@@ -263,6 +265,41 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
         console.error("Edit error:", error);
         res.status(500).json({ status: false, message: "Server error" });
     }
+});
+
+router.post("/api/admin/login", (req, res) => {
+  const { password } = req.body;
+
+  if (password === process.env.VITE_ADMIN_PASSWORD) {
+    const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+    // Set token in secure httpOnly cookie
+    res.cookie("a-usr", token, {
+      httpOnly: true,                     // cannot be accessed via JS
+      secure: true,                       // HTTPS only
+      sameSite: "none",                   // allow cross-site cookie
+      maxAge: 60 * 60 * 1000              // 1 hour
+    });
+
+    return res.json({ success: true });
+  }
+
+  res.status(401).json({ error: "Invalid password" });
+});
+
+router.get("/api/admin/check-auth", (req, res) => {
+  const token = req?.cookies["a-usr"];
+  if (!token) return res.status(401).json({ authenticated: false });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role === "admin") {
+      return res.json({ authenticated: true });
+    }
+    return res.status(401).json({ authenticated: false });
+  } catch {
+    return res.status(401).json({ authenticated: false });
+  }
 });
 
 module.exports = router;

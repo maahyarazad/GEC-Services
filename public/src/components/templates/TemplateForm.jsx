@@ -25,6 +25,7 @@ import { SurveyTemplateForm } from "./SurveyTemplateForm";
 import { initialValues } from "./InitialValues";
 import GICRegistrationForm from './GICRegistrationForm';
 import { useNavigate } from "react-router-dom";
+import { TextField, InputAdornment, MenuItem } from "@mui/material";
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
 //     const { setFieldValue } = useFormikContext();
 
@@ -151,11 +152,11 @@ export const TemplateForm = () => {
     useEffect(() => {
         const gecuser = getEncryptedLocalStorage("gec-registration");
         if (gecuser) {
-            if(gecuser.surveyForm === "true"){
+            if (gecuser.surveyForm === "true") {
                 setPhoneRegistered(true);
             }
 
-            if(gecuser.gic === "true"){
+            if (gecuser.gic === "true") {
                 setPhoneRegistered(true);
             }
 
@@ -269,8 +270,8 @@ export const TemplateForm = () => {
             // End Handle GICFormLogic   
 
 
-            
-            
+
+
             const registration_response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/registration`,
                 {
@@ -394,7 +395,7 @@ export const TemplateForm = () => {
 
                         <Formik
                             enableReinitialize={true}
-                            initialValues={initialValues }
+                            initialValues={initialValues}
                             validationSchema={getValidationSchema(target)}
                             onSubmit={async (values, { resetForm, setFieldValue }) => {
                                 await handleSubmitRegistration(values, {
@@ -447,382 +448,397 @@ export const TemplateForm = () => {
 
                                     {target.gic === "false" && (
                                         <>
-                                        {target.surveyForm === "false" && (
+                                            {target.surveyForm === "false" && (
 
-                                        <>
-                                            <div className="full">
-                                                <div className="w-100">
-                                                    <label>
-                                                        <p>Email</p>
-                                                    </label>
-                                                    <div className="input-group">
-                                                        {target.fieldIcon === "true" && (
-                                                            <span className="input-group-text">
-                                                                <MdEmail />
-                                                            </span>
-                                                        )}
+                                                <>
+                                                    <div className="full">
+                                                        <div className="w-100">
 
-                                                        <Field
-                                                            className={`form-control ${errors.email && touched.email ? "is-invalid" : ""
-                                                                }`}
-                                                            type="email"
-                                                            name="email"
-                                                            disabled={phoneRegistered}
+                                                            <div className="input-group">
+                                                                <Field
+                                                                    as={TextField}
+                                                                    type="email"
+                                                                    name="email"
+                                                                    disabled={phoneRegistered}
+                                                                    size="small"
+                                                                    fullWidth
+                                                                    label="Email"
+                                                                    helperText={<ErrorMessage name="email" />}
+                                                                    className="pb-2"
+                                                                    error={touched.email && Boolean(errors.email)}
+                                                                    InputProps={{
+                                                                        startAdornment: (
+                                                                            <InputAdornment position="start">
+                                                                                {target.fieldIcon === "true" && (
+
+                                                                                    <MdEmail />
+                                                                                )}
+                                                                            </InputAdornment>
+                                                                        ),
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+
+                                                    <div className="full">
+                                                       
+                                                        <div className="input-group">
+                                                            
+                                                            <Field
+                                                                as={TextField}
+                                                                    
+                                                                    name="phone"
+                                                                    
+                                                                    size="small"
+                                                                    fullWidth
+                                                                    label="Phone Number"
+                                                                    helperText={<ErrorMessage name="phone" />}
+                                                                    className="pb-2"
+                                                                    error={touched.phone && Boolean(errors.phone)}
+                                                                    InputProps={{
+                                                                        startAdornment: (
+                                                                            <InputAdornment position="start">
+                                                                                {target.fieldIcon === "true" && (
+
+                                                                                    <FaPhoneAlt />
+                                                                                )}
+                                                                            </InputAdornment>
+                                                                        ),
+                                                                    }}
+                                                            />
+                                                        </div>
+                                                        
+                                                    </div>
+
+                                                    <div className="full">
+                                                        <label>
+                                                            <p>Whatsapp Number</p>
+                                                        </label>
+                                                        <div className="input-group">
+                                                            {target.fieldIcon === "true" && (
+                                                                <span className="input-group-text">
+                                                                    <FaWhatsapp />
+                                                                </span>
+                                                            )}
+                                                            <Field
+                                                                className={`form-control ${errors.whatsapp && touched.whatsapp
+                                                                    ? "is-invalid"
+                                                                    : ""
+                                                                    }`}
+                                                                type="tel"
+                                                                name="whatsapp"
+                                                            // We are using email verification
+                                                            // disabled={phoneRegistered}
+                                                            />
+                                                        </div>
+                                                        <ErrorMessage
+                                                            name="whatsapp"
+                                                            component="div"
+                                                            className="text-danger small"
                                                         />
                                                     </div>
-                                                </div>
-                                                <ErrorMessage
-                                                    name="email"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                            </div>
 
-                                            <div className="full">
-                                                <label>
-                                                    <p>Phone Number</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <FaPhoneAlt />
-                                                        </span>
+                                                    <div className={`otp-slide ${showOtpInput ? "show" : ""}`}>
+                                                        <div ref={statusRef}></div>
+
+                                                        {currentResponseStatus && (
+                                                            <>
+                                                                <OtpInput
+                                                                    ref={otpRef}
+                                                                    onComplete={(val) => {
+                                                                        handlePostOTP(val);
+                                                                    }}
+                                                                />
+                                                                {validOtp && (
+                                                                    <OtpTimer
+                                                                        loginResponseData={currentResponseStatus}
+                                                                        onExpiredChange={handleExpiredChange}
+                                                                    />
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </div>
+
+                                                    {!phoneRegistered && (
+                                                        <Button
+                                                            variant="contained"
+                                                            color="primary"
+                                                            disabled={validOtp === true}
+                                                            type="button"
+                                                            onClick={async () => {
+                                                                const formErrors = await validateForm(); // validate entire form
+
+                                                                if (formErrors.email) {
+                                                                    setTouched({ email: true });
+                                                                }
+
+                                                                if (!formErrors.email && values.email) {
+                                                                    handleSendOtp(values);
+                                                                }
+                                                            }}
+                                                            style={{
+                                                                pointerEvents: "auto",
+                                                                opacity: 1,
+                                                                width: "100%",
+                                                                textTransform: "none",
+                                                            }}
+                                                        >
+                                                            <p>Send OTP</p>
+                                                        </Button>
                                                     )}
-                                                    <Field
-                                                        className={`form-control ${errors.phone && touched.phone ? "is-invalid" : ""
-                                                            }`}
-                                                        type="tel"
-                                                        name="phone"
-                                                        disabled={false}
-                                                    />
-                                                </div>
-                                                <ErrorMessage
-                                                    name="phone"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                            </div>
 
-                                            <div className="full">
-                                                <label>
-                                                    <p>Whatsapp Number</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
+                                                    <div className="spacer"></div>
+
+                                                    <div className="full">
+                                                        <label>
+                                                            <p>Gender</p>
+                                                        </label>
+                                                        <div className="input-group">
+                                                            {target.fieldIcon === "true" && (
+                                                                <span className="input-group-text">
+                                                                    <BsGenderAmbiguous />
+                                                                </span>
+                                                            )}
+
+                                                            <Field as="select" name="gender">
+                                                                <option value="male">Male</option>
+                                                                <option value="female">Female</option>
+                                                            </Field>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="full">
+                                                       
+                                                        <div className="input-group">
+                                                          
+
+                                                            <Field
+                                                                  as={TextField}
+                                                            size="small"
+                                                            fullWidth
+                                                            label="First Name"
+                                                            helperText={<ErrorMessage name="firstName" />}
+                                                            className="pb-2"
+                                                            type="text"
+                                                            name="firstName"
+                                                            error={touched.firstName && Boolean(errors.firstName)}
+                                                            InputProps={{
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start">
+                                                                        {target.fieldIcon === "true" && (
+
+                                                                               <MdDriveFileRenameOutline />
+                                                                        )}
+                                                                    </InputAdornment>
+                                                                ),
+                                                            }}
+                                                            />
+                                                        </div>
+                                                       
+                                                    </div>
+
+                                                    <div className="full">
+                                                       
+                                                        <div className="input-group">
+                                                            <Field
+                                                                 as={TextField}
+                                                            size="small"
+                                                            fullWidth
+                                                            label="Last Name"
+                                                            helperText={<ErrorMessage name="lastName" />}
+                                                            className="pb-2"
+                                                            type="text"
+                                                            name="lastName"
+                                                            error={touched.lastName && Boolean(errors.lastName)}
+                                                            InputProps={{
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start">
+                                                                        {target.fieldIcon === "true" && (
+
+                                                                               <MdDriveFileRenameOutline />
+                                                                        )}
+                                                                    </InputAdornment>
+                                                                ),
+                                                            }}
+                                                            />
+                                                        </div>
+                                                      
+                                                    </div>
+                                                </>
+                                            )}
+                                            {target.birthdayRequired === "true" && (
+                                                <div className="full">
+                                                    <label>
+                                                        <p>Birthday</p>
+                                                    </label>
+                                                    <div className="input-group">
                                                         <span className="input-group-text">
-                                                            <FaWhatsapp />
+                                                            <MdOutlineCalendarMonth />
                                                         </span>
-                                                    )}
-                                                    <Field
-                                                        className={`form-control ${errors.whatsapp && touched.whatsapp
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="tel"
-                                                        name="whatsapp"
-                                                    // We are using email verification
-                                                    // disabled={phoneRegistered}
-                                                    />
-                                                </div>
-                                                <ErrorMessage
-                                                    name="whatsapp"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                            </div>
-
-                                            <div className={`otp-slide ${showOtpInput ? "show" : ""}`}>
-                                                <div ref={statusRef}></div>
-
-                                                {currentResponseStatus && (
-                                                    <>
-                                                        <OtpInput
-                                                            ref={otpRef}
-                                                            onComplete={(val) => {
-                                                                handlePostOTP(val);
+                                                        <Field
+                                                            className={`form-control ${errors.birthday && touched.birthday
+                                                                ? "is-invalid"
+                                                                : ""
+                                                                }`}
+                                                            name="birthday"
+                                                            type="date"
+                                                            value={selectedDate}
+                                                            onChange={(e) => {
+                                                                setFieldValue("birthday", e.target.value);
+                                                                setSelectedDate(e.target.value);
                                                             }}
                                                         />
-                                                        {validOtp && (
-                                                            <OtpTimer
-                                                                loginResponseData={currentResponseStatus}
-                                                                onExpiredChange={handleExpiredChange}
-                                                            />
-                                                        )}
-                                                    </>
-                                                )}
-                                            </div>
-
-                                            {!phoneRegistered && (
-                                                <Button
-                                                    variant="contained"
-                                                    color="primary"
-                                                    disabled={validOtp === true}
-                                                    type="button"
-                                                    onClick={async () => {
-                                                        const formErrors = await validateForm(); // validate entire form
-
-                                                        if (formErrors.email) {
-                                                            setTouched({ email: true });
-                                                        }
-
-                                                        if (!formErrors.email && values.email) {
-                                                            handleSendOtp(values);
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        pointerEvents: "auto",
-                                                        opacity: 1,
-                                                        width: "100%",
-                                                        textTransform: "none",
-                                                    }}
-                                                >
-                                                    <p>Send OTP</p>
-                                                </Button>
+                                                    </div>
+                                                    <ErrorMessage
+                                                        name="birthday"
+                                                        component="div"
+                                                        className="text-danger small"
+                                                    />
+                                                </div>
                                             )}
 
-                                            <div className="spacer"></div>
+                                            {target.companyRequired === "true" && (
+                                                <div className="full">
 
-                                            <div className="full">
-                                                <label>
-                                                    <p>Gender</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <BsGenderAmbiguous />
-                                                        </span>
-                                                    )}
+                                                    <div className="input-group">
 
-                                                    <Field as="select" name="gender">
-                                                        <option value="male">Male</option>
-                                                        <option value="female">Female</option>
-                                                    </Field>
+                                                        <Field
+                                                            as={TextField}
+                                                            size="small"
+                                                            fullWidth
+                                                            label="Company Name"
+                                                            helperText={<ErrorMessage name="companyName" />}
+                                                            className="pb-2"
+                                                            type="text"
+                                                            name="companyName"
+                                                            error={touched.companyName && Boolean(errors.companyName)}
+                                                            InputProps={{
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start">
+                                                                        {target.fieldIcon === "true" && (
+
+                                                                            <LuBriefcaseBusiness />
+                                                                        )}
+                                                                    </InputAdornment>
+                                                                ),
+                                                            }}
+                                                        />
+                                                    </div>
+
                                                 </div>
-                                            </div>
+                                            )}
 
-                                            <div className="full">
-                                                <label>
-                                                    <p>First Name</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <MdDriveFileRenameOutline />
-                                                        </span>
-                                                    )}
-
-                                                    <Field
-                                                        className={`form-control ${errors.firstName && touched.firstName
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="firstName"
+                                            {target.textarea === "true" && (
+                                                <div className="full">
+                                                    <label htmlFor="textarea">
+                                                        <p>Message</p>
+                                                    </label>
+                                                    <div className="input-group">
+                                                        <Field
+                                                            as="textarea"
+                                                            rows={4}
+                                                            className={`form-control ${errors.textarea && touched.textarea
+                                                                ? "is-invalid"
+                                                                : ""
+                                                                }`}
+                                                            name="textarea"
+                                                        />
+                                                    </div>
+                                                    <ErrorMessage
+                                                        name="textarea"
+                                                        component="div"
+                                                        className="text-danger small"
                                                     />
                                                 </div>
-                                                <ErrorMessage
-                                                    name="firstName"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                            </div>
+                                            )}
 
-                                            <div className="full">
-                                                <label>
-                                                    <p>Last Name</p>
-                                                </label>
-                                                <div className="input-group">
-                                                    {target.fieldIcon === "true" && (
-                                                        <span className="input-group-text">
-                                                            <MdDriveFileRenameOutline />
-                                                        </span>
-                                                    )}
-
-                                                    <Field
-                                                        className={`form-control ${errors.lastName && touched.lastName
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        type="text"
-                                                        name="lastName"
-                                                    />
-                                                </div>
-                                                <ErrorMessage
-                                                    name="lastName"
-                                                    component="div"
-                                                    className="text-danger small"
-                                                />
-                                            </div>
-                                        </>
-                                    )}
-                                    {target.birthdayRequired === "true" && (
-                                        <div className="full">
-                                            <label>
-                                                <p>Birthday</p>
-                                            </label>
-                                            <div className="input-group">
-                                                <span className="input-group-text">
-                                                    <MdOutlineCalendarMonth />
-                                                </span>
-                                                <Field
-                                                    className={`form-control ${errors.birthday && touched.birthday
-                                                        ? "is-invalid"
-                                                        : ""
-                                                        }`}
-                                                    name="birthday"
-                                                    type="date"
-                                                    value={selectedDate}
-                                                    onChange={(e) => {
-                                                        setFieldValue("birthday", e.target.value);
-                                                        setSelectedDate(e.target.value);
-                                                    }}
-                                                />
-                                            </div>
-                                            <ErrorMessage
-                                                name="birthday"
-                                                component="div"
-                                                className="text-danger small"
-                                            />
-                                        </div>
-                                    )}
-
-                                     {target.companyRequired === "true" && (
-                                        <div className="full">
-                                            <label>
-                                                <p>Company Name</p>
-                                            </label>
-                                            <div className="input-group">
-                                                {target.fieldIcon === "true" && (
-                                                    <span className="input-group-text">
-                                                        <LuBriefcaseBusiness />
-                                                    </span>
-                                                )}
-                                                <Field
-                                                    className={`form-control ${errors.companyName && touched.companyName
-                                                        ? "is-invalid"
-                                                        : ""
-                                                        }`}
-                                                    type="text"
-                                                    name="companyName"
-                                                />
-                                            </div>
-                                            <ErrorMessage
-                                                name="companyName"
-                                                component="div"
-                                                className="text-danger small"
-                                            />
-                                        </div>
-                                    )}
-
-                                    {target.textarea === "true" && (
-                                        <div className="full">
-                                            <label htmlFor="textarea">
-                                                <p>Message</p>
-                                            </label>
-                                            <div className="input-group">
-                                                <Field
-                                                    as="textarea"
-                                                    rows={4}
-                                                    className={`form-control ${errors.textarea && touched.textarea
-                                                        ? "is-invalid"
-                                                        : ""
-                                                        }`}
-                                                    name="textarea"
-                                                />
-                                            </div>
-                                            <ErrorMessage
-                                                name="textarea"
-                                                component="div"
-                                                className="text-danger small"
-                                            />
-                                        </div>
-                                    )}
-
-                                    {target.fileUpload === "true" && (
-                                        <div className="full">
-                                            <div className="clearance"></div>
-                                            <label className="full" htmlFor="fileUpload">
-                                                <p>
-                                                    Please attach any documentation to support your
-                                                    application.
-                                                </p>
-                                            </label>
-                                            <input
-                                                ref={fileInputRef}
-                                                id="fileUpload"
-                                                name="fileUpload"
-                                                type="file"
-                                                accept=".pdf, .doc, .docx, .ppt, .pptx, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation"
-                                                className={`form-control ${errors.fileUpload && touched.fileUpload
-                                                    ? "is-invalid"
-                                                    : ""
-                                                    }`}
-                                                onChange={(e) => {
-                                                    const file = e.currentTarget.files[0];
-                                                    if (file) {
-                                                        setFieldValue("fileUpload", file);
-                                                    }
-                                                }}
-                                            />
-
-                                            <ErrorMessage
-                                                name="fileUpload"
-                                                component="div"
-                                                className="invalid-feedback small"
-                                            />
-                                        </div>
-                                    )}
-
-                                    {target.IdentityConsent === "true" && (
-                                        <div className="full">
-                                            <label htmlFor="consent">
-                                                I confirm that I have a valid proof of identification
-                                                and consent to present it at the venue.
-                                            </label>
-                                            <Field name="consent">
-                                                {({ field, form }) => (
+                                            {target.fileUpload === "true" && (
+                                                <div className="full">
+                                                    <div className="clearance"></div>
+                                                    <label className="full" htmlFor="fileUpload">
+                                                        <p>
+                                                            Please attach any documentation to support your
+                                                            application.
+                                                        </p>
+                                                    </label>
                                                     <input
-                                                        ref={identityConsentRef}
-                                                        {...field}
-                                                        type="checkbox"
-                                                        id="consent"
-                                                        className={`form-check-input ${form.errors.consent && form.touched.consent
+                                                        ref={fileInputRef}
+                                                        id="fileUpload"
+                                                        name="fileUpload"
+                                                        type="file"
+                                                        accept=".pdf, .doc, .docx, .ppt, .pptx, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                                                        className={`form-control ${errors.fileUpload && touched.fileUpload
                                                             ? "is-invalid"
                                                             : ""
                                                             }`}
                                                         onChange={(e) => {
-                                                            field.onChange(e);
-                                                            setShowSubmit(e.target.checked);
+                                                            const file = e.currentTarget.files[0];
+                                                            if (file) {
+                                                                setFieldValue("fileUpload", file);
+                                                            }
                                                         }}
                                                     />
-                                                )}
-                                            </Field>
-                                            <ErrorMessage
-                                                name="consent"
-                                                component="div"
-                                                className="invalid-feedback small"
-                                            />
-                                        </div>
-                                    )}
 
-                                    {target.surveyForm === "true" && (
-                                        <SurveyTemplateForm errors={errors} touched={touched} target={target} />
-                                    )}
+                                                    <ErrorMessage
+                                                        name="fileUpload"
+                                                        component="div"
+                                                        className="invalid-feedback small"
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {target.IdentityConsent === "true" && (
+                                                <div className="full">
+                                                    <label htmlFor="consent">
+                                                        I confirm that I have a valid proof of identification
+                                                        and consent to present it at the venue.
+                                                    </label>
+                                                    <Field name="consent">
+                                                        {({ field, form }) => (
+                                                            <input
+                                                                ref={identityConsentRef}
+                                                                {...field}
+                                                                type="checkbox"
+                                                                id="consent"
+                                                                className={`form-check-input ${form.errors.consent && form.touched.consent
+                                                                    ? "is-invalid"
+                                                                    : ""
+                                                                    }`}
+                                                                onChange={(e) => {
+                                                                    field.onChange(e);
+                                                                    setShowSubmit(e.target.checked);
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </Field>
+                                                    <ErrorMessage
+                                                        name="consent"
+                                                        component="div"
+                                                        className="invalid-feedback small"
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {target.surveyForm === "true" && (
+                                                <SurveyTemplateForm errors={errors} touched={touched} target={target} />
+                                            )}
                                         </>
                                     )}
 
                                     {target.gic === "true" && (
                                         <GICRegistrationForm errors={errors} touched={touched} target={target} initialValues={initialValues} />
                                     )}
-                                       
-                                    
 
-                                   
+
+
+
 
                                     <Box className="d-flex justify-content-end w-100 my-2">
                                         <Button
                                             onClick={async () => {
-                                                
+
                                                 const formErrors = await validateForm();
 
                                                 const errorFields = Object.keys(formErrors);

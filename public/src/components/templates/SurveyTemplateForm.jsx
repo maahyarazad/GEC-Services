@@ -15,7 +15,7 @@ export const SurveyTemplateForm = ({ target, errors, touched }) => {
                     case 0:
                         return (
                             <div key={idx}>
-                                <h2 className="py-3">Company Information</h2>
+                                <h3 className="py-3 text-black">Company Information</h3>
                                 
 
                                 {val.fields.map((sVal) => (
@@ -84,7 +84,7 @@ export const SurveyTemplateForm = ({ target, errors, touched }) => {
                                     </div>
                                 ))}
 
-                                <h2 className="py-3">Contact Information</h2>
+                                <h3 className="py-3 text-black">Contact Information</h3>
                             </div>
                         );
                     default:
