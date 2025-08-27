@@ -99,22 +99,27 @@ CREATE TABLE IF NOT EXISTS Company (
 
     ceoOwnerGm VARCHAR(300),
     ceoOwnerGm_contactNumber VARCHAR(300),
+    ceoOwnerGm_landline VARCHAR(300),
     ceoOwnerGm_email VARCHAR(300),
 
     hrHead VARCHAR(300),
     hrHead_contactNumber VARCHAR(300),
+    hrHead_landline VARCHAR(300),
     hrHead_email VARCHAR(300),
 
     accountingHead VARCHAR(300),
     accountingHead_contactNumber VARCHAR(300),
+    accountingHead_landline VARCHAR(300),
     accountingHead_email VARCHAR(300),
 
     marketingHead VARCHAR(300),
     marketingHead_contactNumber VARCHAR(300),
+    marketingHead_landline VARCHAR(300),
     marketingHead_email VARCHAR(300),
 
     pa VARCHAR(300),
     pa_contactNumber VARCHAR(300),
+    pa_landline VARCHAR(300),
     pa_email VARCHAR(300),
 
     createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -122,6 +127,9 @@ CREATE TABLE IF NOT EXISTS Company (
     event VARCHAR(100),
     event_id VARCHAR(100)
 );
+
+
+
 
 
 CREATE TABLE IF NOT EXISTS GIC_Users (

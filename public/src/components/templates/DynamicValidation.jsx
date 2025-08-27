@@ -30,6 +30,7 @@ const companyInfoSchema = Yup.object().shape({
     .required("CEO/Owner/GM is required."),
 
   company_ceoOwnerGm_contactNumber: phoneSchema.required("CEO/Owner/GM mobile number is required."),
+  company_ceoOwnerGm_landline: phoneSchema.required("CEO/Owner/GM landline number is required."),
 
   company_ceoOwnerGm_email: Yup.string()
     .email("Please enter a valid email address.")
@@ -78,6 +79,8 @@ export const getValidationSchema = (target) => {
     email: Yup.string()
       .email("Please enter a valid email address.")
       .required("Email is required."),
+
+      gender: Yup.string().oneOf(["Male", "Female"]).required("Gender is required"),
 
     phone: Yup.string()
       .matches(/^\+?[0-9]{10,15}$/, "Phone number must be 10–15 digits, and may start with +.")

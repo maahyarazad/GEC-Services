@@ -26,6 +26,9 @@ import { initialValues } from "./InitialValues";
 import GICRegistrationForm from './GICRegistrationForm';
 import { useNavigate } from "react-router-dom";
 import { TextField, InputAdornment, MenuItem } from "@mui/material";
+import BirthdayField from "../utils/BirthdayField";
+import { CgDetailsMore } from "react-icons/cg";
+import { IoClose } from "react-icons/io5";
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
 //     const { setFieldValue } = useFormikContext();
 
@@ -49,6 +52,7 @@ export const TemplateForm = () => {
     const [currentResponseMessage, setCurrentResponseMessage] = useState("");
     const [phoneRegistered, setPhoneRegistered] = useState(false);
     const [validOtp, setValidOtp] = useState(null);
+    const [exapndedDescriptionMobileView, setExapndedDescriptionMobileView] = useState(false);
     const [global_whatsapp, setGlobalWhatsapp] = useState("");
     const [showDivFirst, setShowDivFirst] = useState(false);
     const navigate = useNavigate();
@@ -351,6 +355,32 @@ export const TemplateForm = () => {
                 <button onClick={clearLocalStorage} className="cta-button simple">
                     <img src="/close-info.svg"></img>
                 </button>
+                {(() => {
+                        const trimmedDescription = (target.description || "").trim();
+
+                        // Strip HTML tags and check if there's meaningful content
+                        const plainText = trimmedDescription.replace(/<[^>]*>/g, "").trim();
+
+                        if (plainText) {
+                            return (
+                               
+                                
+                                <button
+                                        className={`cta-button simple slider-button ${exapndedDescriptionMobileView ? "opened" :""}`}
+                                        onClick={()=> setExapndedDescriptionMobileView(prev => !prev)}
+                                    >
+                                        {exapndedDescriptionMobileView ? 
+                                        <IoClose size={25}/>
+                                            :
+                                        <CgDetailsMore size={25}/>
+                                        }
+                                </button>
+                            );
+                        }
+
+                        return null;
+                    })()}
+                    
                 <div className={showDivFirst ? "active" : ""}>
                     {(() => {
                         const trimmedDescription = (target.description || "").trim();
@@ -361,9 +391,10 @@ export const TemplateForm = () => {
                         if (plainText) {
                             return (
                                 <div
-                                    className="target-description ql-editor"
+                                    className={`target-description ql-editor ${exapndedDescriptionMobileView ? "expanded" :""}`}
                                     dangerouslySetInnerHTML={{ __html: trimmedDescription }}
                                 />
+                                
                             );
                         }
 
@@ -414,6 +445,10 @@ export const TemplateForm = () => {
                                 setTouched,
                             }) => (
                                 <Form>
+                                   
+
+                       
+                                    
                                     {/* <Button
                     variant="contained"
                     color="primary"
@@ -513,31 +548,35 @@ export const TemplateForm = () => {
                                                     </div>
 
                                                     <div className="full">
-                                                        <label>
-                                                            <p>Whatsapp Number</p>
-                                                        </label>
+                                                        
                                                         <div className="input-group">
-                                                            {target.fieldIcon === "true" && (
-                                                                <span className="input-group-text">
-                                                                    <FaWhatsapp />
-                                                                </span>
-                                                            )}
+                                                            
                                                             <Field
-                                                                className={`form-control ${errors.whatsapp && touched.whatsapp
-                                                                    ? "is-invalid"
-                                                                    : ""
-                                                                    }`}
-                                                                type="tel"
-                                                                name="whatsapp"
+                                                                as={TextField}
+                                                                    
+                                                                    name="whatsapp"
+                                                                    
+                                                                    size="small"
+                                                                    fullWidth
+                                                                    label="WhatsApp Number"
+                                                                    helperText={<ErrorMessage name="whatsapp" />}
+                                                                    className="pb-2"
+                                                                    error={touched.whatsapp && Boolean(errors.whatsapp)}
+                                                                    InputProps={{
+                                                                        startAdornment: (
+                                                                            <InputAdornment position="start">
+                                                                                {target.fieldIcon === "true" && (
+
+                                                                                     <FaWhatsapp />
+                                                                                )}
+                                                                            </InputAdornment>
+                                                                        ),
+                                                                    }}
                                                             // We are using email verification
                                                             // disabled={phoneRegistered}
                                                             />
                                                         </div>
-                                                        <ErrorMessage
-                                                            name="whatsapp"
-                                                            component="div"
-                                                            className="text-danger small"
-                                                        />
+                                                       
                                                     </div>
 
                                                     <div className={`otp-slide ${showOtpInput ? "show" : ""}`}>
@@ -592,19 +631,43 @@ export const TemplateForm = () => {
                                                     <div className="spacer"></div>
 
                                                     <div className="full">
-                                                        <label>
-                                                            <p>Gender</p>
-                                                        </label>
+                                                       
                                                         <div className="input-group">
-                                                            {target.fieldIcon === "true" && (
-                                                                <span className="input-group-text">
-                                                                    <BsGenderAmbiguous />
-                                                                </span>
-                                                            )}
+                                                            
 
-                                                            <Field as="select" name="gender">
-                                                                <option value="male">Male</option>
-                                                                <option value="female">Female</option>
+                                                            <Field  name="gender"
+                                                                     as={TextField}
+                                                                     select
+                                                                    size="small"
+
+                                                                    label="Gender"
+                                                                    helperText={<ErrorMessage name="gender" />}
+                                                                    className="pb-2"
+                                                                    error={touched.gender && Boolean(errors.gender)}
+                                                                    InputProps={{
+                                                                        startAdornment: (
+                                                                            <InputAdornment position="start">
+                                                                                {target.fieldIcon === "true" && (
+
+                                                                                      <BsGenderAmbiguous />
+                                                                                )}
+                                                                            </InputAdornment>
+                                                                        ),
+                                                                    }}
+                                                                    SelectProps={{
+                                                                        displayEmpty: true,
+                                                                        renderValue: (selected) =>
+                                                                        selected && selected.length > 0 ? (
+                                                                            selected
+                                                                        ) : (
+                                                                            <span style={{ color: "#9e9e9e", fontSize: "0.8rem" }}>
+                                                                            Select Gender
+                                                                            </span>
+                                                                        ),
+                                                                    }}
+                                                                    >
+                                                                <MenuItem value="Male">Male</MenuItem>
+                                                                <MenuItem value="Female">Female</MenuItem>
                                                             </Field>
                                                         </div>
                                                     </div>
@@ -670,14 +733,28 @@ export const TemplateForm = () => {
                                             )}
                                             {target.birthdayRequired === "true" && (
                                                 <div className="full">
-                                                    <label>
-                                                        <p>Birthday</p>
-                                                    </label>
+                                                   
                                                     <div className="input-group">
-                                                        <span className="input-group-text">
-                                                            <MdOutlineCalendarMonth />
-                                                        </span>
-                                                        <Field
+                                                        
+                                                    <Field
+                                                    as={TextField}
+                                                    size="small"
+                                                    fullWidth
+                                                    type="date"
+                                                    label="Birthday"
+                                                    name="birthday"
+                                                    helperText={<ErrorMessage name="birthday" />}
+                                                    className="pb-2"
+                                                    error={touched.birthday && Boolean(errors.birthday)}
+                                                    InputProps={{
+                                                        startAdornment: (
+                                                        <InputAdornment position="start">
+                                                            {target.fieldIcon === "true" && <MdCake />} {/* your icon */}
+                                                        </InputAdornment>
+                                                        ),
+                                                    }}
+                                                    />
+                                                        {/* <Field
                                                             className={`form-control ${errors.birthday && touched.birthday
                                                                 ? "is-invalid"
                                                                 : ""
@@ -689,13 +766,9 @@ export const TemplateForm = () => {
                                                                 setFieldValue("birthday", e.target.value);
                                                                 setSelectedDate(e.target.value);
                                                             }}
-                                                        />
+                                                        /> */}
                                                     </div>
-                                                    <ErrorMessage
-                                                        name="birthday"
-                                                        component="div"
-                                                        className="text-danger small"
-                                                    />
+                                                    
                                                 </div>
                                             )}
 
@@ -732,25 +805,30 @@ export const TemplateForm = () => {
 
                                             {target.textarea === "true" && (
                                                 <div className="full">
-                                                    <label htmlFor="textarea">
-                                                        <p>Message</p>
-                                                    </label>
+                                                   
                                                     <div className="input-group">
                                                         <Field
-                                                            as="textarea"
-                                                            rows={4}
-                                                            className={`form-control ${errors.textarea && touched.textarea
-                                                                ? "is-invalid"
-                                                                : ""
-                                                                }`}
-                                                            name="textarea"
-                                                        />
+                                        as={TextField}
+                                        size="small"
+                                        fullWidth
+                                        label="Message"
+                                        helperText={<ErrorMessage name="textarea" />}
+                                        className="pb-2"
+                                        type="text"
+                                        name="textarea"
+                                        multiline
+                                        minRows={4} // adjust the number of visible rows
+                                        error={touched.textarea && Boolean(errors.textarea)}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    {target.fieldIcon === "true" && <LuBriefcaseBusiness />}
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                    />
                                                     </div>
-                                                    <ErrorMessage
-                                                        name="textarea"
-                                                        component="div"
-                                                        className="text-danger small"
-                                                    />
+                                                   
                                                 </div>
                                             )}
 
