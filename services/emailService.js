@@ -530,18 +530,23 @@ async function company_data_confirmation_email(reqBody) {
       company_industry,
       company_ceoOwnerGm,
       company_ceoOwnerGm_contactNumber,
+      company_ceoOwnerGm_landline,
       company_ceoOwnerGm_email,
       company_hrHead,
       company_hrHead_contactNumber,
+      company_hrHead_landline,
       company_hrHead_email,
       company_accountingHead,
       company_accountingHead_contactNumber,
+      company_accountingHead_landline,
       company_accountingHead_email,
       company_marketingHead,
       company_marketingHead_contactNumber,
+      company_marketingHead_landline,
       company_marketingHead_email,
       company_pa,
       company_pa_contactNumber,
+      company_pa_landline,
       company_pa_email
     } = JSON.parse(reqBody.company_data);
 
@@ -564,7 +569,7 @@ async function company_data_confirmation_email(reqBody) {
             </tr>
             <tr>
               <td style="color: #333333; font-size: 16px; line-height: 1.6; padding: 30px;">
-                <p style="margin: 0 0 15px 0; color: #333333;">Dear ${reqBody.firstName} ${reqBody.lastName},</p>
+                <p style="margin: 0 0 15px 0; color: #333333;">Dear ${company_partnerName},</p>
                 <p style="margin: 0 0 15px 0; color: #333333;">We have successfully received your company information for <strong>${event_name}</strong>. Below are the details provided:</p>
 
                 <table width="100%" cellpadding="8" cellspacing="0" border="0" style="border-collapse: collapse; font-size: 14px; color: #333333;">
@@ -582,27 +587,33 @@ async function company_data_confirmation_email(reqBody) {
                     <tr><td colspan="2" style="padding-top: 15px; color:#333333;"><strong>CEO / Owner / GM</strong></td></tr>
                     <tr><td style="color:#333333;">Name</td><td style="color:#333333;">${company_ceoOwnerGm || '-'}</td></tr>
                     <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_ceoOwnerGm_contactNumber || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_ceoOwnerGm_landline || '-'}</td></tr>
                     <tr><td style="color:#333333;">Email</td><td style="color:#333333;">${company_ceoOwnerGm_email || '-'}</td></tr>
                     
+                    <tr><td colspan="2" style="padding-top: 15px; color:#333333;"><strong>PA</strong></td></tr>
+                    <tr><td style="color:#333333;">Name</td><td style="color:#333333;">${company_pa || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_pa_contactNumber || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_pa_landline || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Email</td><td style="color:#333333;">${company_pa_email || '-'}</td></tr>
+
                     <tr><td colspan="2" style="padding-top: 15px; color:#333333;"><strong>HR Head</strong></td></tr>
                     <tr><td style="color:#333333;">Name</td><td style="color:#333333;">${company_hrHead || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_hrHead_contactNumber || '-'}</td></tr>
                     <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_hrHead_contactNumber || '-'}</td></tr>
                     <tr><td style="color:#333333;">Email</td><td style="color:#333333;">${company_hrHead_email || '-'}</td></tr>
                     
                     <tr><td colspan="2" style="padding-top: 15px; color:#333333;"><strong>Accounting Head</strong></td></tr>
                     <tr><td style="color:#333333;">Name</td><td style="color:#333333;">${company_accountingHead || '-'}</td></tr>
                     <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_accountingHead_contactNumber || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_accountingHead_landline || '-'}</td></tr>
                     <tr><td style="color:#333333;">Email</td><td style="color:#333333;">${company_accountingHead_email || '-'}</td></tr>
                     
                     <tr><td colspan="2" style="padding-top: 15px; color:#333333;"><strong>Marketing Head</strong></td></tr>
                     <tr><td style="color:#333333;">Name</td><td style="color:#333333;">${company_marketingHead || '-'}</td></tr>
                     <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_marketingHead_contactNumber || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_marketingHead_landline || '-'}</td></tr>
                     <tr><td style="color:#333333;">Email</td><td style="color:#333333;">${company_marketingHead_email || '-'}</td></tr>
                     
-                    <tr><td colspan="2" style="padding-top: 15px; color:#333333;"><strong>PA</strong></td></tr>
-                    <tr><td style="color:#333333;">Name</td><td style="color:#333333;">${company_pa || '-'}</td></tr>
-                    <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_pa_contactNumber || '-'}</td></tr>
-                    <tr><td style="color:#333333;">Email</td><td style="color:#333333;">${company_pa_email || '-'}</td></tr>
                   </tbody>
                 </table>
 

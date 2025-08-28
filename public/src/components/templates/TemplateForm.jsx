@@ -299,7 +299,10 @@ export const TemplateForm = () => {
                     "success"
                 );
                 resetForm(); // 👈 Reset the form after submission
-                setPhoneRegistered(false);
+                if (target.surveyForm !== "true") {
+                    
+                    setPhoneRegistered(false);
+                }
                 setValidOtp(false);
                 otpRef?.current?.clear();
                 timeoutRef.current = setTimeout(() => {

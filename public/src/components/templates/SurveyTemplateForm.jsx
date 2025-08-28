@@ -81,7 +81,6 @@ export const SurveyTemplateForm = ({ target, errors, touched }) => {
                                                                 name={sVal.name}
                                                                 helperText={<ErrorMessage name={sVal.name} />}
                                                                 InputProps={{
-                                                                    InputMode:"search",
                                                                     startAdornment: (
                                                                         <InputAdornment position="start">
                                                                             {target.fieldIcon === "true" && (

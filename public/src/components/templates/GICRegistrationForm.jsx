@@ -73,7 +73,7 @@ const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
                                                 name={GICTemplate[key].name}
                                                 helperText={<ErrorMessage name={GICTemplate[key].name} />}
                                                 InputProps={{
-                                                    InputMode:"search",
+                                                    
                                                     startAdornment: (
                                                         <InputAdornment position="start">
                                                             {target.fieldIcon === "true" && (
@@ -161,7 +161,7 @@ const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
                                                 name={GICTemplate[key].name}
                                                 helperText={<ErrorMessage name={GICTemplate[key].name} />}
                                                 InputProps={{
-                                                    InputMode:"search",
+                                                    
                                                     startAdornment: (
                                                         <InputAdornment position="start">
                                                             {target.fieldIcon === "true" && (
