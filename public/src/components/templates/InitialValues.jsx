@@ -2,7 +2,7 @@ export const initialValues = {
         email: "",
         phone: "",
         whatsapp: "",
-        gender: null,
+        gender: "",
         firstName: "",
         lastName: "",
         companyName: "",

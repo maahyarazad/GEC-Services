@@ -5,6 +5,7 @@ const { generateRecordId, generateOTP } = require("../services/generatorService"
 const dbService = require("../services/dbService");
 const {email_otp} = require("../services/emailService");
 const twilioClient = require('twilio')(process.env.TWILIO_ACOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const smsglobal = require('smsglobal')(process.env.SMSGLOBAL_KEY, process.env.SMSGLOBAL_SECRET);
 
 const multer = require("multer");
 const { config } = require('dotenv');
@@ -65,8 +66,8 @@ const sendOtpToEmail = async (data, req, res) => {
 };
 
 
-const sendOtpToPhone = async (mobile_number, req, res) => {
-    if (!mobile_number) {
+const sendOtpToPhone = async (data, req, res) => {
+    if (!data.phone) {
         return { status: false, code: 400, message: 'Mobile number required' };
     }
 
@@ -80,11 +81,22 @@ const sendOtpToPhone = async (mobile_number, req, res) => {
     req.session.otpExpires = Date.now() + 1 * 59 * 1000; // expires in 1 mins
 
     try {
-        await twilioClient.messages.create({
-            body: `Your OTP code is: ${otp}`,
-            from: process.env.TWILIO_PHONE  ,
-            to: `whatsapp:${mobile_number}`,
-        });
+        // await twilioClient.messages.create({
+        //     body: `Your OTP code is: ${otp}`,
+        //     from: process.env.TWILIO_PHONE  ,
+        //     to: `whatsapp:${mobile_number}`,
+        // });
+
+        var payload = {
+            origin: 'RegistrationApp',
+            message: `{*${otp}*} is your verification code.`,
+            destination: `${data.phone}`
+        };
+
+            // {*code*} placeholder is mandatory and will be replaced by an auto generated numeric code.
+
+            const response = await smsglobal.otp.send(payload);
+
 
         return { status: true, code: 200, message: 'OTP sent successfully' };
     } catch (error) {

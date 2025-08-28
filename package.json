@@ -34,6 +34,7 @@
     "nodemailer": "^7.0.5",
     "pm2": "^6.0.8",
     "qrcode": "^1.5.4",
+    "smsglobal": "^1.2.5",
     "sqlite3": "^5.1.7",
     "stream": "^0.0.3",
     "twilio": "^5.7.1"

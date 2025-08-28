@@ -74,12 +74,14 @@ export const SurveyTemplateForm = ({ target, errors, touched }) => {
                                                                 className="pb-2"
                                                                 size="small"
                                                                 as={TextField}
+                                                                type="search"
                                                                 fullWidth
                                                                 error={sVal.name && Boolean(errors[sVal.name])}
                                                                 label={sVal.label}
                                                                 name={sVal.name}
                                                                 helperText={<ErrorMessage name={sVal.name} />}
                                                                 InputProps={{
+                                                                    InputMode:"search",
                                                                     startAdornment: (
                                                                         <InputAdornment position="start">
                                                                             {target.fieldIcon === "true" && (

@@ -1,34 +1,41 @@
-import { Login } from "../utils/Login";
-import "./templateform.css";
-import { useEffect, useState } from "react";
+// React & Hooks
+import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+
+// Third-Party Libraries
 import { Formik, Form, Field, ErrorMessage } from "formik";
+import { Button, Box, TextField, InputAdornment, MenuItem } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
+
+// Icons
+import { FaWhatsapp } from "react-icons/fa6";
+import { MdEmail, MdDriveFileRenameOutline } from "react-icons/md";
+import { LuBriefcaseBusiness } from "react-icons/lu";
+import { BsGenderAmbiguous } from "react-icons/bs";
+import { IoClose, IoCloseCircleOutline } from "react-icons/io5";
+import { IoMdInformationCircleOutline } from "react-icons/io";
+import { FaPhoneAlt } from "react-icons/fa";
+
+// Utils & Helpers
+import { Login } from "../utils/Login";
 import {
     getEncryptedLocalStorage,
     removeEncryptedLocalStorage,
 } from "../utils/cookieUtils";
-import { Button, Box } from "@mui/material";
-import { getValidationSchema } from "./dynamicValidation";
-import { FaWhatsapp } from "react-icons/fa6";
-import { MdEmail } from "react-icons/md";
-import { FaPhoneAlt } from "react-icons/fa";
-import { MdOutlineCalendarMonth } from "react-icons/md";
-import { MdDriveFileRenameOutline } from "react-icons/md";
-import { LuBriefcaseBusiness } from "react-icons/lu";
-import { BsGenderAmbiguous } from "react-icons/bs";
 import SimpleSnackbar from "../utils/Snackbar";
-import { useRef } from "react";
-import CircularProgress from "@mui/material/CircularProgress";
 import OtpTimer from "../utils/OtpTimer";
 import OtpInput from "../utils/OtpInput";
 import CountDownComponent from "../utils/TenDayCountdown";
+
+// Forms & Validation
+import { getValidationSchema } from "./dynamicValidation";
 import { SurveyTemplateForm } from "./SurveyTemplateForm";
 import { initialValues } from "./InitialValues";
-import GICRegistrationForm from './GICRegistrationForm';
-import { useNavigate } from "react-router-dom";
-import { TextField, InputAdornment, MenuItem } from "@mui/material";
-import BirthdayField from "../utils/BirthdayField";
-import { CgDetailsMore } from "react-icons/cg";
-import { IoClose } from "react-icons/io5";
+import GICRegistrationForm from "./GICRegistrationForm";
+
+// Styles
+import "./templateform.css";
+
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
 //     const { setFieldValue } = useFormikContext();
 
@@ -347,13 +354,13 @@ export const TemplateForm = () => {
                     }`}
             >
                 <button
-                    onClick={() => setShowDivFirst((prev) => !prev)}
+                   onClick={()=> setExapndedDescriptionMobileView(prev => !prev)}
                     className="cta-button simple"
                 >
-                    <img src="/info.svg"></img>
+                   <IoMdInformationCircleOutline size={20}/>
                 </button>
                 <button onClick={clearLocalStorage} className="cta-button simple">
-                    <img src="/close-info.svg"></img>
+                    <IoCloseCircleOutline size={20}/>
                 </button>
                 {(() => {
                         const trimmedDescription = (target.description || "").trim();
@@ -372,7 +379,7 @@ export const TemplateForm = () => {
                                         {exapndedDescriptionMobileView ? 
                                         <IoClose size={25}/>
                                             :
-                                        <CgDetailsMore size={25}/>
+                                            <></>
                                         }
                                 </button>
                             );

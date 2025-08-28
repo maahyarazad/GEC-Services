@@ -23,7 +23,7 @@
     ]
   },
   {
-    "section": "2. Main Contact",
+    "section": "2.PA to Main Contact",
     "fields": [
       { "label": "Name", "name": "company_pa", "icon": "MdPerson", "type": "text" },
       { "label": "Mobile/WhatsApp", "name": "company_pa_contactNumber", "icon": "MdPhone", "type": "text" },
@@ -44,8 +44,8 @@
     "section": "4. Marketing Contact",
     "fields": [
       { "label": "Name", "name": "company_marketingHead", "icon": "MdPerson", "type": "text" },
-      { "label": "Contact Number", "name": "company_marketingHead_contactNumber", "icon": "MdPhone", "type": "text" },
-      { "label": "Contact Number", "name": "company_marketingHead_landline", "icon": "MdPhone", "type": "text" },
+      { "label": "Mobile/WhatsApp", "name": "company_marketingHead_contactNumber", "icon": "MdPhone", "type": "text" },
+      { "label": "Landline", "name": "company_marketingHead_landline", "icon": "MdPhone", "type": "text" },
       { "label": "Email", "name": "company_marketingHead_email", "icon": "MdEmail", "type": "email" }
     ]
   },

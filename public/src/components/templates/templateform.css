@@ -208,6 +208,9 @@
     > button:nth-of-type(2) {
       top: 8px;
       right: 8px;
+      border-radius: 10px;
+box-shadow: 0px 8px 10px rgba(0, 0, 0, 0.5),
+              0px 3px 6px rgba(0, 0, 0, 0.5);
       > img {
         filter: unset;
         filter: invert(1);
@@ -216,7 +219,7 @@
 
     > button:nth-of-type(2)::before {
       content: "";
-      color: var(--white);
+      color: var(--black);
     }
 
     > div {
@@ -224,16 +227,16 @@
     }
 
     > .slider-button{
-      left: -5vw;
+      left: -7dvw;
       position: absolute;
-      top: 40px;
+      top: 7dvh;
       z-index: 99;
       display:block;
        transition: left 0.3s ease-in-out;
     }
 
     > .slider-button.opened{
-      left: 75vw !important;
+      left: 77dvw !important;
        transition: left 0.3s ease-in-out;
     }
 
@@ -241,8 +244,11 @@
       position: absolute !important;
       width: 100% !important;
       > .target-description {
+              background: rgba(255, 255, 255, 1); /* semi-transparent background */
+      backdrop-filter: blur(0px); /* <--- the blur effect */
+      -webkit-backdrop-filter: blur(0px); /* for Safari support */
                 /* width: calc(100% - 48px); */
-        height: calc(100dvh - 64px);
+        height: 90vh;
         position: absolute;
         bottom: 0;
         left: -80dvw;
@@ -302,7 +308,7 @@
           overflow-y: scroll; */
 
           > h1 {
-            font-size: 1.3rem;
+            font-size: 1.5rem;
           }
         }
       }
@@ -341,6 +347,7 @@
       position: absolute;
       top: 8px;
       right: 8px;
+      
     }
 
     > p {

@@ -67,11 +67,13 @@ const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
                                                 size="small"
                                                 as={TextField}
                                                 fullWidth
+                                                type="search"
                                                 error={touched[GICTemplate[key].name] && Boolean(errors[GICTemplate[key].name])}
                                                 label={GICTemplate[key].label}
                                                 name={GICTemplate[key].name}
                                                 helperText={<ErrorMessage name={GICTemplate[key].name} />}
                                                 InputProps={{
+                                                    InputMode:"search",
                                                     startAdornment: (
                                                         <InputAdornment position="start">
                                                             {target.fieldIcon === "true" && (
@@ -148,7 +150,7 @@ const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
                                     case "gic_address_country":
                                         return (
                                             <Field
-                                            
+                                                type="search"
                                                 select
                                                 className="pb-2"
                                                 size="small"
@@ -159,6 +161,7 @@ const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
                                                 name={GICTemplate[key].name}
                                                 helperText={<ErrorMessage name={GICTemplate[key].name} />}
                                                 InputProps={{
+                                                    InputMode:"search",
                                                     startAdornment: (
                                                         <InputAdornment position="start">
                                                             {target.fieldIcon === "true" && (
