@@ -599,7 +599,7 @@ async function company_data_confirmation_email(reqBody) {
                     <tr><td colspan="2" style="padding-top: 15px; color:#333333;"><strong>HR Head</strong></td></tr>
                     <tr><td style="color:#333333;">Name</td><td style="color:#333333;">${company_hrHead || '-'}</td></tr>
                     <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_hrHead_contactNumber || '-'}</td></tr>
-                    <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_hrHead_contactNumber || '-'}</td></tr>
+                    <tr><td style="color:#333333;">Contact Number</td><td style="color:#333333;">${company_hrHead_landline || '-'}</td></tr>
                     <tr><td style="color:#333333;">Email</td><td style="color:#333333;">${company_hrHead_email || '-'}</td></tr>
                     
                     <tr><td colspan="2" style="padding-top: 15px; color:#333333;"><strong>Accounting Head</strong></td></tr>

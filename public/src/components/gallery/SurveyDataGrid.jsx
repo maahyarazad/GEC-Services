@@ -19,23 +19,29 @@ const columns = [
 
   { field: 'ceoOwnerGm', headerName: 'CEO / Owner / GM', width: 180, filterable: true },
   { field: 'ceoOwnerGm_contactNumber', headerName: 'CEO Contact Number', width: 180, filterable: true },
+  { field: 'ceoOwnerGm_landline', headerName: 'CEO Landline Number', width: 180, filterable: true },
   { field: 'ceoOwnerGm_email', headerName: 'CEO Email', width: 180, filterable: true },
+
+  { field: 'pa', headerName: 'PA', width: 160, filterable: true },
+  { field: 'pa_contactNumber', headerName: 'PA Contact Number', width: 180, filterable: true },
+  { field: 'pa_landline', headerName: 'PA Landline Number', width: 180, filterable: true },
+  { field: 'pa_email', headerName: 'PA Email', width: 180, filterable: true },
 
   { field: 'hrHead', headerName: 'HR Head', width: 160, filterable: true },
   { field: 'hrHead_contactNumber', headerName: 'HR Contact Number', width: 180, filterable: true },
+  { field: 'hrHead_landline', headerName: 'HR Landline Number', width: 180, filterable: true },
   { field: 'hrHead_email', headerName: 'HR Email', width: 180, filterable: true },
 
   { field: 'accountingHead', headerName: 'Accounting Head', width: 180, filterable: true },
   { field: 'accountingHead_contactNumber', headerName: 'Accounting Contact Number', width: 200, filterable: true },
+  { field: 'accountingHead_landline', headerName: 'Accounting Landline Number', width: 200, filterable: true },
   { field: 'accountingHead_email', headerName: 'Accounting Email', width: 180, filterable: true },
 
   { field: 'marketingHead', headerName: 'Marketing Head', width: 180, filterable: true },
   { field: 'marketingHead_contactNumber', headerName: 'Marketing Contact Number', width: 200, filterable: true },
+  { field: 'marketingHead_landline', headerName: 'Marketing Landline Number', width: 200, filterable: true },
   { field: 'marketingHead_email', headerName: 'Marketing Email', width: 180, filterable: true },
 
-  { field: 'pa', headerName: 'PA', width: 160, filterable: true },
-  { field: 'pa_contactNumber', headerName: 'PA Contact Number', width: 180, filterable: true },
-  { field: 'pa_email', headerName: 'PA Email', width: 180, filterable: true },
 
   { field: 'createdAt', headerName: 'Created At', width: 200, filterable: true },
   { field: 'modifiedAt', headerName: 'Modified At', width: 200, filterable: true },
