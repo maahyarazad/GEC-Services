@@ -795,3 +795,24 @@ tr.eventhide {
 .MuiDataGrid-toolbarQuickFilter {
   display: none !important;
 }
+
+.ql-editor {
+  box-sizing: border-box;
+  counter-reset: list-0 list-1 list-2 list-3 list-4 list-5 list-6 list-7 list-8
+    list-9;
+  line-height: 1.42;
+  height: 100%;
+  outline: none;
+  overflow-y: auto;
+  padding: 12px 15px;
+  tab-size: 4;
+  -moz-tab-size: 4;
+  text-align: left;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+
+  img {
+    width: 100% !important;
+    height: auto !important;
+  }
+}

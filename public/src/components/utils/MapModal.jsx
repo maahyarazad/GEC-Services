@@ -15,13 +15,9 @@ const MapModal = ({ isOpen, onClose, onSelect, isParentModalOpen, initialLon , i
 
   useEffect(()=> {
     
-      const token = Cookies.get('a-usr');
-    debugger;
-    if (token) {
-      const decoded = jwtDecode(token);
-      const mapboxToken = decoded.mapboxToken;
-      mapboxgl.accessToken = mapboxToken;
-    }
+
+      mapboxgl.accessToken = "pk.eyJ1IjoibWFoeWFyYXphZCIsImEiOiJjazhzaG9pNjIwYzJ4M2VyczJlNnNndzF6In0.ZFGc5daAFPaXObvBKA20CA";
+    
   }, [])
 
   useEffect(() => {
