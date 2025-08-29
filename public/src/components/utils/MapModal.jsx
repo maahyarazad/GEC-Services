@@ -16,7 +16,7 @@ const MapModal = ({ isOpen, onClose, onSelect, isParentModalOpen, initialLon , i
   useEffect(()=> {
     
       const token = Cookies.get('a-usr');
-    
+    debugger;
     if (token) {
       const decoded = jwtDecode(token);
       const mapboxToken = decoded.mapboxToken;

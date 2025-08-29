@@ -328,6 +328,7 @@ export const RegistrationList = () => {
     };
 
     const [enableUniqueMemberCode, setEnableUniqueMemberCode] = useState(false);
+    const [disableLogin, setDisableLogin] = useState(false);
 
     const steps = [
         'Step 1: Select Initial Event Configuration',
@@ -451,6 +452,8 @@ export const RegistrationList = () => {
                                     Later, you can limit the number of registrations allowed per code.
                                 </p>
 
+<div className="d-flex flex-column">
+
                                 <FormControlLabel
                                     control={
                                         <Switch
@@ -461,6 +464,22 @@ export const RegistrationList = () => {
                                     }
                                     label="Enable unique event codes for members"
                                 />
+
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={disableLogin}
+                                            onChange={(e) => {
+                                                if(e.target.checked){
+                                                    setEnableUniqueMemberCode(false)
+                                                }
+                                                setDisableLogin(e.target.checked)}}
+                                            color="primary"
+                                        />
+                                    }
+                                    label="Disable Login"
+                                />
+</div>
                             </div>
 
                             <div className="mt-4 text-end">
@@ -478,6 +497,7 @@ export const RegistrationList = () => {
                                 initialData={null}
                                 uniqeCodeAccess={memberCount}
                                 enableUniqueMemberCode={enableUniqueMemberCode}
+                                disableLogin={disableLogin}
                                 modalSwitch={() => {
                                     setNewReg(false);
                                     setIsParentModalOpen(false);

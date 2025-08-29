@@ -141,45 +141,57 @@ router.post(
 
       // uniqeCodeAccess Logic goes here
 
-      const code_list = [];
-      if (Number(data.uniqeCodeAccess) > 1) {
-        const members = await dbService.findExact(
-          "Member",
-          "active_member",
-          true
-        );
-        for (let i = 0; i < Number(data.uniqeCodeAccess); i++) {
-          code_list.push({
-            key: generateRecordId(data.page, -6),
-            memberId: members[i].id,
+      if(data.loginRequired){
+
+        const code_list = [];
+        if (Number(data.uniqeCodeAccess) > 1) {
+          const members = await dbService.findExact(
+            "Member",
+            "active_member",
+            true
+          );
+          for (let i = 0; i < Number(data.uniqeCodeAccess); i++) {
+            code_list.push({
+              key: generateRecordId(data.page, -6),
+              memberId: members[i].id,
+            });
+          }
+        }
+  
+        if (code_list.length > 0) {
+          const insert_data = await dbService.insertWithKeys(
+            "registration_config",
+            registration_data,
+            code_list
+          );
+          res.json({
+            status: true,
+            message: "Data saved successfully",
+            insert_data,
+          });
+        } else {
+          registration_data.registration_code = generateRecordId(
+            data.page,
+            -6,
+            false
+          );
+          const insert_data = dbService.create(table_name, registration_data);
+          res.json({
+            status: true,
+            message: "Data saved successfully",
+            insert_data,
           });
         }
+      }else{
+        const insert_data = dbService.create(table_name, registration_data);
+          res.json({
+            status: true,
+            message: "Data saved successfully",
+            insert_data,
+          });
       }
 
-      if (code_list.length > 0) {
-        const insert_data = await dbService.insertWithKeys(
-          "registration_config",
-          registration_data,
-          code_list
-        );
-        res.json({
-          status: true,
-          message: "Data saved successfully",
-          insert_data,
-        });
-      } else {
-        registration_data.registration_code = generateRecordId(
-          data.page,
-          -6,
-          false
-        );
-        const insert_data = dbService.create(table_name, registration_data);
-        res.json({
-          status: true,
-          message: "Data saved successfully",
-          insert_data,
-        });
-      }
+
     } catch (error) {
       console.error(error);
       res.status(500).json({ status: false, message: "Server error" });

@@ -67,6 +67,7 @@ export default function NewRegistrationPage({
   initialData = null,
   modalSwitch,
   uniqeCodeAccess,
+  disableLogin,
   enableUniqueMemberCode,
   isParentModalOpen,
 }) {
@@ -90,7 +91,7 @@ export default function NewRegistrationPage({
       }
     };
   }, []);
-
+  
   const initialValues = {
     id: initialData?.id || null,
     page: initialData?.page || "",
@@ -98,6 +99,7 @@ export default function NewRegistrationPage({
     birthdayRequired: initialData?.birthdayRequired === "true",
     companyRequired: initialData?.companyRequired === "true",
     lockRegistration: initialData?.lockRegistration === "true",
+    loginRequired: initialData?.loginRequired === "true",
     IdentityConsent: initialData?.IdentityConsent === "true",
     fileUpload: initialData?.fileUpload === "true",
     surveyForm: initialData?.surveyForm === "true",
@@ -118,6 +120,7 @@ export default function NewRegistrationPage({
   };
 
   useEffect(() => {
+    
     if (initialValues.image && typeof initialValues.image === "string") {
       const url = `${import.meta.env.VITE_SERVERURL}/uploads/${initialValues.image}`;
       setPreview(url);
@@ -156,6 +159,15 @@ export default function NewRegistrationPage({
       );
     }
   }, [initialValues.page]);
+
+  // useEffect(() => {
+  //   debugger;
+    
+  //   if(disableLogin === "true"){
+  //     initialValues.loginRequired = Boolean(false);
+  //   }
+  // }, []);
+
 
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
     setSubmitError("");
@@ -621,6 +633,26 @@ export default function NewRegistrationPage({
               <div className="row">
                 <div className="col-6">
                   <div className="pb-3">Registration Settings</div>
+
+ <div className="form-check form-switch mb-3">
+                    <Field name="loginRequired">
+                      {({ field }) => (
+                        <input
+                          name={field.name}
+                          checked={field.value}
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          id="loginRequired"
+                          className="form-check-input"
+                          type="checkbox"
+                        />
+                      )}
+                    </Field>
+                    <label className="form-check-label" htmlFor="loginRequired">
+                      Login Required
+                    </label>
+                  </div>
+
                   {values.fileUpload === false && (
                     <>
                       {(values.surveyForm === false) && (

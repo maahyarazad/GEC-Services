@@ -1,6 +1,6 @@
 // React & Hooks
-import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 // Third-Party Libraries
 import { Formik, Form, Field, ErrorMessage } from "formik";
@@ -51,6 +51,7 @@ import "./templateform.css";
 
 export const TemplateForm = () => {
     //OTP
+    const location = useLocation();
     const [showOtpInput, setShowOtpInput] = useState(false);
     const otpRef = useRef();
     const statusRef = useRef();
@@ -63,6 +64,41 @@ export const TemplateForm = () => {
     const [global_whatsapp, setGlobalWhatsapp] = useState("");
     const [showDivFirst, setShowDivFirst] = useState(false);
     const navigate = useNavigate();
+
+     const fetchData = useCallback(async () => {
+                try {
+                    // setLoading(true);
+                    const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config`, {
+                        method: 'GET',
+                    });
+        
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch');
+                    }
+        
+                    const values = await response.json();
+        
+                    if (values) {
+                        values.rows.map((x)=>{
+                                const value = location.pathname;
+                                debugger;
+                                if(x.loginRequired){
+
+                                }
+                        });
+                        
+                    }
+                } catch (err) {
+                    console.error('Error fetching data:', err);
+                } finally {
+                    // setLoading(false);
+                }
+            }, []);
+
+useEffect(() => {
+        fetchData();
+       
+    }, [fetchData]);
 
     const handleSendOtp = async (values) => {
         try {
@@ -170,7 +206,7 @@ export const TemplateForm = () => {
             if (gecuser.gic === "true") {
                 setPhoneRegistered(true);
             }
-
+            debugger;
             setTarget(gecuser);
         }
     }, []);
