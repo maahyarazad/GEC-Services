@@ -233,6 +233,7 @@ export const RegistrationList = () => {
             for (const key in selectedRow) {
                 formData.append(key, selectedRow[key]);
             }
+            
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/switch-registration-lock/`, {
                 method: 'POST',
                 body: formData,
@@ -295,16 +296,17 @@ export const RegistrationList = () => {
             </div>,
             'Confirm Action',
             () => {
-
-                const selectedRow = registrationList?.rows?.find((x) => x.id === row.id);
+                
+                const selectedRow = registrationList?.find((x) => x.id === row.id);
                 if (selectedRow) {
                     selectedRow.Image = null;
                     handleSwitchLock(selectedRow)
                 }
+
             },
             () => {
 
-            }
+            },
         );
 
     };
