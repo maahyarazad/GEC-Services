@@ -295,25 +295,35 @@ export const RegistrationList = () => {
     };
 
     const switchLock = (row) => {
-        dialogRef.current.openDialog(
-            <div>
-                <p>Enabling this option will lock the registration page and prevent further submissions. Are you sure you want to proceed?</p>
-                <img src={lockRegistrationImage} alt="Lock" style={{ maxWidth: '100%', marginTop: 8 }} />
-            </div>,
-            'Confirm Action',
-            () => {
-                
-                const selectedRow = registrationList?.find((x) => x.id === row.id);
-                if (selectedRow) {
-                    selectedRow.Image = null;
-                    handleSwitchLock(selectedRow)
-                }
+        
+        if(row.lockRegistration === "false"){
 
-            },
-            () => {
-
-            },
-        );
+            dialogRef.current.openDialog(
+                <div>
+                    <p>Enabling this option will lock the registration page and prevent further submissions. Are you sure you want to proceed?</p>
+                    <img src={lockRegistrationImage} alt="Lock" style={{ maxWidth: '100%', marginTop: 8 }} />
+                </div>,
+                'Confirm Action',
+                () => {
+                    
+                    const selectedRow = registrationList?.find((x) => x.id === row.id);
+                    if (selectedRow) {
+                        selectedRow.Image = null;
+                        handleSwitchLock(selectedRow)
+                    }
+    
+                },
+                () => {
+    
+                },
+            );
+        }else{
+            const selectedRow = registrationList?.find((x) => x.id === row.id);
+                    if (selectedRow) {
+                        selectedRow.Image = null;
+                        handleSwitchLock(selectedRow)
+                    }
+        }
 
     };
 

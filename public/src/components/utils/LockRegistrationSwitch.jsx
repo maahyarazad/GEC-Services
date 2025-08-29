@@ -10,21 +10,27 @@ const LockRegistrationSwitch =
 
 
   const handleSwitchChange = (field, e) => {
-    dialogRef.current.openDialog(
-      <div>
-        <p>Enabling this option will lock the registration page and prevent further submissions. Are you sure you want to proceed?</p>
-        <img src={lockRegistrationImage} alt="Lock" style={{ maxWidth: '100%', marginTop: 8 }} />
-      </div>,
-      'Confirm Action',
-      () => {
-        
-        setFieldValue(field.name, !field.value);
+    
+    if(field.value === "false"){
+      dialogRef.current.openDialog(
+        <div>
+          <p>Enabling this option will lock the registration page and prevent further submissions. Are you sure you want to proceed?</p>
+          <img src={lockRegistrationImage} alt="Lock" style={{ maxWidth: '100%', marginTop: 8 }} />
+        </div>,
+        'Confirm Action',
+        () => {
+          
+          setFieldValue(field.name, !field.value);
+  
+        },
+        () => {
+          // Cancelled: do nothing
+        }
+      );
 
-      },
-      () => {
-        // Cancelled: do nothing
-      }
-    );
+    }else{
+      setFieldValue(field.name, !field.value);    
+    }
   };
 
   return (
