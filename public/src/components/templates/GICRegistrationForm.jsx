@@ -202,6 +202,7 @@ const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
                                                         fullWidth
                                                         size="small"
                                                         className="pb-2"
+                                                        placeholder={`Select ${GICTemplate[key].label}`}
                                                         label={GICTemplate[key].label}
                                                         name={GICTemplate[key].name}
                                                         error={touched[GICTemplate[key].name] && Boolean(errors[GICTemplate[key].name])}
