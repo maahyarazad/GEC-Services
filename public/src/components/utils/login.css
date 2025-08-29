@@ -33,6 +33,7 @@
 @media only screen and (max-width: 767px) {
   .login {
     position: relative;
+    border: none;
     > div {
       width: 80%;
     }

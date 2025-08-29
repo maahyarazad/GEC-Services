@@ -118,7 +118,7 @@ export const Login = () => {
   return (
     <div className="login">
       <div>
-        <h4>Welcome Back! Log In to Porceed.</h4>
+        <h4>Welcome back! Please log in to continue.</h4>
         {/* Step 1: check code login */}
         <Formik
           initialValues={initialValues}

@@ -128,7 +128,7 @@ export const GuestRegistration = () => {
         return (
             <div className="login">
                 <div>
-                    <h4>Welcome Back! Log In to Proceed.</h4>
+                    <h4>Welcome back! Please log in to continue.</h4>
                     <Formik
                         initialValues={initialValues}
                         validationSchema={validationSchema}
