@@ -244,6 +244,19 @@ router.get("/registration-config", async (req, res) => {
   }
 });
 
+router.get("/registration-config/optional-login", async (req, res) => {
+  try {
+    const table_name = "registration_config";
+    const rows = await dbService.findExact(table_name, "page", req.data);
+    debugger;
+
+    res.json({ status: true, message: "Data fetched successfully", rows });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
 router.post("/registration-config-access", upload.none(), async (req, res) => {
   try {
     const data = req.body;

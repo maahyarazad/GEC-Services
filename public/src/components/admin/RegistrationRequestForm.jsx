@@ -99,7 +99,12 @@ export default function NewRegistrationPage({
     birthdayRequired: initialData?.birthdayRequired === "true",
     companyRequired: initialData?.companyRequired === "true",
     lockRegistration: initialData?.lockRegistration === "true",
-    loginRequired: initialData?.loginRequired === "true",
+      // ✅ if loginRequired is null/undefined, fallback to disableLogin
+  loginRequired:
+    initialData?.loginRequired != null
+      ? initialData?.loginRequired === "true"
+      : !disableLogin,
+
     IdentityConsent: initialData?.IdentityConsent === "true",
     fileUpload: initialData?.fileUpload === "true",
     surveyForm: initialData?.surveyForm === "true",
