@@ -184,6 +184,7 @@
 }
 
 @media only screen and (max-width: 850px) {
+  
   .animated-digit {
     > div {
       color: var(--white);
@@ -199,6 +200,8 @@
   .template-form {
     position: relative;
     overflow: visible;
+    border: 0;
+    
     > button:nth-of-type(1) {
       display: block;
       right: unset;
@@ -207,13 +210,16 @@
     > button:nth-of-type(1),
     > button:nth-of-type(2) {
       top: 8px;
+      background-color: #fcfcfc;
       right: 8px;
       border-radius: 10px;
-box-shadow: 0px 8px 10px rgba(0, 0, 0, 0.5),
-              0px 3px 6px rgba(0, 0, 0, 0.5);
+      box-shadow: 0px 8px 10px rgba(136, 136, 136, 0.5),
+              0px 3px 6px rgba(141, 141, 141, 0.5);
       > img {
         filter: unset;
         filter: invert(1);
+        
+        
       }
     }
 
@@ -223,20 +229,22 @@ box-shadow: 0px 8px 10px rgba(0, 0, 0, 0.5),
     }
 
     > div {
-      border-radius: 8px;
+      border-radius: 0px;
     }
 
     > .slider-button{
-      left: -7dvw;
+      left: 10.5dvw;
+      
       position: absolute;
-      top: 7dvh;
+      top: 10.5dvh;
       z-index: 99;
       display:block;
-       transition: left 0.3s ease-in-out;
+      transition: left 0.3s ease-in-out;
+
     }
 
     > .slider-button.opened{
-      left: 77dvw !important;
+      left: 83dvw !important;
        transition: left 0.3s ease-in-out;
     }
 
@@ -244,14 +252,15 @@ box-shadow: 0px 8px 10px rgba(0, 0, 0, 0.5),
       position: absolute !important;
       width: 100% !important;
       > .target-description {
+        padding-right: 2rem;
               background: rgba(255, 255, 255, 1); /* semi-transparent background */
       backdrop-filter: blur(0px); /* <--- the blur effect */
       -webkit-backdrop-filter: blur(0px); /* for Safari support */
                 /* width: calc(100% - 48px); */
-        height: 90vh;
+        height: 90dvh;
         position: absolute;
         bottom: 0;
-        left: -80dvw;
+        left: -95dvw;
         max-height: unset;
         /* text-align: center; */
         border-radius: 4px;
@@ -285,6 +294,7 @@ box-shadow: 0px 8px 10px rgba(0, 0, 0, 0.5),
 
       > div {
         position: relative;
+        padding: 0.8rem;
         height: 100dvh;
         overflow-y: scroll;
         
@@ -300,7 +310,8 @@ box-shadow: 0px 8px 10px rgba(0, 0, 0, 0.5),
           }
         }
         > form {
-          padding: 32px;
+          
+          padding: 20px;
           border-radius: 12px;
           background-color: var(--white);
           box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
@@ -308,7 +319,7 @@ box-shadow: 0px 8px 10px rgba(0, 0, 0, 0.5),
           overflow-y: scroll; */
 
           > h1 {
-            font-size: 1.5rem;
+            font-size: 2rem;
           }
         }
       }

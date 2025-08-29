@@ -70,7 +70,7 @@ async function sendRawEmailWithAttachments({ to, subject, html, text = '', attac
     const mailOptions = {
         from: process.env.SMTP_SENDER,
         to,
-        bcc:"development2@german-emirates-club.com",
+        bcc: ["development2@german-emirates-club.com", "office1@german-emirates-club.com"],
         subject,
         text,
         html,
@@ -555,7 +555,7 @@ async function company_data_confirmation_email(reqBody) {
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>${event_name} - Company Data Received</title>
+    <title>${event_name} - Data Received</title>
   </head>
   <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif; color: #333333;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">

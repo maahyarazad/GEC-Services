@@ -1,6 +1,6 @@
 [
   {
-    "section": "Company Information",
+    "section": "Company Information (For Use in ClubPartner Profile)",
     "fields": [
       { "label": "Partner Company (Legal Name for Contract)", "name": "company_partnerName", "icon": "MdDriveFileRenameOutline", "type": "text" },
       { "label": "Brand Name for Partner Profile", "name": "company_partnerBrand", "icon": "LuBriefcaseBusiness", "type": "text" },
@@ -14,48 +14,55 @@
     ]
   },
   {
-    "section": "1. Main Contact (Owner / CEO / GM / Country Manager)",
+    "section":"Contact Information (GEC internal use only)", 
     "fields": [
-      { "label": "Name", "name": "company_ceoOwnerGm", "icon": "MdPerson", "type": "text" },
-      { "label": "Mobile/WhatsApp", "name": "company_ceoOwnerGm_contactNumber", "icon": "MdPhone", "type": "text" },
-      { "label": "Landline", "name": "company_ceoOwnerGm_landline", "icon": "MdPhone", "type": "text" },
-      { "label": "Email", "name": "company_ceoOwnerGm_email", "icon": "MdEmail", "type": "email" }
-    ]
-  },
-  {
-    "section": "2.PA to Main Contact",
-    "fields": [
-      { "label": "Name", "name": "company_pa", "icon": "MdPerson", "type": "text" },
-      { "label": "Mobile/WhatsApp", "name": "company_pa_contactNumber", "icon": "MdPhone", "type": "text" },
-      { "label": "Landline", "name": "company_pa_landline", "icon": "MdPhone", "type": "text" },
-      { "label": "Email", "name": "company_pa_email", "icon": "MdEmail", "type": "email" }
-    ]
-  },
-  {
-    "section": "3. HR Contact",
-    "fields": [
-      { "label": "Name", "name": "company_hrHead", "icon": "MdPerson", "type": "text" },
-      { "label": "Mobile/WhatsApp", "name": "company_hrHead_contactNumber", "icon": "MdPhone", "type": "text" },
-      { "label": "Landline", "name": "company_chrHead_landline", "icon": "MdPhone", "type": "text" },
-      { "label": "Email", "name": "company_hrHead_email", "icon": "MdEmail", "type": "email" }
-    ]
-  },
-  {
-    "section": "4. Marketing Contact",
-    "fields": [
-      { "label": "Name", "name": "company_marketingHead", "icon": "MdPerson", "type": "text" },
-      { "label": "Mobile/WhatsApp", "name": "company_marketingHead_contactNumber", "icon": "MdPhone", "type": "text" },
-      { "label": "Landline", "name": "company_marketingHead_landline", "icon": "MdPhone", "type": "text" },
-      { "label": "Email", "name": "company_marketingHead_email", "icon": "MdEmail", "type": "email" }
-    ]
-  },
-  {
-    "section": "5. Accounting / Billing Contact",
-    "fields": [
-      { "label": "Name", "name": "company_accountingHead", "icon": "MdPerson", "type": "text" },
-      { "label": "Mobile/WhatsApp", "name": "company_accountingHead_contactNumber", "icon": "MdPhone", "type": "text" },
-      { "label": "Landline", "name": "company_accountingHead_landline", "icon": "MdPhone", "type": "text" },
-      { "label": "Email", "name": "company_accountingHead_email", "icon": "MdEmail", "type": "email" }
+          {
+            "section": "1. Main Contact (Owner / CEO / GM / Country Manager)",
+            "fields": [
+              { "label": "Name", "name": "company_ceoOwnerGm", "icon": "MdPerson", "type": "text" },
+              { "label": "Mobile/WhatsApp", "name": "company_ceoOwnerGm_contactNumber", "icon": "MdPhone", "type": "text" },
+              { "label": "Landline", "name": "company_ceoOwnerGm_landline", "icon": "MdPhone", "type": "text" },
+              { "label": "Email", "name": "company_ceoOwnerGm_email", "icon": "MdEmail", "type": "email" }
+            ]
+          },
+          {
+            "section": "2.PA to Main Contact",
+            "fields": [
+              { "label": "Name", "name": "company_pa", "icon": "MdPerson", "type": "text" },
+              { "label": "Mobile/WhatsApp", "name": "company_pa_contactNumber", "icon": "MdPhone", "type": "text" },
+              { "label": "Landline", "name": "company_pa_landline", "icon": "MdPhone", "type": "text" },
+              { "label": "Email", "name": "company_pa_email", "icon": "MdEmail", "type": "email" }
+            ]
+          },
+          {
+            "section": "3. HR Contact",
+            "fields": [
+              { "label": "Name", "name": "company_hrHead", "icon": "MdPerson", "type": "text" },
+              { "label": "Mobile/WhatsApp", "name": "company_hrHead_contactNumber", "icon": "MdPhone", "type": "text" },
+              { "label": "Landline", "name": "company_chrHead_landline", "icon": "MdPhone", "type": "text" },
+              { "label": "Email", "name": "company_hrHead_email", "icon": "MdEmail", "type": "email" }
+            ]
+          },
+          {
+            "section": "4. Marketing Contact",
+            "fields": [
+              { "label": "Name", "name": "company_marketingHead", "icon": "MdPerson", "type": "text" },
+              { "label": "Mobile/WhatsApp", "name": "company_marketingHead_contactNumber", "icon": "MdPhone", "type": "text" },
+              { "label": "Landline", "name": "company_marketingHead_landline", "icon": "MdPhone", "type": "text" },
+              { "label": "Email", "name": "company_marketingHead_email", "icon": "MdEmail", "type": "email" }
+            ]
+          },
+          {
+            "section": "5. Accounting / Billing Contact",
+            "fields": [
+              { "label": "Name", "name": "company_accountingHead", "icon": "MdPerson", "type": "text" },
+              { "label": "Mobile/WhatsApp", "name": "company_accountingHead_contactNumber", "icon": "MdPhone", "type": "text" },
+              { "label": "Landline", "name": "company_accountingHead_landline", "icon": "MdPhone", "type": "text" },
+              { "label": "Email", "name": "company_accountingHead_email", "icon": "MdEmail", "type": "email" }
+            ]
+          }
     ]
   }
+  
+ 
 ]

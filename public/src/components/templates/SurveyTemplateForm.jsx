@@ -15,7 +15,7 @@ export const SurveyTemplateForm = ({ target, errors, touched }) => {
                     case 0:
                         return (
                             <div key={idx}>
-                                <h3 className="py-3 text-black">Company Information</h3>
+                                <h3 className="pb-3 text-black">{val.section}</h3>
 
 
                                 {val.fields.map((sVal) => (
@@ -34,7 +34,7 @@ export const SurveyTemplateForm = ({ target, errors, touched }) => {
                                                                 size="small"
                                                                 as={TextField}
                                                                 fullWidth
-                                                                error={sVal.name && Boolean(errors[sVal.name])}
+                                                                error={touched[sVal.name] && Boolean(errors[sVal.name])}
                                                                 label={sVal.label}
                                                                 name={sVal.name}
                                                                 helperText={<ErrorMessage name={sVal.name} />}
@@ -76,7 +76,7 @@ export const SurveyTemplateForm = ({ target, errors, touched }) => {
                                                                 as={TextField}
                                                                 type="search"
                                                                 fullWidth
-                                                                error={sVal.name && Boolean(errors[sVal.name])}
+                                                                error={touched[sVal.name] && Boolean(errors[sVal.name])}
                                                                 label={sVal.label}
                                                                 name={sVal.name}
                                                                 helperText={<ErrorMessage name={sVal.name} />}
@@ -117,7 +117,7 @@ export const SurveyTemplateForm = ({ target, errors, touched }) => {
                                                                 size="small"
                                                                 as={TextField}
                                                                 fullWidth
-                                                                error={sVal.name && Boolean(errors[sVal.name])}
+                                                                error={touched[sVal.name] && Boolean(errors[sVal.name])}
                                                                 label={sVal.label}
                                                                 name={sVal.name}
                                                                 helperText={<ErrorMessage name={sVal.name} />}
@@ -142,46 +142,65 @@ export const SurveyTemplateForm = ({ target, errors, touched }) => {
                                     </div>
                                 ))}
 
-                                <h3 className="pb-2 text-black">Contact Information</h3>
                             </div>
                         );
                     default:
                         return (
-                            <div key={idx} className="full border-1 border p-3 my-2">
-                                <div className="pb-2">{val.section}</div>
+                            <div key={idx}>
+                                <h3 className="pb-2 text-black">{val.section}</h3>
+                                {(() => {
+                                    return (<>
 
-                                {val.fields.map((sVal) => (
-                                    <div className="full" key={sVal.name}>
+                                        {val.fields.map((sVal, sidx) => (
+                                            <div key={sVal.section} className="full border-1 border p-3 my-1 pb-0">
+                                                <h4 className="pb-3">{sVal.section}</h4>
+                                                {(() => {
+                                                    return (
+                                                        <>
+                                                            {sVal.fields.map((cVal, cidx) => (
+                                                                <div className="full" key={cVal.name}>
 
-                                        <div className="input-group">
-
-
-                                            <Field
-                                                placeholder={`Enter ${sVal.label}`}
-                                                className="pb-2"
-                                                size="small"
-                                                as={TextField}
-                                                fullWidth
-                                                error={sVal.name && Boolean(errors[sVal.name])}
-                                                label={sVal.label}
-                                                name={sVal.name}
-                                                helperText={<ErrorMessage name={sVal.name} />}
-                                                InputProps={{
-                                                    startAdornment: (
-                                                        <InputAdornment position="start">
-                                                            {target.fieldIcon === "true" && (
-
-                                                                IconMap && IconMap[sVal.icon]
-                                                            )}
-                                                        </InputAdornment>
-                                                    ),
-                                                }}
-                                            />
+                                                                    <div className="input-group">
 
 
-                                        </div>
-                                    </div>
-                                ))}
+                                                                        <Field
+                                                                            placeholder={`Enter ${cVal.label}`}
+                                                                            className="pb-2"
+                                                                            size="small"
+                                                                            as={TextField}
+                                                                            fullWidth
+                                                                            error={touched[cVal.name] && Boolean(errors[cVal.name])}
+                                                                            label={cVal.label}
+                                                                            name={cVal.name}
+                                                                            helperText={<ErrorMessage name={cVal.name} />}
+                                                                            InputProps={{
+                                                                                startAdornment: (
+                                                                                    <InputAdornment position="start">
+                                                                                        {target.fieldIcon === "true" && (
+
+                                                                                            IconMap && IconMap[cVal.icon]
+                                                                                        )}
+                                                                                    </InputAdornment>
+                                                                                ),
+                                                                            }}
+                                                                        />
+
+
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </>
+                                                    );
+                                                })()}
+                                            </div>
+
+                                        ))}
+
+
+                                    </>)
+                                })()}
+
+
                             </div>
                         );
                 }

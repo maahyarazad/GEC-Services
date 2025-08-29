@@ -102,17 +102,66 @@ router.post('/gic-user/login', async (req, res) => {
     
     const isPasswordValid = await bcrypt.compare(password, user[0].password_hash);
     if (!isPasswordValid) {
-      return res.status(401).json({ status: false, message: 'Invalid credentials' });
+      return res.status(401).json({ status: false, message: 'Invalid Password' });
     }
 
    // Generate JWT (expires in 7 days)
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user[0].id, email: user[0].email }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
     // Send HTTP-only cookie
-    res.cookie('gic-token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
-    res.json({ status: true, message: 'Login successful' });
+    res.cookie("gic-token", token, {
+      httpOnly: true,                     // cannot be accessed via JS
+      secure: true,                       // HTTPS only
+      sameSite: "none",                   // allow cross-site cookie
+      maxAge: 120* 60 * 1000              // 2 hours
+    });
+
+    res.json({ status: true, message: 'Login successful', user:{
+        id: `${user[0].id}`,
+        email: `${user[0].email}`,
+        firstName: `${user[0].firstName}`,
+        lastName: `${user[0].lastName}`,
+    }  });
+
   } catch (error) {
     res.status(500).json({ status: false, message: 'Server error' });
+  }
+});
+
+
+router.get("/gic-user/check-auth", (req, res) => {
+  const token = req?.cookies["gic-token"];
+  if (!token) return res.status(401).json({ authenticated: false });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded) {
+      return res.json({ authenticated: true });
+    }
+    return res.status(401).json({ authenticated: false });
+  } catch {
+    return res.status(401).json({ authenticated: false });
+  }
+});
+
+router.post("/gic-user/logout", (req, res) => {
+  const token = req.cookies["gic-token"];
+  if (!token) {
+    return res.status(401).json({ authenticated: false, message: "No token found" });
+  }
+
+  try {
+    // Clear the cookie
+    res.clearCookie("gic-token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/",
+    });
+
+    return res.json({ authenticated: false, message: "Logged out successfully" });
+  } catch (err) {
+    return res.status(401).json({ authenticated: false, message: "Invalid or expired token" });
   }
 });
 
