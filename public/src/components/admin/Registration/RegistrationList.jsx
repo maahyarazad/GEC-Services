@@ -11,18 +11,24 @@ import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import RegistrationKeyList from '../Registration/RegistrationKeyList'
-
-
+import { FaCheckCircle } from "react-icons/fa";
+import { MdDisabledVisible } from "react-icons/md";
 
 const getColumns = ({ onEdit, onLock, onShowCode }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     {
-        field: 'lockRegistration', headerName: 'Active Page', width: 150, renderCell: (params) => {
+        field: 'lockRegistration', headerName: 'Active Page', width: 100, renderCell: (params) => {
             const value = params?.row?.lockRegistration === "true";
 
             return (
                 <Box>
-                    <span>{value ? "Not Active" : "Active"}</span>
+                    <span>{value ? <>
+                    <MdDisabledVisible color="red" size={18} />
+                    
+                    </> :  <>
+                    <FaCheckCircle color="green" size={18} />
+                    
+                    </>}</span>
                 </Box>
             );
 
