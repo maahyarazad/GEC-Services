@@ -8,7 +8,7 @@ import { TextField, MenuItem, Autocomplete } from "@mui/material";
 import { IconMap } from "./IconMap";
 
 
-const GICRegistrationForm = ({ target, errors, touched, initialValues }) => {
+const GICRegistrationForm = ({ target, errors, touched, initialValues, setFieldValue }) => {
     return (
         <>
             {Object.keys(GICTemplate).map((key) => {

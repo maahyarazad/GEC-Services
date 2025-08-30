@@ -952,7 +952,7 @@ useEffect(() => {
                                     )}
 
                                     {target.gic === "true" && (
-                                        <GICRegistrationForm errors={errors} touched={touched} target={target} initialValues={initialValues} />
+                                        <GICRegistrationForm errors={errors} touched={touched} target={target} initialValues={initialValues} setFieldValue={setFieldValue} />
                                     )}
 
 
