@@ -165,7 +165,7 @@ async function event_confirm_registration_email_aws(reqBody) {
                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
                   <p>
                     If you have any questions, feel free to contact us at <br/>
-                    <a href="mailto:info@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">info@german-emirates-club.com</a>.
+                    <a href="mailto:office5@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office5@german-emirates-club.com</a>.
                   </p>
                   <p>Warm regards,<br />The German Emirates Club Team</p>
                 </td>
@@ -256,7 +256,7 @@ async function comfirm_message_email(reqBody) {
                   </p>
                   <p>
                     If you have any questions in the meantime, please feel free to contact us at
-                    <a href="mailto:info@german-emirates-club.com" style="color: #D9B144; text-decoration: none;">info@german-emirates-club.com</a>.
+                    <a href="mailto:office5@german-emirates-club.com" style="color: #D9B144; text-decoration: none;">office5@german-emirates-club.com</a>.
                   </p>
                   <p>Warm regards,<br/>The German Emirates Club Team</p>
                 </td>
@@ -402,7 +402,7 @@ async function event_confirm_registration_email(reqBody) {
                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
                   <p>
                     If you have any questions, feel free to contact us at <br/>
-                    <a href="mailto:info@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">info@german-emirates-club.com</a>.
+                    <a href="mailto:office5@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office5@german-emirates-club.com</a>.
                   </p>
                   <p>Warm regards,<br />The German Emirates Club Team</p>
                 </td>

@@ -272,7 +272,7 @@ export const SuccessTemplatePage = ({}) => {
                         If you have any questions, feel free to contact us at{" "}
                         <br />
                         <a
-                          href="mailto:info@german-emirates-club.com"
+                          href="mailto:office5@german-emirates-club.com"
                           style={{
                             color: "#D9B144",
                             textDecoration: "none",
