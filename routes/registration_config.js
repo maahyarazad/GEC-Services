@@ -244,13 +244,24 @@ router.get("/registration-config", async (req, res) => {
   }
 });
 
-router.get("/registration-config/optional-login", async (req, res) => {
+router.post("/registration-config/optional-login", async (req, res) => {
   try {
     const table_name = "registration_config";
-    const rows = await dbService.findExact(table_name, "page", req.data);
+    if (req.body && req.body.page) {
+      const page = req.body.page.replace("/registration/", ""); 
+      const rows = await dbService.findExact(table_name, "page", page);
+
+      return res.json({
+        status: true,
+        message: "Data fetched successfully",
+        rows,
+      });
+    }
+
+    res.status(400).json({ status: true, message: "Bad Request" });
+
     debugger;
 
-    res.json({ status: true, message: "Data fetched successfully", rows });
   } catch (error) {
     console.error(error);
     res.status(500).json({ status: false, message: "Server error" });

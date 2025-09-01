@@ -63,13 +63,22 @@ export const TemplateForm = () => {
     const [exapndedDescriptionMobileView, setExapndedDescriptionMobileView] = useState(false);
     const [global_whatsapp, setGlobalWhatsapp] = useState("");
     const [showDivFirst, setShowDivFirst] = useState(false);
+    const [isLoading, setLoading] = useState(true);
     const navigate = useNavigate();
 
      const fetchData = useCallback(async () => {
                 try {
-                    // setLoading(true);
-                    const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config`, {
-                        method: 'GET',
+                    setLoading(true);
+                    debugger;
+                    // const value = location.pathname;
+                    const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/optional-login`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body:JSON.stringify({
+                            "page": location.pathname
+                        })
                     });
         
                     if (!response.ok) {
@@ -80,18 +89,16 @@ export const TemplateForm = () => {
         
                     if (values) {
                         values.rows.map((x)=>{
-                                const value = location.pathname;
-                                debugger;
-                                if(x.loginRequired){
-
-                                }
+                            if(x.loginRequired === "false"){
+                                setTarget(values.rows[0]);
+                            }
                         });
                         
                     }
                 } catch (err) {
                     console.error('Error fetching data:', err);
                 } finally {
-                    // setLoading(false);
+                    setLoading(false);
                 }
             }, []);
 
@@ -206,9 +213,10 @@ useEffect(() => {
             if (gecuser.gic === "true") {
                 setPhoneRegistered(true);
             }
-            debugger;
+            
             setTarget(gecuser);
         }
+        setLoading(false);
     }, []);
 
     // Cookie
@@ -379,6 +387,16 @@ useEffect(() => {
             }
         };
     }, []);
+
+    if (isLoading) {
+        return (
+
+        <div className="w-100 min-vh-100 d-flex justify-content-center align-items-center flex-column">
+        
+                    <CircularProgress />
+                </div>
+        )
+    }
 
     if (!target) {
         return <Login />;
