@@ -96,6 +96,7 @@ export default function NewRegistrationPage({
     id: initialData?.id || null,
     page: initialData?.page || "",
     paymentRequired: initialData?.paymentRequired === "true",
+    recordFee: initialData?.recordFee || null,
     birthdayRequired: initialData?.birthdayRequired === "true",
     companyRequired: initialData?.companyRequired === "true",
     lockRegistration: initialData?.lockRegistration === "true",
@@ -398,6 +399,35 @@ export default function NewRegistrationPage({
                     </div>
                   </div>
                 )}
+
+                {(values.paymentRequired === true) && (
+
+                  <div className="col-6">
+                    <div className="align-items-center">
+                      <label htmlFor="recordFee" className="form-label">
+                        Registration Payment Value (AED)
+                      </label>
+                      <Field
+                        name="recordFee"
+                        type="number"
+                        className={`form-control ${errors.recordFee && touched.recordFee
+                            ? "is-invalid"
+                            : ""
+                          }`}
+                        placeholder="Enter the fee"
+                        style={{ minHeight: 38 }}
+                      />
+                      <div style={{ minHeight: 30 }}>
+                        <ErrorMessage
+                          name="recordFee"
+                          component="div"
+                          className="text-danger small mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
               </div>
             </div>
 

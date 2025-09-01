@@ -248,7 +248,7 @@ router.post("/registration-config/optional-login", async (req, res) => {
   try {
     const table_name = "registration_config";
     if (req.body && req.body.page) {
-      const page = req.body.page.replace("/registration/", ""); 
+      const page = req.body.page;
       const rows = await dbService.findExact(table_name, "page", page);
 
       return res.json({
@@ -260,7 +260,6 @@ router.post("/registration-config/optional-login", async (req, res) => {
 
     res.status(400).json({ status: true, message: "Bad Request" });
 
-    debugger;
 
   } catch (error) {
     console.error(error);

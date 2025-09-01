@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS registration_config (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   page VARCHAR(100),
   paymentRequired BOOLEAN,
+  recordFee REAL DEFAULT 0.0,
   birthdayRequired BOOLEAN,
   companyRequired BOOLEAN,
   lockRegistration BOOLEAN,
@@ -38,6 +39,7 @@ CREATE TABLE IF NOT EXISTS registration_config (
   fileUpload BOOLEAN,
   surveyForm BOOLEAN,
   gic BOOLEAN,
+  loginRequired BOOLEAN,
   countDown BOOLEAN,
   textarea BOOLEAN,
   fieldIcon BOOLEAN,
@@ -129,7 +131,22 @@ CREATE TABLE IF NOT EXISTS Company (
 );
 
 
-
+CREATE Table IF NOT EXISTS event_proforma_invoice (
+    id VARCHAR(50) PRIMARY KEY,                -- "GEC-EC-GUEST-19052025-006"
+    firstName VARCHAR(100) NOT NULL,           -- "Lars"
+    lastName VARCHAR(100) NOT NULL,            -- "Jordan"
+    phoneNumber VARCHAR(20) NOT NULL,          -- "+971509893374"
+    whatsapp VARCHAR(20),                      -- "+971509893374"
+    email VARCHAR(150) NOT NULL,               -- "lars-jordan@hotmail.de"
+    registeredForEvent VARCHAR(255) NOT NULL,  -- "Expert Circle Meeting/ec-45492450" data.title/
+    registrationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,        -- "2025-05-19T17:57:53.957Z"
+    status BOOLEAN DEFAULT FALSE,              -- false
+    userId VARCHAR(50) NOT NULL,               -- "gec00ecg47677474"
+    sourceId VARCHAR(100),                     -- "this will be the registration config Id"
+    recordType VARCHAR(100) NOT NULL,          -- "Event Participation Fee"
+    recordFee DECIMAL(10,2) DEFAULT 0,         -- 60.00
+    vat DECIMAL(4,2) DEFAULT 0.00              -- 0.05 (5%)
+);
 
 
 CREATE TABLE IF NOT EXISTS GIC_Users (

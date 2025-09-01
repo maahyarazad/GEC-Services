@@ -21,8 +21,6 @@ const upload = multer({
 router.post("/registration", upload.single('attachment_file'), async (req, res) => {
     try {
         
-
-
         let table_name = "registration";
         const {registration_code, title, event_date ,...data} = req.body;
         const file = req.file; 
@@ -89,6 +87,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
         if (file) {
             data.attachment_file = uniqueFileName;
         } 
+
 
         data.event_id = generateRecordId(data.event, false);
         let create_result;
@@ -302,5 +301,8 @@ router.get("/api/admin/check-auth", (req, res) => {
     return res.status(401).json({ authenticated: false });
   }
 });
+
+
+
 
 module.exports = router;

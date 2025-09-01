@@ -16,6 +16,7 @@ const maps = require('./routes/maps.js');
 const googleWallet = require('./routes/google_wallet.js');
 const survey = require('./routes/survey.js');
 const gic_user = require('./routes/gic_user.js');
+const payment = require('./routes/payment.js');
 const cookieParser = require("cookie-parser");
 
 // Setup DB connection
@@ -82,6 +83,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/uploads', express.static(path.join(__dirname, 'file_storage')));
+app.use('/maps', express.static(path.join(__dirname, 'maps')));
 app.use('/', express.static(path.join(__dirname, 'public')));
 
 app.use('/', otp);
@@ -93,6 +95,7 @@ app.use('/', member);
 app.use('/', registration_keys);
 app.use('/', maps);
 app.use('/', googleWallet);
+app.use('/', payment);
 
 // Route to serve your main HTML file
 app.get("/", (req, res) => {

@@ -7,7 +7,9 @@ import ReactModal from 'react-modal';
 
 ReactModal.setAppElement('#root');
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+  // <StrictMode>
+  //   <App />
+  // </StrictMode>
     <App />
-  </StrictMode>,
+  ,
 )

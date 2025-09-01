@@ -67,6 +67,29 @@ const dbService = {
         });
     },
 
+    updateWhere: (table, id, data, column) => {
+        if (!data || Object.keys(data).length === 0) {
+            return Promise.reject(new Error("No data provided to update"));
+        }
+
+        const keys = Object.keys(data);
+        const values = Object.values(data);
+
+        
+        const setClause = keys.map(key => `${key} = ?`).join(", ");
+
+        // SQL query with WHERE clause
+        const sql = `UPDATE ${table} SET ${setClause} WHERE ${column} = ?`;
+
+        return new Promise((resolve, reject) => {
+            db.run(sql, [...values, id], function (err) {
+                if (err) return reject(err);
+                resolve({ changes: this.changes });
+            });
+        });
+    },
+
+
     update: (table, id, data) => {
         const keys = Object.keys(data);
         const values = Object.values(data);

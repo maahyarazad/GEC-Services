@@ -70,7 +70,7 @@ async function sendRawEmailWithAttachments({ to, subject, html, text = '', attac
     const mailOptions = {
         from: process.env.SMTP_SENDER,
         to,
-        bcc: ["development2@german-emirates-club.com", "office1@german-emirates-club.com"],
+        // bcc: ["development2@german-emirates-club.com", "office1@german-emirates-club.com"],
         subject,
         text,
         html,

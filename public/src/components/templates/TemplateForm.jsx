@@ -1,6 +1,6 @@
 // React & Hooks
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 // Third-Party Libraries
 import { Formik, Form, Field, ErrorMessage } from "formik";
@@ -51,7 +51,8 @@ import "./templateform.css";
 
 export const TemplateForm = () => {
     //OTP
-    const location = useLocation();
+    const { event } = useParams();
+
     const [showOtpInput, setShowOtpInput] = useState(false);
     const otpRef = useRef();
     const statusRef = useRef();
@@ -65,46 +66,46 @@ export const TemplateForm = () => {
     const [showDivFirst, setShowDivFirst] = useState(false);
     const [isLoading, setLoading] = useState(true);
     const navigate = useNavigate();
+    // http://localhost:5175/registration/october-party/success?reference=ordexc-PI-gec-op-17567159285689843&checkout=1842050180199175015
+    const fetchData = useCallback(async () => {
+        try {
+            setLoading(true);
+            
+            // const value = location.pathname;
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/optional-login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "page": event
+                })
+            });
 
-     const fetchData = useCallback(async () => {
-                try {
-                    setLoading(true);
-                    debugger;
-                    // const value = location.pathname;
-                    const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/optional-login`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body:JSON.stringify({
-                            "page": location.pathname
-                        })
-                    });
-        
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch');
-                    }
-        
-                    const values = await response.json();
-        
-                    if (values) {
-                        values.rows.map((x)=>{
-                            if(x.loginRequired === "false"){
-                                setTarget(values.rows[0]);
-                            }
-                        });
-                        
-                    }
-                } catch (err) {
-                    console.error('Error fetching data:', err);
-                } finally {
-                    setLoading(false);
-                }
-            }, []);
+            if (!response.ok) {
+                throw new Error('Failed to fetch');
+            }
 
-useEffect(() => {
+            const values = await response.json();
+            
+            if (values) {
+                values.rows.map((x) => {
+                    if (x.loginRequired === "false") {
+                        setTarget(values.rows[0]);
+                    }
+                });
+
+            }
+        } catch (err) {
+            console.error('Error fetching data:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
         fetchData();
-       
+
     }, [fetchData]);
 
     const handleSendOtp = async (values) => {
@@ -127,6 +128,8 @@ useEffect(() => {
                 }
             );
 
+            
+            
             if (otp_response.ok) {
                 setGlobalWhatsapp(values["email"]);
                 setCurrentResponseStatus(otp_response.ok);
@@ -138,6 +141,8 @@ useEffect(() => {
 
                 setCurrentResponseMessage(response_data.message);
             }
+
+
         } catch (e) {
             statusRef.current.innerText = e.message;
         }
@@ -184,11 +189,14 @@ useEffect(() => {
                 snackbarRef.current?.openSnackbar(otp_response_data.message, "success");
             } else {
                 statusRef.current.textContent = otp_response_data.message;
+                statusRef.current.classList.add("text-danger");
+            
             }
         } catch (err) {
-            console.error("Login failed:", err);
+            
             if (statusRef.current) {
-                statusRef.current.textContent = `Login failed: ${err.message}`;
+                statusRef.current.textContent = `Verification failed: ${err.message}`;
+                statusRef.current.classList.add("text-danger");
             }
         }
     };
@@ -213,7 +221,7 @@ useEffect(() => {
             if (gecuser.gic === "true") {
                 setPhoneRegistered(true);
             }
-            
+
             setTarget(gecuser);
         }
         setLoading(false);
@@ -257,6 +265,7 @@ useEffect(() => {
                 ...values,
                 event: target.page,
             };
+
 
             data.message = textarea;
 
@@ -324,55 +333,78 @@ useEffect(() => {
             });
             // End Handle GICFormLogic   
 
-
-
-
-            const registration_response = await fetch(
-                `${import.meta.env.VITE_SERVERURL}/registration`,
-                {
-                    method: "POST",
-                    body: formData,
-                }
-            );
-
-            const registration_response_data = await registration_response.json();
-
-            if (registration_response_data.status) {
-                snackbarRef.current?.openSnackbar(
-                    registration_response_data.message,
-                    "success"
+            
+            if (target.paymentRequired === "true") {
+                formData.append("registration_config_id", JSON.stringify(target.id));
+                formData.append("recordFee", JSON.stringify(target.recordFee));
+                const payment_response = await fetch(
+                    `${import.meta.env.VITE_SERVERURL}/payment/create-record`,
+                    {
+                        method: "POST",
+                        body: formData,
+                    }
                 );
-                resetForm(); // 👈 Reset the form after submission
-                if (target.surveyForm !== "true") {
-                    
-                    setPhoneRegistered(false);
+                
+                if (payment_response.status) {
+                    const payment_response_data = await payment_response.json();
+                    // Navigate to payment gateway
+                    window.location.href = payment_response_data.payment.result.redirectUrl;
+                } else {
+                    snackbarRef.current?.openSnackbar(
+                        payment_response.error.message,
+                        ""
+                    );
                 }
-                setValidOtp(false);
-                otpRef?.current?.clear();
-                timeoutRef.current = setTimeout(() => {
-                    // document.cookie = "gec-registration=; path=/; max-age=0";
-                    clearLocalStorage();
-                }, 10000);
-
-                // setFieldValue("phone", target.mobile_number);
-                // setFieldValue("whatsapp", target.mobile_number);
-
-                // Optionally clear file input manually if you're using ref
-                if (fileInputRef?.current && fileInputRef.current.value) {
-                    fileInputRef.current.value = "";
-                }
-
-                if (identityConsentRef?.current && identityConsentRef.current.checked) {
-                    identityConsentRef.current.checked = false;
-                }
-
-                setSelectedDate("");
+                
             } else {
-                snackbarRef.current?.openSnackbar(
-                    registration_response_data.message,
-                    ""
+                const registration_response = await fetch(
+                    `${import.meta.env.VITE_SERVERURL}/registration`,
+                    {
+                        method: "POST",
+                        body: formData,
+                    }
                 );
+
+                const registration_response_data = await registration_response.json();
+
+                if (registration_response_data.status) {
+                    snackbarRef.current?.openSnackbar(
+                        registration_response_data.message,
+                        "success"
+                    );
+                    resetForm(); // 👈 Reset the form after submission
+                    if (target.surveyForm !== "true") {
+
+                        setPhoneRegistered(false);
+                    }
+                    setValidOtp(false);
+                    otpRef?.current?.clear();
+                    timeoutRef.current = setTimeout(() => {
+                        // document.cookie = "gec-registration=; path=/; max-age=0";
+                        clearLocalStorage();
+                    }, 10000);
+
+                    // setFieldValue("phone", target.mobile_number);
+                    // setFieldValue("whatsapp", target.mobile_number);
+
+                    // Optionally clear file input manually if you're using ref
+                    if (fileInputRef?.current && fileInputRef.current.value) {
+                        fileInputRef.current.value = "";
+                    }
+
+                    if (identityConsentRef?.current && identityConsentRef.current.checked) {
+                        identityConsentRef.current.checked = false;
+                    }
+
+                    setSelectedDate("");
+                } else {
+                    snackbarRef.current?.openSnackbar(
+                        registration_response_data.message,
+                        ""
+                    );
+                }
             }
+
         } catch (e) {
             snackbarRef.current?.openSnackbar(e.message);
         } finally {
@@ -391,10 +423,10 @@ useEffect(() => {
     if (isLoading) {
         return (
 
-        <div className="w-100 min-vh-100 d-flex justify-content-center align-items-center flex-column">
-        
-                    <CircularProgress />
-                </div>
+            <div className="w-100 min-vh-100 d-flex justify-content-center align-items-center flex-column">
+
+                <CircularProgress />
+            </div>
         )
     }
 
@@ -411,40 +443,40 @@ useEffect(() => {
                     }`}
             >
                 <button
-                   onClick={()=> setExapndedDescriptionMobileView(prev => !prev)}
+                    onClick={() => setExapndedDescriptionMobileView(prev => !prev)}
                     className="cta-button simple"
                 >
-                   <IoMdInformationCircleOutline size={20}/>
+                    <IoMdInformationCircleOutline size={20} />
                 </button>
                 <button onClick={clearLocalStorage} className="cta-button simple">
-                    <IoCloseCircleOutline size={20}/>
+                    <IoCloseCircleOutline size={20} />
                 </button>
                 {(() => {
-                        const trimmedDescription = (target.description || "").trim();
+                    const trimmedDescription = (target.description || "").trim();
 
-                        // Strip HTML tags and check if there's meaningful content
-                        const plainText = trimmedDescription.replace(/<[^>]*>/g, "").trim();
+                    // Strip HTML tags and check if there's meaningful content
+                    const plainText = trimmedDescription.replace(/<[^>]*>/g, "").trim();
 
-                        if (plainText) {
-                            return (
-                               
-                                
-                                <button
-                                        className={`cta-button simple slider-button ${exapndedDescriptionMobileView ? "opened" :""}`}
-                                        onClick={()=> setExapndedDescriptionMobileView(prev => !prev)}
-                                    >
-                                        {exapndedDescriptionMobileView ? 
-                                        <IoClose size={25}/>
-                                            :
-                                            <></>
-                                        }
-                                </button>
-                            );
-                        }
+                    if (plainText) {
+                        return (
 
-                        return null;
-                    })()}
-                    
+
+                            <button
+                                className={`cta-button simple slider-button ${exapndedDescriptionMobileView ? "opened" : ""}`}
+                                onClick={() => setExapndedDescriptionMobileView(prev => !prev)}
+                            >
+                                {exapndedDescriptionMobileView ?
+                                    <IoClose size={25} />
+                                    :
+                                    <></>
+                                }
+                            </button>
+                        );
+                    }
+
+                    return null;
+                })()}
+
                 <div className={showDivFirst ? "active" : ""}>
                     {(() => {
                         const trimmedDescription = (target.description || "").trim();
@@ -455,10 +487,10 @@ useEffect(() => {
                         if (plainText) {
                             return (
                                 <div
-                                    className={`target-description ql-editor ${exapndedDescriptionMobileView ? "expanded" :""}`}
+                                    className={`target-description ql-editor ${exapndedDescriptionMobileView ? "expanded" : ""}`}
                                     dangerouslySetInnerHTML={{ __html: trimmedDescription }}
                                 />
-                                
+
                             );
                         }
 
@@ -509,10 +541,10 @@ useEffect(() => {
                                 setTouched,
                             }) => (
                                 <Form>
-                                   
 
-                       
-                                    
+
+
+
                                     {/* <Button
                     variant="contained"
                     color="primary"
@@ -582,65 +614,65 @@ useEffect(() => {
                                                     </div>
 
                                                     <div className="full">
-                                                       
+
                                                         <div className="input-group">
-                                                            
+
                                                             <Field
                                                                 as={TextField}
-                                                                    
-                                                                    name="phone"
-                                                                    
-                                                                    size="small"
-                                                                    fullWidth
-                                                                    label="Phone Number"
-                                                                    helperText={<ErrorMessage name="phone" />}
-                                                                    className="pb-2"
-                                                                    error={touched.phone && Boolean(errors.phone)}
-                                                                    InputProps={{
-                                                                        startAdornment: (
-                                                                            <InputAdornment position="start">
-                                                                                {target.fieldIcon === "true" && (
 
-                                                                                    <FaPhoneAlt />
-                                                                                )}
-                                                                            </InputAdornment>
-                                                                        ),
-                                                                    }}
+                                                                name="phone"
+
+                                                                size="small"
+                                                                fullWidth
+                                                                label="Phone Number"
+                                                                helperText={<ErrorMessage name="phone" />}
+                                                                className="pb-2"
+                                                                error={touched.phone && Boolean(errors.phone)}
+                                                                InputProps={{
+                                                                    startAdornment: (
+                                                                        <InputAdornment position="start">
+                                                                            {target.fieldIcon === "true" && (
+
+                                                                                <FaPhoneAlt />
+                                                                            )}
+                                                                        </InputAdornment>
+                                                                    ),
+                                                                }}
                                                             />
                                                         </div>
-                                                        
+
                                                     </div>
 
                                                     <div className="full">
-                                                        
+
                                                         <div className="input-group">
-                                                            
+
                                                             <Field
                                                                 as={TextField}
-                                                                    
-                                                                    name="whatsapp"
-                                                                    
-                                                                    size="small"
-                                                                    fullWidth
-                                                                    label="WhatsApp Number"
-                                                                    helperText={<ErrorMessage name="whatsapp" />}
-                                                                    className="pb-2"
-                                                                    error={touched.whatsapp && Boolean(errors.whatsapp)}
-                                                                    InputProps={{
-                                                                        startAdornment: (
-                                                                            <InputAdornment position="start">
-                                                                                {target.fieldIcon === "true" && (
 
-                                                                                     <FaWhatsapp />
-                                                                                )}
-                                                                            </InputAdornment>
-                                                                        ),
-                                                                    }}
+                                                                name="whatsapp"
+
+                                                                size="small"
+                                                                fullWidth
+                                                                label="WhatsApp Number"
+                                                                helperText={<ErrorMessage name="whatsapp" />}
+                                                                className="pb-2"
+                                                                error={touched.whatsapp && Boolean(errors.whatsapp)}
+                                                                InputProps={{
+                                                                    startAdornment: (
+                                                                        <InputAdornment position="start">
+                                                                            {target.fieldIcon === "true" && (
+
+                                                                                <FaWhatsapp />
+                                                                            )}
+                                                                        </InputAdornment>
+                                                                    ),
+                                                                }}
                                                             // We are using email verification
                                                             // disabled={phoneRegistered}
                                                             />
                                                         </div>
-                                                       
+
                                                     </div>
 
                                                     <div className={`otp-slide ${showOtpInput ? "show" : ""}`}>
@@ -695,41 +727,41 @@ useEffect(() => {
                                                     <div className="spacer"></div>
 
                                                     <div className="full">
-                                                       
+
                                                         <div className="input-group">
-                                                            
 
-                                                            <Field  name="gender"
-                                                                     as={TextField}
-                                                                     select
-                                                                    size="small"
 
-                                                                    label="Gender"
-                                                                    helperText={<ErrorMessage name="gender" />}
-                                                                    className="pb-2"
-                                                                    error={touched.gender && Boolean(errors.gender)}
-                                                                    InputProps={{
-                                                                        startAdornment: (
-                                                                            <InputAdornment position="start">
-                                                                                {target.fieldIcon === "true" && (
+                                                            <Field name="gender"
+                                                                as={TextField}
+                                                                select
+                                                                size="small"
 
-                                                                                      <BsGenderAmbiguous />
-                                                                                )}
-                                                                            </InputAdornment>
-                                                                        ),
-                                                                    }}
-                                                                    SelectProps={{
-                                                                        displayEmpty: true,
-                                                                        renderValue: (selected) =>
+                                                                label="Gender"
+                                                                helperText={<ErrorMessage name="gender" />}
+                                                                className="pb-2"
+                                                                error={touched.gender && Boolean(errors.gender)}
+                                                                InputProps={{
+                                                                    startAdornment: (
+                                                                        <InputAdornment position="start">
+                                                                            {target.fieldIcon === "true" && (
+
+                                                                                <BsGenderAmbiguous />
+                                                                            )}
+                                                                        </InputAdornment>
+                                                                    ),
+                                                                }}
+                                                                SelectProps={{
+                                                                    displayEmpty: true,
+                                                                    renderValue: (selected) =>
                                                                         selected && selected.length > 0 ? (
                                                                             selected
                                                                         ) : (
                                                                             <span style={{ color: "#9e9e9e", fontSize: "0.8rem" }}>
-                                                                            Select Gender
+                                                                                Select Gender
                                                                             </span>
                                                                         ),
-                                                                    }}
-                                                                    >
+                                                                }}
+                                                            >
                                                                 <MenuItem value="Male">Male</MenuItem>
                                                                 <MenuItem value="Female">Female</MenuItem>
                                                             </Field>
@@ -737,87 +769,87 @@ useEffect(() => {
                                                     </div>
 
                                                     <div className="full">
-                                                       
+
                                                         <div className="input-group">
-                                                          
+
 
                                                             <Field
-                                                                  as={TextField}
-                                                            size="small"
-                                                            fullWidth
-                                                            label="First Name"
-                                                            helperText={<ErrorMessage name="firstName" />}
-                                                            className="pb-2"
-                                                            type="text"
-                                                            name="firstName"
-                                                            error={touched.firstName && Boolean(errors.firstName)}
-                                                            InputProps={{
-                                                                startAdornment: (
-                                                                    <InputAdornment position="start">
-                                                                        {target.fieldIcon === "true" && (
+                                                                as={TextField}
+                                                                size="small"
+                                                                fullWidth
+                                                                label="First Name"
+                                                                helperText={<ErrorMessage name="firstName" />}
+                                                                className="pb-2"
+                                                                type="text"
+                                                                name="firstName"
+                                                                error={touched.firstName && Boolean(errors.firstName)}
+                                                                InputProps={{
+                                                                    startAdornment: (
+                                                                        <InputAdornment position="start">
+                                                                            {target.fieldIcon === "true" && (
 
-                                                                               <MdDriveFileRenameOutline />
-                                                                        )}
-                                                                    </InputAdornment>
-                                                                ),
-                                                            }}
+                                                                                <MdDriveFileRenameOutline />
+                                                                            )}
+                                                                        </InputAdornment>
+                                                                    ),
+                                                                }}
                                                             />
                                                         </div>
-                                                       
+
                                                     </div>
 
                                                     <div className="full">
-                                                       
+
                                                         <div className="input-group">
                                                             <Field
-                                                                 as={TextField}
-                                                            size="small"
-                                                            fullWidth
-                                                            label="Last Name"
-                                                            helperText={<ErrorMessage name="lastName" />}
-                                                            className="pb-2"
-                                                            type="text"
-                                                            name="lastName"
-                                                            error={touched.lastName && Boolean(errors.lastName)}
-                                                            InputProps={{
-                                                                startAdornment: (
-                                                                    <InputAdornment position="start">
-                                                                        {target.fieldIcon === "true" && (
+                                                                as={TextField}
+                                                                size="small"
+                                                                fullWidth
+                                                                label="Last Name"
+                                                                helperText={<ErrorMessage name="lastName" />}
+                                                                className="pb-2"
+                                                                type="text"
+                                                                name="lastName"
+                                                                error={touched.lastName && Boolean(errors.lastName)}
+                                                                InputProps={{
+                                                                    startAdornment: (
+                                                                        <InputAdornment position="start">
+                                                                            {target.fieldIcon === "true" && (
 
-                                                                               <MdDriveFileRenameOutline />
-                                                                        )}
-                                                                    </InputAdornment>
-                                                                ),
-                                                            }}
+                                                                                <MdDriveFileRenameOutline />
+                                                                            )}
+                                                                        </InputAdornment>
+                                                                    ),
+                                                                }}
                                                             />
                                                         </div>
-                                                      
+
                                                     </div>
                                                 </>
                                             )}
                                             {target.birthdayRequired === "true" && (
                                                 <div className="full">
-                                                   
+
                                                     <div className="input-group">
-                                                        
-                                                    <Field
-                                                    as={TextField}
-                                                    size="small"
-                                                    fullWidth
-                                                    type="date"
-                                                    label="Birthday"
-                                                    name="birthday"
-                                                    helperText={<ErrorMessage name="birthday" />}
-                                                    className="pb-2"
-                                                    error={touched.birthday && Boolean(errors.birthday)}
-                                                    InputProps={{
-                                                        startAdornment: (
-                                                        <InputAdornment position="start">
-                                                            {target.fieldIcon === "true" && <MdCake />} {/* your icon */}
-                                                        </InputAdornment>
-                                                        ),
-                                                    }}
-                                                    />
+
+                                                        <Field
+                                                            as={TextField}
+                                                            size="small"
+                                                            fullWidth
+                                                            type="date"
+                                                            label="Birthday"
+                                                            name="birthday"
+                                                            helperText={<ErrorMessage name="birthday" />}
+                                                            className="pb-2"
+                                                            error={touched.birthday && Boolean(errors.birthday)}
+                                                            InputProps={{
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start">
+                                                                        {target.fieldIcon === "true" && <MdCake />} {/* your icon */}
+                                                                    </InputAdornment>
+                                                                ),
+                                                            }}
+                                                        />
                                                         {/* <Field
                                                             className={`form-control ${errors.birthday && touched.birthday
                                                                 ? "is-invalid"
@@ -832,7 +864,7 @@ useEffect(() => {
                                                             }}
                                                         /> */}
                                                     </div>
-                                                    
+
                                                 </div>
                                             )}
 
@@ -869,30 +901,30 @@ useEffect(() => {
 
                                             {target.textarea === "true" && (
                                                 <div className="full">
-                                                   
+
                                                     <div className="input-group">
                                                         <Field
-                                        as={TextField}
-                                        size="small"
-                                        fullWidth
-                                        label="Message"
-                                        helperText={<ErrorMessage name="textarea" />}
-                                        className="pb-2"
-                                        type="text"
-                                        name="textarea"
-                                        multiline
-                                        minRows={4} // adjust the number of visible rows
-                                        error={touched.textarea && Boolean(errors.textarea)}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    {target.fieldIcon === "true" && <LuBriefcaseBusiness />}
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                    />
+                                                            as={TextField}
+                                                            size="small"
+                                                            fullWidth
+                                                            label="Message"
+                                                            helperText={<ErrorMessage name="textarea" />}
+                                                            className="pb-2"
+                                                            type="text"
+                                                            name="textarea"
+                                                            multiline
+                                                            minRows={4} // adjust the number of visible rows
+                                                            error={touched.textarea && Boolean(errors.textarea)}
+                                                            InputProps={{
+                                                                startAdornment: (
+                                                                    <InputAdornment position="start">
+                                                                        {target.fieldIcon === "true" && <LuBriefcaseBusiness />}
+                                                                    </InputAdornment>
+                                                                ),
+                                                            }}
+                                                        />
                                                     </div>
-                                                   
+
                                                 </div>
                                             )}
 
@@ -1009,11 +1041,18 @@ useEffect(() => {
                                                 textTransform: "none",
                                             }}
                                         >
-                                            {isSubmitting ? (
-                                                <CircularProgress size={20} color="inherit" />
-                                            ) : (
-                                                target.send_button_text
-                                            )}
+
+                                            {(() => {
+                                                if (isSubmitting) {
+                                                    return <CircularProgress size={20} color="inherit" />;
+                                                }
+
+                                                if (target.paymentRequired === "true") {
+                                                    return <span>Confirm & Pay {target.recordFee} AED</span>;
+                                                }
+
+                                                return <span>{target.send_button_text}</span>;
+                                            })()}
                                         </Button>
                                     </Box>
                                 </Form>
