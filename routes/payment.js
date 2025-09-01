@@ -35,7 +35,7 @@ const allowedKeys = [
 //DONE BEFORE SENDING USER TO PAYMENNT LANDING PAGE
 router.post("/payment/create-record", upload.none(), async (req, res) => {
 
-    const table_name = "event_preproforma_invoice";
+    const table_name = "event_proforma_invoice";
     const { registration_code, title, event_date, ...data } = req.body;
     const uniqeIdentifier = generateRecordId(data.event, false);
 
@@ -162,13 +162,13 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
 
         if(data.result.status === "PAID"){
 
-            const performa_invoice_data = await dbService.findById("event_preproforma_invoice", data.result.orderId);
+            const performa_invoice_data = await dbService.findById("event_proforma_invoice", data.result.orderId);
             // Maahyar CM:
             // Change the pre invoice order status and also use the data.customer json to add the missing that to the registration record
 
             if(performa_invoice_data){
                 performa_invoice_data.status = true;
-                await dbService.update("event_preproforma_invoice",performa_invoice_data.id, performa_invoice_data );
+                await dbService.update("event_proforma_invoice",performa_invoice_data.id, performa_invoice_data );
                 
                 registration_config = await dbService.findById("registration_config", performa_invoice_data.sourceId);
                 registration_config.email = performa_invoice_data.email;
