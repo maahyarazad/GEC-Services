@@ -8,7 +8,8 @@ import eventTime from "../../assets/media/event_time.png";
 import eventLocationName from "../../assets/media/event_location_name.png";
 import eventNavigation from "../../assets/media/event_location_name.png";
 
-import { Button, Tooltip, CircularProgress } from "@mui/material";
+
+import { Button, Tooltip, CircularProgress, TextField, MenuItem } from "@mui/material";
 import EventLocationInput from "../utils/EventLocationInput";
 import LockRegistrationSwitch from "../utils/LockRegistrationSwitch";
 
@@ -78,7 +79,7 @@ export default function NewRegistrationPage({
   const [file, setFile] = useState(null);
   const [initialLat, setInitialLat] = useState(null);
   const [initialLon, setInitialLon] = useState(null);
-
+  const [currency, setCurrency] = useState("AED");
   const fileInputRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -91,20 +92,21 @@ export default function NewRegistrationPage({
       }
     };
   }, []);
-  
+
   const initialValues = {
     id: initialData?.id || null,
     page: initialData?.page || "",
     paymentRequired: initialData?.paymentRequired === "true",
     recordFee: initialData?.recordFee || null,
+    currency: initialData?.currency || null,
     birthdayRequired: initialData?.birthdayRequired === "true",
     companyRequired: initialData?.companyRequired === "true",
     lockRegistration: initialData?.lockRegistration === "true",
-      // ✅ if loginRequired is null/undefined, fallback to disableLogin
-  loginRequired:
-    initialData?.loginRequired != null
-      ? initialData?.loginRequired === "true"
-      : !disableLogin,
+    // ✅ if loginRequired is null/undefined, fallback to disableLogin
+    loginRequired:
+      initialData?.loginRequired != null
+        ? initialData?.loginRequired === "true"
+        : !disableLogin,
 
     IdentityConsent: initialData?.IdentityConsent === "true",
     fileUpload: initialData?.fileUpload === "true",
@@ -126,7 +128,7 @@ export default function NewRegistrationPage({
   };
 
   useEffect(() => {
-    
+
     if (initialValues.image && typeof initialValues.image === "string") {
       const url = `${import.meta.env.VITE_SERVERURL}/uploads/${initialValues.image}`;
       setPreview(url);
@@ -157,6 +159,8 @@ export default function NewRegistrationPage({
 
   useEffect(() => {
     if (initialValues.page && typeof initialValues.page === "string") {
+      
+    
       setSlug(
         slugify(initialValues.page, {
           lower: true,
@@ -164,11 +168,16 @@ export default function NewRegistrationPage({
         })
       );
     }
-  }, [initialValues.page]);
+    if(initialValues.paymentRequired){
+      
+      setCurrency(initialValues?.currency)
+    }
+
+  }, [initialValues.page, initialValues.paymentRequired]);
 
   // useEffect(() => {
   //   debugger;
-    
+
   //   if(disableLogin === "true"){
   //     initialValues.loginRequired = Boolean(false);
   //   }
@@ -181,7 +190,7 @@ export default function NewRegistrationPage({
 
     try {
       const formData = new FormData();
-      
+
       Object.entries(values).forEach(([key, value]) => {
         switch (key) {
           case "id":
@@ -190,6 +199,11 @@ export default function NewRegistrationPage({
             }
             break;
 
+          case "currency":
+            if(initialData.paymentRequired === "true"){
+              formData.append("currency", currency);
+              break;  
+            }
           case "page":
             formData.append("page", slug);
             break;
@@ -209,9 +223,9 @@ export default function NewRegistrationPage({
             break;
         }
       });
-              
-    
-      
+
+
+
       const response = await fetch(
         `${import.meta.env.VITE_SERVERURL}/registration-config`,
         {
@@ -330,8 +344,8 @@ export default function NewRegistrationPage({
                     name="tokensPerGuest"
                     type="number"
                     className={`form-control ${errors.tokensPerGuest && touched.tokensPerGuest
-                        ? "is-invalid"
-                        : ""
+                      ? "is-invalid"
+                      : ""
                       }`}
                     placeholder="e.g. 3"
                   />
@@ -354,11 +368,12 @@ export default function NewRegistrationPage({
                       Submit Button Text
                     </label>
                     <Field
+                      label=" Submit Button Text"
                       name="send_button_text"
                       type="text"
                       className={`form-control ${errors.send_button_text && touched.send_button_text
-                          ? "is-invalid"
-                          : ""
+                        ? "is-invalid"
+                        : ""
                         }`}
                       placeholder=""
                     />
@@ -383,8 +398,8 @@ export default function NewRegistrationPage({
                         name="event_date"
                         type="date"
                         className={`form-control ${errors.event_date && touched.event_date
-                            ? "is-invalid"
-                            : ""
+                          ? "is-invalid"
+                          : ""
                           }`}
                         placeholder="Select event date"
                         style={{ minHeight: 38 }}
@@ -402,27 +417,52 @@ export default function NewRegistrationPage({
 
                 {(values.paymentRequired === true) && (
 
-                  <div className="col-6">
-                    <div className="align-items-center">
-                      <label htmlFor="recordFee" className="form-label">
-                        Registration Payment Value (AED)
-                      </label>
-                      <Field
-                        name="recordFee"
-                        type="number"
-                        className={`form-control ${errors.recordFee && touched.recordFee
+                  <div className="col-12">
+                    <div className="row">
+
+                      <div className="align-items-center col-6">
+                        <label htmlFor="recordFee" className="form-label">
+                          Registration Payment Value
+                        </label>
+                        <Field
+                          name="recordFee"
+                          type="number"
+                          className={`form-control ${errors.recordFee && touched.recordFee
                             ? "is-invalid"
                             : ""
-                          }`}
-                        placeholder="Enter the fee"
-                        style={{ minHeight: 38 }}
-                      />
-                      <div style={{ minHeight: 30 }}>
-                        <ErrorMessage
-                          name="recordFee"
-                          component="div"
-                          className="text-danger small mt-1"
+                            }`}
+                          placeholder="Enter the fee"
+                          style={{ minHeight: 38 }}
                         />
+                        <div style={{ minHeight: 30 }}>
+                          <ErrorMessage
+                            name="recordFee"
+                            component="div"
+                            className="text-danger small mt-1"
+                          />
+                        </div>
+
+                      </div>
+
+                      <div className="col-6 align-items-center">
+                        <label htmlFor="send_button_text" className="form-label">
+                          Currency
+                        </label>
+                        <Field
+                          as={TextField}
+                          select
+                          size="small"
+                          value={currency}
+
+                          sx={{ minWidth: 127 }}
+
+                          onChange={(e) => setCurrency(e.target.value)}
+                        >
+                          <MenuItem value="AED">AED</MenuItem>
+                          <MenuItem value="EUR">EUR</MenuItem>
+                          <MenuItem value="USD">USD</MenuItem>
+                          <MenuItem value="GBP">GBP</MenuItem>
+                        </Field>
                       </div>
                     </div>
                   </div>
@@ -472,8 +512,8 @@ export default function NewRegistrationPage({
                           name="event_time"
                           type="text"
                           className={`form-control ${errors.event_time && touched.event_time
-                              ? "is-invalid"
-                              : ""
+                            ? "is-invalid"
+                            : ""
                             }`}
                           placeholder="Event Time"
                         />
@@ -564,9 +604,9 @@ export default function NewRegistrationPage({
                           name="event_location_name"
                           type="text"
                           className={`form-control ${errors.event_location_name &&
-                              touched.event_location_name
-                              ? "is-invalid"
-                              : ""
+                            touched.event_location_name
+                            ? "is-invalid"
+                            : ""
                             }`}
                           placeholder="Event Location Name"
                         />
@@ -669,7 +709,7 @@ export default function NewRegistrationPage({
                 <div className="col-6">
                   <div className="pb-3">Registration Settings</div>
 
- <div className="form-check form-switch mb-3">
+                  <div className="form-check form-switch mb-3">
                     <Field name="loginRequired">
                       {({ field }) => (
                         <input
@@ -967,27 +1007,27 @@ export default function NewRegistrationPage({
             <div className="col-12">
               <div className="d-flex justify-content-end">
                 <Button
-                variant="contained"
-                type="submit"
-                className="btn btn-primary"
-                disabled={isSubmitting}
-                sx={{ textTransform: "none", position: "relative" }}
-              >
-                {isSubmitting ? (
-                  <>
-                    <CircularProgress
-                      size={20}
-                      sx={{
-                        color: "white",
-                        marginRight: 1,
-                      }}
-                    />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Registration Page"
-                )}
-              </Button>
+                  variant="contained"
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={isSubmitting}
+                  sx={{ textTransform: "none", position: "relative" }}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <CircularProgress
+                        size={20}
+                        sx={{
+                          color: "white",
+                          marginRight: 1,
+                        }}
+                      />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Registration Page"
+                  )}
+                </Button>
               </div>
             </div>
           </Form>

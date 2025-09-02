@@ -23,6 +23,9 @@ import { BsCalendar2Event } from "react-icons/bs";
 import { BsPeopleFill } from "react-icons/bs";
 import { FcSurvey } from "react-icons/fc";
 import { GICDataGrid } from "../gallery/GICDataGrid";
+import { PaymentDataGrid } from "../gallery/PaymentDataGrid";
+
+
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
 });
@@ -125,9 +128,12 @@ export const Admin = ({ data }) => {
             content = <SurveyDataGrid />;
             break;
         case 3:
-            content = <GICDataGrid />;
+            content = <PaymentDataGrid />;
             break;
         case 4:
+            content = <GICDataGrid />;
+            break;
+        case 5:
             content = <MemberDataGrid />;
             break;
         default:

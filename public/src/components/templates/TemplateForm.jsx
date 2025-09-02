@@ -49,10 +49,12 @@ import "./templateform.css";
 //     return null;
 // };
 
+
+
 export const TemplateForm = () => {
     //OTP
     const { event } = useParams();
-
+    
     const [showOtpInput, setShowOtpInput] = useState(false);
     const otpRef = useRef();
     const statusRef = useRef();
@@ -65,9 +67,55 @@ export const TemplateForm = () => {
     const [global_whatsapp, setGlobalWhatsapp] = useState("");
     const [showDivFirst, setShowDivFirst] = useState(false);
     const [isLoading, setLoading] = useState(true);
+    
+    const [chosenCurrency, setChosenCurrency] = useState(null);
+    const [initialCurrency, setInitialCurrency] = useState(null);
+    const [initialTargetFee, setInitialTargetFee] = useState(null);
+    const [rates, setRates] = useState(null);
     const navigate = useNavigate();
+
+    
+
     // http://localhost:5175/registration/october-party/success?reference=ordexc-PI-gec-op-17567159285689843&checkout=1842050180199175015
-    const fetchData = useCallback(async () => {
+
+    const fetchCurrencyData = useCallback(async (currency) => {
+        try {
+            setLoading(true);
+            
+            
+            // const response = await fetch(`https://open.er-api.com/v6/latest/${initialCurrency}`, {
+            //     method: 'GET',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     },
+            // });
+
+
+            const response = await fetch(`/api/v6/latest/${currency}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch');
+            }
+
+            const values = await response.json();
+            
+            if (values) {
+                setRates(values.rates);
+
+            }
+        } catch (err) {
+            console.error('Error fetching data:', err);
+        } finally {
+            setLoading(false);
+        }
+    },[]);
+
+    const serverAPICall = useCallback(async () => {
         try {
             setLoading(true);
             
@@ -89,9 +137,14 @@ export const TemplateForm = () => {
             const values = await response.json();
             
             if (values) {
-                values.rows.map((x) => {
+                values.rows.map(async (x) => {
                     if (x.loginRequired === "false") {
+                        
                         setTarget(values.rows[0]);
+                        setInitialTargetFee(values.rows[0].recordFee)
+                        setInitialCurrency(values.rows[0].currency)
+                        setChosenCurrency(values.rows[0].currency)
+                        await fetchCurrencyData(values.rows[0].currency);
                     }
                 });
 
@@ -101,12 +154,15 @@ export const TemplateForm = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    },[]);
+
+    
 
     useEffect(() => {
-        fetchData();
+        serverAPICall();
+       
 
-    }, [fetchData]);
+    }, [serverAPICall]);
 
     const handleSendOtp = async (values) => {
         try {
@@ -227,6 +283,17 @@ export const TemplateForm = () => {
         setLoading(false);
     }, []);
 
+    const convertCurrency = (amount, source, target) => {
+      if (source === target) return amount; // no conversion needed
+    
+      if (!rates[source] || !rates[target]) {
+        throw new Error(`Missing rate for ${source} or ${target}`);
+      }
+    
+      return Math.round(amount * (rates[target] / rates[source]));
+      
+    }
+
     // Cookie
     // useEffect(() => {
     //     const gecuser = getCookie("gec-registration");
@@ -337,6 +404,7 @@ export const TemplateForm = () => {
             if (target.paymentRequired === "true") {
                 formData.append("registration_config_id", JSON.stringify(target.id));
                 formData.append("recordFee", JSON.stringify(target.recordFee));
+                formData.append("currency", JSON.stringify(chosenCurrency));
                 const payment_response = await fetch(
                     `${import.meta.env.VITE_SERVERURL}/payment/create-record`,
                     {
@@ -1005,8 +1073,47 @@ export const TemplateForm = () => {
                                         <GICRegistrationForm errors={errors} touched={touched} target={target} initialValues={initialValues} setFieldValue={setFieldValue} />
                                     )}
 
+{target.paymentRequired === "true" &&(
+
+                                     <div className="full">
+
+                                        <div className="input-group">
 
 
+                                            <Field
+                                                as={TextField}
+                                                select
+                                                size="small"
+                                                value={chosenCurrency}
+                                                label="Currency"
+                                                sx={{minWidth:127}}
+                                                className="pb-2"
+                                                onChange={(e) => {
+                                                    // Currency Switch Logic goes here
+                                                    if(e.target.value != initialCurrency){
+                                                            target.recordFee = convertCurrency(initialTargetFee, initialCurrency, e.target.value)
+                                                            
+                                                            
+                                                        }else{
+                                                            target.recordFee = initialTargetFee;
+                                                            
+                                                        }
+                                                        
+                                                        
+                                                        setChosenCurrency(e.target.value);
+                                                    }
+                                                }
+                                            >
+                                                <MenuItem value="AED">AED</MenuItem>
+                                                <MenuItem value="EUR">EUR</MenuItem>
+                                                <MenuItem value="USD">USD</MenuItem>
+                                                <MenuItem value="GBP">GBP</MenuItem>
+                                            </Field>
+                                        </div>
+                                        
+                                        
+                                    </div>
+)}
 
 
                                     <Box className="d-flex justify-content-end w-100 my-2">
@@ -1048,7 +1155,12 @@ export const TemplateForm = () => {
                                                 }
 
                                                 if (target.paymentRequired === "true") {
-                                                    return <span>Confirm & Pay {target.recordFee} AED</span>;
+                                                    
+                                                    return <span>Confirm & Pay {target.recordFee} {chosenCurrency}
+                                                    {initialCurrency !== chosenCurrency && (
+                                            <small style={{fontSize : '0.8rem'}}> (approximately)</small>
+                                        )}
+                                                    </span>;
                                                 }
 
                                                 return <span>{target.send_button_text}</span>;

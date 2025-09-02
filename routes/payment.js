@@ -31,6 +31,27 @@ const allowedKeys = [
     "vat"
 ];
 
+
+router.get('/payment', async (req, res) => {
+    try {
+        
+        const table_name = "event_proforma_invoice";
+        const { filters, data } = await dbService.QuerySqlConverter(req.query, table_name);
+
+        const total = await dbService.getTotalCount(table_name, filters);
+
+        return res.json({
+            status: true,
+            data,
+            total
+        });
+
+    } catch (error) {
+        console.error("Error in /member:", error);
+        res.status(500).json({ status: false, message: 'Server error' });
+    }
+});
+
 //CREATE A RECORD RECEIPT ON REGISTRATION BUTTON CLICK
 //DONE BEFORE SENDING USER TO PAYMENNT LANDING PAGE
 router.post("/payment/create-record", upload.none(), async (req, res) => {
@@ -225,10 +246,10 @@ async function prepareOrder(data) {
     return {
         requestId: `ordexc-${sanitized.id}`,
         orderId: sanitized.id,
-        currency: "AED",
+        currency: JSON.parse(data.currency),
         amount: totalAmount,
         totals: {
-            subtotal: sanitized.recordFee,
+            subtotal: 699,
             tax,
             shipping: 0,
             handling: 0,
@@ -257,7 +278,7 @@ async function prepareOrder(data) {
             address2: "",
             city: "Dubai",
             state: "Dubai",
-            zip: "12345",
+            zip: "00000",
             country: "AE",
             set: true,
         },

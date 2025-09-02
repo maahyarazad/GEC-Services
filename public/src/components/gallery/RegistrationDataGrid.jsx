@@ -24,6 +24,7 @@ const columns = [
             ) : null;
         }
     },
+    
     { field: 'event', headerName: 'Event', width: 130, filterable: true },
     { field: 'firstName', headerName: 'Firstname', width: 130, filterable: true },
     { field: 'lastName', headerName: 'Lastname', width: 130, filterable: true },
@@ -68,6 +69,8 @@ const columns = [
     { field: 'metadata_createdAt', headerName: 'Creation Datetime', width: 160, filterable: true },
     { field: 'metadata_modifiedAt', headerName: 'Last Modified Datetime', width: 160, filterable: true }
 ];
+
+
 
 export const RegistrationDataGrid = () => {
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];

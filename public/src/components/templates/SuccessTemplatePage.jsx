@@ -278,7 +278,7 @@ export const SuccessTemplatePage = ({}) => {
                             textDecoration: "none",
                           }}
                         >
-                          info@german-emirates-club.com
+                          office5@german-emirates-club.com
                         </a>
                         .
                       </p>

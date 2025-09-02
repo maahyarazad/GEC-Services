@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS registration_config (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   page VARCHAR(100),
   paymentRequired BOOLEAN,
+  currency VARCHAR(3),
   recordFee REAL DEFAULT 0.0,
   birthdayRequired BOOLEAN,
   companyRequired BOOLEAN,
