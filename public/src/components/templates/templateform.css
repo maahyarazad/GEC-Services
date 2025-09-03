@@ -392,8 +392,6 @@
 .locked-template-form {
   pointer-events: none;
   position: relative;
-  width: 100vw;
-  height: 100vh;
 
   filter: blur(2px);
   z-index: 0;

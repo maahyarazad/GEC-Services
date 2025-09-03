@@ -507,8 +507,7 @@ export const TemplateForm = () => {
             <SimpleSnackbar ref={snackbarRef} />
 
             <div
-                className={`template-form ${target.lockRegistration === "true" ? "locked-template-form" : ""
-                    }`}
+                className="template-form"
             >
                 <button
                     onClick={() => setExapndedDescriptionMobileView(prev => !prev)}
@@ -580,7 +579,8 @@ export const TemplateForm = () => {
                 </div>
 
                 <div>
-                    <div>
+                    <div                 className={`${target.lockRegistration === "true" ? "locked-template-form" : ""
+                    }`}>
                         {target.countDown === "true" && (
                             <div style={{ position: "relative", paddingBottom: 20 }}>
                                 {/* <CountDownComponent props={{event_date: "2025-07-20T00:00:00Z"}}/> */}
@@ -1170,15 +1170,15 @@ export const TemplateForm = () => {
                                 </Form>
                             )}
                         </Formik>
+                    {target.lockRegistration === "true" && (
+                        <div className="locked-overlay-message">
+                            Registration has been closed!
+                        </div>
+                    )}
                     </div>
                 </div>
             </div>
 
-            {target.lockRegistration === "true" && (
-                <div className="locked-overlay-message">
-                    Registration has been closed!
-                </div>
-            )}
         </>
     );
 };
