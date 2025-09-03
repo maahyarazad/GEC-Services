@@ -16,15 +16,21 @@ export function CustomDateTimePicker() {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <DateTimePicker
+      PopperProps={{
+    disablePortal: true // ⚡ key fix
+  }}
         label="Choose your Time"
+         disablePortal={true}
         value={value}
         onChange={setValue}
         minTime={minTime}
         maxTime={maxTime}
         slotProps={{
+           openPickerIcon: { fontSize: 'small' },
           textField: {
             size: "small",
             fullWidth: true,
+            fontSize: 'small'
           },
         }}
         minutesStep={15} // slots at 00, 15, 30, 45

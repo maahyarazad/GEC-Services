@@ -171,12 +171,15 @@
 
         button {
           filter: grayscale(0.9);
-          pointer-events: none;
+          /* Maahyar CM I this prevents the datetime picker interaction */
+          /* pointer-events: none; */
         }
 
         button.show {
           filter: unset;
-          pointer-events: auto;
+          /* Maahyar CM I this prevents the datetime picker interaction */
+          /* pointer-events: none; */
+          
         }
       }
     }

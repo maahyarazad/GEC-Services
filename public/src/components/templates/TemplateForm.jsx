@@ -35,6 +35,8 @@ import GICRegistrationForm from "./GICRegistrationForm";
 
 // Styles
 import "./templateform.css";
+import BirthdayField from "../utils/BirthdayField";
+import { CustomDateTimePicker } from "../utils/CustomDateTimePicker";
 
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
 //     const { setFieldValue } = useFormikContext();
@@ -607,6 +609,7 @@ export const TemplateForm = () => {
                                 values,
                                 validateForm,
                                 setTouched,
+                                setFieldTouched
                             }) => (
                                 <Form>
 
@@ -899,38 +902,11 @@ export const TemplateForm = () => {
                                                 <div className="full">
 
                                                     <div className="input-group">
+                                                        
+                                                        
 
-                                                        <Field
-                                                            as={TextField}
-                                                            size="small"
-                                                            fullWidth
-                                                            type="date"
-                                                            label="Birthday"
-                                                            name="birthday"
-                                                            helperText={<ErrorMessage name="birthday" />}
-                                                            className="pb-2"
-                                                            error={touched.birthday && Boolean(errors.birthday)}
-                                                            InputProps={{
-                                                                startAdornment: (
-                                                                    <InputAdornment position="start">
-                                                                        {target.fieldIcon === "true" && <MdCake />} {/* your icon */}
-                                                                    </InputAdornment>
-                                                                ),
-                                                            }}
-                                                        />
-                                                        {/* <Field
-                                                            className={`form-control ${errors.birthday && touched.birthday
-                                                                ? "is-invalid"
-                                                                : ""
-                                                                }`}
-                                                            name="birthday"
-                                                            type="date"
-                                                            value={selectedDate}
-                                                            onChange={(e) => {
-                                                                setFieldValue("birthday", e.target.value);
-                                                                setSelectedDate(e.target.value);
-                                                            }}
-                                                        /> */}
+                                                        <BirthdayField errors={errors} setFieldValue={setFieldValue} values={values} touched={touched} setFieldTouched={setFieldTouched}/>
+                                                        
                                                     </div>
 
                                                 </div>

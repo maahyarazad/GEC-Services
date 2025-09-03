@@ -816,3 +816,11 @@ tr.eventhide {
     height: auto !important;
   }
 }
+
+.MuiPickersInputBase-root{
+  max-height: 38px;
+}
+
+.MuiSelect-select{
+  max-height: 37px;
+}
