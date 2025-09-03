@@ -347,6 +347,8 @@ async function handleRegistration(data, sanitized) {
         // data.event_id = generateRecordId(data.event, false);
 
         let create_result;
+        delete data.registration_config_id;
+        delete data.currency;
 
         if (data.company_data) {
             table_name = "Company";
@@ -371,7 +373,7 @@ async function handleRegistration(data, sanitized) {
             
         } else {
             table_name = "registration";
-            delete data.registration_config_id;
+
             data.event_id = sanitized.userId
             create_result = await dbService.createSafe(table_name, data);
         }

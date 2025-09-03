@@ -463,6 +463,9 @@ export default function NewRegistrationPage({
                           <MenuItem value="USD">USD</MenuItem>
                           <MenuItem value="GBP">GBP</MenuItem>
                         </Field>
+                        <div style={{ minHeight: 30 }}>
+                          
+                        </div>
                       </div>
                     </div>
                   </div>

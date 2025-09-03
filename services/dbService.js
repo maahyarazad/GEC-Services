@@ -202,7 +202,9 @@ const dbService = {
         page = 0,
         pageSize = 10,
         sortField = null,
-        sortOrder = 'ASC' // 'ASC' or 'DESC'
+        sortOrder = 'ASC', // 'ASC' or 'DESC',
+        leftJoin,
+        columns = ["*"]
     ) => {
         const offset = page * pageSize;
 
@@ -220,8 +222,23 @@ const dbService = {
                 ? `ORDER BY ${sortField} ${sortOrder.toUpperCase()}`
                 : "";
 
+                    // Optional LEFT JOIN
+        let joinClause = "";
+        if(Object.keys(leftJoin).length!== 0){
+            joinClause = leftJoin
+                ? `LEFT JOIN ${leftJoin.table} ON ${leftJoin.on}`
+                : "";
+        }
+
+
+            // Build SELECT columns string
+    const columnsClause = Array.isArray(columns) && columns.length > 0
+        ? columns.join(", ")
+        : "*";
+
         const sql = `
-            SELECT * FROM ${table}
+            SELECT ${columnsClause} FROM ${table}
+            ${joinClause}
             ${whereClause}
             ${orderClause}
             LIMIT ? OFFSET ?
@@ -235,7 +252,7 @@ const dbService = {
         });
     },
 
-    QuerySqlConverter: async (query, table_name) => {
+    QuerySqlConverter: async (query, table_name, leftJoin = {}, columns) => {
         const {
             page = "1", pageSize = "10", sortField, sortOrder, ...queryFilters
         } = query;
@@ -260,7 +277,9 @@ const dbService = {
             pageNumber,
             limit,
             sortField,
-            sortOrder
+            sortOrder,
+            leftJoin,
+            columns
         );
         return { filters, data };
     },

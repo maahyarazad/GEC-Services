@@ -18,13 +18,28 @@ const columns = [
         renderCell: (params) => {
             const modified = params?.row?.metadata_modifiedAt;
             return modified ? (
-                <Tooltip title="Modified">
+                <Tooltip title={`Completed at ${modified}`}>
                     <FaCircleCheck size={16} color="#28a745" /> {/* Bootstrap green */}
                 </Tooltip>
             ) : null;
         }
     },
-    
+    {
+        field: 'status',
+        headerName: 'Payment Status',
+        width: 100,
+        sortable: true,
+        filterable: true,
+        disableColumnMenu: true,
+        renderCell: (params) => {
+           
+            return params?.row?.status ? (
+                <Tooltip title={`Payment Id ${params?.row?.id}`}>
+                    <FaCircleCheck size={16} color="#28a745" /> {/* Bootstrap green */}
+                </Tooltip>
+            ) : null;
+        }
+    },
     { field: 'event', headerName: 'Event', width: 130, filterable: true },
     { field: 'firstName', headerName: 'Firstname', width: 130, filterable: true },
     { field: 'lastName', headerName: 'Lastname', width: 130, filterable: true },

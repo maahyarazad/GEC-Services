@@ -193,7 +193,15 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
 router.get('/registration', async (req, res) => {
   try {
   
-    const { filters, data } = await dbService.QuerySqlConverter(req.query, "registration");
+    const { filters, data } = await dbService.QuerySqlConverter(req.query, "registration AS r", {
+        table: "event_proforma_invoice AS e",
+        on: "r.event_id = e.userId",
+        
+    },
+    [
+    "r.*",          // all columns from registration (aliased as r)
+    "e.status"      // only the status column from event_proforma_invoice (aliased as e)
+    ]);
     
     const total = await dbService.getTotalCount("registration", filters);
 

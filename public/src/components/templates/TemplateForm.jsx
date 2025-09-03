@@ -83,20 +83,20 @@ export const TemplateForm = () => {
             setLoading(true);
             
             
-            // const response = await fetch(`https://open.er-api.com/v6/latest/${initialCurrency}`, {
-            //     method: 'GET',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //     },
-            // });
-
-
-            const response = await fetch(`/api/v6/latest/${currency}`, {
-                method: "GET",
+            const response = await fetch(`https://open.er-api.com/v6/latest/${currency}`, {
+                method: 'GET',
                 headers: {
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/json',
                 },
             });
+
+
+            // const response = await fetch(`/api/v6/latest/${currency}`, {
+            //     method: "GET",
+            //     headers: {
+            //         "Content-Type": "application/json",
+            //     },
+            // });
 
             if (!response.ok) {
                 throw new Error('Failed to fetch');
