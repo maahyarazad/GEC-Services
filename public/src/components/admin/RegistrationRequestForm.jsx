@@ -158,11 +158,11 @@ export default function NewRegistrationPage({
   }, [initialValues.image, initialValues.event_location]);
 
   useEffect(() => {
-    if (initialValues.page && typeof initialValues.page === "string") {
+    if (initialValues.title && typeof initialValues.title === "string") {
       
     
       setSlug(
-        slugify(initialValues.page, {
+        slugify(initialValues.title, {
           lower: true,
           strict: true,
         })
@@ -173,7 +173,7 @@ export default function NewRegistrationPage({
       setCurrency(initialValues?.currency)
     }
 
-  }, [initialValues.page, initialValues.paymentRequired]);
+  }, [initialValues.title, initialValues.paymentRequired]);
 
   // useEffect(() => {
   //   debugger;
@@ -190,7 +190,7 @@ export default function NewRegistrationPage({
 
     try {
       const formData = new FormData();
-
+      debugger;
       Object.entries(values).forEach(([key, value]) => {
         switch (key) {
           case "id":
@@ -198,15 +198,17 @@ export default function NewRegistrationPage({
               formData.append("id", initialData.id);
             }
             break;
-
+            
           case "currency":
             if(initialData.paymentRequired === "true"){
               formData.append("currency", currency);
-              break;  
             }
+            break;  
           case "page":
-            formData.append("page", slug);
-            break;
+          if (slug) {               
+              formData.append("page", slug);
+            }
+            break;  
 
           case "tokensPerGuest": // map correctly to maxTokensPerGuest
             formData.append("maxTokensPerGuest", value);
@@ -235,11 +237,6 @@ export default function NewRegistrationPage({
         }
       );
 
-      if (!response.ok) {
-        throw new Error(response.status + " - " + response.statusText);
-      }
-
-      console.log(response);
       const data = await response.json();
       if (response.ok && data.status) {
         setSlug("");
@@ -266,7 +263,9 @@ export default function NewRegistrationPage({
         setSubmitError(data.message || "Something went wrong.");
       }
     } catch (error) {
+      
       console.error(error);
+      
       setSubmitError(error.message || "Submission failed, please try again");
     } finally {
       containerRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -306,26 +305,35 @@ export default function NewRegistrationPage({
                   </label>
 
                   <Field name="title">
-                    {({ field, form }) => (
-                      <input
-                        {...field} // includes value, name, onChange, and onBlur from Formik
-                        type="text"
-                        className={`form-control ${errors.title && touched.title ? "is-invalid" : ""
-                          }`}
-                        placeholder="Enter page title"
-                        onBlur={(e) => {
-                          field.onBlur(e); // ✅ still call Formik's internal onBlur
-
-                          setSlug(
-                            slugify(e.target.value, {
-                              lower: true,
-                              strict: true,
-                            })
-                          );
-                        }}
-                      />
-                    )}
-                  </Field>
+                  {({ field, form }) => (
+                    <input
+                      {...field} // value, name, etc.
+                      type="text"
+                      className={`form-control ${errors.title && touched.title ? "is-invalid" : ""}`}
+                      placeholder="Enter page title"
+                      // onChange={async (e) => {
+                      //   debugger; // ✅ This will now hit
+                      //   field.onChange(e); // Formik update
+                      //   setSlug(
+                      //     slugify(e.target.value, {
+                      //       lower: true,
+                      //       strict: true,
+                      //     })
+                      //   );
+                      // }}
+                      // onBlur={field.onBlur} // still call Formik's onBlur
+                      onInput={(e) => {
+        field.onChange(e); // still update Formik
+        setSlug(
+          slugify(e.target.value, {
+            lower: true,
+            strict: true,
+          })
+        );
+      }}
+                    />
+                  )}
+                </Field>
                   <div style={{ minHeight: 30 }}>
                     <ErrorMessage
                       name="title"

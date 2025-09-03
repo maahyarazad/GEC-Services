@@ -1073,7 +1073,7 @@ export const TemplateForm = () => {
                                         <GICRegistrationForm errors={errors} touched={touched} target={target} initialValues={initialValues} setFieldValue={setFieldValue} />
                                     )}
 
-{target.paymentRequired === "true" &&(
+                                    {target.paymentRequired === "true" &&(
 
                                      <div className="full">
 

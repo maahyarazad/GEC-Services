@@ -68,7 +68,7 @@ router.post(
           registration_data.page
         );
         console.log("check duplicate record");
-
+        
         if (duplicate_record && duplicate_record.id !== existing.id) {
           return res.status(400).json({
             status: false,
