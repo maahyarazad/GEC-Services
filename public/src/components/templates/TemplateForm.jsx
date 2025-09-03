@@ -1055,6 +1055,7 @@ export const TemplateForm = () => {
 
                                         <div className="input-group">
 
+{rates !== null && (
 
                                             <Field
                                                 as={TextField}
@@ -1068,8 +1069,7 @@ export const TemplateForm = () => {
                                                     // Currency Switch Logic goes here
                                                     if(e.target.value != initialCurrency){
                                                             target.recordFee = convertCurrency(initialTargetFee, initialCurrency, e.target.value)
-                                                            
-                                                            
+
                                                         }else{
                                                             target.recordFee = initialTargetFee;
                                                             
@@ -1085,6 +1085,7 @@ export const TemplateForm = () => {
                                                 <MenuItem value="USD">USD</MenuItem>
                                                 <MenuItem value="GBP">GBP</MenuItem>
                                             </Field>
+)}
                                         </div>
                                         
                                         
