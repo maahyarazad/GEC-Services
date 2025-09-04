@@ -127,13 +127,13 @@ export const Admin = ({ data }) => {
         case 2:
             content = <SurveyDataGrid />;
             break;
+        // case 3:
+        //     content = <PaymentDataGrid />;
+        //     break;
         case 3:
-            content = <PaymentDataGrid />;
-            break;
-        case 4:
             content = <GICDataGrid />;
             break;
-        case 5:
+        case 4:
             content = <MemberDataGrid />;
             break;
         default:
