@@ -34,10 +34,11 @@ const storage = multer.diskStorage({
   },
 });
 const { generateMapImage } = require("../services/mapService");
-
+const authorize_admin = require("../middleware/auth");
 const upload = multer({ storage: storage });
 router.post(
   "/registration-config",
+  authorize_admin,
   upload.single("image"),
   async (req, res) => {
     try {
@@ -201,6 +202,7 @@ router.post(
 
 router.post(
   "/registration-config/switch-registration-lock",
+  authorize_admin,
   upload.single("none"),
   async (req, res) => {
     try {
@@ -232,7 +234,7 @@ router.post(
   }
 );
 
-router.get("/registration-config", async (req, res) => {
+router.get("/registration-config", authorize_admin ,async (req, res) => {
   try {
     const table_name = "registration_config";
     const rows = await dbService.findAll(table_name);
@@ -267,7 +269,7 @@ router.post("/registration-config/optional-login", async (req, res) => {
   }
 });
 
-router.post("/registration-config-access", upload.none(), async (req, res) => {
+router.post("/registration-config-access",authorize_admin ,upload.none(), async (req, res) => {
   try {
     const data = req.body;
     const registration_code = data.registration_code

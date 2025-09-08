@@ -12,7 +12,7 @@ const path = require("path");
 const fs = require("fs");
 require('dotenv').config();
 const jwt = require("jsonwebtoken");
-
+const authorize_admin = require("../middleware/auth");
 
 const upload = multer({ 
     storage: multer.memoryStorage()
@@ -190,7 +190,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
     }
 });
 
-router.get('/registration', async (req, res) => {
+router.get('/registration',authorize_admin, async (req, res) => {
   try {
   
     const { filters, data } = await dbService.QuerySqlConverter(req.query, "registration AS r", {
@@ -217,7 +217,7 @@ router.get('/registration', async (req, res) => {
   }
 });
 
-router.get('/registration-csv-data', async (req, res) => {
+router.get('/registration-csv-data', authorize_admin,async (req, res) => {
   try {
   
     const data = await dbService.findAll("registration");

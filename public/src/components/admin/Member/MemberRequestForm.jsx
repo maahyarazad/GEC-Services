@@ -60,6 +60,7 @@ export default function MemberNewForm({ initialData = null, modalSwitch }) {
       const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member`, {
         method: 'POST',
         body: formData,
+        credentials: "include"
       });
 
       const data = await response.json();

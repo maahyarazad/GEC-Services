@@ -92,7 +92,7 @@ export const SurveyDataGrid = () => {
                 filterParams
             ].filter(Boolean).join('&');
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/survey?${queryParams}`);
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/survey?${queryParams}`,{credentials:"include"});
             const response_data = await response.json();
 
             setSurveyList(response_data.data || []);

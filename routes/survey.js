@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const dbService = require("../services/dbService");
-router.get('/survey', async (req, res) => {
+const authorize_admin = require("../middleware/auth")
+
+router.get('/survey', authorize_admin, async (req, res) => {
   try {
   
     const { filters, data } = await dbService.QuerySqlConverter(req.query, "Company");

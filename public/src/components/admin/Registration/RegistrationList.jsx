@@ -183,6 +183,7 @@ export const RegistrationList = () => {
             setLoading(true);
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config`, {
                 method: 'GET',
+                credentials: "include"
             });
 
             if (!response.ok) {
@@ -210,6 +211,7 @@ export const RegistrationList = () => {
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-get-count/`, {
                 method: 'GET',
+                credentials: "include"
             });
 
             if (!response.ok) {
@@ -243,6 +245,7 @@ export const RegistrationList = () => {
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/switch-registration-lock/`, {
                 method: 'POST',
                 body: formData,
+                credentials: "include"
             });
 
             if (!response.ok) {

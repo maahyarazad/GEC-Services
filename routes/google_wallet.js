@@ -28,17 +28,17 @@ router.get('/google-wallet', async (req, res) => {
 });
 
 
-router.post('/google-wallet/create-pass-class', async (req, res) => {
+router.get('/google-wallet/create-pass-class/:email', async (req, res) => {
+    
   return await createPassClass(req, res)
 });
 
 async function createPassClass(req, res) {
-    // TODO: Create a Generic pass class
-    console.log(req.body);
+    const email = req.params.email;
+    // console.log(req.body);
 
 
-
-    return res.status(200).json({ status: true, message: 'Server error' });
+    // return res.status(200).json({ status: true, message: 'Server error' });
 
     let genericClass = {
         'id': `${classId}`,
@@ -51,7 +51,7 @@ async function createPassClass(req, res) {
                                 'firstValue': {
                                     'fields': [
                                         {
-                                            'fieldPath': `object.textModulesData["${req.body}"]`
+                                            'fieldPath': `object.textModulesData["${email}"]`
                                         }
                                     ]
                                 }

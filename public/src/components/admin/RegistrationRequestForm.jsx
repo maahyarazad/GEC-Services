@@ -233,6 +233,7 @@ export default function NewRegistrationPage({
         {
           method: "POST",
           body: formData,
+          credentials: "include"
           // Important: Don't set 'Content-Type'; browser sets it including boundary
         }
       );

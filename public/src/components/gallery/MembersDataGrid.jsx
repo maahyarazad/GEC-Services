@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { DataGrid, GridToolbar, GridToolbarFilterButton } from '@mui/x-data-grid';
 import { Box, CircularProgress, Tooltip, Button, Switch } from '@mui/material';
 import { BsFiletypeCsv } from "react-icons/bs";
@@ -116,7 +116,7 @@ export const MemberDataGrid = () => {
     const handleExport = async () => {
         try {
             setIsDownloading(true);
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-csv-data`);
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-csv-data`, {credentials:"include"});
             if (!response.ok) throw new Error('Failed to fetch CSV');
 
             const blob = await response.blob();
@@ -144,6 +144,23 @@ export const MemberDataGrid = () => {
             setEditReg(true);
         }
     };
+
+    const timeoutRef = useRef(null);
+    const handleModalSwitch = () => {
+        setEditReg(false);
+        fetchData(paginationModel, sortModel, filterModel);
+        
+        timeoutRef.current = setTimeout(() => {
+            setInitialData(null);
+        }, 100);
+        };
+
+        useEffect(() => {
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+        }, []);
+
     // const openEdit = async (row) => {
     //     try{
 
@@ -183,6 +200,7 @@ export const MemberDataGrid = () => {
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/active-member-switch`, {
                 method: 'POST',
                 body: formData,
+                credentials : "include"
             });
 
             if(!response.ok) throw new Error('Failed to switch member activation.');
@@ -285,14 +303,12 @@ export const MemberDataGrid = () => {
             </Modal>
 
             <Modal isOpen={editReg}
-                onRequestClose={() => { setEditReg(false); setInitialData(null); }}
-                title={`Modify ${initialData?.title}`}>
-                <MemberRequestForm initialData={initialData} modalSwitch={() => {
-                    setEditReg(false);
-                    fetchData(paginationModel, sortModel, filterModel);
-
-                    setInitialData(null);
-                }} />
+                onRequestClose={handleModalSwitch}
+                title={`Modify ${initialData?.firstName} ${initialData?.lastName}`}>
+               <MemberRequestForm
+                    initialData={initialData}
+                    modalSwitch={handleModalSwitch}
+                    />
             </Modal>
         </Box>
     );

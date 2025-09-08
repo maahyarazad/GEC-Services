@@ -19,6 +19,7 @@ const survey = require('./routes/survey.js');
 const gic_user = require('./routes/gic_user.js');
 const payment = require('./routes/payment.js');
 const cookieParser = require("cookie-parser");
+const authorize = require("./middleware/auth");
 
 // Setup DB connection
 const db = new sqlite3.Database("./app.db", (err) => {
@@ -98,6 +99,7 @@ app.use('/', maps);
 app.use('/', googleWallet);
 app.use('/', membercard);
 app.use('/', payment);
+app.use(authorize);
 
 // Route to serve your main HTML file
 app.get("/", (req, res) => {

@@ -128,7 +128,7 @@ export const RegistrationDataGrid = () => {
                 filterParams
             ].filter(Boolean).join('&');
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration?${queryParams}`);
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration?${queryParams}`, {credentials:"include"});
             const response_data = await response.json();
 
             setRegistrationList(response_data.data || []);

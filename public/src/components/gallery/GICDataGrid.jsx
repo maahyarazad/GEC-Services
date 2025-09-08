@@ -97,6 +97,7 @@ export const GICDataGrid = () => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ email: row.email }),
+                credentials: "include"
             });
 
             const data = await response.json();
@@ -133,7 +134,7 @@ export const GICDataGrid = () => {
                     filterParams,
                 ].filter(Boolean).join('&');
 
-                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/gic-user?${queryParams}`);
+                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/gic-user?${queryParams}`, {credentials:"include"});
 
                 const data = await response.json();
 

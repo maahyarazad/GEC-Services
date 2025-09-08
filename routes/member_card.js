@@ -19,7 +19,17 @@ router.get("/membership-card/:memberId",upload.none(),async (req, res) => {
     const signerCertPath = path.join(__dirname, "../certs/signerCert.pem");
     const signerKeyPath = path.join(__dirname, "../certs/signerKey.pem");
 
-    
+    const now = new Date();
+
+  // Create a new date 12 months from now
+  const expirationDate = new Date(
+    now.getFullYear(),
+    now.getMonth() + 12, // add 12 months
+    now.getDate(),
+    now.getHours(),
+    now.getMinutes(),
+    now.getSeconds()
+  );
 
     // Load pass template
     const pass = await PKPass.from({
@@ -33,14 +43,16 @@ router.get("/membership-card/:memberId",upload.none(),async (req, res) => {
     },{
     serialNumber: "AAGH44625236dddaffbda",
   });
+  
+    const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+    const formattedDate = expirationDate.toLocaleDateString('en-GB', options).replace(/\//g, '-');
+    pass.secondaryFields.push({ key: "expiry", label: "Expiry Date" ,value: formattedDate });
+    pass.primaryFields.push({ key: "member", label: "Member ID", "value": "123456789" });
+    pass.auxiliaryFields.push({ key: "fullname", label :"Fullname" ,value: "Maahyar Azad", textAlignment: "PKTextAlignmentLeft" });
 
-  pass.secondaryFields.push({ key: "expiry", label: "Expiry Date" ,value: "2025-12-31" });
-  pass.primaryFields.push({ key: "member", label: "Member ID", "value": "123456789" });
-  pass.auxiliaryFields.push({ key: "club", label :"German Emirates Club" ,value: "Active Membership" });
 
 
-
-pass.setExpirationDate(new Date("2025-12-31"));
+  pass.setExpirationDate(expirationDate);
 
     const buffer = await pass.getAsBuffer();
     // const passPath = path.join(process.cwd(),"routes" ,"MyCard.pkpass");
