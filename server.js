@@ -13,7 +13,8 @@ const registration = require('./routes/registration.js');
 const member = require('./routes/member.js');
 const registration_keys = require('./routes/registration_keys.js');
 const maps = require('./routes/maps.js');
-// const googleWallet = require('./routes/google_wallet.js');
+const googleWallet = require('./routes/google_wallet.js');
+const membercard = require('./routes/member_card.js');
 const survey = require('./routes/survey.js');
 const gic_user = require('./routes/gic_user.js');
 const payment = require('./routes/payment.js');
@@ -94,7 +95,8 @@ app.use('/', gic_user);
 app.use('/', member);
 app.use('/', registration_keys);
 app.use('/', maps);
-// app.use('/', googleWallet);
+app.use('/', googleWallet);
+app.use('/', membercard);
 app.use('/', payment);
 
 // Route to serve your main HTML file

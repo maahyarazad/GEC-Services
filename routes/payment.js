@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const path = require("path");
+const fetch = require("node-fetch");
 const dbService = require("../services/dbService");
 require('dotenv').config();
 const multer = require("multer");
@@ -38,9 +39,11 @@ router.get("/api/v6/latest/:currency", async (req, res) => {
     const response = await fetch(`https://open.er-api.com/v6/latest/${currency}`);
     const data = await response.json();
     res.json(data); // forward JSON to client
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch currency data" });
   }
+ catch (err) {
+  console.error("Currency fetch error:", err);
+  res.status(500).json({ error: "Failed to fetch currency data", details: err.message });
+}
 });
 
 
