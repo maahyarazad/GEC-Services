@@ -49,11 +49,8 @@ export const Admin = ({ data }) => {
                     method: "GET",
                     credentials: "include",
                 });
-                    
-                if (!res.ok) {
-                    setAdminUser(null);
-                    
-                } else {
+                
+                if (res.ok) {
                     const data = await res.json();
                     setAdminUser(data.authenticated === true);
                 }

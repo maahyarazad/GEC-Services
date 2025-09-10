@@ -9,12 +9,13 @@ const upload = multer({
     storage: multer.memoryStorage()
     , limits: { fileSize: 5 * 1024 * 1024 }
 }); // 5MB max
-
+const {emailMembershipCard} = require("../services/emailService");
 const fs = require("fs");
 
-router.get("/membership-card/:memberId",upload.none(),async (req, res) => {
+router.post("/membership-card",upload.none(),async (req, res) => {
   try {
-    const memberId = req.params.memberId;
+    // const memberId = req.params.memberId;
+    const data = req.body;
     const wwdrPath = path.join(__dirname, "../certs/AppleWWDRCAG4.pem");
     const signerCertPath = path.join(__dirname, "../certs/signerCert.pem");
     const signerKeyPath = path.join(__dirname, "../certs/signerKey.pem");
@@ -43,12 +44,13 @@ router.get("/membership-card/:memberId",upload.none(),async (req, res) => {
     },{
     serialNumber: "AAGH44625236dddaffbda",
   });
-  
+
     const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
     const formattedDate = expirationDate.toLocaleDateString('en-GB', options).replace(/\//g, '-');
     pass.secondaryFields.push({ key: "expiry", label: "Expiry Date" ,value: formattedDate });
-    pass.primaryFields.push({ key: "member", label: "Member ID", "value": "123456789" });
-    pass.auxiliaryFields.push({ key: "fullname", label :"Fullname" ,value: "Maahyar Azad", textAlignment: "PKTextAlignmentLeft" });
+    pass.primaryFields.push({ key: "member", label: "Member ID", "value": `${data.usrId}` });
+    pass.auxiliaryFields.push({ key: "fullname", label :"Fullname" ,value: `${data.title}${data.first_name}${data.name}`, textAlignment: "PKTextAlignmentLeft" });
+    pass.auxiliaryFields.push({ key: "carnumber", label :"Card Number" ,value: `${data.cardnumber}`, textAlignment: "PKTextAlignmentLeft" });
 
 
 
@@ -58,16 +60,22 @@ router.get("/membership-card/:memberId",upload.none(),async (req, res) => {
     // const passPath = path.join(process.cwd(),"routes" ,"MyCard.pkpass");
     // const buffer = fs.readFileSync(passPath);
     // fs.writeFileSync("MyVirtualCard.pkpass", buffer);
-    res.setHeader("Content-Type", "application/vnd.apple.pkpass");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="MyCard.pkpass"`
-    );
+    // res.setHeader("Content-Type", "application/vnd.apple.pkpass");
+    // res.setHeader(
+    //   "Content-Disposition",
+    //   `attachment; filename="MyCard.pkpass"`
+    // );
+    // res.send(buffer); //`
 
+  await emailMembershipCard({
+      email: "maahyarazad@gmail.com",                // recipient email
+      memberName: `${data.title} ${data.first_name} ${data.name}`, // full name
+      cardNumber: data.cardnumber,      // card number
+      expiryDate: formattedDate,        // formatted expiry date
+      membershipTier: "membership"      // optional: package or membership tier
+  }, buffer);
 
-    res.send(buffer); //`
-
-    
+    res.status(201).send("Success");
 
   } catch (err) {
     console.error("Error generating pass:", err);

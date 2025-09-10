@@ -5,7 +5,7 @@ function authorize_admin(req, res, next) {
   try {
     const token = req?.cookies["a-usr"];
     if (!token) {
-      return res.status(401).json({ authenticated: false, message: "No token" });
+        return res.status(401).json({ authenticated: false, message: "Unauthorized" });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

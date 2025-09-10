@@ -37,6 +37,9 @@ import GICRegistrationForm from "./GICRegistrationForm";
 import "./templateform.css";
 import BirthdayField from "../utils/BirthdayField";
 import { CustomDateTimePicker } from "../utils/CustomDateTimePicker";
+import GECBackground from "../../assets/media/GECBackground.png";
+import StarsField from "../../assets/media/stars-field.webm";
+
 
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
 //     const { setFieldValue } = useFormikContext();
@@ -417,8 +420,10 @@ export const TemplateForm = () => {
                 
                 if (payment_response.status) {
                     const payment_response_data = await payment_response.json();
+                    console.log(payment_response_data);
+                    
                     // Navigate to payment gateway
-                    window.location.href = payment_response_data.payment.result.redirectUrl;
+                    window.location.href = payment_response_data.payment?.result?.redirectUrl;
                 } else {
                     snackbarRef.current?.openSnackbar(
                         payment_response.error.message,
@@ -571,11 +576,19 @@ export const TemplateForm = () => {
                         const extension = file.split(".").pop().toLowerCase();
                         const isVideo = ["mp4", "webm", "ogg"].includes(extension);
                         const fileUrl = `${import.meta.env.VITE_SERVERURL}/uploads/${file}`;
-
+                        
                         if (isVideo) {
-                            return <video src={fileUrl} loop autoPlay muted playsInline />;
+                            return <video src={fileUrl} loop autoPlay muted playsInline 
+                            onError={(e) => {
+                                e.target.onerror = null; // prevent infinite loop
+                                e.target.src = StarsField;
+                            }}
+                            />;
                         } else {
-                            return <img src={fileUrl} alt={target.title} />;
+                            return <img src={fileUrl} alt={target.title} onError={(e) => {
+                                e.target.onerror = null; // prevent infinite loop
+                                e.target.src = GECBackground;
+                            }}/>;
                         }
                     })()}
                 </div>

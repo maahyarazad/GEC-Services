@@ -5,6 +5,16 @@ const fs = require("fs");
 const { GoogleAuth } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const googleConfig = JSON.parse(fs.readFileSync(process.env.GOOGLE_CONFIG, "utf8"));
+
+
+
+const issuerId = '3388000000022971699';
+
+
+const classId = `${issuerId}.membership_id`;
+
+const baseUrl = 'https://walletobjects.googleapis.com/walletobjects/v1';
+
 const httpClient = new GoogleAuth({
     credentials: googleConfig,
     scopes: 'https://www.googleapis.com/auth/wallet_object.issuer'
@@ -12,165 +22,179 @@ const httpClient = new GoogleAuth({
 
 
 router.get('/google-wallet', async (req, res) => {
-  try {
-  
-    console.log(googleConfig.client_email); // just to check
+    try {
 
-    return res.json({
-      status: true,
-      googleConfig,
-    });
-    
-  } catch (error) {
-    console.error("Error in /registration:", error);
-    return res.status(500).json({ status: false, message: 'Server error' });
-  }
+        console.log(googleConfig.client_email); // just to check
+
+        return res.json({
+            status: true,
+            googleConfig,
+        });
+
+    } catch (error) {
+        console.error("Error in /registration:", error);
+        return res.status(500).json({ status: false, message: 'Server error' });
+    }
 });
 
 
-router.get('/google-wallet/create-pass-class/:email', async (req, res) => {
-    
-  return await createPassClass(req, res)
+router.post('/google-wallet/create-pass-class/', async (req, res) => {
+
+    return await createPassClass(req, res)
 });
 
 async function createPassClass(req, res) {
-    const email = req.params.email;
-    // console.log(req.body);
+    const   data = req.body;
+    const email = `${data.email.replace(/[^\w.-]/g, '_')}`;
+    const objectId = `${issuerId}.member_${Date.now()}`;
 
 
-    // return res.status(200).json({ status: true, message: 'Server error' });
+    const now = Math.floor(Date.now() / 1000);
 
-    let genericClass = {
-        'id': `${classId}`,
-        'classTemplateInfo': {
-            'cardTemplateOverride': {
-                'cardRowTemplateInfos': [
+    // Create a new date 12 months from now
+    const expirationDate = new Date(
+        now.getFullYear(),
+        now.getMonth() + 12, // add 12 months
+        now.getDate(),
+        now.getHours(),
+        now.getMinutes(),
+        now.getSeconds()
+    );
+
+    const formattedDate = expirationDate.toLocaleDateString('en-GB', options).replace(/\//g, '-');
+
+    const genericClass = {
+        id: classId,
+        issuerName: "German Emirates Club",
+        title: "GEC Membership Card",
+        programName: "German Emirates Club Membership",
+        reviewStatus: "underReview",
+        hexBackgroundColor: "#D9B144",
+        textModulesData: [
+            {
+                id: "game_overview",
+                header: "Welcome",
+                body: "Your membership card"
+            }
+        ],
+        classTemplateInfo: {
+            cardTemplateOverride: {
+                cardRowTemplateInfos: [
                     {
-                        'twoItems': {
-                            'startItem': {
-                                'firstValue': {
-                                    'fields': [
-                                        {
-                                            'fieldPath': `object.textModulesData["${email}"]`
-                                        }
+                        twoItems: {
+                            startItem: {
+                                firstValue: {
+                                    fields: [
+                                        { fieldPath: 'object.textModulesData["cardnumber"].body' }
                                     ]
                                 }
                             },
-                            'endItem': {
-                                'firstValue': {
-                                    'fields': [
-                                        {
-                                            'fieldPath': 'object.textModulesData["contacts"]'
-                                        }
+                            endItem: {
+                                firstValue: {
+                                    fields: [
+                                        { fieldPath: 'object.textModulesData["expiry"].body' }
                                     ]
                                 }
                             }
                         }
                     }
                 ]
-            },
-            'detailsTemplateOverride': {
-                'detailsItemInfos': [
-                    {
-                        'item': {
-                            'firstValue': {
-                                'fields': [
-                                    {
-                                        'fieldPath': 'class.imageModulesData["event_banner"]'
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    {
-                        'item': {
-                            'firstValue': {
-                                'fields': [
-                                    {
-                                        'fieldPath': 'class.textModulesData["game_overview"]'
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    {
-                        'item': {
-                            'firstValue': {
-                                'fields': [
-                                    {
-                                        'fieldPath': 'class.linksModuleData.uris["official_site"]'
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                ]
             }
-        },
-        'imageModulesData': [
-            {
-                'mainImage': {
-                    'sourceUri': {
-                        'uri': 'https://storage.googleapis.com/wallet-lab-tools-codelab-artifacts-public/google-io-2021-card.png'
-                    },
-                    'contentDescription': {
-                        'defaultValue': {
-                            'language': 'en-US',
-                            'value': 'Google I/O 2022 Banner'
-                        }
-                    }
-                },
-                'id': 'event_banner'
-            }
-        ],
-        'textModulesData': [
-            {
-                'header': 'Gather points meeting new people at Google I/O',
-                'body': 'Join the game and accumulate points in this badge by meeting other attendees in the event.',
-                'id': 'game_overview'
-            }
-        ],
-        'linksModuleData': {
-            'uris': [
-                {
-                    'uri': 'https://io.google/2022/',
-                    'description': 'Official I/O \'22 Site',
-                    'id': 'official_site'
-                }
-            ]
         }
     };
 
-    let response;
-    try {
-        // Check if the class exists already
-        response = await httpClient.request({
-            url: `${baseUrl}/genericClass/${classId}`,
-            method: 'GET'
-        });
-
-        console.log('Class already exists');
-        console.log(response);
-    } catch (err) {
-        if (err.response && err.response.status === 404) {
-            // Class does not exist
-            // Create it now
-            response = await httpClient.request({
-                url: `${baseUrl}/genericClass`,
-                method: 'POST',
-                data: genericClass
-            });
-
-            console.log('Class insert response');
-            console.log(response);
-            return res.status(500).json({ status: false, message: 'Server error' });
-        } else {
-            // Something else went wrong
-            console.log(err);
-            return res.send('Something went wrong...check the console logs!');
-            return res.status(500).json({ status: false, message: 'Server error' });
+    const genericObject = {
+        id: objectId,
+        classId: classId,
+        state: "active",
+        hexBackgroundColor: "#0d1b2a",
+        cardTitle: {
+            defaultValue: {
+                language: "en-US",
+                value: "Membership Card"
+            }
+        },
+        header: {
+            defaultValue: {
+                language: "en-US",
+                value: "Maahyar Azad"
+            }
+        },
+        subheader: {
+            defaultValue: {
+                language: "en-US",
+                value: "Member ID: 817628712"
+            }
+        },
+        heroImage: {
+            sourceUri: {
+                uri: "https://www.german-emirates-club.com/v2/static/media/__local_logo.2e51ed10d1b8bc0ab1e8.jpeg"
+            },
+            contentDescription: {
+                defaultValue: {
+                    language: "en-US",
+                    value: "Hero Image Banner"
+                }
+            }
+        },
+        linksModuleData: {
+            uris: [
+                {
+                    id: "official_site",
+                    uri: "https://www.german-emirates-club.com/",
+                    description: "Visit German Emirates Club"
+                }
+            ]
+        },
+        textModulesData: [
+            {
+                id: "cardnumber",
+                header: "Card Number",
+                body: "CARD123456"
+            },
+            {
+                id: "expiry",
+                header: "Expiry Date",
+                body: "31-12-2025"
+            }
+        ],
+        barcode: {
+            type: "QR_CODE",
+            value: "CARD123456"
         }
-    }
+    };
+
+
+    // TODO: Create the signed JWT and link
+    const claims = {
+        iss: googleConfig.client_email,
+        aud: 'google',
+        origins: [],
+        typ: 'savetowallet',
+        payload: {
+            genericObjects: [
+                genericObject
+            ]
+        }
+    };
+   
+    const jwtPayload = {
+        iss: googleConfig.client_email,
+        aud: 'google',
+        typ: 'savetowallet',
+        iat: now,
+        exp: now + 60 * 60, // 1 hour
+        payload: {
+            genericClasses: [genericClass],
+            genericObjects: [genericObject]
+        }
+    };
+
+    const token = jwt.sign(jwtPayload, googleConfig.private_key, { algorithm: 'RS256' });
+    const saveUrl = `https://pay.google.com/gp/v/save/${token}`;
+
+    res.send(`<a href='${saveUrl}'><img src='wallet-button.png'></a>`);
+    // res.send("Form submitted!");
 }
 
 module.exports = router;

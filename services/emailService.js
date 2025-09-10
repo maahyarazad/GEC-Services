@@ -722,4 +722,87 @@ const htmlBody = `
   }
 }
 
-module.exports = { comfirm_message_email, event_confirm_registration_email, event_confirm_registration_email_aws, email_otp, company_data_confirmation_email , gic__reset_password};
+async function emailMembershipCard(reqBody, pkpassBuffer) {
+    const { email, memberName, cardNumber, expiryDate, membershipTier } = reqBody;
+
+    try {
+        const currentYear = new Date().getFullYear();
+
+        const htmlBody = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>German Emirates Club - Membership Card</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
+      <tr>
+        <td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin: 40px auto; overflow: hidden;">
+            <tr>
+              <td bgcolor="#D9B144" style="color: #ffffff; text-align: center; padding: 20px; font-size: 22px; font-weight: bold; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+                German Emirates Club - Membership Card
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 30px; color: #333333; font-size: 16px; line-height: 1.6;">
+                <p>Dear <strong>${memberName}</strong>,</p>
+                <p>We are excited to provide you with your <strong>German Emirates Club Membership Card</strong> for Apple Wallet.</p>
+                <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
+                  <tr>
+                    <td style="padding: 10px; background-color: #f4f4f4; font-weight: bold;">Card Number:</td>
+                    <td style="padding: 10px;">${cardNumber}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 10px; background-color: #f4f4f4; font-weight: bold;">Membership Tier:</td>
+                    <td style="padding: 10px;">${membershipTier}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 10px; background-color: #f4f4f4; font-weight: bold;">Expiry Date:</td>
+                    <td style="padding: 10px;">${expiryDate}</td>
+                  </tr>
+                </table>
+                <p>You can add your membership card to Apple Wallet by following the instructions in the attached file or link.</p>
+                <p>Enjoy your membership benefits!</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-size: 13px; color: #777777; text-align: center; padding: 20px; border-top: 1px solid #dddddd;">
+                &copy; ${currentYear} German Emirates Club. All rights reserved.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+`;
+
+const attachments = [
+    {
+        filename: 'membership.pkpass',  // The filename the recipient sees
+        content: pkpassBuffer,          // Your generated .pkpass as a Buffer
+        contentType: 'application/vnd.apple.pkpass' // MIME type for Apple Pass
+    }
+];
+
+        return await sendRawEmailWithAttachments({
+            to: email,
+            subject: `Your German Emirates Club Membership Card`,
+            html: htmlBody,
+            text: `Hello ${memberName},\n\nYour German Emirates Club Membership Card is ready.\nCard Number: ${cardNumber}\nMembership Tier: ${membershipTier}\nExpiry Date: ${expiryDate}`,
+            // Optionally, attach the .pkpass file:
+            attachments: attachments
+        });
+
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+
+
+module.exports = { emailMembershipCard, comfirm_message_email, event_confirm_registration_email, event_confirm_registration_email_aws, email_otp, company_data_confirmation_email , gic__reset_password};

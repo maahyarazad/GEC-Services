@@ -45,9 +45,9 @@ const validationSchema = Yup.object({
 
   // description: Yup.string().required('Description is required'),
 
-  event_date: Yup.date()
-    .required("Event date is required")
-    .min(new Date(), "Event date must be in the future"),
+  // event_date: Yup.date()
+  //   .required("Event date is required")
+  //   .min(new Date(), "Event date must be in the future"),
 
   // event_location_name: Yup.string()
   // .required('Event Location Name is required'),
@@ -159,8 +159,8 @@ export default function NewRegistrationPage({
 
   useEffect(() => {
     if (initialValues.title && typeof initialValues.title === "string") {
-      
-    
+
+
       setSlug(
         slugify(initialValues.title, {
           lower: true,
@@ -168,8 +168,8 @@ export default function NewRegistrationPage({
         })
       );
     }
-    if(initialValues.paymentRequired){
-      
+    if (initialValues.paymentRequired) {
+
       setCurrency(initialValues?.currency)
     }
 
@@ -183,14 +183,15 @@ export default function NewRegistrationPage({
   //   }
   // }, []);
 
-
-  const handleSubmit = async (values, { setSubmitting, resetForm }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const handleSubmit = async (values) => {
+    setIsSubmitting(true)
     setSubmitError("");
     setSubmitSuccess(false);
 
     try {
       const formData = new FormData();
-      debugger;
+      
       Object.entries(values).forEach(([key, value]) => {
         switch (key) {
           case "id":
@@ -198,17 +199,17 @@ export default function NewRegistrationPage({
               formData.append("id", initialData.id);
             }
             break;
-            
+
           case "currency":
-            if(initialData.paymentRequired === "true"){
+            if (initialData.paymentRequired === "true") {
               formData.append("currency", currency);
             }
-            break;  
+            break;
           case "page":
-          if (slug) {               
+            if (slug) {
               formData.append("page", slug);
             }
-            break;  
+            break;
 
           case "tokensPerGuest": // map correctly to maxTokensPerGuest
             formData.append("maxTokensPerGuest", value);
@@ -254,7 +255,7 @@ export default function NewRegistrationPage({
           modalSwitch();
           setPreview(null);
           setSlug(null);
-          resetForm();
+          // resetForm();
         }, 3000);
 
         if (fileInputRef.current) {
@@ -264,13 +265,13 @@ export default function NewRegistrationPage({
         setSubmitError(data.message || "Something went wrong.");
       }
     } catch (error) {
-      
+
       console.error(error);
-      
+
       setSubmitError(error.message || "Submission failed, please try again");
     } finally {
+      setIsSubmitting(false)
       containerRef.current?.scrollIntoView({ behavior: "smooth" });
-      setSubmitting(false);
     }
   };
 
@@ -284,12 +285,26 @@ export default function NewRegistrationPage({
       {submitError && <div className="alert alert-danger">{submitError}</div>}
 
       <Formik
+        enableReinitialize={true}
         initialValues={initialValues}
         validationSchema={validationSchema}
-        enableReinitialize={true}
-        onSubmit={handleSubmit}
+        onSubmit={async (values, { resetForm, setFieldValue }) => {
+          await handleSubmit(values, {
+
+            resetForm,
+            setFieldValue,
+          });
+        }}
       >
-        {({ setFieldValue, errors, touched, values, isSubmitting }) => (
+        {({
+          setFieldValue,
+          errors,
+          touched,
+          values,
+          validateForm,
+          setTouched,
+          setFieldTouched
+        }) => (
           <Form>
             {slug && (
               <span className="text-muted">
@@ -306,35 +321,35 @@ export default function NewRegistrationPage({
                   </label>
 
                   <Field name="title">
-                  {({ field, form }) => (
-                    <input
-                      {...field} // value, name, etc.
-                      type="text"
-                      className={`form-control ${errors.title && touched.title ? "is-invalid" : ""}`}
-                      placeholder="Enter page title"
-                      // onChange={async (e) => {
-                      //   debugger; // ✅ This will now hit
-                      //   field.onChange(e); // Formik update
-                      //   setSlug(
-                      //     slugify(e.target.value, {
-                      //       lower: true,
-                      //       strict: true,
-                      //     })
-                      //   );
-                      // }}
-                      // onBlur={field.onBlur} // still call Formik's onBlur
-                      onInput={(e) => {
-        field.onChange(e); // still update Formik
-        setSlug(
-          slugify(e.target.value, {
-            lower: true,
-            strict: true,
-          })
-        );
-      }}
-                    />
-                  )}
-                </Field>
+                    {({ field, form }) => (
+                      <input
+                        {...field} // value, name, etc.
+                        type="text"
+                        className={`form-control ${errors.title && touched.title ? "is-invalid" : ""}`}
+                        placeholder="Enter page title"
+                        // onChange={async (e) => {
+                        //   debugger; // ✅ This will now hit
+                        //   field.onChange(e); // Formik update
+                        //   setSlug(
+                        //     slugify(e.target.value, {
+                        //       lower: true,
+                        //       strict: true,
+                        //     })
+                        //   );
+                        // }}
+                        // onBlur={field.onBlur} // still call Formik's onBlur
+                        onInput={(e) => {
+                          field.onChange(e); // still update Formik
+                          setSlug(
+                            slugify(e.target.value, {
+                              lower: true,
+                              strict: true,
+                            })
+                          );
+                        }}
+                      />
+                    )}
+                  </Field>
                   <div style={{ minHeight: 30 }}>
                     <ErrorMessage
                       name="title"
@@ -473,7 +488,7 @@ export default function NewRegistrationPage({
                           <MenuItem value="GBP">GBP</MenuItem>
                         </Field>
                         <div style={{ minHeight: 30 }}>
-                          
+
                         </div>
                       </div>
                     </div>
@@ -680,11 +695,14 @@ export default function NewRegistrationPage({
                         style={{ width: '150px', height: 'auto', display: 'block', marginBottom: '10px' }}
                       />
                     ) : (
-                      <img
-                        src={preview}
-                        alt="Current"
-                        style={{ width: '150px', height: 'auto', display: 'block', marginBottom: '10px' }}
-                      />
+                      <div>
+
+                        <img
+                          src={preview}
+                          alt="Current"
+                          style={{ width: '150px', height: 'auto', display: 'block', marginBottom: '10px' }}
+                        />
+                      </div>
                     )}
                   </div>
                 )}
@@ -1023,6 +1041,24 @@ export default function NewRegistrationPage({
                   type="submit"
                   className="btn btn-primary"
                   disabled={isSubmitting}
+                  onClick={async () => {
+                    const formErrors = await validateForm();
+
+                    const errorFields = Object.keys(formErrors);
+                    if (errorFields.length > 0) {
+
+                      const firstErrorField = document.querySelector(
+                        `[name="${errorFields[0]}"]`
+                      );
+
+                      if (firstErrorField) {
+                        firstErrorField.scrollIntoView({ behavior: "smooth", block: "start" });
+                        // firstErrorField.focus();
+                      }
+
+                      return;
+                    }
+                  }}
                   sx={{ textTransform: "none", position: "relative" }}
                 >
                   {isSubmitting ? (

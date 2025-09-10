@@ -106,7 +106,7 @@ router.post("/payment/create-record", upload.none(), async (req, res) => {
         create_result = await dbService.createSafe(table_name, sanitized);
         const order = await prepareOrder(data)
         // Step 2: Forward the saved record to payment endpoint
-        const { default: fetch } = await import("node-fetch");
+        
         const paymentResponse = await fetch(`${process.env.PAYMENNTTESTURL}`, {
             method: "POST",
             headers: {
@@ -129,7 +129,7 @@ router.post("/payment/create-record", upload.none(), async (req, res) => {
 
         const paymentData = await paymentResponse.json();
 
-        console.log(paymentData.result);
+        console.log(paymentData);
         // Step 3: Return combined response
         return res.status(201).json({
             message: "Record created and payment initiated successfully!",

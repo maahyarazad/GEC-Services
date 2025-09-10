@@ -13,8 +13,8 @@ const columns = ({ onEdit, onSwitchActive }) => [
     { field: 'lastName', headerName: 'Last Name', width: 130, filterable: true },
     { field: 'phoneNumber', headerName: 'Phone Number', width: 150, filterable: true },
     { field: 'whatsapp', headerName: 'WhatsApp', width: 150, filterable: true },
-    { field: 'language', headerName: 'Language', width: 100, filterable: true },
-    { field: 'uniqueIdentifier', headerName: 'Unique ID', width: 160, filterable: true },
+    { field: 'email', headerName: 'Email', width: 300, filterable: true },
+    // { field: 'uniqueIdentifier', headerName: 'Unique ID', width: 160, filterable: true },
     { field: 'createdAt', headerName: 'Created At', width: 160, filterable: true },
     { field: 'modifiedAt', headerName: 'Modified At', width: 160, filterable: true },
     {
