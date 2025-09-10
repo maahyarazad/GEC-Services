@@ -67,3 +67,10 @@ yarn-error.log*
 
 # Windows
 Thumbs.db
+
+
+# SQLite database files
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
