@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS registration_config (
   countDown BOOLEAN,
   textarea BOOLEAN,
   fieldIcon BOOLEAN,
+  fieldIcon BOOLEAN,
   title VARCHAR(255),
   send_button_text VARCHAR(255),
   event_date DATETIME, 
@@ -195,4 +196,22 @@ FROM (
   UNION ALL SELECT 'Johannes','Schoenborn','Johannes@xplt.com','00971-585648976','00971-585648976',NULL,NULL,NULL,'2025-07-07 07:58:24',NULL,TRUE
 ) AS seed
 WHERE NOT EXISTS (SELECT 1 FROM Member);
+
+
+CREATE TABLE IF NOT EXISTS member_card (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    memberId INTEGER, 
+    paid BOOLEAN,
+    card_number INTEGER,
+    username VARCHAR(150),
+    title VARCHAR(150), 
+    firstname VARCHAR(150),
+    lastname VARCHAR(150),
+    gender TEXT CHECK(gender IN ('Herr', 'Frau')),
+    mobile_number VARCHAR(150),
+    email VARCHAR(150),
+    card_expiry_date DATETIME,
+    last_login DATETIME
+);
+
 

@@ -37,7 +37,7 @@ import GICRegistrationForm from "./GICRegistrationForm";
 import "./templateform.css";
 import BirthdayField from "../utils/BirthdayField";
 import { CustomDateTimePicker } from "../utils/CustomDateTimePicker";
-import GECBackground from "../../assets/media/GECBackground.png";
+import GECBackground from "../../assets/media/GECBackground.webp";
 import StarsField from "../../assets/media/stars-field.webm";
 
 
@@ -72,7 +72,7 @@ export const TemplateForm = () => {
     const [global_whatsapp, setGlobalWhatsapp] = useState("");
     const [showDivFirst, setShowDivFirst] = useState(false);
     const [isLoading, setLoading] = useState(true);
-    
+    const [emailRequired, setEmailRequired] = useState(false);
     const [chosenCurrency, setChosenCurrency] = useState(null);
     const [initialCurrency, setInitialCurrency] = useState(null);
     const [initialTargetFee, setInitialTargetFee] = useState(null);
@@ -96,7 +96,7 @@ export const TemplateForm = () => {
             // });
 
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/v6/latest/${currency}`, {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/latest/${currency}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -143,6 +143,12 @@ export const TemplateForm = () => {
             
             if (values) {
                 values.rows.map(async (x) => {
+                    debugger;
+                    if(x.use_member_card === "true"){
+
+                        setEmailRequired(true);
+                    }
+
                     if (x.loginRequired === "false") {
                         
                         setTarget(values.rows[0]);
@@ -192,6 +198,8 @@ export const TemplateForm = () => {
             
             
             if (otp_response.ok) {
+                
+                statusRef.current.classList.remove("text-danger");
                 setGlobalWhatsapp(values["email"]);
                 setCurrentResponseStatus(otp_response.ok);
                 setValidOtp(true);
@@ -215,6 +223,8 @@ export const TemplateForm = () => {
 
     const handlePostOTP = async (value) => {
         try {
+            
+
             const data = {
                 otp: value,
                 userAgent: navigator.userAgent,
@@ -243,8 +253,9 @@ export const TemplateForm = () => {
             }
 
             const otp_response_data = await otpResponse.json();
-
+            
             if (otp_response_data.status) {
+
                 setPhoneRegistered(true);
                 setShowOtpInput(false);
                 snackbarRef.current?.openSnackbar(otp_response_data.message, "success");
@@ -506,7 +517,7 @@ export const TemplateForm = () => {
     }
 
     if (!target) {
-        return <Login />;
+        return <Login emailRequired={emailRequired} event={event}/>;
     }
 
     return (

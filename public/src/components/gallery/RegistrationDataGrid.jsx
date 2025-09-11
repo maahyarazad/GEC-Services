@@ -128,7 +128,7 @@ export const RegistrationDataGrid = () => {
                 filterParams
             ].filter(Boolean).join('&');
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration?${queryParams}`, {credentials:"include"});
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration?${queryParams}`, {credentials:"include"});
             const response_data = await response.json();
 
             setRegistrationList(response_data.data || []);
@@ -152,7 +152,7 @@ export const RegistrationDataGrid = () => {
         try {
             setIsDownloadings(true);
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-csv-data`);
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-csv-data`);
 
             if (!response.ok) {
                 throw new Error('Failed to fetch CSV file');

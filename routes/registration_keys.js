@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const dbService = require("../services/dbService");
+const authorize_admin = require("../middleware/auth");
 
-router.post("/registration-keys", async (req, res) => {
+router.post("/api/registration-keys",authorize_admin ,async (req, res) => {
     try {
         const table_name = "registration_keys";
         const data = req.body;

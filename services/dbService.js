@@ -138,6 +138,21 @@ const dbService = {
         });
     },
 
+    findExactWithConditions: (table, conditions) => {
+        const columns = Object.keys(conditions);
+        const values = Object.values(conditions);
+
+        const whereClause = columns.map(col => `${col} = ?`).join(" AND ");
+        const sql = `SELECT * FROM ${table} WHERE ${whereClause}`;
+
+        return new Promise((resolve, reject) => {
+            db.all(sql, values, (err, rows) => {
+            if (err) return reject(err);
+            resolve(rows);
+            });
+        });
+    },
+
     findExact: (table, column, pattern) => {
         const sql = `SELECT * FROM ${table} WHERE ${column} = ?`;
         const param = `${pattern}`;

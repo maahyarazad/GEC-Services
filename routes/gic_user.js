@@ -40,7 +40,7 @@ const upload = multer({ storage: storage });
 
 
 
-router.get('/gic-user', authorize_admin,async (req, res) => {
+router.get('/gic-user',async (req, res) => {
     try {
 
         const { filters, data } = await dbService.QuerySqlConverter(req.query, "GIC_Users");
@@ -60,7 +60,7 @@ router.get('/gic-user', authorize_admin,async (req, res) => {
 });
 
 
-router.post('/gic-user/send-reset-password', authorize_admin,async (req, res) => {
+router.post('/api/gic-user/send-reset-password', authorize_admin,async (req, res) => {
     try {
         const table_name = "GIC_Users";
         const userCheck = await dbService.countExact(table_name, 'email', req.body.email);

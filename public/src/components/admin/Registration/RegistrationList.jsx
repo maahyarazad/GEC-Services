@@ -13,6 +13,10 @@ import StepLabel from '@mui/material/StepLabel';
 import RegistrationKeyList from '../Registration/RegistrationKeyList'
 import { FaCheckCircle } from "react-icons/fa";
 import { MdDisabledVisible } from "react-icons/md";
+import { FaAddressCard } from "react-icons/fa";
+import GECBackground from "../../../assets/media/GECBackground.webp";
+import StarsField from "../../../assets/media/stars-field.webm";
+import { IoIosInformationCircleOutline } from "react-icons/io";
 
 const getColumns = ({ onEdit, onLock, onShowCode }) => [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -68,19 +72,29 @@ const getColumns = ({ onEdit, onLock, onShowCode }) => [
 
             if (videoExtensions.includes(extension)) {
                 return (
-                <video
-                    src={fileUrl}
-                    style={{ width: 50, height: 50, objectFit: 'contain', borderRadius: 4 }}
-                    loop
-                    autoPlay
-                    muted
-                    playsInline
-                    preload="metadata"
-                />
+                    <>
+                        <video
+                            src={fileUrl}
+                            style={{ width: 50, height: 50, objectFit: 'contain', borderRadius: 4 }}
+                            loop
+                            autoPlay
+                            muted
+                            playsInline
+                            preload="metadata"
+                            onError={(e) => {
+                                                            e.target.onerror = null; // prevent infinite loop
+                                                            e.target.src = StarsField;
+                                                        }}
+                        />
+                    </>
                 );
             } else {
                 return (
                 <img
+                onError={(e) => {
+                                                e.target.onerror = null; // prevent infinite loop
+                                                e.target.src = GECBackground;
+                                            }}
                     src={fileUrl}
                     alt="thumbnail"
                     style={{ width: 50, height: 50, objectFit: 'contain', borderRadius: 4 }}
@@ -99,33 +113,46 @@ const getColumns = ({ onEdit, onLock, onShowCode }) => [
         width: 150,
         renderCell: (params) => {
             const code = params?.row?.registration_code;
-
-            if (code) {
-                return (
-                    <Box>
-                        {/* You can optionally show a placeholder or a "No Code" message */}
-                        <span>{code}</span>
-                    </Box>
-                );
-            } else {
-                return (
-                    <Box>
-                        <Tooltip
-                            title="Show the Registration Code"
-                            componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}
-                        >
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                size="small"
-                                style={{ textTransform: 'none' }}
-                                onClick={() => onShowCode(params.row)}
+            const use_member_card = params?.row?.use_member_card;
+            if(use_member_card === "true"){
+                return <Box>
+                             <Tooltip
+                                title="Users should use their email and the Member CardId to login"
+                                componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}
                             >
-                                Code List
-                            </Button>
-                        </Tooltip>
-                    </Box>
-                );
+                                
+                                <FaAddressCard color="orange" size={25}/>
+                            </Tooltip>
+                        </Box>
+            }else{
+                
+                if (code) {
+                    return (
+                        <Box>
+                            {/* You can optionally show a placeholder or a "No Code" message */}
+                            <span>{code}</span>
+                        </Box>
+                    );
+                } else {
+                    return (
+                        <Box>
+                            <Tooltip
+                                title="Show the Registration Code"
+                                componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}
+                            >
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    size="small"
+                                    style={{ textTransform: 'none' }}
+                                    onClick={() => onShowCode(params.row)}
+                                >
+                                    Code List
+                                </Button>
+                            </Tooltip>
+                        </Box>
+                    );
+                }
             }
         },
     },
@@ -181,7 +208,7 @@ export const RegistrationList = () => {
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config`, {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-config`, {
                 method: 'GET',
                 credentials: "include"
             });
@@ -209,7 +236,7 @@ export const RegistrationList = () => {
     const getMemberCount = useCallback(async () => {
         try {
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-get-count/`, {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-get-count/`, {
                 method: 'GET',
                 credentials: "include"
             });
@@ -242,7 +269,7 @@ export const RegistrationList = () => {
                 formData.append(key, selectedRow[key]);
             }
             
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/switch-registration-lock/`, {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-config/switch-registration-lock/`, {
                 method: 'POST',
                 body: formData,
                 credentials: "include"
@@ -264,9 +291,10 @@ export const RegistrationList = () => {
     const showCodeList = async (row) => {
         try {
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-keys`, {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-keys`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: "include",
                 body: JSON.stringify({ id: row.id }),
             });
 

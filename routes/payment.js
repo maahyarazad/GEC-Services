@@ -33,7 +33,7 @@ const allowedKeys = [
 ];
 
 
-router.get("/api/v6/latest/:currency", async (req, res) => {
+router.get("/latest/:currency", async (req, res) => {
   const { currency } = req.params;
   try {
     const response = await fetch(`https://open.er-api.com/v6/latest/${currency}`);
@@ -106,7 +106,7 @@ router.post("/payment/create-record", upload.none(), async (req, res) => {
         create_result = await dbService.createSafe(table_name, sanitized);
         const order = await prepareOrder(data)
         // Step 2: Forward the saved record to payment endpoint
-        
+        console.log(order)
         const paymentResponse = await fetch(`${process.env.PAYMENNTTESTURL}`, {
             method: "POST",
             headers: {

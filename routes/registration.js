@@ -22,7 +22,9 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
     try {
         
         let table_name = "registration";
+        
         const {registration_code, title, event_date ,...data} = req.body;
+        const reg_config = await dbService.findExact("registration_config", "page", data.event);
         const file = req.file; 
         let uniqueFileName = null;
         // Validate file type
@@ -39,21 +41,17 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
         }
 
 
-        let event_time;
-        let event_location;
-        let event_location_name;
-
         const key = await dbService.findExact("registration_keys", "key", registration_code);
+        const event_time = reg_config[0]?.event_time;
+        const event_location = reg_config[0]?.event_location;
+        const event_location_name = reg_config[0]?.event_location_name;
 
+        
         // Max token doesn't mean anything for sending out documents like applying for Golden Adler award 
-        if(!file){
-            const max_token_value = await dbService.findExact("registration_config", "page", data.event);
-            event_time = max_token_value[0]?.event_time;
-            event_location = max_token_value[0]?.event_location;
-            event_location_name = max_token_value[0]?.event_location_name;
-
+        if(!file && reg_config.use_member_card !== false){
+                    
             // Convert to numbers
-            const maxTokens = Number(max_token_value[0]?.maxTokensPerGuest);
+            const maxTokens = Number(reg_config[0]?.maxTokensPerGuest);
             let currentCount = 0;
             if(key && key.length > 0){
                 currentCount = Number(key[0].tokenCount);
@@ -190,7 +188,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
     }
 });
 
-router.get('/registration',authorize_admin, async (req, res) => {
+router.get('/api/registration',authorize_admin, async (req, res) => {
   try {
   
     const { filters, data } = await dbService.QuerySqlConverter(req.query, "registration AS r", {
@@ -217,7 +215,7 @@ router.get('/registration',authorize_admin, async (req, res) => {
   }
 });
 
-router.get('/registration-csv-data', authorize_admin,async (req, res) => {
+router.get('/api/registration-csv-data', authorize_admin,async (req, res) => {
   try {
   
     const data = await dbService.findAll("registration");
@@ -274,7 +272,7 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
     }
 });
 
-router.post("/api/admin/login", (req, res) => {
+router.post("/admin/login", (req, res) => {
   const { password } = req.body;
 
   if (password === process.env.VITE_ADMIN_PASSWORD) {
@@ -295,7 +293,7 @@ router.post("/api/admin/login", (req, res) => {
   res.status(401).json({ error: "Invalid password" });
 });
 
-router.get("/api/admin/check-auth", (req, res) => {
+router.get("/admin/check-auth", (req, res) => {
   const token = req?.cookies["a-usr"];
   if (!token) return res.status(401).json({ authenticated: false });
 

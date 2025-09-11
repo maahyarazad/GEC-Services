@@ -18,7 +18,8 @@ const validationSchema = Yup.object({
   send_button_text: Yup.string().required("Send Button Text is required"),
 
   image: Yup.mixed()
-    .required('Image or video is required')
+    // .required('Image or video is required')
+    .nullable()
     .test("fileSize", "File too large (max 5MB)", (value) => {
       if (!value) return true;
       if (typeof value === "string") return true;
@@ -62,6 +63,7 @@ const validationSchema = Yup.object({
   gic: Yup.boolean(),
   textarea: Yup.boolean(),
   filedIcon: Yup.boolean(),
+  use_member_card: Yup.boolean(),
 });
 
 export default function NewRegistrationPage({
@@ -102,6 +104,7 @@ export default function NewRegistrationPage({
     birthdayRequired: initialData?.birthdayRequired === "true",
     companyRequired: initialData?.companyRequired === "true",
     lockRegistration: initialData?.lockRegistration === "true",
+    use_member_card: initialData?.use_member_card === "true",
     // ✅ if loginRequired is null/undefined, fallback to disableLogin
     loginRequired:
       initialData?.loginRequired != null
@@ -191,8 +194,10 @@ export default function NewRegistrationPage({
 
     try {
       const formData = new FormData();
+     
       
       Object.entries(values).forEach(([key, value]) => {
+        console.log(key, value);
         switch (key) {
           case "id":
             if (initialData) {
@@ -201,7 +206,7 @@ export default function NewRegistrationPage({
             break;
 
           case "currency":
-            if (initialData.paymentRequired === "true") {
+            if (values.paymentRequired === "true") {
               formData.append("currency", currency);
             }
             break;
@@ -216,6 +221,7 @@ export default function NewRegistrationPage({
             break;
 
           case "image": // handle file object directly
+            
             if (value) {
               formData.append("image", value);
             }
@@ -227,10 +233,10 @@ export default function NewRegistrationPage({
         }
       });
 
-
+      
 
       const response = await fetch(
-        `${import.meta.env.VITE_SERVERURL}/registration-config`,
+        `${import.meta.env.VITE_SERVERURL}/api/registration-config`,
         {
           method: "POST",
           body: formData,
@@ -755,6 +761,26 @@ export default function NewRegistrationPage({
                     </Field>
                     <label className="form-check-label" htmlFor="loginRequired">
                       Login Required
+                    </label>
+                  </div>
+
+<div className="form-check form-switch mb-3">
+                    <Field name="use_member_card">
+                      {({ field }) => (
+                        <input
+                          name={field.name}
+                          checked={field.value}
+                          onChange={field.onChange}
+                          
+                          onBlur={field.onBlur}
+                          id="use_member_card"
+                          className="form-check-input"
+                          type="checkbox"
+                        />
+                      )}
+                    </Field>
+                    <label className="form-check-label" htmlFor="use_member_card">
+                      Use Member Card ID to login
                     </label>
                   </div>
 

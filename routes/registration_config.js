@@ -36,8 +36,10 @@ const storage = multer.diskStorage({
 const { generateMapImage } = require("../services/mapService");
 const authorize_admin = require("../middleware/auth");
 const upload = multer({ storage: storage });
+
+
 router.post(
-  "/registration-config",
+  "/api/registration-config",
   authorize_admin,
   upload.single("image"),
   async (req, res) => {
@@ -201,7 +203,7 @@ router.post(
 );
 
 router.post(
-  "/registration-config/switch-registration-lock",
+  "/api/registration-config/switch-registration-lock",
   authorize_admin,
   upload.single("none"),
   async (req, res) => {
@@ -234,7 +236,7 @@ router.post(
   }
 );
 
-router.get("/registration-config", authorize_admin ,async (req, res) => {
+router.get("/api/registration-config", authorize_admin ,async (req, res) => {
   try {
     const table_name = "registration_config";
     const rows = await dbService.findAll(table_name);
@@ -269,47 +271,81 @@ router.post("/registration-config/optional-login", async (req, res) => {
   }
 });
 
-router.post("/registration-config-access",authorize_admin ,upload.none(), async (req, res) => {
+router.post("/registration-config-access" ,upload.none(), async (req, res) => {
   try {
     const data = req.body;
     const registration_code = data.registration_code
       .replace(/\s+/g, " ")
       .trim();
-    // Check duplicate
 
-    const key = await dbService.findExact(
-      "registration_keys",
-      "key",
-      registration_code
-    );
-    if (key && key.length > 0) {
+      
+      if(data.email){
+        
+        const key = await dbService.findExactWithConditions(
+          "member_card",
+          { email: data.email, card_number: registration_code }
+        );
+        
+        if(key.length === 0){
+          return res
+          .status(401)
+          .json({ status: false, message: "Invalid Member Card ID or email address" });
+        }
+        
+        const page_data = await dbService.findExact(
+          "registration_config",
+          "page",
+          data.event
+        );
+        
+        if (page_data) {
+          return res.status(200).json({
+            status: true,
+            message: "Login Success",
+            data: page_data,
+            session: req.session,
+          });
+        }
+        
+      }
+      
+      // Check duplicate
+      
+      const key = await dbService.findExact(
+        "registration_keys",
+        "key",
+        registration_code
+      );
+      
+      if (key && key.length > 0) {
+        const page_data = await dbService.findExact(
+          "registration_config",
+          "id",
+          key[0].registration_config_id
+        );
+        page_data[0].registration_code = registration_code;
+        
+        if (page_data) {
+          return res.status(200).json({
+            status: true,
+            message: "Login Success",
+            data: page_data,
+            session: req.session,
+          });
+        }
+      }
+      
       const page_data = await dbService.findExact(
         "registration_config",
-        "id",
-        key[0].registration_config_id
+        "registration_code",
+        registration_code
       );
-      page_data[0].registration_code = registration_code;
-
-      if (page_data) {
-        return res.status(200).json({
-          status: true,
-          message: "Login Success",
-          data: page_data,
-          session: req.session,
-        });
+      if (!page_data || page_data.length == 0) {
+        return res
+          .status(401)
+          .json({ status: false, message: "Invalid Authorization Code" });
       }
-    }
-
-    const page_data = await dbService.findExact(
-      "registration_config",
-      "registration_code",
-      registration_code
-    );
-    if (!page_data || page_data.length == 0) {
-      return res
-        .status(401)
-        .json({ status: false, message: "Invalid Authorization Code" });
-    }
+      
 
     // await sendOtpToPhone(data.mobile_number, req, res, client);
     // await dbService.create("registration_client_access", data);

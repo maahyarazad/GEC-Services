@@ -5,7 +5,7 @@ import "./admin.css";
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { RegistrationList } from "./Registration/RegistrationList";
 import { RegistrationDataGrid } from "../gallery/RegistrationDataGrid"
 import { MemberDataGrid } from "../gallery/MembersDataGrid"
@@ -24,12 +24,16 @@ import { BsPeopleFill } from "react-icons/bs";
 import { FcSurvey } from "react-icons/fc";
 import { GICDataGrid } from "../gallery/GICDataGrid";
 import { PaymentDataGrid } from "../gallery/PaymentDataGrid";
+import { IoIdCardOutline } from "react-icons/io5";
+import { GrCatalog } from "react-icons/gr";
+import { GrCatalogOption } from "react-icons/gr";
 
 
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
 });
 import {useNavigate} from 'react-router-dom';
+import { MemberCardDataGrid } from "../gallery/MemberCardDataGrid";
 
 export const Admin = ({ data }) => {
 
@@ -42,10 +46,9 @@ export const Admin = ({ data }) => {
     const [adminUser, setAdminUser] = useState(null);
     const [showPassword, setShowPassowrd] = useState(false);
 
-    useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const res = await fetch(`${import.meta.env.VITE_SERVERURL}/api/admin/check-auth`, {
+    const checkAuth = useCallback(async () => {
+        try {
+                const res = await fetch(`${import.meta.env.VITE_SERVERURL}/admin/check-auth`, {
                     method: "GET",
                     credentials: "include",
                 });
@@ -60,16 +63,18 @@ export const Admin = ({ data }) => {
             } finally {
                 setIsCheckingAuth(false);
             }
-        };
+    }, [])
+    
 
+    useEffect(() => {
         checkAuth();
-    }, []);
+    }, [checkAuth]);
 
     const handleLoginSubmit = async (values, { setSubmitting, resetForm }) => {
         try {
             setSubmitting(true);
 
-            const res = await fetch(`${import.meta.env.VITE_SERVERURL}/api/admin/login`, {
+            const res = await fetch(`${import.meta.env.VITE_SERVERURL}/admin/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -109,6 +114,33 @@ export const Admin = ({ data }) => {
     };
 
 
+    const tabStyle = { textTransform: 'none', alignSelf: 'baseline'  };
+const tabConfig = [
+  {
+    icon: <GiArchiveRegister size={20} />,
+    label: "Registration Config",
+  },
+  {
+    icon: <GrCatalogOption size={20} />,
+    label: "Events",
+  },
+  {
+    icon: <FcSurvey size={24} />,
+    label: "Surveys",
+  },
+  {
+    icon: <IoIdCardOutline size={24} />,
+    label: "Member Cards",
+  },
+  {
+    icon: <GrCatalog size={20} />,
+    label: "GIC Data",
+  },
+  {
+    icon: <BsPeopleFill size={20} />,
+    label: "Member Data",
+  },
+];
 
     const [tabValue, setTabValue] = useState(0);
 
@@ -124,13 +156,13 @@ export const Admin = ({ data }) => {
         case 2:
             content = <SurveyDataGrid />;
             break;
-        // case 3:
-        //     content = <PaymentDataGrid />;
-        //     break;
         case 3:
-            content = <GICDataGrid />;
+            content = <MemberCardDataGrid />;
             break;
         case 4:
+            content = <GICDataGrid />;
+            break;
+        case 5:
             content = <MemberDataGrid />;
             break;
         default:
@@ -149,7 +181,7 @@ export const Admin = ({ data }) => {
             <div className="admin">
                 <div>
                     <Box
-                        sx={{ flexGrow: 0, bgcolor: 'background.paper', display: 'flex' }}
+                        sx={{ flexGrow: 1, bgcolor: 'background.paper', display: 'flex' }}
                     >
                         <Tabs
                             orientation="vertical"
@@ -166,33 +198,15 @@ export const Admin = ({ data }) => {
                                 }
                             }}
                         >
-                            <Tab
-                                icon={<GiArchiveRegister size={20} />}
+                           {tabConfig.map((tab, index) => (
+                                <Tab
+                                key={index}
+                                icon={tab.icon}
                                 iconPosition="start"
-                                label="Registration Management"
-                                style={{ textTransform: 'none' }} />
-                            <Tab
-                                icon={<BsCalendar2Event size={20} />}
-                                iconPosition="start"
-                                label="Event Management"
-                                style={{ textTransform: 'none', alignContent: 'flex-start' }} />
-
-                            <Tab
-                                icon={<FcSurvey size={24} />}
-                                iconPosition="start"
-                                label="Survey Management"
-                                style={{ textTransform: 'none' }} />
-
-                            <Tab
-                                icon={<BsPeopleFill size={20} />}
-                                iconPosition="start"
-                                label="GIC Management"
-                                style={{ textTransform: 'none' }} />
-                            <Tab
-                                icon={<BsPeopleFill size={20} />}
-                                iconPosition="start"
-                                label="Member Management"
-                                style={{ textTransform: 'none' }} />
+                                label={tab.label}
+                                style={tabStyle}
+                                />
+                            ))}
 
                         </Tabs>
                     </Box>

@@ -91,7 +91,7 @@ export const PaymentDataGrid = () => {
     const handleResetPassword = async (row) => {
         try {
             setLoadingRowId(row.id);
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/gic-user/send-reset-password`, {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/gic-user/send-reset-password`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -5,76 +5,70 @@ import { MdLockReset } from "react-icons/md";
 import { IoShieldCheckmarkSharp } from "react-icons/io5";
 import { FaExclamation } from "react-icons/fa";
 const columns = ({ onResendPasswordReset, loadingRowId }) => [
-    { field: 'id', headerName: 'ID', width: 70 },
-    {
-        field: 'change_password_required',
-        headerName: 'Password Changed',
-        width: 150,
-        sortable: true,
-        filterable: true,
-        renderCell: (params) =>
-            params.row.change_password_required ? (
-                <Tooltip title="User has not updated the temporary password yet">
-                    <FaExclamation color="red" size={20} />
-                </Tooltip>
-            ) : (
-                <Tooltip title="User has successfully updated their password">
-                    <IoShieldCheckmarkSharp color="green" size={20} />
-                </Tooltip>
-            ),
-    },
-    {
-        field: 'actions',
-        headerName: 'Actions',
-        width: 120,
-        sortable: false,
-        filterable: false,
-        renderCell: (params) => (
-            <Box>
-                <Tooltip title="Send reset password email to this user">
+  { field: 'id', headerName: 'ID', width: 70 },
 
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        size="small"
-                        startIcon={<MdLockReset />}
-                        sx={{ textTransform: 'none' }}
-                        onClick={() => onResendPasswordReset(params.row)}
-                    >
+//   {
+//     field: 'paid',
+//     headerName: 'Paid',
+//     width: 100,
+//     sortable: true,
+//     filterable: true,
+//     renderCell: (params) =>
+//       params.row.paid ? (
+//         <Tooltip title="Membership is paid">
+//           <IoShieldCheckmarkSharp color="green" size={20} />
+//         </Tooltip>
+//       ) : (
+//         <Tooltip title="Membership is not paid">
+//           <FaExclamation color="red" size={20} />
+//         </Tooltip>
+//       ),
+//   },
 
-                        {loadingRowId === params.row.id ? (
-                            <CircularProgress size={18} color="inherit" />
-                        ) : (
-                            "Password"
-                        )}
-                    </Button>
-                </Tooltip>
+//   {
+//     field: 'actions',
+//     headerName: 'Actions',
+//     width: 140,
+//     sortable: false,
+//     filterable: false,
+//     renderCell: (params) => (
+//       <Box>
+//         <Tooltip title="Send reset password email to this user">
+//           <Button
+//             variant="contained"
+//             color="primary"
+//             size="small"
+//             startIcon={<MdLockReset />}
+//             sx={{ textTransform: 'none' }}
+//             onClick={() => onResendPasswordReset(params.row)}
+//           >
+//             {loadingRowId === params.row.id ? (
+//               <CircularProgress size={18} color="inherit" />
+//             ) : (
+//               "Password"
+//             )}
+//           </Button>
+//         </Tooltip>
+//       </Box>
+//     ),
+//   },
 
-            </Box>
-        ),
-    },
-    // Base fields
-    { field: 'email', headerName: 'Email', width: 200, filterable: true },
-    { field: 'created_at', headerName: 'Created At', width: 180, filterable: true },
-
-    // Extra fields
-    { field: 'firstName', headerName: 'First Name', width: 150, filterable: true },
-    { field: 'lastName', headerName: 'Last Name', width: 150, filterable: true },
-    { field: 'phone', headerName: 'Phone', width: 150, filterable: true },
-    { field: 'mobile', headerName: 'Mobile', width: 150, filterable: true },
-    { field: 'gender', headerName: 'Gender', width: 120, filterable: true },
-    { field: 'industry', headerName: 'Industry', width: 180, filterable: true },
-    { field: 'company', headerName: 'Company', width: 200, filterable: true },
-    { field: 'website', headerName: 'Website', width: 200, filterable: true },
-    { field: 'address_street', headerName: 'Street', width: 200, filterable: true },
-    { field: 'address_area', headerName: 'Area', width: 180, filterable: true },
-    { field: 'address_city', headerName: 'City', width: 150, filterable: true },
-    { field: 'address_emirate', headerName: 'Emirate', width: 150, filterable: true },
-    { field: 'address_country', headerName: 'Country', width: 150, filterable: true },
+  // Table fields
+  { field: 'memberId', headerName: 'Member ID', width: 150, filterable: true },
+  { field: 'card_number', headerName: 'Card Number', width: 150, filterable: true },
+  { field: 'username', headerName: 'Username', width: 200, filterable: true },
+  { field: 'title', headerName: 'Title', width: 120, filterable: true },
+  { field: 'firstname', headerName: 'First Name', width: 150, filterable: true },
+  { field: 'lastname', headerName: 'Last Name', width: 150, filterable: true },
+  { field: 'gender', headerName: 'Gender', width: 120, filterable: true },
+  { field: 'mobile_number', headerName: 'Mobile Number', width: 180, filterable: true },
+  { field: 'email', headerName: 'Email', width: 220, filterable: true },
+  { field: 'card_expiry_date', headerName: 'Card Expiry Date', width: 200, filterable: true },
+  { field: 'last_login', headerName: 'Last Login', width: 200, filterable: true },
 ];
 
 
-export const GICDataGrid = () => {
+export const MemberCardDataGrid = () => {
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];
     const [loadingRowId, setLoadingRowId] = useState(null);
     const [members, setMembers] = useState([]);
@@ -96,8 +90,8 @@ export const GICDataGrid = () => {
                 headers: {
                     "Content-Type": "application/json",
                 },
+                credentials:"include",
                 body: JSON.stringify({ email: row.email }),
-                credentials: "include"
             });
 
             const data = await response.json();
@@ -134,7 +128,7 @@ export const GICDataGrid = () => {
                     filterParams,
                 ].filter(Boolean).join('&');
 
-                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/gic-user?${queryParams}`, {credentials:"include"});
+                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member_card?${queryParams}`, {credentials:"include"});
 
                 const data = await response.json();
 

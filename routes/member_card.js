@@ -1,86 +1,42 @@
 const express = require("express");
 const router = express.Router();
 const path = require("path");
+const fetch = require("node-fetch");
 const dbService = require("../services/dbService");
 require('dotenv').config();
 const multer = require("multer");
-const {PKPass} = require("passkit-generator");
+const authorize_admin = require("../middleware/auth");
+
 const upload = multer({
     storage: multer.memoryStorage()
     , limits: { fileSize: 5 * 1024 * 1024 }
 }); // 5MB max
-const {emailMembershipCard} = require("../services/emailService");
-const fs = require("fs");
 
-router.post("/membership-card",upload.none(),async (req, res) => {
-  try {
-    // const memberId = req.params.memberId;
-    const data = req.body;
-    const wwdrPath = path.join(__dirname, "../certs/AppleWWDRCAG4.pem");
-    const signerCertPath = path.join(__dirname, "../certs/signerCert.pem");
-    const signerKeyPath = path.join(__dirname, "../certs/signerKey.pem");
-
-    const now = new Date();
-
-  // Create a new date 12 months from now
-  const expirationDate = new Date(
-    now.getFullYear(),
-    now.getMonth() + 12, // add 12 months
-    now.getDate(),
-    now.getHours(),
-    now.getMinutes(),
-    now.getSeconds()
-  );
-
-    // Load pass template
-    const pass = await PKPass.from({
-      model: path.join(process.cwd(), "models/membership.pass"),
-      certificates: {
-        wwdr: fs.readFileSync(wwdrPath),
-        signerCert: fs.readFileSync(signerCertPath),
-        signerKey: fs.readFileSync(signerKeyPath),
-        signerKeyPassphrase: process.env.APPLE_PASS_SIGNER_KEY_PASSPHRASE || "germany"
-      }
-    },{
-    serialNumber: "AAGH44625236dddaffbda",
-  });
-
-    const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
-    const formattedDate = expirationDate.toLocaleDateString('en-GB', options).replace(/\//g, '-');
-    pass.secondaryFields.push({ key: "expiry", label: "Expiry Date" ,value: formattedDate });
-    pass.primaryFields.push({ key: "member", label: "Member ID", "value": `${data.usrId}` });
-    pass.auxiliaryFields.push({ key: "fullname", label :"Fullname" ,value: `${data.title}${data.first_name}${data.name}`, textAlignment: "PKTextAlignmentLeft" });
-    pass.auxiliaryFields.push({ key: "carnumber", label :"Card Number" ,value: `${data.cardnumber}`, textAlignment: "PKTextAlignmentLeft" });
+const fs = require("fs").promises;
+// keep only DB table columns
 
 
 
-  pass.setExpirationDate(expirationDate);
+router.get('/api/member_card', authorize_admin,async (req, res) => {
+    try {
+        
+        const table_name = "member_card";
+        const { filters, data } = await dbService.QuerySqlConverter(req.query, table_name);
 
-    const buffer = await pass.getAsBuffer();
-    // const passPath = path.join(process.cwd(),"routes" ,"MyCard.pkpass");
-    // const buffer = fs.readFileSync(passPath);
-    // fs.writeFileSync("MyVirtualCard.pkpass", buffer);
-    // res.setHeader("Content-Type", "application/vnd.apple.pkpass");
-    // res.setHeader(
-    //   "Content-Disposition",
-    //   `attachment; filename="MyCard.pkpass"`
-    // );
-    // res.send(buffer); //`
+        const total = await dbService.getTotalCount(table_name, filters);
 
-  await emailMembershipCard({
-      email: "maahyarazad@gmail.com",                // recipient email
-      memberName: `${data.title} ${data.first_name} ${data.name}`, // full name
-      cardNumber: data.cardnumber,      // card number
-      expiryDate: formattedDate,        // formatted expiry date
-      membershipTier: "membership"      // optional: package or membership tier
-  }, buffer);
+        return res.json({
+            status: true,
+            data,
+            total
+        });
 
-    res.status(201).send("Success");
-
-  } catch (err) {
-    console.error("Error generating pass:", err);
-    res.status(500).send("Error creating pass");
-  }
+    } catch (error) {
+        console.error("Error in /member:", error);
+        res.status(500).json({ status: false, message: 'Server error' });
+    }
 });
+
+
 
 module.exports = router;
