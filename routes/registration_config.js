@@ -283,8 +283,19 @@ router.post("/registration-config-access" ,upload.none(), async (req, res) => {
       const member_key = await dbService.findExact(
         "member_card",
         "card_number", registration_code);
-      
       if(member_key.length === 1){
+          const expiryDate = new Date(member_key[0].card_expiry_date);
+          const now = new Date();
+        if (expiryDate < now) {
+          return res
+            .status(401)
+            .json({
+              status: false,
+              message:
+                'Your membership card has expired. For assistance, please contact <h3><a href="mailto:office2@german-emirates-club.com">office2@german-emirates-club.com</a></h3>'
+            });
+}
+
         const page_data = await dbService.findExact(
           "registration_config",
           "page",

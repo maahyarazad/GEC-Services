@@ -80,9 +80,8 @@ export const Login = ({ emailRequired, event }) => {
                 statusRef.current.textContent = response_data.message;
                 return;
             }
-            debugger;
+            
             if (response_data.status) {
-                console.log(response_data.status);
 
                 // setEncryptedCookie("gec-registration", response_data.data[0]);
                 // const queryParam = encryptQueryParam(response_data.data[0]);
@@ -223,7 +222,8 @@ export const Login = ({ emailRequired, event }) => {
                 <p
                     ref={statusRef}
                     className={`mt-1 ${currentResponseStatus ? "" : "text-danger"}`}
-                ></p>
+                    dangerouslySetInnerHTML={{ __html: statusRef.current?.textContent || "" }}
+                    ></p>
             </div>
         </div>
     );

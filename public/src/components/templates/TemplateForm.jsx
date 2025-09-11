@@ -150,7 +150,7 @@ export const TemplateForm = () => {
             
             if (values) {
                 values.rows.map(async (x) => {
-                    debugger;
+                    
                     if(x.use_member_card === "true"){
 
                         setEmailRequired(true);
@@ -293,7 +293,7 @@ export const TemplateForm = () => {
     useEffect(() => {
         const gecuser = getEncryptedLocalStorage("gec-registration");
         if (gecuser) {
-            debugger;
+            
             if (gecuser.surveyForm === "true") {
                 setPhoneRegistered(true);
             }

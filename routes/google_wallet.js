@@ -44,23 +44,25 @@ router.post('/google-wallet/create-pass-class/', async (req, res) => {
 });
 
 async function createPassClass(req, res) {
-    const   data = req.body;
+    const data = req.body;
     const email = `${data.email.replace(/[^\w.-]/g, '_')}`;
     const objectId = `${issuerId}.member_${Date.now()}`;
 
 
     const now = Math.floor(Date.now() / 1000);
+    const _now = new Date();
 
     // Create a new date 12 months from now
     const expirationDate = new Date(
-        now.getFullYear(),
-        now.getMonth() + 12, // add 12 months
-        now.getDate(),
-        now.getHours(),
-        now.getMinutes(),
-        now.getSeconds()
+        _now.getFullYear(),
+        _now.getMonth() + 12, // add 12 months
+        _now.getDate(),
+        _now.getHours(),
+        _now.getMinutes(),
+        _now.getSeconds()
     );
 
+    const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
     const formattedDate = expirationDate.toLocaleDateString('en-GB', options).replace(/\//g, '-');
 
     const genericClass = {
@@ -117,13 +119,13 @@ async function createPassClass(req, res) {
         header: {
             defaultValue: {
                 language: "en-US",
-                value: "Maahyar Azad"
+                value: `${data.fullname}`
             }
         },
         subheader: {
             defaultValue: {
                 language: "en-US",
-                value: "Member ID: 817628712"
+                value: `Member ID: ${data.memberId}`
             }
         },
         heroImage: {
@@ -150,12 +152,12 @@ async function createPassClass(req, res) {
             {
                 id: "cardnumber",
                 header: "Card Number",
-                body: "CARD123456"
+                body: `${data.card_number}`
             },
             {
                 id: "expiry",
                 header: "Expiry Date",
-                body: "31-12-2025"
+                body: `${formattedDate}`
             }
         ],
         barcode: {
