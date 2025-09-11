@@ -1,6 +1,6 @@
 // React & Hooks
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 
 // Third-Party Libraries
 import { Formik, Form, Field, ErrorMessage } from "formik";
@@ -59,10 +59,11 @@ import StarsField from "../../assets/media/stars-field.webm";
 export const TemplateForm = () => {
     //OTP
     const { event } = useParams();
-    
+    const location = useLocation();
     const [showOtpInput, setShowOtpInput] = useState(false);
     const otpRef = useRef();
     const statusRef = useRef();
+    const email_ref = useRef(null);
     const timeoutRef = useRef(null);
     const [currentResponseStatus, setCurrentResponseStatus] = useState(null);
     const [currentResponseMessage, setCurrentResponseMessage] = useState("");
@@ -79,6 +80,12 @@ export const TemplateForm = () => {
     const [rates, setRates] = useState(null);
     const navigate = useNavigate();
 
+
+    const params = new URLSearchParams(location.search);
+    
+    const from = params.get("from");
+  const login_email = params.get("email");
+  const login_memberId = params.get("memberId");
     
 
     // http://localhost:5175/registration/october-party/success?reference=ordexc-PI-gec-op-17567159285689843&checkout=1842050180199175015
@@ -286,6 +293,7 @@ export const TemplateForm = () => {
     useEffect(() => {
         const gecuser = getEncryptedLocalStorage("gec-registration");
         if (gecuser) {
+            debugger;
             if (gecuser.surveyForm === "true") {
                 setPhoneRegistered(true);
             }
@@ -605,7 +613,7 @@ export const TemplateForm = () => {
                 </div>
 
                 <div>
-                    <div                 className={`${target.lockRegistration === "true" ? "locked-template-form" : ""
+                <div className={`${target.lockRegistration === "true" ? "locked-template-form" : ""
                     }`}>
                         {target.countDown === "true" && (
                             <div style={{ position: "relative", paddingBottom: 20 }}>
@@ -616,7 +624,10 @@ export const TemplateForm = () => {
 
                         <Formik
                             enableReinitialize={true}
-                            initialValues={initialValues}
+                            initialValues={{
+                                ...initialValues,
+                                // email: login_email, // set your dynamic value here
+                            }}
                             validationSchema={getValidationSchema(target)}
                             onSubmit={async (values, { resetForm, setFieldValue }) => {
                                 await handleSubmitRegistration(values, {
@@ -682,6 +693,7 @@ export const TemplateForm = () => {
 
                                                             <div className="input-group">
                                                                 <Field
+                                                                
                                                                     as={TextField}
                                                                     type="email"
                                                                     name="email"

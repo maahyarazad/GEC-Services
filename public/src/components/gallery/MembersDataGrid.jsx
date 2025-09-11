@@ -7,6 +7,7 @@ import { MdFormatListBulletedAdd } from "react-icons/md";
 import Modal from "../../components/Modal";
 import debounce from 'lodash/debounce';
 
+
 const columns = ({ onEdit, onSwitchActive }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'firstName', headerName: 'First Name', width: 130, filterable: true },

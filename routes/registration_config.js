@@ -279,19 +279,12 @@ router.post("/registration-config-access" ,upload.none(), async (req, res) => {
       .trim();
 
       
-      if(data.email){
-        
-        const key = await dbService.findExactWithConditions(
-          "member_card",
-          { email: data.email, card_number: registration_code }
-        );
-        
-        if(key.length === 0){
-          return res
-          .status(401)
-          .json({ status: false, message: "Invalid Member Card ID or email address" });
-        }
-        
+      
+      const member_key = await dbService.findExact(
+        "member_card",
+        "card_number", registration_code);
+      
+      if(member_key.length === 1){
         const page_data = await dbService.findExact(
           "registration_config",
           "page",
@@ -306,7 +299,6 @@ router.post("/registration-config-access" ,upload.none(), async (req, res) => {
             session: req.session,
           });
         }
-        
       }
       
       // Check duplicate

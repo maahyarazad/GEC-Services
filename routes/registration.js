@@ -48,7 +48,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
 
         
         // Max token doesn't mean anything for sending out documents like applying for Golden Adler award 
-        if(!file && reg_config.use_member_card !== false){
+        if(!file){
                     
             // Convert to numbers
             const maxTokens = Number(reg_config[0]?.maxTokensPerGuest);

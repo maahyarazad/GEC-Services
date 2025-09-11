@@ -14,11 +14,11 @@ import { GoShieldLock } from "react-icons/go";
 
 export const Login = ({ emailRequired, event }) => {
     const validationSchema = Yup.object({
-        email: emailRequired ? Yup.string().email("Enter a valid email").required("Email is required!") : Yup.string().nullable(), 
+        // email: emailRequired ? Yup.string().email("Enter a valid email").required("Email is required!") : Yup.string().nullable(), 
         registration_code: Yup.string().required("Login code is required!"),
     });
 
-
+    const navigate = useNavigate();
     const [showPassword, setShowPassowrd] = useState(false);
     const [currentResponseStatus, setCurrentResponseStatus] = useState(true);
     const [loginResponseData, setLoginResponseData] = useState(null);
@@ -35,7 +35,6 @@ export const Login = ({ emailRequired, event }) => {
     
 
     const initialValues = {
-        email: '',
         registration_code: "",
     };
 
@@ -56,7 +55,6 @@ export const Login = ({ emailRequired, event }) => {
                 platform: navigator.platform,
                 language: navigator.language,
                 registration_code: values.registration_code,
-                email: values.email,
                 event: event
             };
 
@@ -82,7 +80,7 @@ export const Login = ({ emailRequired, event }) => {
                 statusRef.current.textContent = response_data.message;
                 return;
             }
-
+            debugger;
             if (response_data.status) {
                 console.log(response_data.status);
 
@@ -92,9 +90,16 @@ export const Login = ({ emailRequired, event }) => {
 
                 statusRef.current.textContent = "Login successful, please wait.... ";
 
+                           
                 setTimeout(() => {
-                    window.location.assign(`/registration/${response_data.data[0].page}`);
-                }, 500);
+                    
+                    const params = new URLSearchParams({
+                        from: "login",
+                        memberId: data.registration_code,
+                    }).toString();
+                    window.location.assign(`/registration/${response_data.data[0].page}?${params}`);
+
+                }, 50);
             } else {
                 statusRef.current.textContent = response_data.message;
             }
@@ -123,7 +128,7 @@ export const Login = ({ emailRequired, event }) => {
                     {({ values, setFieldValue, errors, touched, isSubmitting }) => (
                         <Form ref={loginRef}>
                            
-                            {emailRequired && (
+                            {/* {emailRequired && (
 
                                 <>
                                     <Field
@@ -143,7 +148,7 @@ export const Login = ({ emailRequired, event }) => {
                                         />
                                     </div>
                                 </>
-                            )}
+                            )} */}
                             <div className="full position-relative">
                                 <Field
                                     onChange={(e) => {

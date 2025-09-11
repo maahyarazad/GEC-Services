@@ -1,9 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { Box, CircularProgress, Button, Tooltip } from '@mui/material';
-import { MdLockReset } from "react-icons/md";
-import { IoShieldCheckmarkSharp } from "react-icons/io5";
-import { FaExclamation } from "react-icons/fa";
+import { MdWorkspacePremium } from "react-icons/md";
+
 const columns = ({ onResendPasswordReset, loadingRowId }) => [
   { field: 'id', headerName: 'ID', width: 70 },
 
@@ -55,6 +54,15 @@ const columns = ({ onResendPasswordReset, loadingRowId }) => [
 
   // Table fields
   { field: 'memberId', headerName: 'Member ID', width: 150, filterable: true },
+  { field: 'paid', headerName: 'Type', width: 150, filterable: true, 
+    renderCell: (params) =>
+                params.row.paid ? (
+                    
+                    <></>
+                ) : (
+                    <MdWorkspacePremium color="#0D47A1" size={22} />
+                ),
+   },
   { field: 'card_number', headerName: 'Card Number', width: 150, filterable: true },
   { field: 'username', headerName: 'Username', width: 200, filterable: true },
   { field: 'title', headerName: 'Title', width: 120, filterable: true },
