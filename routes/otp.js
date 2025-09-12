@@ -1,11 +1,41 @@
 require('dotenv').config();
 const express = require('express');
+const rateLimit = require('express-rate-limit');
+
 const router = express.Router();
 const { generateRecordId, generateOTP } = require("../services/generatorService");
 const dbService = require("../services/dbService");
 const {email_otp} = require("../services/emailService");
 const twilioClient = require('twilio')(process.env.TWILIO_ACOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const smsglobal = require('smsglobal')(process.env.SMSGLOBAL_KEY, process.env.SMSGLOBAL_SECRET);
+
+const otpRequestMap = new Map();
+const otpLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 1,
+  standardHeaders: true,
+  legacyHeaders: false,
+
+  handler: (req, res, next, options) => {
+    const key = req.ip; // or use req.body.phone/email for per-user tracking
+    const now = Date.now();
+    const lastRequestTime = otpRequestMap.get(key) || 0;
+    const elapsed = now - lastRequestTime;
+
+    if (elapsed < 60000) {
+      return res.status(429).json({
+        status: 429,
+        error: `You can only request one OTP per minute. Please wait ${Math.floor((60000-elapsed)/1000)} seconds before trying again.`
+      });
+    }
+
+    
+    // Update last request timestamp and allow the request
+    next(); // continue to your route
+  }
+});
+
+
 
 const multer = require("multer");
 const { config } = require('dotenv');
@@ -105,10 +135,12 @@ const sendOtpToPhone = async (data, req, res) => {
     }
 };
 
-router.post("/send-otp",upload.none() ,async (req, res) => {
+router.post("/send-otp",otpLimiter, upload.none() ,async (req, res) => {
     try {
         const data = req.body;
-
+        const key = req.ip; // or use req.body.phone/email for per-user tracking
+        const now = Date.now();
+        otpRequestMap.set(key, now);
     //    const response = await sendOtpToPhone(data.whatsapp, req, res);
        const response = await sendOtpToEmail(data, req, res);
        
@@ -137,7 +169,7 @@ router.post("/otp-check",upload.none(), async (req, res) => {
     try {
         const data = req.body;
         const otp = req.session.otp;
-        const now = Date.now();
+        
         if (Date.now() > req.session.otpExpires) {
             return res.status(401).json({ status: false, message: 'OTP has expired please try again' });
         }

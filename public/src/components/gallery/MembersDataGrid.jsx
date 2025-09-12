@@ -6,7 +6,7 @@ import MemberRequestForm from "../../components/admin/Member/MemberRequestForm";
 import { MdFormatListBulletedAdd } from "react-icons/md";
 import Modal from "../../components/Modal";
 import debounce from 'lodash/debounce';
-
+import { MdAddCircleOutline } from "react-icons/md";
 
 const columns = ({ onEdit, onSwitchActive }) => [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -219,45 +219,60 @@ export const MemberDataGrid = () => {
 
 
             <div className="d-flex justify-content-start mb-1">
-                <div className="me-2">
-                    <Button
-                        variant="outlined"
-                        startIcon={<MdFormatListBulletedAdd size={24} />}
-                        onClick={() => setNewReg(true)}
-                        sx={{ fontSize: 14, textTransform: 'none' }}
-                    >
-                        Add Member
-                    </Button>
-                </div>
+                <div className='row me-2'>
+                    <div className='col-12 d-lg-flex'>
+                        
+                        <div className='me-1'>
 
-                <div className='me-2'>
-
-                    {isDownloading ? (
-                        <div className='d-flex mw-2'>
-                            <span className=''>Downloading</span>
-                            <CircularProgress size={20} color="inherit" />
+                            <Button
+                                
+                                variant="outlined"
+                                startIcon={<MdAddCircleOutline size={20} />}
+                                onClick={() => setNewReg(true)}
+                                sx={{ fontSize: 13, textTransform: 'none', wordBreak: 'break-all'}}
+                            >
+                                Add Member
+                            </Button>
                         </div>
-                    ) : (
-                        <Button
-                            variant="outlined"
-                            startIcon={<BsFiletypeCsv size={20} />}
-                            onClick={handleExport}
-                            sx={{ fontSize: 14, color: 'primary.main', textTransform: 'none' }}
-                        >
-                            Download (All Records) CSV
-                        </Button>
-                    )}
+                        <div className='me-1'>
+{isDownloading ? (
+                                <div className='d-flex mw-2'>
+                                    <span className=''>Downloading</span>
+                                    <CircularProgress size={20} color="inherit" />
+                                </div>
+                            ) : (
+                                <Button
+                                    
+                                    variant="outlined"
+                                    startIcon={<BsFiletypeCsv size={20} />}
+                                    onClick={handleExport}
+                                    sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all' }}
+                                >
+                                    Download (All Records) CSV
+                                </Button>
+                            )}
+                        </div>
+                        <div className='me-2'>
+
+                            <Button
+                            
+                                variant="contained"
+                                color="primary"
+                                onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
+                                sx={{ fontSize: 13, textTransform: 'none' }}
+                            >
+                                Apply Filters
+                            </Button>
+                        </div>
+                            
+
+
+                    </div>
+                   
                 </div>
-                <div className="">
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
-                        sx={{ fontSize: 14, textTransform: 'none' }}
-                    >
-                        Apply Filters
-                    </Button>
-                </div>
+
+               
+              
 
             </div>
 

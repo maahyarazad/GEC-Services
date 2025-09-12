@@ -154,7 +154,7 @@ export const SurveyDataGrid = () => {
                         variant="contained"
                         color="primary"
                         onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
-                        sx={{ fontSize: 14, textTransform: 'none' }}
+                        sx={{ fontSize: 13, textTransform: 'none' }}
                     >
                         Apply Filters
                     </Button>

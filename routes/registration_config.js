@@ -1,4 +1,5 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const router = express.Router();
 const path = require("path");
 const dbService = require("../services/dbService");
@@ -37,6 +38,15 @@ const { generateMapImage } = require("../services/mapService");
 const authorize_admin = require("../middleware/auth");
 const upload = multer({ storage: storage });
 
+const loginLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 15 minutes
+  max: 5,                   // limit each IP to 5 requests per window
+  message: {
+    status: 429,
+    error: "Too many login attempts, please try again after 15 minutes."
+  },
+  headers: true, // Send rate limit info in headers (X-RateLimit-*)
+});
 
 router.post(
   "/api/registration-config",
@@ -271,28 +281,38 @@ router.post("/registration-config/optional-login", async (req, res) => {
   }
 });
 
-router.post("/registration-config-access" ,upload.none(), async (req, res) => {
+router.post("/registration-config-access" ,loginLimiter, upload.none(), async (req, res) => {
   try {
     const data = req.body;
     const registration_code = data.registration_code
       .replace(/\s+/g, " ")
       .trim();
 
-      
-      
       const member_key = await dbService.findExact(
         "member_card",
-        "card_number", registration_code);
+        "card_number", Number(registration_code.slice(1, registration_code.length)));
       if(member_key.length === 1){
           const expiryDate = new Date(member_key[0].card_expiry_date);
+          const check_ExpiryDate = new Date(expiryDate);
+
+          // add 1 year
+          check_ExpiryDate.setFullYear(expiryDate.getFullYear() + 1);
           const now = new Date();
-        if (expiryDate < now) {
+
+
+        if (
+          check_ExpiryDate.getFullYear() < now.getFullYear() || 
+          (check_ExpiryDate.getFullYear() === now.getFullYear() && check_ExpiryDate.getMonth() < now.getMonth())
+        )  {
+
+          const message = Number(member_key[0].card_number.toString().slice(0, 2)) == 70
+          ? 'Your membership card has expired. Please contact the card issuer for assistance.'
+          :'Your membership card has expired. For assistance, please contact <h3><a href="mailto:office2@german-emirates-club.com">office2@german-emirates-club.com</a></h3>';
           return res
             .status(401)
             .json({
               status: false,
-              message:
-                'Your membership card has expired. For assistance, please contact <h3><a href="mailto:office2@german-emirates-club.com">office2@german-emirates-club.com</a></h3>'
+              message: message
             });
 }
 

@@ -184,7 +184,9 @@ export const RegistrationDataGrid = () => {
 
         <Box sx={{ padding: 1 }}>
             <div className="d-flex justify-content-start mb-1">
-                <div className="me-2">
+                                <div className='row me-2'>
+                    <div className='col-12 d-lg-flex'>
+                <div className="me-1">
                     <Tooltip title="Download CSV data" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
                     </Tooltip>
                     {isDownloading ? <div className='d-flex'>
@@ -201,7 +203,7 @@ export const RegistrationDataGrid = () => {
                             variant="outlined"
                             startIcon={<BsFiletypeCsv size={20} />}
                             onClick={handleExport}
-                            sx={{ fontSize: 14, color: 'primary.main', textTransform: 'none' }}
+                            sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none' }}
                         >
                             Download (All Records) CSV
                         </Button>
@@ -213,11 +215,14 @@ export const RegistrationDataGrid = () => {
                         variant="contained"
                         color="primary"
                         onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
-                        sx={{ fontSize: 14, textTransform: 'none' }}
+                        sx={{ fontSize: 13, textTransform: 'none' }}
                     >
                         Apply Filters
                     </Button>
                 </div>
+                        
+                        </div>
+                        </div>
             </div>
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>

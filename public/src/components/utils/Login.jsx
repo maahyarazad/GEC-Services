@@ -10,7 +10,7 @@ import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import { GoShieldLock } from "react-icons/go";
-
+import GECCard_Back from '../../assets/media/card_back.webp';
 
 export const Login = ({ emailRequired, event }) => {
     const validationSchema = Yup.object({
@@ -71,18 +71,30 @@ export const Login = ({ emailRequired, event }) => {
                 }
             );
 
-            setCurrentResponseStatus(loginResponse.ok);
-
-            const response_data = await loginResponse.json();
-            setLoginResponseData(loginResponse);
-
-            if (response_data.status === 401) {
-                statusRef.current.textContent = response_data.message;
-                return;
+            if (loginResponse.status === 429) {
+              const errorData = await loginResponse.json();
+              statusRef.current.textContent = errorData.error || "Too many attempts, please try again later.";
+              setCurrentResponseStatus(false);      // ==> set className
+              setIsLogging(false);
+              return;
             }
             
-            if (response_data.status) {
-
+            if (loginResponse.status === 401) {
+              const errorData = await loginResponse.json();
+              statusRef.current.textContent = errorData.message || "Unauthorized.";
+              setCurrentResponseStatus(false);      // ==> set className
+              setIsLogging(false);
+              return;
+            }
+            
+            
+            
+            if (loginResponse.status === 200) {
+                
+                setCurrentResponseStatus(loginResponse.ok);
+                
+                const response_data = await loginResponse.json();
+                setLoginResponseData(loginResponse);
                 // setEncryptedCookie("gec-registration", response_data.data[0]);
                 // const queryParam = encryptQueryParam(response_data.data[0]);
                 setEncryptedLocalStorage("gec-registration", response_data.data[0]);
@@ -105,6 +117,7 @@ export const Login = ({ emailRequired, event }) => {
         } catch (err) {
             console.error("Login failed:", err);
             if (statusRef.current) {
+                setCurrentResponseStatus(false);      // ==> set className
                 statusRef.current.textContent = `Login failed: ${err.message}`;
             }
         } finally {
@@ -127,10 +140,10 @@ export const Login = ({ emailRequired, event }) => {
                     {({ values, setFieldValue, errors, touched, isSubmitting }) => (
                         <Form ref={loginRef}>
                            
-                            {/* {emailRequired && (
-
+                            {emailRequired && (
                                 <>
-                                    <Field
+                                <img src={GECCard_Back} alt="GEC-Member-Card"/>
+                                    {/* <Field
                                         onChange={(e) => {
                                             setFieldValue('email', e.target.value)
                                         }}
@@ -145,9 +158,9 @@ export const Login = ({ emailRequired, event }) => {
                                             component="div"
                                             className="text-danger small"
                                         />
-                                    </div>
+                                    </div> */}
                                 </>
-                            )} */}
+                            )}
                             <div className="full position-relative">
                                 <Field
                                     onChange={(e) => {
@@ -221,7 +234,7 @@ export const Login = ({ emailRequired, event }) => {
                 {/* <CustomDateTimePicker/> */}
                 <p
                     ref={statusRef}
-                    className={`mt-1 ${currentResponseStatus ? "" : "text-danger"}`}
+                    className={`mt-1 ${currentResponseStatus ? "" : "text-danger"} fw-normal`}
                     dangerouslySetInnerHTML={{ __html: statusRef.current?.textContent || "" }}
                     ></p>
             </div>

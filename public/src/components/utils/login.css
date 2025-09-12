@@ -16,11 +16,16 @@
     padding: 16px 32px;
     border-radius: 8px;
     box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
-
     > form {
       margin-top: 16px;
       gap: 0 0 8px;
+      
+      > img {
+        height: 209px;
+        border-radius: 4px;
+        filter: brightness(160%);
 
+      }
       > div {
         > input {
           width: 100%;
@@ -36,6 +41,18 @@
     border: none;
     > div {
       width: 80%;
+      > form {
+      
+       
+       > img {
+         height: 174px;
+         border-radius: 4px;
+         filter: brightness(160%);
+ 
+       }
+      
+     }
     }
+
   }
 }

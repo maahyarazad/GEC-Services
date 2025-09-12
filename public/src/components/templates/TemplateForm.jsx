@@ -39,6 +39,7 @@ import BirthdayField from "../utils/BirthdayField";
 import { CustomDateTimePicker } from "../utils/CustomDateTimePicker";
 import GECBackground from "../../assets/media/GECBackground.webp";
 import StarsField from "../../assets/media/stars-field.webm";
+import WhatsAppButton from "../utils/WhatsappButton";
 
 
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
@@ -202,7 +203,14 @@ export const TemplateForm = () => {
                 }
             );
 
-            
+            if(otp_response.status === 429){
+                debugger;
+                const response_data = await otp_response.json();
+                statusRef.current.innerText = response_data.error;
+                setCurrentResponseMessage(false);
+                statusRef.current.classList.add("text-danger");
+                return;
+            }
             
             if (otp_response.ok) {
                 
@@ -1180,6 +1188,7 @@ export const TemplateForm = () => {
                                             })()}
                                         </Button>
                                     </Box>
+<WhatsAppButton/>
                                 </Form>
                             )}
                         </Formik>

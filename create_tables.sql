@@ -202,6 +202,7 @@ CREATE TABLE IF NOT EXISTS member_card (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     memberId INTEGER, 
     paid BOOLEAN,
+    Type INTEGER,
     card_number INTEGER,
     username VARCHAR(150),
     title VARCHAR(150), 

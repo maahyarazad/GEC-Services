@@ -17,6 +17,7 @@ import { FaAddressCard } from "react-icons/fa";
 import GECBackground from "../../../assets/media/GECBackground.webp";
 import StarsField from "../../../assets/media/stars-field.webm";
 import { IoIosInformationCircleOutline } from "react-icons/io";
+import { MdAddCircleOutline } from "react-icons/md";
 
 const getColumns = ({ onEdit, onLock, onShowCode }) => [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -403,9 +404,9 @@ export const RegistrationList = () => {
                     </Tooltip>
                     <Button
                         variant="outlined"
-                        startIcon={<MdFormatListBulletedAdd size={24} />}
+                        startIcon={<MdAddCircleOutline size={20} />}
                         onClick={() => setNewReg(true)}
-                        sx={{ fontSize: 14, textTransform: 'none' }}
+                        sx={{ fontSize: 13, textTransform: 'none' }}
                     >
                         Add Registration
                     </Button>
