@@ -1,0 +1,275 @@
+.left-panel form .input-group {
+  position: relative;
+  margin-bottom: 20px;
+  width: 100%;
+}
+.left-panel form .input-group textarea {
+  height: auto !important;
+}
+.left-panel form .input-group input,
+.left-panel form .input-group textarea {
+  width: 100%;
+  height: 40px;
+  padding: 12px 8px 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px !important;
+  outline: none;
+  font-size: 14px;
+}
+.left-panel form .input-group input::-moz-placeholder, .left-panel form .input-group textarea::-moz-placeholder {
+  color: transparent;
+}
+.left-panel form .input-group input::placeholder,
+.left-panel form .input-group textarea::placeholder {
+  color: transparent;
+}
+.left-panel form .input-group input:focus,
+.left-panel form .input-group textarea:focus {
+  border-color: #037bfc;
+}
+.left-panel form .input-group input:not(:-moz-placeholder) + label, .left-panel form .input-group textarea:not(:-moz-placeholder) + label {
+  top: -8px;
+  left: 8px;
+  font-size: 13px;
+  color: #037bfc;
+  background-color: white;
+  padding: 0 4px;
+  line-height: 1;
+}
+.left-panel form .input-group input:focus + label, .left-panel form .input-group input:not(:placeholder-shown) + label,
+.left-panel form .input-group textarea:focus + label,
+.left-panel form .input-group textarea:not(:placeholder-shown) + label {
+  top: -8px;
+  left: 8px;
+  font-size: 13px;
+  color: #037bfc;
+  background-color: white;
+  padding: 0 4px;
+  line-height: 1;
+}
+.left-panel form .input-group label {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-size: 14px;
+  color: #888;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  background-color: transparent;
+  text-transform: capitalize;
+}
+
+.print-container {
+  padding: 40px;
+  background-color: white;
+  width: 50%;
+}
+.print-container .header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.print-container .header img {
+  height: 90px;
+}
+.print-container .header .project-info p {
+  font-size: 13px;
+  font-weight: 600;
+  color: #037bfc;
+}
+.print-container .header .project-info p.line2 {
+  text-align: end;
+  text-transform: uppercase;
+}
+.print-container .header .project-info p.code {
+  color: #000000;
+  font-weight: 300;
+  text-align: end;
+  text-transform: uppercase;
+}
+.print-container .company-info {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+}
+.print-container .company-info div p {
+  font-size: 14px;
+  color: #000000;
+}
+.print-container .company-info div p.company-name {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.print-container .company-info div p.company-detail {
+  font-weight: 300;
+  text-align: start;
+}
+.print-container .description {
+  border-top: 1px solid #f5a742;
+  margin-top: 16px;
+}
+.print-container .description table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.print-container .description table th:nth-child(1) {
+  width: 50%;
+}
+.print-container .description table th:nth-child(2) {
+  width: 10%;
+}
+.print-container .description table th:nth-child(3) {
+  width: 10%;
+}
+.print-container .description table th:nth-child(4) {
+  width: 10%;
+}
+.print-container .description table th:nth-child(5) {
+  width: 10%;
+}
+.print-container .description table th:nth-child(6) {
+  width: 20%;
+}
+.print-container .description table td {
+  padding: 0px;
+  font-size: 13px;
+  text-align: left;
+}
+.print-container .description table th {
+  text-align: left;
+  padding: 0px;
+  color: #037bfc;
+  font-weight: 6600;
+  font-size: 12px;
+  border-bottom: 1px solid #ccc;
+}
+.print-container .description table td {
+  border-bottom: 1px solid #eee;
+}
+.print-container .description table td:last-child {
+  font-weight: 500;
+}
+.print-container .description table .description-row td {
+  line-height: initial;
+  padding-bottom: 3rem;
+}
+.print-container .description table .description-row td span {
+  font-size: 11px;
+}
+.print-container .references {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  font-size: 12px;
+  padding-bottom: 3rem;
+}
+.print-container .references p {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 2;
+}
+.print-container .references .info p {
+  line-height: 1;
+}
+.print-container .bank-detail span {
+  color: #037bfc;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
+}
+.print-container .bank-detail .bank-detail-row {
+  display: flex;
+}
+.print-container .bank-detail .bank-detail-row p {
+  font-size: 12px;
+}
+.print-container .bank-detail .bank-detail-row .key {
+  width: 200px;
+  text-transform: capitalize;
+}
+.print-container .bank-detail .bank-detail-row .key.iban {
+  text-transform: uppercase;
+}
+.print-container .bank-detail .bank-detail-row .key.bank_address {
+  padding-bottom: 20px;
+}
+.print-container .bank-detail .bank-detail-row .value {
+  font-weight: 600;
+}
+.print-container .payment-terms span {
+  color: #037bfc;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
+}
+.print-container .payment-terms .normal-span {
+  text-transform: none;
+}
+.print-container .payment-terms .sign-term {
+  padding-bottom: 50px;
+  font-size: 12px;
+  font-weight: 400;
+}
+.print-container .payment-terms .signature {
+  padding-top: 80px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 20px;
+  position: relative;
+}
+.print-container .payment-terms .signature .signature-left {
+  grid-column: 1/2;
+  grid-row: 1;
+  position: relative;
+}
+.print-container .payment-terms .signature .signature-left > p:first-child {
+  position: relative;
+}
+.print-container .payment-terms .signature .signature-left > p:first-child::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: 0;
+  width: 150px;
+  height: 1px;
+  background-color: black;
+}
+.print-container .payment-terms .signature .signature-right {
+  grid-column: 2/3;
+  grid-row: 1;
+}
+.print-container .payment-terms .signature .signature-right > p:first-child {
+  position: relative;
+}
+.print-container .payment-terms .signature .signature-right > p:first-child::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: 0;
+  width: 150px;
+  height: 1px;
+  background-color: black;
+}
+.print-container .payment-terms .signature .signature-bottom-right {
+  grid-column: 2/3;
+  grid-row: 2;
+}
+.print-container .payment-terms .signature .signature-bottom-right > p:first-child {
+  position: relative;
+}
+.print-container .payment-terms .signature .signature-bottom-right > p:first-child::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: 0;
+  width: 150px;
+  height: 1px;
+  background-color: black;
+}
+.print-container .payment-terms .signature .value {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+}/*# sourceMappingURL=PDFGenerator.css.map */

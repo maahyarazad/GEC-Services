@@ -34,6 +34,7 @@ const validationSchema = Yup.object({
 });
 import {useNavigate} from 'react-router-dom';
 import { MemberCardDataGrid } from "../gallery/MemberCardDataGrid";
+import PDFGenerator from "./PDFGenerator/PDFGenerator";
 
 export const Admin = ({ data }) => {
 
@@ -151,6 +152,10 @@ const tabConfig = [
     icon: <BsPeopleFill size={20} />,
     label: "Member Data",
   },
+    {
+    icon: <BsPeopleFill size={20} />,
+    label: "PDF Generator",
+  },
 ];
 
     const [tabValue, setTabValue] = useState(0);
@@ -161,14 +166,17 @@ const tabConfig = [
 
     let content;
     switch (tabValue) {
+        case 0:
+            content = <RegistrationList />;
+            break;
         case 1:
-            content = <RegistrationDataGrid />;
+            content = <RegistrationDataGrid/>;
             break;
         case 2:
             content = <SurveyDataGrid />;
             break;
         case 3:
-            content = <MemberCardDataGrid />;
+            content = <MemberCardDataGrid/>;
             break;
         case 4:
             content = <GICDataGrid />;
@@ -176,8 +184,8 @@ const tabConfig = [
         case 5:
             content = <MemberDataGrid />;
             break;
-        default:
-            content = <RegistrationList />
+        case 6:
+            content = <PDFGenerator />;
             break;
     }
 

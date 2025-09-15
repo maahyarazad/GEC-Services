@@ -2,7 +2,7 @@ import "./header.css";
 import PropTypes from "prop-types";
 import { useState } from "react";
 import CHookDateTime from "./CHookDateTime";
-
+import GEC_logo from "../../assets/media/gec-logo.webp"
 export const Header = () => {
   const [burgerActive, setBurgerActive] = useState(false);
   const dateTime = CHookDateTime();
@@ -23,7 +23,7 @@ export const Header = () => {
               <span></span>
             </button>
             <a to="/">
-              <img alt="GEC Logo" src="/logo-gec.png"></img>
+              <img alt="GEC Logo" src={GEC_logo}></img>
             </a>
           </span>
           <span>
