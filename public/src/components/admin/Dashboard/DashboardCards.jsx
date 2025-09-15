@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useCallback} from "react";
 import { Grid, Paper, Typography, Box, CircularProgress } from "@mui/material";
-import { People, CheckCircle, Error, AccessTime } from "@mui/icons-material";
-import { MdWorkspacePremium } from "react-icons/md";
+import { IoPeople } from "react-icons/io5";
+import { MdWorkspacePremium, MdOutlineAccessTime } from "react-icons/md";
 const DashboardCards = () => {
         const [loading, setLoading] = useState(true);
         const [panelData, setPanelData] = useState(null);
@@ -40,35 +40,35 @@ useEffect(() => {
       {
         label: "Total Members",
         value: panelData.count_total_valid,
-        icon: <People fontSize="large" />,
+        icon: <IoPeople  size={35}/>,
         bgColor: "primary.white",
         color: "primary.main",
       },
       {
         label: "Expiring Soon",
         value: panelData.expiring_soon_count,
-        icon: <AccessTime fontSize="large" />,
+        icon: <MdOutlineAccessTime size={35}/>,
         bgColor: "success.white",
         color: "warning.main",
       },
       {
         label: "Blue (Paid Type 1)",
         value: panelData.blue_paid,
-        icon: <MdWorkspacePremium fontSize="large" size={35}/>,
+        icon: <MdWorkspacePremium  size={35}/>,
         bgColor: "primary.white",
         color:"#0D47A1"
       },
       {
         label: "Blue (Non Paid Type 5)",
         value: panelData.blue_non_paid,
-        icon: <MdWorkspacePremium fontSize="large" size={35}/>,
+        icon: <MdWorkspacePremium  size={35}/>,
         bgColor: "primary.white",
         color:"#55729E"
       },
       {
         label: "Red (Type 7)",
         value: panelData.red,
-        icon: <MdWorkspacePremium fontSize="large" size={35}/>,
+        icon: <MdWorkspacePremium  size={35}/>,
         bgColor: "primary.white",
         color:"#cc0000"
       },
