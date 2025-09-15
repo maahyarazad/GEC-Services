@@ -35,7 +35,7 @@ const upload = multer({ storage: storage });
 const authorize_admin = require("../middleware/auth");
 
 
-router.get('/member-csv-data',authorize_admin, async (req, res) => {
+router.get('/api/member-csv-data',authorize_admin, async (req, res) => {
     try {
         const data = await dbService.findAll("member");
 
@@ -56,7 +56,7 @@ router.get('/member-csv-data',authorize_admin, async (req, res) => {
 });
 
 
-router.get('/member', async (req, res) => {
+router.get('/api/member', async (req, res) => {
     try {
 
         const { filters, data } = await dbService.QuerySqlConverter(req.query, "member");
@@ -75,7 +75,7 @@ router.get('/member', async (req, res) => {
     }
 });
 
-router.get('/member-get-count', authorize_admin,async (req, res) => {
+router.get('/api/member-get-count', authorize_admin,async (req, res) => {
     try {
 
         const total = await dbService.countExact("member", "active_member", true);
@@ -91,7 +91,7 @@ router.get('/member-get-count', authorize_admin,async (req, res) => {
     }
 });
 
-router.post("/member", authorize_admin, upload.single('attachment_file'), async (req, res) => {
+router.post("/api/member", authorize_admin, upload.single('attachment_file'), async (req, res) => {
     try {
         const table_name = "member";
         const data = req.body;
@@ -129,7 +129,7 @@ router.post("/member", authorize_admin, upload.single('attachment_file'), async 
     }
 });
 
-router.post("/active-member-switch", authorize_admin, upload.none(), async (req, res) => {
+router.post("/api/active-member-switch", authorize_admin, upload.none(), async (req, res) => {
     try {
         const table_name = "member";
         const data = req.body;

@@ -370,6 +370,7 @@ const dbService = {
         });
     });
 },
+
 findByConditions: (table, conditions) => {
     const keys = Object.keys(conditions);
     const values = Object.values(conditions);
@@ -385,6 +386,46 @@ findByConditions: (table, conditions) => {
         db.all(sql, values, (err, rows) => {
             if (err) return reject(err);
             resolve(rows);
+        });
+    });
+},
+
+countExactWithConditions: (table, conditions) => {
+    const keys = Object.keys(conditions);
+
+    if (keys.length === 0) {
+        return Promise.reject(new Error("At least one condition is required."));
+    }
+
+    const whereParts = [];
+    const values = [];
+
+    for (const [key, condition] of Object.entries(conditions)) {
+        if (typeof condition === "object" && condition.op) {
+            if (condition.op.toUpperCase() === "BETWEEN") {
+                if (!Array.isArray(condition.value) || condition.value.length !== 2) {
+                    throw new Error(`BETWEEN requires an array with 2 values for ${key}`);
+                }
+                whereParts.push(`${key} BETWEEN ? AND ?`);
+                values.push(condition.value[0], condition.value[1]);
+            } else {
+                whereParts.push(`${key} ${condition.op} ?`);
+                values.push(condition.value);
+            }
+        } else {
+            // fallback: equals
+            whereParts.push(`${key} = ?`);
+            values.push(condition);
+        }
+    }
+
+    const whereClause = whereParts.join(" AND ");
+    const sql = `SELECT count(*) as count FROM ${table} WHERE ${whereClause}`;
+
+    return new Promise((resolve, reject) => {
+        db.get(sql, values, (err, row) => {
+            if (err) return reject(err);
+            resolve(row.count);
         });
     });
 }

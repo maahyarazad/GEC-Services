@@ -147,17 +147,20 @@ export const SurveyDataGrid = () => {
 
 
         <Box sx={{ padding: 1 }}>
-            <div className="d-flex justify-content-start mb-1">
-                
-                <div className="">
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
-                        sx={{ fontSize: 13, textTransform: 'none' }}
-                    >
-                        Apply Filters
-                    </Button>
+            <div className='row mb-1'>
+
+                <div className="d-lg-flex justify-content-end">
+                    
+                    <div className="">
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
+                            sx={{ fontSize: 13, textTransform: 'none' }}
+                        >
+                            Apply Filters
+                        </Button>
+                    </div>
                 </div>
             </div>
             {loading ? (

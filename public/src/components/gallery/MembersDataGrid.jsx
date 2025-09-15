@@ -88,7 +88,7 @@ export const MemberDataGrid = () => {
                     filterParams,
                 ].filter(Boolean).join('&');
 
-                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member?${queryParams}`);
+                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member?${queryParams}`, {credentials:"include"});
                 const data = await response.json();
 
                 setMembers(data.data || []);
@@ -102,22 +102,19 @@ export const MemberDataGrid = () => {
         [setLoading, setMembers, setRowCount]
     );
 
-    const debouncedFetch = useCallback(
-        debounce((pagination, sort, filter) => {
-            fetchData(pagination, sort, filter);
-        }, 500),
-        []
-    );
+
+
 
 
     useEffect(() => {
         fetchData(paginationModel, sortModel, filterModel);
+
     }, [paginationModel, sortModel, applyFilterTrigger]);
 
     const handleExport = async () => {
         try {
             setIsDownloading(true);
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-csv-data`, {credentials:"include"});
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-csv-data`, {credentials:"include"});
             if (!response.ok) throw new Error('Failed to fetch CSV');
 
             const blob = await response.blob();
@@ -198,7 +195,7 @@ export const MemberDataGrid = () => {
                 formData.append('active_member', row.active_member);
             };
     
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/active-member-switch`, {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/active-member-switch`, {
                 method: 'POST',
                 body: formData,
                 credentials : "include"
@@ -217,42 +214,42 @@ export const MemberDataGrid = () => {
         <Box sx={{ padding: 1 }}>
 
 
+                <div className='row mb-1'>
+                    <div className='col-12 d-lg-flex justify-content-between'>
+                        <div className='d-lg-flex'>
 
-            <div className="d-flex justify-content-start mb-1">
-                <div className='row me-2'>
-                    <div className='col-12 d-lg-flex'>
-                        
-                        <div className='me-1'>
+                            <div className='me-1'>
 
-                            <Button
-                                
-                                variant="outlined"
-                                startIcon={<MdAddCircleOutline size={20} />}
-                                onClick={() => setNewReg(true)}
-                                sx={{ fontSize: 13, textTransform: 'none', wordBreak: 'break-all'}}
-                            >
-                                Add Member
-                            </Button>
-                        </div>
-                        <div className='me-1'>
-{isDownloading ? (
-                                <div className='d-flex mw-2'>
-                                    <span className=''>Downloading</span>
-                                    <CircularProgress size={20} color="inherit" />
-                                </div>
-                            ) : (
                                 <Button
                                     
                                     variant="outlined"
-                                    startIcon={<BsFiletypeCsv size={20} />}
-                                    onClick={handleExport}
-                                    sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all' }}
+                                    startIcon={<MdAddCircleOutline size={20} />}
+                                    onClick={() => setNewReg(true)}
+                                    sx={{ fontSize: 13, textTransform: 'none', wordBreak: 'break-all'}}
                                 >
-                                    Download (All Records) CSV
+                                    Add Member
                                 </Button>
-                            )}
+                            </div>
+                            <div className='me-1'>
+    {isDownloading ? (
+                                    <div className='d-flex mw-2'>
+                                        <span className=''>Downloading</span>
+                                        <CircularProgress size={20} color="inherit" />
+                                    </div>
+                                ) : (
+                                    <Button
+                                        
+                                        variant="outlined"
+                                        startIcon={<BsFiletypeCsv size={20} />}
+                                        onClick={handleExport}
+                                        sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all' }}
+                                    >
+                                        Download (All Records) CSV
+                                    </Button>
+                                )}
+                            </div>
                         </div>
-                        <div className='me-2'>
+                        <div className=''>
 
                             <Button
                             
@@ -270,11 +267,6 @@ export const MemberDataGrid = () => {
                     </div>
                    
                 </div>
-
-               
-              
-
-            </div>
 
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>

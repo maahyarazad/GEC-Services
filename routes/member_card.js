@@ -37,6 +37,62 @@ router.get('/api/member_card', authorize_admin,async (req, res) => {
     }
 });
 
+router.get('/api/member_card_report', authorize_admin,async (req, res) => {
+    try {
+        
+        const table_name = "member_card";
+        const now = new Date(); // current date
+        const year = now.getFullYear() - 1;
+        const this_month = `${year}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+        const nextMonthDate = new Date(year, now.getMonth() + 1, 1);
+        const next_month = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, "0")}`;
+        
+
+        const expiring_soon_count = await dbService.countExactWithConditions(table_name, {
+            card_expiry_date: { op: "BETWEEN", value: [this_month, next_month] }
+            });
+        
+
+        const expired = await dbService.countExactWithConditions(table_name, {
+            card_expiry_date: { op: "<", value: this_month }
+            });
+
+        const count_total_valid = await dbService.countExactWithConditions(table_name, {
+            card_expiry_date: { op: ">", value: this_month }
+            });
+
+        const blue_paid = await dbService.countExactWithConditions(table_name, {
+            type: { op: "=", value: 1 }
+            });
+
+        const blue_non_paid = await dbService.countExactWithConditions(table_name, {
+            type: { op: "=", value: 5 }
+            });
+
+
+        const red = await dbService.countExactWithConditions(table_name, {
+            type: { op: "=", value: 7 }
+            });
+
+        return res.json({
+            status: true,
+            data:{
+                expired: expired,
+                expiring_soon_count: expiring_soon_count,
+                count_total_valid: count_total_valid,
+                blue_paid: blue_paid,
+                blue_non_paid: blue_non_paid,
+                red: red
+            }
+        });
+
+    } catch (error) {
+        console.error("Error in /member:", error);
+        res.status(500).json({ status: false, message: 'Server error' });
+    }
+});
+
 
 
 module.exports = router;

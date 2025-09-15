@@ -204,7 +204,7 @@ export const TemplateForm = () => {
             );
 
             if(otp_response.status === 429){
-                debugger;
+                
                 const response_data = await otp_response.json();
                 statusRef.current.innerText = response_data.error;
                 setCurrentResponseMessage(false);

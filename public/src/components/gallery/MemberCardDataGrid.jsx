@@ -1,59 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { Box, CircularProgress, Button, Tooltip } from '@mui/material';
+import DashboardCards from '../admin/Dashboard/DashboardCards';
 import { MdWorkspacePremium } from "react-icons/md";
-
 const columns = ({ onResendPasswordReset, loadingRowId }) => [
     { field: 'id', headerName: 'ID', width: 70 },
-
-    //   {
-    //     field: 'paid',
-    //     headerName: 'Paid',
-    //     width: 100,
-    //     sortable: true,
-    //     filterable: true,
-    //     renderCell: (params) =>
-    //       params.row.paid ? (
-    //         <Tooltip title="Membership is paid">
-    //           <IoShieldCheckmarkSharp color="green" size={20} />
-    //         </Tooltip>
-    //       ) : (
-    //         <Tooltip title="Membership is not paid">
-    //           <FaExclamation color="red" size={20} />
-    //         </Tooltip>
-    //       ),
-    //   },
-
-    //   {
-    //     field: 'actions',
-    //     headerName: 'Actions',
-    //     width: 140,
-    //     sortable: false,
-    //     filterable: false,
-    //     renderCell: (params) => (
-    //       <Box>
-    //         <Tooltip title="Send reset password email to this user">
-    //           <Button
-    //             variant="contained"
-    //             color="primary"
-    //             size="small"
-    //             startIcon={<MdLockReset />}
-    //             sx={{ textTransform: 'none' }}
-    //             onClick={() => onResendPasswordReset(params.row)}
-    //           >
-    //             {loadingRowId === params.row.id ? (
-    //               <CircularProgress size={18} color="inherit" />
-    //             ) : (
-    //               "Password"
-    //             )}
-    //           </Button>
-    //         </Tooltip>
-    //       </Box>
-    //     ),
-    //   },
-
-    // Table fields
-    { field: 'memberId', headerName: 'Member ID', width: 150, filterable: true },
     {
         field: 'type', headerName: 'Type', width: 70, filterable: true,
         renderCell: (params) => {
@@ -63,19 +14,21 @@ const columns = ({ onResendPasswordReset, loadingRowId }) => [
                 case 5:
                     return <><MdWorkspacePremium color="#55729E" size={22} /></>;
                 default:
-                    return <MdWorkspacePremium color="#0D47A1" size={22} />;
+                    return <MdWorkspacePremium color="#cc0000" size={22} />;
             }
         },
     },
     { field: 'card_number', headerName: 'Card Number', width: 150, filterable: true },
-    { field: 'username', headerName: 'Username', width: 200, filterable: true },
-    { field: 'title', headerName: 'Title', width: 120, filterable: true },
     { field: 'firstname', headerName: 'First Name', width: 150, filterable: true },
     { field: 'lastname', headerName: 'Last Name', width: 150, filterable: true },
-    { field: 'gender', headerName: 'Gender', width: 120, filterable: true },
+    { field: 'card_expiry_date', headerName: 'Card Expiry Date', width: 200, filterable: true },
     { field: 'mobile_number', headerName: 'Mobile Number', width: 180, filterable: true },
     { field: 'email', headerName: 'Email', width: 220, filterable: true },
-    { field: 'card_expiry_date', headerName: 'Card Expiry Date', width: 200, filterable: true },
+
+    { field: 'memberId', headerName: 'Member ID', width: 150, filterable: true },
+    { field: 'username', headerName: 'Username', width: 200, filterable: true },
+    { field: 'title', headerName: 'Title', width: 120, filterable: true },
+    { field: 'gender', headerName: 'Gender', width: 120, filterable: true },
     { field: 'last_login', headerName: 'Last Login', width: 200, filterable: true },
 ];
 
@@ -116,6 +69,24 @@ export const MemberCardDataGrid = () => {
     };
 
     const [initialData, setInitialData] = useState(null);
+
+    const fetchDashboardData = useCallback(async()=>{
+        try {
+                setLoading(true);
+                
+
+                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member_card_report`, {credentials:"include"});
+                
+            } catch (err) {
+                console.error('Failed to fetch:', err);
+            } finally {
+                setLoading(false);
+            }
+    },
+        
+        []
+    );
+
     const fetchData = useCallback(
         async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
             setLoading(true);
@@ -157,7 +128,8 @@ export const MemberCardDataGrid = () => {
 
     useEffect(() => {
         fetchData(paginationModel, sortModel, filterModel);
-    }, [paginationModel, sortModel, applyFilterTrigger]);
+        fetchDashboardData();
+    }, [paginationModel, sortModel, applyFilterTrigger, fetchDashboardData]);
 
 
     return (
@@ -166,6 +138,10 @@ export const MemberCardDataGrid = () => {
 
                 <div className="d-lg-flex justify-content-between align-items-center">
                     <div>
+
+                        <DashboardCards/>
+                    </div>
+                    <div style={{alignSelf: 'end'}}>
 
                         <Button
                             variant="contained"
@@ -176,31 +152,6 @@ export const MemberCardDataGrid = () => {
                             Apply Filters
                         </Button>
                     </div>
-                    <div>
-                        <small className='fw-bold' style={{ fontSize: 12, paddingRight: 4 }}>Card Type Legend:</small>
-
-                        <>
-                            <small style={{ fontSize: 11 }}>
-                                <MdWorkspacePremium color="#0D47A1" size={22} />
-                                Blue - paid (1)
-                            </small>
-                        </>
-                        <>
-                            <MdWorkspacePremium color="#55729E" size={22} />
-                            <small style={{ fontSize: 11 }}>
-                                Blue - non paid (5)
-                            </small>
-                        </>
-
-                        <>
-                            <MdWorkspacePremium color="#AF0F0F" size={22} />
-                            <small style={{ fontSize: 11 }}>
-                                Red(7)
-                            </small>
-                        </>
-
-
-                    </div>
                 </div>
 
             </div>
@@ -210,7 +161,7 @@ export const MemberCardDataGrid = () => {
                     <CircularProgress />
                 </Box>
             ) : (
-                <div style={{ width: '100%', height: '82dvh' }}>
+                <div style={{ width: '100%', height: '74vh' }}>
                     <DataGrid
                         rows={members}
                         columns={columns({ onResendPasswordReset: handleResetPassword, loadingRowId: loadingRowId })}

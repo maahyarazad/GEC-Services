@@ -11,7 +11,7 @@ const googleConfig = JSON.parse(fs.readFileSync(process.env.GOOGLE_CONFIG, "utf8
 const issuerId = '3388000000022971699';
 
 
-const classId = `${issuerId}.membership_id`;
+const classId = `${issuerId}.membership_class`;
 
 const baseUrl = 'https://walletobjects.googleapis.com/walletobjects/v1';
 
@@ -109,7 +109,7 @@ async function createPassClass(req, res) {
         id: objectId,
         classId: classId,
         state: "active",
-        hexBackgroundColor: "#0d1b2a",
+        hexBackgroundColor: "#cc0000",
         cardTitle: {
             defaultValue: {
                 language: "en-US",
@@ -130,7 +130,7 @@ async function createPassClass(req, res) {
         },
         heroImage: {
             sourceUri: {
-                uri: "https://www.german-emirates-club.com/v2/static/media/__local_logo.2e51ed10d1b8bc0ab1e8.jpeg"
+                uri: "https://services.german-emirates-club.com/uploads/GEC_transparent.png"
             },
             contentDescription: {
                 defaultValue: {

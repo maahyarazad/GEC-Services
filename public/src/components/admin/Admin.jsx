@@ -48,18 +48,29 @@ export const Admin = ({ data }) => {
 
     const checkAuth = useCallback(async () => {
         try {
+                
                 const res = await fetch(`${import.meta.env.VITE_SERVERURL}/admin/check-auth`, {
                     method: "GET",
                     credentials: "include",
                 });
                 
+                if (res.status === 401) {
+                    
+                    console.warn("Unauthorized");
+                    setAdminUser(null);
+                    
+                    return;
+                    }
+
                 if (res.ok) {
                     const data = await res.json();
                     setAdminUser(data.authenticated === true);
                 }
+
+
             } catch (err) {
                 console.error("Auth check failed:", err);
-                setAdminUser(false);
+                setAdminUser(null);
             } finally {
                 setIsCheckingAuth(false);
             }

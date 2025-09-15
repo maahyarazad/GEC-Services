@@ -32,7 +32,7 @@ const columns = [
         filterable: true,
         disableColumnMenu: true,
         renderCell: (params) => {
-           
+
             return params?.row?.status ? (
                 <Tooltip title={`Payment Id ${params?.row?.id}`}>
                     <FaCircleCheck size={16} color="#28a745" /> {/* Bootstrap green */}
@@ -128,7 +128,7 @@ export const RegistrationDataGrid = () => {
                 filterParams
             ].filter(Boolean).join('&');
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration?${queryParams}`, {credentials:"include"});
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration?${queryParams}`, { credentials: "include" });
             const response_data = await response.json();
 
             setRegistrationList(response_data.data || []);
@@ -183,47 +183,46 @@ export const RegistrationDataGrid = () => {
 
 
         <Box sx={{ padding: 1 }}>
-            <div className="d-flex justify-content-start mb-1">
-                                <div className='row me-2'>
-                    <div className='col-12 d-lg-flex'>
-                <div className="me-1">
-                    <Tooltip title="Download CSV data" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
-                    </Tooltip>
-                    {isDownloading ? <div className='d-flex'>
-                        <span className='me-2'>Downloading</span>
-                        <CircularProgress
-                            size={20}
-                            color="inherit"
-                        />
+
+                <div className='row mb-1'>
+                    <div className='col-lg-12 d-lg-flex justify-content-between'>
+                        <div className="">
+                            <Tooltip title="Download CSV data" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
+                            </Tooltip>
+                            {isDownloading ? <div className='d-flex'>
+                                <span className='me-2'>Downloading</span>
+                                <CircularProgress
+                                    size={20}
+                                    color="inherit"
+                                />
+                            </div>
+
+
+                                :
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<BsFiletypeCsv size={20} />}
+                                    onClick={handleExport}
+                                    sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none' }}
+                                >
+                                    Download (All Records) CSV
+                                </Button>
+                            }
+
+                        </div>
+                        <div className="">
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
+                                sx={{ fontSize: 13, textTransform: 'none' }}
+                            >
+                                Apply Filters
+                            </Button>
+                        </div>
+
                     </div>
-
-
-                        :
-                        <Button
-                            variant="outlined"
-                            startIcon={<BsFiletypeCsv size={20} />}
-                            onClick={handleExport}
-                            sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none' }}
-                        >
-                            Download (All Records) CSV
-                        </Button>
-                    }
-
                 </div>
-                <div className="">
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
-                        sx={{ fontSize: 13, textTransform: 'none' }}
-                    >
-                        Apply Filters
-                    </Button>
-                </div>
-                        
-                        </div>
-                        </div>
-            </div>
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                     <CircularProgress />

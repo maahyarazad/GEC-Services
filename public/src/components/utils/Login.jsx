@@ -128,7 +128,13 @@ export const Login = ({ emailRequired, event }) => {
     return (
         <div className="login">
             <div>
-                <h4>Welcome back! Please log in to continue.</h4>
+                {emailRequired ? (
+                <h4>
+                    Please check the back of your member card for the Card ID number to proceed further.
+                </h4>
+                ) : (
+                    <h4>Welcome back! Please log in to continue.</h4>
+                )}
                 {/* Step 1: check code login */}
                 <Formik
                     initialValues={initialValues}
