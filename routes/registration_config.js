@@ -305,7 +305,7 @@ router.post("/registration-config-access" ,loginLimiter, upload.none(), async (r
           (check_ExpiryDate.getFullYear() === now.getFullYear() && check_ExpiryDate.getMonth() < now.getMonth())
         )  {
 
-          const message = Number(member_key[0].card_number.toString().slice(0, 2)) == 70
+          const message = Number(member_key[0].card_number.toString().slice(0, 2)) === 70
           ? 'Your membership card has expired. Please contact the card issuer for assistance.'
           :'Your membership card has expired. For assistance, please contact <h3><a href="mailto:office2@german-emirates-club.com">office2@german-emirates-club.com</a></h3>';
           return res
