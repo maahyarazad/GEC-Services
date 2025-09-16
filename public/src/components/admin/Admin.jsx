@@ -27,7 +27,7 @@ import { PaymentDataGrid } from "../gallery/PaymentDataGrid";
 import { IoIdCardOutline } from "react-icons/io5";
 import { GrCatalog } from "react-icons/gr";
 import { GrCatalogOption } from "react-icons/gr";
-
+import { MdPictureAsPdf } from "react-icons/md";
 
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
@@ -126,7 +126,7 @@ export const Admin = ({ data }) => {
     };
 
 
-    const tabStyle = { textTransform: 'none', alignSelf: 'baseline'  };
+    const tabStyle = { textTransform: 'none', alignSelf: 'baseline', mi: '10px'  };
 const tabConfig = [
   {
     icon: <GiArchiveRegister size={20} />,
@@ -153,8 +153,8 @@ const tabConfig = [
     label: "Member Data",
   },
     {
-    icon: <BsPeopleFill size={20} />,
-    label: "PDF Generator",
+    icon: <MdPictureAsPdf size={20} />,
+    label: "Procurement PDF Generator",
   },
 ];
 
@@ -210,11 +210,17 @@ const tabConfig = [
                             aria-label=""
                             TabIndicatorProps={{
                                 sx: {
-                                    left: 0,
-                                    right: 'auto',
-                                    width: 3,
-                                    bgcolor: 'primary.main',
+                                left: 0,
+                                right: 'auto',
+                                width: 3,
+                                bgcolor: 'primary.main',
                                 }
+                            }}
+                            sx={{
+                                '& .MuiTab-root': {
+                                minHeight: 45,  // reduce height of all tabs
+                                py: 0.5,
+                                },
                             }}
                         >
                            {tabConfig.map((tab, index) => (

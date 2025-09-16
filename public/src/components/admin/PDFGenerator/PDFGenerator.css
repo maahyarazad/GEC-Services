@@ -206,6 +206,7 @@
   text-transform: none;
 }
 .print-container .payment-terms .sign-term {
+  padding-top: 40px;
   padding-bottom: 50px;
   font-size: 12px;
   font-weight: 400;
@@ -223,10 +224,10 @@
   grid-row: 1;
   position: relative;
 }
-.print-container .payment-terms .signature .signature-left > p:first-child {
+.print-container .payment-terms .signature .signature-left p:first-of-type {
   position: relative;
 }
-.print-container .payment-terms .signature .signature-left > p:first-child::before {
+.print-container .payment-terms .signature .signature-left p:first-of-type::before {
   content: "";
   position: absolute;
   top: -3px;
@@ -239,10 +240,10 @@
   grid-column: 2/3;
   grid-row: 1;
 }
-.print-container .payment-terms .signature .signature-right > p:first-child {
+.print-container .payment-terms .signature .signature-right p:first-of-type {
   position: relative;
 }
-.print-container .payment-terms .signature .signature-right > p:first-child::before {
+.print-container .payment-terms .signature .signature-right p:first-of-type::before {
   content: "";
   position: absolute;
   top: -3px;
@@ -251,14 +252,19 @@
   height: 1px;
   background-color: black;
 }
+.print-container .payment-terms .signature .signature-right .swap-button {
+  position: absolute;
+  top: 10px;
+  left: 25vh;
+}
 .print-container .payment-terms .signature .signature-bottom-right {
   grid-column: 2/3;
   grid-row: 2;
 }
-.print-container .payment-terms .signature .signature-bottom-right > p:first-child {
+.print-container .payment-terms .signature .signature-bottom-right p:first-of-type {
   position: relative;
 }
-.print-container .payment-terms .signature .signature-bottom-right > p:first-child::before {
+.print-container .payment-terms .signature .signature-bottom-right p:first-of-type::before {
   content: "";
   position: absolute;
   top: -3px;
@@ -272,4 +278,40 @@
   font-size: 12px;
   font-weight: 400;
   line-height: 1;
+}
+
+.total {
+  padding-top: 40px;
+  padding-bottom: 60px;
+  display: flex;
+  justify-content: space-between;
+}
+.total p {
+  font-size: 12px;
+}
+.total .key {
+  width: 200px;
+  text-transform: capitalize;
+}
+.total .key.iban {
+  text-transform: uppercase;
+}
+.total .key.bank_address {
+  padding-bottom: 20px;
+}
+.total .value {
+  font-weight: 600;
+}
+.total .left span {
+  width: 200px;
+  font-size: 14px !important;
+}
+.total .left span {
+  color: #037bfc;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
+}
+.total .right .key {
+  padding-left: 80px;
 }/*# sourceMappingURL=PDFGenerator.css.map */

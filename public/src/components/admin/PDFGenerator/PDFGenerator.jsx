@@ -3,13 +3,16 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import GEC_logo from "../../../assets/media/gec-logo.webp";
 
-import { Box } from '@mui/material';
+import { Box, Tooltip } from '@mui/material';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Button from '@mui/material/Button';
+import { IoIosSwap } from "react-icons/io";
+
+
 
 import './PDFGenerator.css';
 
@@ -17,12 +20,18 @@ const PDFGenerator = () => {
     const printRef = useRef();
     const now = new Date();
     const this_month = `${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+
+    const formattedDate = `${year}${month}${day}`;
+
     // Form state
     const [formData, setFormData] = useState({
         project: {
             project_name: "Website Transtlation 2025",
             project_name_ll2: "OFFER/ANGEBOT",
-            project_name_code: "£FG7826378236",
+            project_name_code: `#FG${formattedDate}`,
         },
         company: {
             company_name: "MARSTON-DOMSEL GMBH",
@@ -39,7 +48,7 @@ const PDFGenerator = () => {
             reference_contact_person_name_2: "Gianfranco Confuorti",
             reference_contact_person_number_2: "00971-58-876 27 80",
             reference_contact_person_email_2: "procurement1@german-emirates-club.com",
-            date: `${now.getDay()}/${this_month}/${now.getFullYear()}`
+            date: `${day}/${month}/${now.getFullYear()}`
         },
 
         bank_detail: {
@@ -123,18 +132,22 @@ const PDFGenerator = () => {
     const handleDownloadPdf = async () => {
         const element = printRef.current;
         // Maahyar CM: We can use scale 2 or 3 for high resulotion
-        const canvas = await html2canvas(element, { scale: 2 });
+        const canvas = await html2canvas(element, {
+            scale: 1,
+            ignoreElements: (el) => el.classList.contains("swap-button")
+        });
 
         // 0.8 also reduce the size
-        const imgData = canvas.toDataURL("image/png", 0.8);
+        const imgData = canvas.toDataURL("image/png", 0.7);
 
         const pdf = new jsPDF("p", "mm", "a4");
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
         // PNG for high resolution
-        pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
-        pdf.save("document.pdf");
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+
+        pdf.save(`Procurement-${formData.project.project_name}-${formData.project.project_name_code}.pdf`);
     };
 
     const tabstyle = {
@@ -174,7 +187,7 @@ const PDFGenerator = () => {
             </div>
             <div className="row" style={{ height: '85vh', overflow: 'scroll' }}>
                 {/* Form to update PDF content */}
-                <div className="col-6 left-panel">
+                <div className="col-lg-6 col-12 left-panel">
 
                     <form style={{ display: 'block' }}>
                         <Accordion defaultExpanded>
@@ -422,7 +435,7 @@ const PDFGenerator = () => {
                 </div>
 
                 {/* Div to be captured as PDF */}
-                <div ref={printRef} className="print-container">
+                <div ref={printRef} className="print-container col-lg-6 col-12">
                     <div className="header">
                         <img src={GEC_logo} alt="logo" />
                         <div className="project-info">
@@ -534,14 +547,45 @@ const PDFGenerator = () => {
                             <div key={key} className="bank-detail-row">
                                 <p className={`key ${key}`}>{key.replace(/_/g, " ")}</p>
                                 <p className="value">{value}</p>
-
-
-
-
                             </div>
                         ))}
 
                     </div>
+
+
+                    <div className="total">
+                        <div className="left">
+                            <div className="d-flex">
+
+                                <p className="key">Subtotal</p>
+                                <p>
+                                    AED{" "}
+                                    {formData.items && formData.items.length > 0
+                                        ? formData.items
+                                            .reduce((total, item) => total + (parseFloat(item.amount) || 0), 0)
+                                            .toFixed(2)
+                                        : "0.00"}
+                                </p>
+
+                            </div>
+                            <div className="d-flex">
+                                <span>total</span>
+                                <span >
+                                    AED{" "}
+                                    {formData.items && formData.items.length > 0
+                                        ? formData.items
+                                            .reduce((total, item) => total + (parseFloat(item.amount) || 0), 0)
+                                            .toFixed(2)
+                                        : "0.00"}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="d-flex  right">
+                            <p className="key">Reference:</p>
+                            <p>Please mention <strong>{formData.reference.reference_number}</strong></p>
+                        </div>
+                    </div>
+
 
                     <div className="payment-terms">
                         <span>Payment Terms:</span>
@@ -565,17 +609,46 @@ const PDFGenerator = () => {
                                         </div>
                                     );
 
-                              
+
                             }
                         })}
 
                         <div className="signature">
-                             <div className="signature-left">
+                            <div className="signature-left">
                                 <p className="value">{formData.payment_terms.signature_left_name}</p>
                                 <p className="value">{formData.payment_terms.signature_left_title}</p>
                             </div>
 
-                             <div className="signature-right">
+                            <div className="signature-right">
+                                <div className="swap-button">
+                                    <Tooltip title="Swap Signatures">
+                                    
+                                        <Button 
+                                        
+                                            variant="text"
+                                            onClick={() => {
+                                                setFormData((prev) => {
+                                                    const { signature_left_name, signature_left_title, signature_right_name, signature_right_title } =
+                                                        prev.payment_terms;
+
+                                                    return {
+                                                        ...prev,
+                                                        payment_terms: {
+                                                            ...prev.payment_terms,
+                                                            signature_left_name: signature_right_name,
+                                                            signature_left_title: signature_right_title,
+                                                            signature_right_name: signature_left_name,
+                                                            signature_right_title: signature_left_title,
+                                                        },
+                                                    };
+                                                });
+                                            }}
+                                        >
+                                            <IoIosSwap size={30}/>
+                                        </Button>
+                                    </Tooltip>
+
+                                </div>
                                 <p className="value">{formData.payment_terms.signature_right_name}</p>
                                 <p className="value">{formData.payment_terms.signature_right_title}</p>
                             </div>

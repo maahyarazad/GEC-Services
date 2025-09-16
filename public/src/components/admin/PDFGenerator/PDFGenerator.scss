@@ -1,6 +1,15 @@
 $blue_color: #037bfc;
 $orange_color: #f5a742;
 
+    @mixin span-style {
+        span {
+            color: $blue_color;
+            text-transform: uppercase;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    }
+
 .left-panel {
     form {
         .input-group {
@@ -220,14 +229,7 @@ $orange_color: #f5a742;
         padding-bottom: 3rem;
     }
 
-    @mixin span-style {
-        span {
-            color: $blue_color;
-            text-transform: uppercase;
-            font-size: 12px;
-            font-weight: 600;
-        }
-    }
+
 
     .bank-detail {
         @include span-style;
@@ -263,7 +265,7 @@ $orange_color: #f5a742;
         @mixin sign-line {
 
             // apply line to the very first child regardless of tag
-            >p:first-child {
+            p:first-of-type {
                 position: relative;
 
                 &::before {
@@ -286,6 +288,7 @@ $orange_color: #f5a742;
         }
 
         .sign-term {
+            padding-top: 40px;
             padding-bottom: 50px;
             font-size: 12px;
             font-weight: 400;
@@ -311,6 +314,11 @@ $orange_color: #f5a742;
                 grid-column: 2 / 3;
                 grid-row: 1;
                 @include sign-line;
+                .swap-button{
+                    position: absolute;
+                    top: 10px;
+                    left: 25vh;
+                }
             }
 
             .signature-bottom-right {
@@ -331,4 +339,45 @@ $orange_color: #f5a742;
 
     }
 
+}
+
+.total {
+    padding-top: 40px;
+    padding-bottom: 60px;
+    display: flex;
+    justify-content: space-between;
+    p {
+        font-size: 12px;
+    }
+
+    .key {
+        width: 200px;
+        text-transform: capitalize;
+
+        &.iban {
+            text-transform: uppercase;
+        }
+
+        &.bank_address {
+            padding-bottom: 20px;
+        }
+    }
+
+    .value {
+        font-weight: 600;
+    }
+
+    .left{
+        span{
+            width: 200px;
+            font-size: 14px !important;
+        }
+        @include span-style;
+    }
+    .right{
+        .key{
+
+            padding-left: 80px;
+        }
+    }
 }
