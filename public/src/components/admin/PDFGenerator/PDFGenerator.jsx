@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import GEC_logo from "../../../assets/media/gec-logo.webp";
+
 
 import { Box, Tooltip } from '@mui/material';
 import Accordion from '@mui/material/Accordion';
@@ -13,8 +13,9 @@ import Button from '@mui/material/Button';
 import { IoIosSwap } from "react-icons/io";
 
 
-
 import './PDFGenerator.css';
+
+import Invoice from "./Invoice";
 
 const PDFGenerator = () => {
     const printRef = useRef();
@@ -55,7 +56,7 @@ const PDFGenerator = () => {
             account_name: "German World Club",
             bank_name: "WIO Bank",
             bank_address: "Etihad Airways Centre",
-            account_number: "9984546965",
+            account_number: "1200563292001",
             iban: "AE 10 0860 0000 0998 4546 965",
             swift: "WIOBAEADXXX",
         },
@@ -169,22 +170,7 @@ const PDFGenerator = () => {
     }
     return (
         <Box sx={{ padding: 1 }}>
-            <div className='row mb-1'>
-                <div className='col-12 d-lg-flex justify-content-end'>
-                    <div className='d-lg-flex'>
-
-                        <Button onClick={handleDownloadPdf}
-                            sx={{ textTransform: 'none' }}
-                            size="small"
-                            variant="contained">
-                            Download PDF
-                        </Button>
-
-                    </div>
-
-                </div>
-
-            </div>
+           
             <div className="row" style={{ height: '85vh', overflow: 'scroll' }}>
                 {/* Form to update PDF content */}
                 <div className="col-lg-6 col-12 left-panel">
@@ -434,236 +420,9 @@ const PDFGenerator = () => {
 
                 </div>
 
-                {/* Div to be captured as PDF */}
-                <div ref={printRef} className="print-container col-lg-6 col-12">
-                    <div className="header">
-                        <img src={GEC_logo} alt="logo" />
-                        <div className="project-info">
-                            <p>{formData.project.project_name}</p>
-                            <p className="line2">{formData.project.project_name_ll2}</p>
-                            <p className="code">{formData.project.project_name_code}</p>
-                        </div>
-                    </div>
+                <div className="col-lg-6 col-12">
 
-                    <div className="company-info">
-                        <div>
-                            <p className="company-name">{formData.company.company_name}</p>
-                            <p className="company-detail">{formData.company.company_address}</p>
-                            <p className="company-detail">{formData.company.company_postal_city}</p>
-                            <p className="company-detail">{formData.company.company_country}</p>
-                        </div>
-                    </div>
-
-                    <div className="references">
-                        <div>
-                            <span>
-                                References
-                            </span>
-                            <div className="info">
-
-                                <p >{formData.reference.reference_number}</p>
-                            </div>
-                        </div>
-
-                        <div>
-                            <p className="">{formData.reference.reference_contact_person_name_1}</p>
-                            <div className="info">
-
-                                <p >{formData.reference.reference_contact_person_number_1}</p>
-                                <p >{formData.reference.reference_contact_person_email_1}</p>
-                            </div>
-                        </div>
-                        <div>
-                            <p className="">{formData.reference.reference_contact_person_name_2}</p>
-                            <div className="info">
-
-                                <p >{formData.reference.reference_contact_person_number_2}</p>
-                                <p >{formData.reference.reference_contact_person_email_2}</p>
-                            </div>
-                        </div>
-                        <div>
-                            <span>
-                                Date
-                            </span>
-                            <div className="info">
-
-                                <p >{formData.reference.date}</p>
-                            </div>
-                        </div>
-
-
-
-
-                    </div>
-
-                    <div className="description">
-                        <table>
-                            <thead>
-                                <tr className="description-header">
-                                    <th style={{ textAlign: "left" }}>Description</th>
-                                    <th>QTY</th>
-                                    <th>DISC</th>
-                                    <th>VAT%</th>
-                                    <th>VAT</th>
-                                    <th>AMOUNT</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {formData.items.map((item, index) => (
-                                    <>
-                                        <tr key={index} className="description">
-                                            <td style={{ fontWeight: 700 }}>
-
-                                                {item.title || "No Title"}
-                                            </td>
-                                            <td>{item.qty || "-"}</td>
-                                            <td>{item.disc || "0%"}</td>
-                                            <td>{item.vap_p || "0"}</td>
-                                            <td>{item.vat || "-"}</td>
-                                            <td >AED {item.amount || "0"}</td>
-                                        </tr>
-                                        <tr key={index} className="description-row">
-                                            <td>
-
-                                                {item.body.split("\n").map((line, i) => (
-                                                    <span key={i}>
-                                                        {line}
-                                                        <br />
-                                                    </span>
-                                                ))}
-                                            </td>
-
-                                        </tr>
-                                    </>
-                                ))}
-
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="bank-detail">
-                        <span>Bank Details</span>
-                        {Object.entries(formData.bank_detail).map(([key, value]) => (
-                            <div key={key} className="bank-detail-row">
-                                <p className={`key ${key}`}>{key.replace(/_/g, " ")}</p>
-                                <p className="value">{value}</p>
-                            </div>
-                        ))}
-
-                    </div>
-
-
-                    <div className="total">
-                        <div className="left">
-                            <div className="d-flex">
-
-                                <p className="key">Subtotal</p>
-                                <p>
-                                    AED{" "}
-                                    {formData.items && formData.items.length > 0
-                                        ? formData.items
-                                            .reduce((total, item) => total + (parseFloat(item.amount) || 0), 0)
-                                            .toFixed(2)
-                                        : "0.00"}
-                                </p>
-
-                            </div>
-                            <div className="d-flex">
-                                <span>total</span>
-                                <span >
-                                    AED{" "}
-                                    {formData.items && formData.items.length > 0
-                                        ? formData.items
-                                            .reduce((total, item) => total + (parseFloat(item.amount) || 0), 0)
-                                            .toFixed(2)
-                                        : "0.00"}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="d-flex  right">
-                            <p className="key">Reference:</p>
-                            <p>Please mention <strong>{formData.reference.reference_number}</strong></p>
-                        </div>
-                    </div>
-
-
-                    <div className="payment-terms">
-                        <span>Payment Terms:</span>
-                        {Object.entries(formData.payment_terms).map(([key, value]) => {
-
-                            switch (key) {
-                                case "line1":
-                                    return (
-                                        <div key={key}>
-                                            <div className="payment-terms-row pb-3">
-                                                <p className="value">{value}</p>
-                                            </div>
-                                            <span className="normal-span">Not Included in the offer:</span>
-                                        </div>
-                                    );
-
-                                case "line2":
-                                    return (
-                                        <div key={key} className="payment-terms-row">
-                                            <p className="value">{value}</p>
-                                        </div>
-                                    );
-
-
-                            }
-                        })}
-
-                        <div className="signature">
-                            <div className="signature-left">
-                                <p className="value">{formData.payment_terms.signature_left_name}</p>
-                                <p className="value">{formData.payment_terms.signature_left_title}</p>
-                            </div>
-
-                            <div className="signature-right">
-                                <div className="swap-button">
-                                    <Tooltip title="Swap Signatures">
-                                    
-                                        <Button 
-                                        
-                                            variant="text"
-                                            onClick={() => {
-                                                setFormData((prev) => {
-                                                    const { signature_left_name, signature_left_title, signature_right_name, signature_right_title } =
-                                                        prev.payment_terms;
-
-                                                    return {
-                                                        ...prev,
-                                                        payment_terms: {
-                                                            ...prev.payment_terms,
-                                                            signature_left_name: signature_right_name,
-                                                            signature_left_title: signature_right_title,
-                                                            signature_right_name: signature_left_name,
-                                                            signature_right_title: signature_left_title,
-                                                        },
-                                                    };
-                                                });
-                                            }}
-                                        >
-                                            <IoIosSwap size={30}/>
-                                        </Button>
-                                    </Tooltip>
-
-                                </div>
-                                <p className="value">{formData.payment_terms.signature_right_name}</p>
-                                <p className="value">{formData.payment_terms.signature_right_title}</p>
-                            </div>
-
-
-                            <div className="signature-bottom-right">
-                                <div class="sign-term">Understood, agreed, and accepted: </div>
-                                <p className="value">{formData.payment_terms.signature_bottom_right_name}</p>
-                                <p className="value">{formData.payment_terms.signature_bottom_right_title}</p>
-                                <p className="value">{formData.payment_terms.signature_bottom_right_company}</p>
-                            </div>
-
-                        </div>
-
-                    </div>
+                    <Invoice formData={formData}/>
                 </div>
             </div>
         </Box>
