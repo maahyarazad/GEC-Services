@@ -85,9 +85,10 @@ export const TemplateForm = () => {
     const params = new URLSearchParams(location.search);
     
     const from = params.get("from");
-  const login_email = params.get("email");
-  const login_memberId = params.get("memberId");
+    const login_email = params.get("email");
+    const login_memberId = params.get("memberId");
     
+
 
     // http://localhost:5175/registration/october-party/success?reference=ordexc-PI-gec-op-17567159285689843&checkout=1842050180199175015
 
@@ -128,6 +129,7 @@ export const TemplateForm = () => {
         }
     },[]);
 
+
     const serverAPICall = useCallback(async () => {
         try {
             setLoading(true);
@@ -150,21 +152,33 @@ export const TemplateForm = () => {
             const values = await response.json();
             
             if (values) {
+                // Maahyar CM: Only one record return from server
                 values.rows.map(async (x) => {
                     
                     if(x.use_member_card === "true"){
-
                         setEmailRequired(true);
                     }
 
                     if (x.loginRequired === "false") {
-                        
                         setTarget(values.rows[0]);
+                    }
+                    
+                    if(x.paymentRequired === "true"){
                         setInitialTargetFee(values.rows[0].recordFee)
                         setInitialCurrency(values.rows[0].currency)
                         setChosenCurrency(values.rows[0].currency)
-                        await fetchCurrencyData(values.rows[0].currency);
+                        // await fetchCurrencyData(values.rows[0].currency);
+
                     }
+
+                    if (x.surveyForm === "true") {
+                        setPhoneRegistered(true);
+                    }
+
+                    if (x.gic === "true") {
+                        setPhoneRegistered(true);
+                    }
+
                 });
 
             }
@@ -182,6 +196,24 @@ export const TemplateForm = () => {
        
 
     }, [serverAPICall]);
+
+
+    useEffect(() => {
+        try{
+            setLoading(true);
+            const gecuser = getEncryptedLocalStorage("gec-registration");
+            if (gecuser) {
+                setTarget(gecuser);
+            }
+            
+        }catch(err){
+            
+        }finally{
+            setLoading(false);
+            
+        }
+    }, []);
+
 
     const handleSendOtp = async (values) => {
         try {
@@ -298,22 +330,7 @@ export const TemplateForm = () => {
     const identityConsentRef = useRef();
 
 
-    useEffect(() => {
-        const gecuser = getEncryptedLocalStorage("gec-registration");
-        if (gecuser) {
-            
-            if (gecuser.surveyForm === "true") {
-                setPhoneRegistered(true);
-            }
 
-            if (gecuser.gic === "true") {
-                setPhoneRegistered(true);
-            }
-
-            setTarget(gecuser);
-        }
-        setLoading(false);
-    }, []);
 
     const convertCurrency = (amount, source, target) => {
       if (source === target) return amount; // no conversion needed
@@ -708,7 +725,7 @@ export const TemplateForm = () => {
                                                                     disabled={phoneRegistered}
                                                                     size="small"
                                                                     fullWidth
-                                                                    label="Email"
+                                                                    label="Email/E-mail"
                                                                     helperText={<ErrorMessage name="email" />}
                                                                     className="pb-2"
                                                                     error={touched.email && Boolean(errors.email)}
@@ -739,7 +756,7 @@ export const TemplateForm = () => {
 
                                                                 size="small"
                                                                 fullWidth
-                                                                label="Phone Number"
+                                                                label="Phone Number/Telefonnummer"
                                                                 helperText={<ErrorMessage name="phone" />}
                                                                 className="pb-2"
                                                                 error={touched.phone && Boolean(errors.phone)}
@@ -812,6 +829,8 @@ export const TemplateForm = () => {
                                                     </div>
 
                                                     {!phoneRegistered && (
+                                                        <>
+                                                       
                                                         <Button
                                                             variant="contained"
                                                             color="primary"
@@ -835,8 +854,13 @@ export const TemplateForm = () => {
                                                                 textTransform: "none",
                                                             }}
                                                         >
+                                                            
                                                             <p>Send OTP</p>
                                                         </Button>
+                                                        <div className="d-flex justify-content-center w-100">
+                                                            <p className="text-center">Verify your email before submit your registration</p>
+                                                        </div>
+                                                        </>
                                                     )}
 
                                                     <div className="spacer"></div>
@@ -851,7 +875,7 @@ export const TemplateForm = () => {
                                                                 select
                                                                 size="small"
 
-                                                                label="Gender"
+                                                                label="Gender/Geschlecht"
                                                                 helperText={<ErrorMessage name="gender" />}
                                                                 className="pb-2"
                                                                 error={touched.gender && Boolean(errors.gender)}
@@ -892,7 +916,7 @@ export const TemplateForm = () => {
                                                                 as={TextField}
                                                                 size="small"
                                                                 fullWidth
-                                                                label="First Name"
+                                                                label="First Name/Vorname"
                                                                 helperText={<ErrorMessage name="firstName" />}
                                                                 className="pb-2"
                                                                 type="text"
@@ -920,7 +944,7 @@ export const TemplateForm = () => {
                                                                 as={TextField}
                                                                 size="small"
                                                                 fullWidth
-                                                                label="Last Name"
+                                                                label="Last Name/Nachname"
                                                                 helperText={<ErrorMessage name="lastName" />}
                                                                 className="pb-2"
                                                                 type="text"
@@ -965,7 +989,7 @@ export const TemplateForm = () => {
                                                             as={TextField}
                                                             size="small"
                                                             fullWidth
-                                                            label="Company Name"
+                                                            label="Company Name/Firmenname"
                                                             helperText={<ErrorMessage name="companyName" />}
                                                             className="pb-2"
                                                             type="text"
@@ -1099,7 +1123,7 @@ export const TemplateForm = () => {
 
                                         <div className="input-group">
 
-{rates !== null && (
+{/* {rates !== null && (
 
                                             <Field
                                                 as={TextField}
@@ -1129,7 +1153,7 @@ export const TemplateForm = () => {
                                                 <MenuItem value="USD">USD</MenuItem>
                                                 <MenuItem value="GBP">GBP</MenuItem>
                                             </Field>
-)}
+)} */}
                                         </div>
                                         
                                         

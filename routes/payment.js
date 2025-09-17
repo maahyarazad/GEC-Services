@@ -89,7 +89,7 @@ router.post("/payment/create-record", upload.none(), async (req, res) => {
     data.recordType = "Event Participation Fee";
     const fee = Math.round(amountValue * 100) / 100;
     data.recordFee = fee;
-    data.vat = 0.05;
+    data.vat = String(data.currency) === "AED" ? 0.05 : 0;
 
     const sanitized = Object.fromEntries(
         Object.entries(data)

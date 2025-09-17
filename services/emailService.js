@@ -362,7 +362,7 @@ async function event_confirm_registration_email(reqBody) {
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>${reqBody.title} Registration</title>
+    <title>${reqBody.title} Anmeldung</title>
   </head>
   <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
@@ -372,7 +372,7 @@ async function event_confirm_registration_email(reqBody) {
             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1); margin:40px auto;">
               <tr>
                 <td bgcolor="#D9B144" style="color:#ffffff; text-align:center; padding:20px; font-size:22px; font-weight:bold; border-top-left-radius:8px; border-top-right-radius:8px;">
-                  Registration Confirmed
+                  Anmeldung Bestätigt
                 </td>
               </tr>
             </table>
@@ -385,8 +385,8 @@ async function event_confirm_registration_email(reqBody) {
             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; padding:0 30px 30px;">
               <tr>
                 <td style="padding:20px; font-size:16px; color:#333333; line-height:1.6;">
-                  <p>Thank you for registering for the <strong>${reqBody.title}</strong>. We appreciate your interest and look forward to your participation.</p>
-                  <p><strong>Date:</strong> ${reqBody.event_date}</p>
+                  <p>Vielen Dank für Ihre Anmeldung zum <strong>${reqBody.title}</strong>. Wir schätzen Ihr Interesse und freuen uns auf Ihre Teilnahme.</p>
+                  <p><strong>Datum:</strong> ${reqBody.event_date}</p>
                   ${eventTimeSection}
                   ${eventLocationName}
                 </td>
@@ -394,22 +394,22 @@ async function event_confirm_registration_email(reqBody) {
               ${eventLocationSection}
               <tr>
                 <td align="center" style="padding:20px; font-size:16px; color:#333333;">
-                  <p><strong>Please keep this email so we can scan your QR code:</strong></p>
-                  <img src="cid:qr-code" alt="QR Code" width="200" height="200" style="display:block;" />
+                  <p><strong>Bitte bewahren Sie diese E-Mail auf, damit wir Ihren QR-Code scannen können:</strong></p>
+                  <img src="cid:qr-code" alt="QR-Code" width="200" height="200" style="display:block;" />
                 </td>
               </tr>
               <tr>
                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
                   <p>
-                    If you have any questions, feel free to contact us at <br/>
+                    Wenn Sie Fragen haben, kontaktieren Sie uns bitte unter <br/>
                     <a href="mailto:office5@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office5@german-emirates-club.com</a>.
                   </p>
-                  <p>Warm regards,<br />The German Emirates Club Team</p>
+                  <p>Mit freundlichen Grüßen,<br />Das Team des German Emirates Club</p>
                 </td>
               </tr>
               <tr>
                 <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
-                  &copy; ${currentYear} German Emirates Club. All rights reserved.
+                  &copy; ${currentYear} German Emirates Club. Alle Rechte vorbehalten.
                 </td>
               </tr>
             </table>
@@ -419,6 +419,7 @@ async function event_confirm_registration_email(reqBody) {
     </table>
   </body>
 </html>
+
 `;
 
         // ✅ Send email using your own SMTP function

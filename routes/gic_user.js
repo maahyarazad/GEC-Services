@@ -60,7 +60,7 @@ router.get('/gic-user',async (req, res) => {
 });
 
 
-router.post('/api/gic-user/send-reset-password', authorize_admin,async (req, res) => {
+router.post('/api/gic-user/send-reset-password', authorize_admin, async (req, res) => {
     try {
         const table_name = "GIC_Users";
         const userCheck = await dbService.countExact(table_name, 'email', req.body.email);

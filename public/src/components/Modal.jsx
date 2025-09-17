@@ -38,12 +38,15 @@ const Modal = ({ isOpen, onRequestClose, title, children }) => {
             shouldCloseOnEsc={true}
             style={{
                 overlay: {
+                   
                     visibility: isOpen ? "visible" : "hidden",
                     opacity: isOpen ? 1 : 0,
                     transition: "opacity 300ms ease-in-out, visibility 300ms ease-in-out",
                     pointerEvents: isOpen ? "auto" : "none",
                 },
                 content: {
+                    // minWidth: '60vw',
+                    // minHeight: '95vh',
                     transform: isOpen ? "translateY(0)" : "translateY(100px)",
                     opacity: isOpen ? 1 : 0,
                     transition: "transform 300ms ease-in-out, opacity 300ms ease-in-out",

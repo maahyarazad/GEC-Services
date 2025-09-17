@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS registration_config (
   surveyForm BOOLEAN,
   gic BOOLEAN,
   loginRequired BOOLEAN,
+  vatEnabled BOOLEAN,
   countDown BOOLEAN,
   textarea BOOLEAN,
   fieldIcon BOOLEAN,

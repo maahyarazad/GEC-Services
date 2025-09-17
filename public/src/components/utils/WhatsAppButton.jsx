@@ -18,7 +18,7 @@ const WhatsAppButton = () => {
         textDecoration: "none",
         width: "auto",
         height: "auto",
-        padding: "4px 16px",
+        padding: "4px 4px",
         backgroundColor: "#25D366",
         borderRadius: "32px",
       }}
@@ -26,7 +26,7 @@ const WhatsAppButton = () => {
        <FaWhatsapp
         color="white"
         size={22}
-        style={{ marginRight: "8px" }}
+        // style={{ marginRight: "8px" }}
       />
       <p
         style={{
@@ -37,7 +37,7 @@ const WhatsAppButton = () => {
           fontSize: "14px",
         }}
       >
-        Send a message
+        
       </p>
     </a>
   );
