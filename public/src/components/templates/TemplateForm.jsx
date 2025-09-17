@@ -1188,7 +1188,7 @@ export const TemplateForm = () => {
                                             })()}
                                         </Button>
                                     </Box>
-<WhatsAppButton/>
+                                    <WhatsAppButton/>
                                 </Form>
                             )}
                         </Formik>

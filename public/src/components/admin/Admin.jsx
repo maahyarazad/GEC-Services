@@ -95,6 +95,20 @@ export const Admin = ({ data }) => {
                 body: JSON.stringify({ password: values.login_code }),
             });
 
+              if (res.status === 429) {
+              const errorData = await res.json();
+              statusRef.current.textContent = errorData.error || "Too many attempts, please try again later.";
+             
+              return;
+            }
+            
+            if (res.status === 401) {
+              const errorData = await res.json();
+              statusRef.current.textContent = errorData.error || "Unauthorized.";
+             
+              return;
+            }
+
             if (res.ok) {
                 const data = await res.json();
 

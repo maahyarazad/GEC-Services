@@ -13,6 +13,18 @@ const fs = require("fs");
 require('dotenv').config();
 const jwt = require("jsonwebtoken");
 const authorize_admin = require("../middleware/auth");
+const rateLimit = require("express-rate-limit");
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,                   // limit each IP to 5 requests per window
+  message: {
+    status: 429,
+    error: "Too many login attempts, please try again after 15 minutes."
+  },
+  headers: true, // Send rate limit info in headers (X-RateLimit-*)
+});
+
 
 const upload = multer({ 
     storage: multer.memoryStorage()
@@ -272,7 +284,7 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
     }
 });
 
-router.post("/admin/login", (req, res) => {
+router.post("/admin/login", loginLimiter, upload.none() , (req, res) => {
   const { password } = req.body;
 
   if (password === process.env.VITE_ADMIN_PASSWORD) {

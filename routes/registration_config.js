@@ -43,7 +43,7 @@ const loginLimiter = rateLimit({
   max: 5,                   // limit each IP to 5 requests per window
   message: {
     status: 429,
-    error: "Too many login attempts, please try again after 15 minutes."
+    error: "Too many login attempts, please try again after 5 minutes."
   },
   headers: true, // Send rate limit info in headers (X-RateLimit-*)
 });
@@ -366,7 +366,7 @@ router.post("/registration-config-access" ,loginLimiter, upload.none(), async (r
       if (!page_data || page_data.length == 0) {
         return res
           .status(401)
-          .json({ status: false, message: "Invalid Authorization Code" });
+          .json({ status: false, message: "Invalid authorization code, contact us on Whatsapp." });
       }
       
 

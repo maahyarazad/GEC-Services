@@ -62,7 +62,8 @@ app.use(session({
 
 const allowedOrigins = [
   process.env.CLIENT_ORIGIN,    // e.g., http://localhost:5175
-  process.env.CLIENT_ORIGIN_GIC // e.g., http://localhost:5173
+  process.env.CLIENT_ORIGIN_GIC, // e.g., http://localhost:5173
+  process.env.CLIENT_ORIGIN_EVENTS // e.g., http://localhost:5173
 ];
 
 app.use(cors({

@@ -11,7 +11,7 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import { GoShieldLock } from "react-icons/go";
 import GECCard_Back from '../../assets/media/card_back.webp';
-
+import WhatsAppButton from '../utils/WhatsAppButton';
 export const Login = ({ emailRequired, event }) => {
     const validationSchema = Yup.object({
         // email: emailRequired ? Yup.string().email("Enter a valid email").required("Email is required!") : Yup.string().nullable(), 
@@ -244,6 +244,7 @@ export const Login = ({ emailRequired, event }) => {
                     dangerouslySetInnerHTML={{ __html: statusRef.current?.textContent || "" }}
                     ></p>
             </div>
+            <WhatsAppButton/>
         </div>
     );
 };
