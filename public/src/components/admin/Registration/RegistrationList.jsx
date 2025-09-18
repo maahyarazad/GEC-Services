@@ -115,6 +115,7 @@ const getColumns = ({ onEdit, onLock, onShowCode }) => [
         renderCell: (params) => {
             const code = params?.row?.registration_code;
             const use_member_card = params?.row?.use_member_card;
+            const loginDisabled = params?.row?.loginRequired;
             if(use_member_card === "true"){
                 return <Box>
                              <Tooltip
@@ -128,12 +129,18 @@ const getColumns = ({ onEdit, onLock, onShowCode }) => [
             }else{
                 
                 if (code) {
-                    return (
+                    return loginDisabled === "false" ? (
+                        <Box>
+                            {/* You can optionally show a placeholder or a "No Code" message */}
+                            <strong className="text-danger">Login Disabled</strong>
+                        </Box>
+                    ): (
                         <Box>
                             {/* You can optionally show a placeholder or a "No Code" message */}
                             <span>{code}</span>
                         </Box>
                     );
+                    
                 } else {
                     return (
                         <Box>
@@ -436,7 +443,7 @@ export const RegistrationList = () => {
 
 
 
-            <Modal isOpen={editReg}
+            <Modal isOpen={editReg} _style={{minWidth: '55vw',minHeight: '95vh' }}
                 onRequestClose={handleModalClose}
                 title={`Modify ${initialData?.title}`}>
                 <RegistrationRequestForm initialData={initialData} isParentModalOpen={isParentModalOpen} modalSwitch={() => {

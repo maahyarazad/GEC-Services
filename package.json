@@ -34,6 +34,7 @@
     "node-fetch": "^2.7.0",
     "nodemailer": "^7.0.5",
     "passkit-generator": "^3.4.0",
+    "pdfkit": "^0.17.2",
     "pm2": "^6.0.8",
     "qrcode": "^1.5.4",
     "smsglobal": "^1.2.5",

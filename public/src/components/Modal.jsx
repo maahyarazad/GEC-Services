@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import ReactModal from "react-modal";
 import { IoClose } from "react-icons/io5";
 
-const Modal = ({ isOpen, onRequestClose, title, children }) => {
+const Modal = ({ isOpen, onRequestClose, title, children, _style = null }) => {
     useEffect(() => {
 
         const handleEsc = (event) => {
@@ -45,8 +45,8 @@ const Modal = ({ isOpen, onRequestClose, title, children }) => {
                     pointerEvents: isOpen ? "auto" : "none",
                 },
                 content: {
-                    // minWidth: '60vw',
-                    // minHeight: '95vh',
+                    minWidth: _style ? _style.minWidth : undefined,
+                    minHeight: _style ? _style.minHeight : undefined,
                     transform: isOpen ? "translateY(0)" : "translateY(100px)",
                     opacity: isOpen ? 1 : 0,
                     transition: "transform 300ms ease-in-out, opacity 300ms ease-in-out",

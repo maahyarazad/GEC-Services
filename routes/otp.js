@@ -8,6 +8,9 @@ const dbService = require("../services/dbService");
 const {email_otp} = require("../services/emailService");
 const twilioClient = require('twilio')(process.env.TWILIO_ACOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const smsglobal = require('smsglobal')(process.env.SMSGLOBAL_KEY, process.env.SMSGLOBAL_SECRET);
+const {generateInvoice} = require('../services/invoceService');
+const path = require("path");
+
 
 const otpRequestMap = new Map();
 const otpLimiter = rateLimit({
@@ -86,7 +89,9 @@ const sendOtpToEmail = async (data, req, res) => {
     req.session.otpExpires = Date.now() + 1 * 59 * 1000; // expires in 1 mins
 
     try {
-        await email_otp(data)
+
+        generateInvoice();
+        // await email_otp(data)
 
         return { status: true, code: 200, message: 'OTP sent successfully' };
     } catch (error) {
