@@ -6,9 +6,9 @@ const dbService = require("../services/dbService");
 require('dotenv').config();
 const multer = require("multer");
 const { generateRecordId } = require("../services/generatorService");
-const  {generateQRWithText} = require("../services/qrGenerator");
-const {event_confirm_registration_email, company_data_confirmation_email} = require("../services/emailService");
-const {generateInvoice} = require ("../services/invoiceService");
+const { generateQRWithText } = require("../services/qrGenerator");
+const { company_data_confirmation_email, event_confirm_registration_email_with_invoice } = require("../services/emailService");
+const { generateInvoice } = require("../services/invoiceService");
 const upload = multer({
     storage: multer.memoryStorage()
     , limits: { fileSize: 5 * 1024 * 1024 }
@@ -34,22 +34,22 @@ const allowedKeys = [
 
 
 router.get("/latest/:currency", async (req, res) => {
-  const { currency } = req.params;
-  try {
-    const response = await fetch(`https://open.er-api.com/v6/latest/${currency}`);
-    const data = await response.json();
-    res.json(data); // forward JSON to client
-  }
- catch (err) {
-  console.error("Currency fetch error:", err);
-  res.status(500).json({ error: "Failed to fetch currency data", details: err.message });
-}
+    const { currency } = req.params;
+    try {
+        const response = await fetch(`https://open.er-api.com/v6/latest/${currency}`);
+        const data = await response.json();
+        res.json(data); // forward JSON to client
+    }
+    catch (err) {
+        console.error("Currency fetch error:", err);
+        res.status(500).json({ error: "Failed to fetch currency data", details: err.message });
+    }
 });
 
 
 router.get('/payment', async (req, res) => {
     try {
-        
+
         const table_name = "event_proforma_invoice";
         const { filters, data } = await dbService.QuerySqlConverter(req.query, table_name);
 
@@ -195,33 +195,51 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
             });
         }
         //http://localhost:5175/registration/wirtschaftswunder-middle-east-wachstum-und-profitabilitat-fur-ihr-unternehmen-the/success?reference=ordexc-PI-gec-wmewupfiut-17581835476538241&checkout=1843589075646491537
-        if(data.result.status === "PAID"){
+        if (data.result.status === "PAID") {
 
             const performa_invoice_data = await dbService.findById("event_proforma_invoice", data.result.orderId);
+            
+            const registration_config = await dbService.findById("registration_config", performa_invoice_data.sourceId);
+            
+            registration_config.email = performa_invoice_data.email;
+            
+            registration_config.event = performa_invoice_data.registeredForEvent;
+            
+            registration_config.event_id = performa_invoice_data.userId;
+            
+            const qrPath = `./qr-files/${registration_config.event_id}.png`;
+            
+            const [qrBuffer] = await Promise.all([
+                fs.readFile(qrPath),
+            ]);
+            
+            // convert to base64 strings
+            const qrBase64 = qrBuffer.toString("base64");
+            
+            registration_config.image = `data:image/png;base64,${qrBase64}`
+            
+            const invoice_filename = `INVOICE-${getAttachedInvoiceFilename(data)}.pdf`;
+            // Maahyar CM: In case of multiple refresh we don't want to send duplicate email
+            await ProcessRequest({invoice_filename, ...registration_config});
+            if (performa_invoice_data !== null && performa_invoice_data.status === 1) {
+
+                return res.status(200).json({
+                    message: "Payment status retrieved successfully",
+                    data: registration_config
+                });
+            }
+
             // Maahyar CM:
             // Change the pre invoice order status and also use the data.customer json to add the missing that to the registration record
-            await generateInvoice({invoice_data: {...performa_invoice_data}, payment_data: {...data.result}});
-            if(performa_invoice_data){
+            await generateInvoice({ invoice_data: { ...performa_invoice_data }, payment_data: { ...data.result } });
+
+            if (performa_invoice_data) {
                 performa_invoice_data.status = true;
-                
-                await dbService.update("event_proforma_invoice",performa_invoice_data.id, performa_invoice_data );
-                
-                registration_config = await dbService.findById("registration_config", performa_invoice_data.sourceId);
-                registration_config.email = performa_invoice_data.email;
-                registration_config.event = performa_invoice_data.registeredForEvent;
-                registration_config.event_id = performa_invoice_data.userId;
-                
-                await ProcessRequest(registration_config);
 
-                const qrPath = `./qr-files/${registration_config.event_id}.png`;
-                const [qrBuffer] = await Promise.all([
-                    fs.readFile(qrPath),
-                ]);
+                await dbService.update("event_proforma_invoice", performa_invoice_data.id, performa_invoice_data);
 
-                // convert to base64 strings
-                const qrBase64 = qrBuffer.toString("base64");
+                
 
-                registration_config.image = `data:image/png;base64,${qrBase64}`
                 return res.status(200).json({
                     message: "Payment status retrieved successfully",
                     data: registration_config
@@ -233,18 +251,18 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
         console.error("Error fetching payment status:", error);
         return res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
+
+
 });
 
 async function prepareOrder(data) {
     const tax = Math.round(Number(data.recordFee) * data.vat);
-    
-    const subtotal = Math.round( Number(data.recordFee));
+
+    const subtotal = Math.round(Number(data.recordFee));
     const sanitized = {};
     const filteredOut = {};
 
     // Create registration record here and mark it as unpaid 
-
-    
 
     Object.entries(data).forEach(([key, value]) => {
         const newKey = key === "phone" ? "phoneNumber" : key;
@@ -258,14 +276,14 @@ async function prepareOrder(data) {
 
 
     await handleRegistration(filteredOut, sanitized)
-    
+
     return {
         requestId: `ordexc-${sanitized.id}`,
         orderId: sanitized.id,
         currency: JSON.parse(data.currency),
         amount: subtotal + tax,
         totals: {
-            subtotal: subtotal ,
+            subtotal: subtotal,
             tax: tax,
             shipping: 0,
             handling: 0,
@@ -291,7 +309,7 @@ async function prepareOrder(data) {
         billingAddress: {
             name: `${sanitized.firstName} ${sanitized.lastName}`,
             address1: sanitized.registeredForEvent,
-            address2: "",
+            address2: filteredOut.companyName,
             city: "Dubai",
             state: "Dubai",
             zip: "00000",
@@ -299,7 +317,7 @@ async function prepareOrder(data) {
             set: true,
         },
         metadata: {
-             ...filteredOut  
+            ...filteredOut
         },
         returnUrl: `${process.env.CLIENT_ORIGIN}/registration/${sanitized.registeredForEvent}/success`,
         branchId: 0,
@@ -320,7 +338,7 @@ async function handleRegistration(data, sanitized) {
         data.lastName = sanitized.lastName;
         data.phone = sanitized.phoneNumber;
         data.whatsapp = sanitized.whatsapp;
-        
+
 
         // Check registration key and max tokens
         const key = await dbService.findExact("registration_keys", "key", data.registration_code);
@@ -386,32 +404,41 @@ async function handleRegistration(data, sanitized) {
             );
 
             const duplicateRecord = await dbService.countExact(table_name, "email", gic_data__.email);
-            
+
         } else {
             table_name = "registration";
 
             data.event_id = sanitized.userId
             create_result = await dbService.createSafe(table_name, data);
         }
-        
+
     } catch (error) {
         console.error(error);
         throw error
     }
 }
 
-async function ProcessRequest (data) {
+async function ProcessRequest(data) {
     try {
-        
-        await generateQRWithText(data.event, data.event_id);
-        await event_confirm_registration_email(data);
-        
+
+        await event_confirm_registration_email_with_invoice(data);
+        // await generateQRWithText(data.event, data.event_id);
+
 
     } catch (error) {
         console.error("Edit error:", error);
         throw error;
     }
-} 
-    
+}
+
+
+function getAttachedInvoiceFilename(data) {
+    const isoDate = data.result.timestamp;
+    const date = new Date(isoDate);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // months are 0-based
+    return `GWC-${day}${month}-${date.getFullYear()}-${data.result.id.slice(data.result.id.length - 4, data.result.id.length)}`;
+}
+
 
 module.exports = router;
