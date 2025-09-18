@@ -207,13 +207,22 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
             
             registration_config.event_id = performa_invoice_data.userId;
             
-            await generateQRWithText(registration_config.event, registration_config.event_id);
 
-            const qrPath = `./qr-files/${registration_config.event_id}.png`;
+            const qrPath = path.join(__dirname, ".." ,"qr-files", `${registration_config.event_id}.png`);
+
+            try {
+                await fs.access(qrPath); // will throw if not found
+                console.log("QR already exists, skipping generation.");
+            } catch {
+                await generateQRWithText(registration_config.event, registration_config.event_id);
+            }
+
+            const qrBuffer = await fs.readFile(qrPath);
             
-            const [qrBuffer] = await Promise.all([
-                fs.readFile(qrPath),
-            ]);
+            
+            // const [qrBuffer] = await Promise.all([
+            //     fs.readFile(qrPath),
+            // ]);
             
             // convert to base64 strings
             const qrBase64 = qrBuffer.toString("base64");
@@ -240,8 +249,6 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
                 performa_invoice_data.status = true;
 
                 await dbService.update("event_proforma_invoice", performa_invoice_data.id, performa_invoice_data);
-
-                
 
                 return res.status(200).json({
                     message: "Payment status retrieved successfully",

@@ -229,7 +229,7 @@ const generateInvoice = async (data) => {
                 // "01.01.2025 to 01.01.2026",
                 `${data.payment_data.amount}.00`,
                 "1",
-                `${data.payment_data.currency === "AED" ? data.invoice_data.recordFee : "0"}.00`,
+                `${data.payment_data.currency === "AED" ? data.invoice_data.recordFee : data.payment_data.amount}.00`,
                 `${data.payment_data.currency === "AED" ? Math.round(data.invoice_data.recordFee * 0.05) : "0"}.00`,
                 `${data.payment_data.amount}.00`
             ]
