@@ -32,15 +32,19 @@ const generateInvoice = () => {
 
 
 
-    // =====================
-    // BILL TO
-    // =====================
-    doc.moveDown(3);
-    doc.font("Helvetica-Bold").fontSize(11).text("BILL TO:", { align: "left" });
+
+
+// Draw background
+    doc.rect(margin, doc.y, pageWidth, 20).fill("#eaeaea");
+
+    // Draw text on top
+    doc.fillColor("black").font("Helvetica-Bold").fontSize(11)
+    .text("BILL TO:", margin + 5, doc.y + 5); // add small padding inside rect
+
     doc.font("Helvetica").fontSize(11)
-        .text("Marston-Domsel GmbH", { align: "left" })
-        .text("Attn: Martin Esser", { align: "left" })
-        .text("Bergheimer Str.15, 53909 Zulpich / Germany", { align: "left" });
+    .text("Marston-Domsel GmbH", { x: margin + 5, continued: false })
+    .text("Attn: Martin Esser", { x: margin + 5 })
+    .text("Bergheimer Str.15, 53909 Zulpich / Germany", { x: margin + 5 });
 
    // =====================
 // MAIN INVOICE TABLE (Dynamic Row Height)
@@ -64,10 +68,10 @@ const headers = [
 const numCols = headers.length;
 
 // Optional: define relative widths (percentages)
-const colPercents = [0.25, 0.15, 0.12, 0.08, 0.15, 0.08, 0.17]; // must sum <= 1
+const colPercents = [0.20, 0.15, 0.12, 0.08, 0.15, 0.08, 0.17]; // must sum <= 1
 
 // Compute actual widths based on page width
-const totalWidth = pageWidth - margin * 2;
+const totalWidth = pageWidth - margin * 1;
 const cols = colPercents.map(p => p * totalWidth);
 
 // Draw header
@@ -95,7 +99,7 @@ doc.y = headerY + baseRowHeight;
 // ------------------
 // Dynamic Rows
 // ------------------
-let currentY = doc.y + baseRowHeight;
+let currentY = doc.y;
 
 // Example dynamic dataset
 const rows = [
@@ -152,7 +156,7 @@ rows.forEach((row) => {
     // PAYMENT TERMS
     // =====================
     doc.moveDown(4);
-    doc.font("Helvetica-Bold").text("PAYMENT TERMS", 50);
+    doc.fillColor("black").font("Helvetica-Bold").text("PAYMENT TERMS", 50);
 
     doc.font("Helvetica").fontSize(11).text(
         "The invoice is due on receipt. Kindly issue a cheque after receiving this invoice or pay via bank transfer to (in case of bank transfer please send a payment avis):",
@@ -173,11 +177,13 @@ rows.forEach((row) => {
     // =====================
     doc.moveDown(4);
         
-    doc.fontSize(10).font("Helvetica").fillColor("gray")
-        .text("GERMAN WORLD CLUB FZCO", { align: "center" })
+   const footerY = doc.page.height - 100; // 50px from bottom
+        doc.fontSize(10).font("Helvetica").fillColor("gray")
+        .text("GERMAN WORLD CLUB FZCO", 0, footerY, { align: "center" })
         .text("Dubai Silicon Oasis • Digital Park • Building A2", { align: "center" })
-        .text("Dubai • United Arab Emirates", { align: "center" });
-    doc.fontSize(10).fillColor("gray").text("© 2025 German World Club FZCO", { align: "center" });
+        .text("Dubai • United Arab Emirates", { align: "center" })
+        .text("© 2025 German World Club FZCO", { align: "center" });
+    // doc.fontSize(10).fillColor("gray").text("© 2025 German World Club FZCO", { align: "center" });
 
     doc.end();
 }

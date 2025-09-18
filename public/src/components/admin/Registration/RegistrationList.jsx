@@ -443,7 +443,7 @@ export const RegistrationList = () => {
 
 
 
-            <Modal isOpen={editReg} _style={{minWidth: '55vw',minHeight: '95vh' }}
+            <Modal isOpen={editReg} _style={{minWidth: '50vw',minHeight: '95vh' }}
                 onRequestClose={handleModalClose}
                 title={`Modify ${initialData?.title}`}>
                 <RegistrationRequestForm initialData={initialData} isParentModalOpen={isParentModalOpen} modalSwitch={() => {
@@ -463,11 +463,14 @@ export const RegistrationList = () => {
 
 
 
-            <Modal isOpen={newReg} onRequestClose={() => {
+            <Modal 
+                _style={activeStep === 0? {}:{minWidth: '50vw',minHeight: '95vh' }}
+                isOpen={newReg} 
+                onRequestClose={() => {
                 setNewReg(false);
                 setIsParentModalOpen(false);
                 setActiveStep(0); // reset step on close
-
+                
                 fetchData();
             }} title="New Registration Page">
                 <Stepper activeStep={activeStep} alternativeLabel>

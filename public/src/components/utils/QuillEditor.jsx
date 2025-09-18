@@ -18,6 +18,7 @@ const QuillEditor = forwardRef(
     return (
       <div>
         <Editor
+          
           ref={quillRef}
           readOnly={readOnly}
           htmlValue={value} // 👈 now controlled by this prop
