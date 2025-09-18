@@ -290,7 +290,7 @@ export default function NewRegistrationPage({
     };
 
     return (
-        <div className="container py-4" ref={containerRef}>
+        <div className="container px-3" ref={containerRef}>
             {submitSuccess && (
                 <div className="alert alert-success">
                     Registration page saved successfully!
@@ -756,8 +756,8 @@ export default function NewRegistrationPage({
                                 </div>
                             </div>
 
-                            <div className="row p-3 rounded" style={{backgroundColor: '#C0C0C0'}}>
-                                <div className="col-6">
+                            <div className="row p-2" style={{backgroundColor: '#E6E3E3', borderRadius: 10}}>
+                                <div className="col-6" >
                                     <div className="pb-3"><h4>Registration Settings</h4></div>
 
                                     <div className="form-check form-switch mb-3">

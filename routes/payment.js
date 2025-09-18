@@ -219,11 +219,7 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
 
             const qrBuffer = await fs.readFile(qrPath);
             
-            
-            // const [qrBuffer] = await Promise.all([
-            //     fs.readFile(qrPath),
-            // ]);
-            
+    
             // convert to base64 strings
             const qrBase64 = qrBuffer.toString("base64");
             
