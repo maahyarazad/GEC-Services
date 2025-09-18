@@ -7,18 +7,18 @@ const generateInvoice = () => {
     const outputPath = path.join(__dirname, "output.pdf");
     // Pipe to file
     doc.pipe(fs.createWriteStream(outputPath));
-
+    doc.lineWidth(0.5);
     // =====================
     // HEADER
     // =====================
     // Company Logo (replace with path)
     const file = path.join(__dirname, "..", "file_storage", "gec-logo.png")
     // Define positions
-    const pageWidth = doc.page.width;
     const margin = 50;
+    const pageWidth = doc.page.width - margin;
     const logoWidth = 60;
     const logoY = 20;
-    
+
     // Add logo on the left
     doc.image(file, margin, logoY, { width: logoWidth });
 
@@ -34,121 +34,122 @@ const generateInvoice = () => {
 
 
 
-// Draw background
-    doc.rect(margin, doc.y, pageWidth, 20).fill("#eaeaea");
-
+    // Draw background
+    doc.rect(margin, doc.y, pageWidth - 25, 20).fill("#eaeaea");
+        
     // Draw text on top
-    doc.fillColor("black").font("Helvetica-Bold").fontSize(11)
-    .text("BILL TO:", margin + 5, doc.y + 5); // add small padding inside rect
+    doc.fillColor("black").font("Helvetica-Bold").fontSize(12)
+        .text("BILL TO", margin, doc.y + 5, {
+            lineGap: 5 // tweak this to visually center text
+        }); // add small padding inside rect
 
     doc.font("Helvetica").fontSize(11)
-    .text("Marston-Domsel GmbH", { x: margin + 5, continued: false })
-    .text("Attn: Martin Esser", { x: margin + 5 })
-    .text("Bergheimer Str.15, 53909 Zulpich / Germany", { x: margin + 5 });
+        .text("Marston-Domsel GmbH", { x: margin + 5, continued: false })
+        .text("Attn: Martin Esser", { x: margin + 5 })
+        .text("Bergheimer Str.15, 53909 Zulpich / Germany", { x: margin + 5 });
 
-   // =====================
-// MAIN INVOICE TABLE (Dynamic Row Height)
-// =====================
+    // =====================
+    // MAIN INVOICE TABLE (Dynamic Row Height)
+    // =====================
     doc.moveDown(4);
-const baseRowHeight = 25; // min height for short rows
+    const baseRowHeight = 28; // min height for short rows
 
-const headers = [
-  "Description",
-  "Period",
-  "Net Rate (AED)",
-  "Unit",
-  "Net Amount (AED)",
-  "Tax",
-  "Total Gross (AED)"
-];
+    const headers = [
+        "Description",
+        "Period",
+        "Net Rate (AED)",
+        "Unit",
+        "Net Amount (AED)",
+        "Tax",
+        "Total Gross (AED)"
+    ];
 
-// ------------------
-// Draw Header
-// ------------------
-const numCols = headers.length;
+    // ------------------
+    // Draw Header
+    // ------------------
 
-// Optional: define relative widths (percentages)
-const colPercents = [0.20, 0.15, 0.12, 0.08, 0.15, 0.08, 0.17]; // must sum <= 1
+    // Optional: define relative widths (percentages)
+    const colPercents = [0.20, 0.15, 0.12, 0.08, 0.15, 0.08, 0.17]; // must sum <= 1
 
-// Compute actual widths based on page width
-const totalWidth = pageWidth - margin * 1;
-const cols = colPercents.map(p => p * totalWidth);
+    // Compute actual widths based on page width
+    const totalWidth = pageWidth * 1;
+    const cols = colPercents.map(p => p * totalWidth);
 
-// Draw header
-let x = margin;
-const headerY = doc.y;
-headers.forEach((header, i) => {
-  // Draw background
-  doc.rect(x, headerY, cols[i], baseRowHeight).fillAndStroke("#eaeaea", "#000");
+    // Draw header
+    let x = margin;
+    const headerY = doc.y;
+    headers.forEach((header, i) => {
+        // Draw background
+        doc.rect(x, headerY, cols[i], baseRowHeight).fillAndStroke("#eaeaea", "#000");
 
-  // Draw text
-  doc.fillColor("black").font("Helvetica-Bold").fontSize(9)
-     .text(header, x + 5, headerY + 7, {
-       width: cols[i] - 10,
-       align: i === 0 ? "left" : "right"
-     });
+        // Draw text
+        doc.fillColor("black").font("Helvetica-Bold").fontSize(9)
+            .text(header, x + 5, headerY + 7, {
+                width: cols[i] - 10,
+                align: i === 0 ? "left" : "right"
+            });
 
-  x += cols[i];
-});
-
+        x += cols[i];
+    });
 
 
-// Move y-position for the first row dynamically
-doc.y = headerY + baseRowHeight; 
 
-// ------------------
-// Dynamic Rows
-// ------------------
-let currentY = doc.y;
+    // Move y-position for the first row dynamically
+    doc.y = headerY + baseRowHeight;
 
-// Example dynamic dataset
-const rows = [
-  [
-    "Annual Fee: Service as per 'Partner Cooperation Agreement'. This text is intentionally long so it wraps into multiple lines properly.",
-    "01.01.2025 to 01.01.2026",
-    "20,000.00",
-    "1",
-    "20,000.00",
-    "0.00",
-    "20,000.00"
-  ],
-  [
-    "Another service with a shorter description",
-    "02.01.2025 to 02.01.2026",
-    "5,000.00",
-    "2",
-    "10,000.00",
-    "0.00",
-    "10,000.00"
-  ]
-];
+    // ------------------
+    // Dynamic Rows
+    // ------------------
+    let currentY = doc.y;
 
-rows.forEach((row) => {
-  // Calculate the height needed for each cell in this row
-  const cellHeights = row.map((val, i) =>
-    doc.heightOfString(val, {
-      width: cols[i] - 10, // account for padding
-      align: i === 0 ? "left" : "right"
-    })
-  );
+    // Example dynamic dataset
+    const rows = [
+        [
+            "Annual Fee: Service as per 'Partner Cooperation Agreement'. This text is intentionally long so it wraps into multiple lines properly.",
+            "01.01.2025 to 01.01.2026",
+            "20,000.00",
+            "1",
+            "20,000.00",
+            "0.00",
+            "20,000.00"
+        ],
+        [
+            "Another service with a shorter description",
+            "02.01.2025 to 02.01.2026",
+            "5,000.00",
+            "2",
+            "10,000.00",
+            "0.00",
+            "10,000.00"
+        ]
+    ];
 
-  const rowHeight = Math.max(...cellHeights, baseRowHeight);
+    rows.forEach((row) => {
+        // Calculate the height needed for each cell in this row
+        const cellHeights = row.map((val, i) =>
+            doc.heightOfString(val, {
+                width: cols[i] - 10, // account for padding
+                align: i === 0 ? "left" : "right"
+            })
+        );
 
-  // Draw cells
-  let x = 50;
-  row.forEach((val, i) => {
-    doc.rect(x, currentY, cols[i], rowHeight).stroke();
-    doc.fillColor("black").font("Helvetica").fontSize(8)
-      .text(val, x + 5, currentY + 7, {
-        width: cols[i] - 10,
-        align: i === 0 ? "left" : "right"
-      });
-    x += cols[i];
-  });
+        const rowHeight = Math.max(...cellHeights, baseRowHeight);
 
-  // Move Y position for next row
-  currentY += rowHeight;
-});
+        // Draw cells
+        let x = 50;
+        row.forEach((val, i) => {
+            doc.rect(x, currentY, cols[i], rowHeight).stroke();
+            doc.fillColor("black").font("Helvetica").fontSize(8)
+                .text(val, x + 5, currentY + 7, {
+                    width: cols[i] - 10,
+                    align: i === 0 ? "left" : "right"
+                });
+            x += cols[i];
+        });
+
+        // Move Y position for next row
+        currentY += rowHeight;
+    });
 
 
 
@@ -156,7 +157,15 @@ rows.forEach((row) => {
     // PAYMENT TERMS
     // =====================
     doc.moveDown(4);
-    doc.fillColor("black").font("Helvetica-Bold").text("PAYMENT TERMS", 50);
+    doc.rect(margin, doc.y, pageWidth - 25, 20).fill("#eaeaea");
+
+    // Draw text on top
+    doc.fillColor("black").font("Helvetica-Bold").fontSize(12)
+        .text("PAYMENT TERMS", margin, doc.y + 5, {
+            lineGap: 5 // tweak this to visually center text
+        }); // add small padding inside rect
+
+
 
     doc.font("Helvetica").fontSize(11).text(
         "The invoice is due on receipt. Kindly issue a cheque after receiving this invoice or pay via bank transfer to (in case of bank transfer please send a payment avis):",
@@ -176,9 +185,9 @@ rows.forEach((row) => {
     // FOOTER
     // =====================
     doc.moveDown(4);
-        
-   const footerY = doc.page.height - 100; // 50px from bottom
-        doc.fontSize(10).font("Helvetica").fillColor("gray")
+
+    const footerY = doc.page.height - 100; // 50px from bottom
+    doc.fontSize(10).font("Helvetica").fillColor("gray")
         .text("GERMAN WORLD CLUB FZCO", 0, footerY, { align: "center" })
         .text("Dubai Silicon Oasis • Digital Park • Building A2", { align: "center" })
         .text("Dubai • United Arab Emirates", { align: "center" })
