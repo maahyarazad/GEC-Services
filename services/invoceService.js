@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 const generateInvoice = () => {
-    const doc = new PDFDocument({ margin: 20 });
+    const doc = new PDFDocument({ margin: 50 });
     const outputPath = path.join(__dirname, "output.pdf");
     // Pipe to file
     doc.pipe(fs.createWriteStream(outputPath));
@@ -15,7 +15,7 @@ const generateInvoice = () => {
     const file = path.join(__dirname, "..", "file_storage", "gec-logo.png")
     // Define positions
     const margin = 50;
-    const pageWidth = doc.page.width - margin;
+    const pageWidth = doc.page.width - margin*2;
     const logoWidth = 60;
     const logoY = 20;
 
@@ -35,7 +35,7 @@ const generateInvoice = () => {
 
 
     // Draw background
-    doc.rect(margin, doc.y, pageWidth - 25, 20).fill("#eaeaea");
+    doc.rect(margin, doc.y, pageWidth, 20).fill("#eaeaea");
         
     // Draw text on top
     doc.fillColor("black").font("Helvetica-Bold").fontSize(12)
@@ -48,13 +48,101 @@ const generateInvoice = () => {
         .text("Attn: Martin Esser", { x: margin + 5 })
         .text("Bergheimer Str.15, 53909 Zulpich / Germany", { x: margin + 5 });
 
+
+
     // =====================
     // MAIN INVOICE TABLE (Dynamic Row Height)
     // =====================
     doc.moveDown(4);
-    const baseRowHeight = 28; // min height for short rows
+    let baseRowHeight = 28; // min height for short rows
 
-    const headers = [
+    let headers = [
+        "Customer Number",
+        "Date",
+        "Invoice Number",
+       
+    ];
+
+    // ------------------
+    // Draw Header
+    // ------------------
+
+    // Optional: define relative widths (percentages)
+    let colPercents = [0.35, 0.25, 0.40]; // must sum <= 1
+
+    // Compute actual widths based on page width
+    let totalWidth = pageWidth * 1;
+    let cols = colPercents.map(p => p * totalWidth);
+
+    // Draw header
+    let x = margin;
+    let headerY = doc.y;
+    headers.forEach((header, i) => {
+        // Draw background
+        doc.rect(x, headerY, cols[i], baseRowHeight).fillAndStroke("#eaeaea", "#000");
+
+        // Draw text
+        doc.fillColor("black").font("Helvetica-Bold").fontSize(9)
+            .text(header, x + 5, headerY + 7, {
+                width: cols[i] - 10,
+                align: "left"
+            });
+
+        x += cols[i];
+    });
+
+
+
+    // Move y-position for the first row dynamically
+    doc.y = headerY + baseRowHeight;
+
+    // ------------------
+    // Dynamic Rows
+    // ------------------
+    let currentY = doc.y;
+
+    // Example dynamic dataset
+    let rows = [
+        [
+            "PCS 23/12/24/001", "01.01.25", "GWC-0101-202523M"
+        ],
+    ];
+
+    rows.forEach((row) => {
+        // Calculate the height needed for each cell in this row
+        const cellHeights = row.map((val, i) =>
+            doc.heightOfString(val, {
+                width: cols[i] - 10, // account for padding
+                align: i === 0 ? "left" : "right"
+            })
+        );
+
+        const rowHeight = Math.max(...cellHeights, baseRowHeight);
+
+        // Draw cells
+        let x = 50;
+        row.forEach((val, i) => {
+            doc.rect(x, currentY, cols[i], rowHeight).stroke();
+            doc.fillColor("black").font("Helvetica").fontSize(8)
+                .text(val, x + 5, currentY + 7, {
+                    width: cols[i] - 10,
+                    align: i === 0 ? "left" : "right"
+                });
+            x += cols[i];
+        });
+
+        // Move Y position for next row
+        currentY += rowHeight;
+    });    
+
+
+    // =====================
+    // MAIN INVOICE TABLE (Dynamic Row Height)
+    // =====================
+    doc.moveDown(4);
+    baseRowHeight = 28; // min height for short rows
+
+    headers = [
         "Description",
         "Period",
         "Net Rate (AED)",
@@ -69,15 +157,15 @@ const generateInvoice = () => {
     // ------------------
 
     // Optional: define relative widths (percentages)
-    const colPercents = [0.20, 0.15, 0.12, 0.08, 0.15, 0.08, 0.17]; // must sum <= 1
+    colPercents = [0.25, 0.15, 0.12, 0.08, 0.15, 0.08, 0.17]; // must sum <= 1
 
     // Compute actual widths based on page width
-    const totalWidth = pageWidth * 1;
-    const cols = colPercents.map(p => p * totalWidth);
+    totalWidth = pageWidth * 1;
+    cols = colPercents.map(p => p * totalWidth);
 
     // Draw header
-    let x = margin;
-    const headerY = doc.y;
+    x = margin;
+    headerY = doc.y;
     headers.forEach((header, i) => {
         // Draw background
         doc.rect(x, headerY, cols[i], baseRowHeight).fillAndStroke("#eaeaea", "#000");
@@ -100,10 +188,10 @@ const generateInvoice = () => {
     // ------------------
     // Dynamic Rows
     // ------------------
-    let currentY = doc.y;
+    currentY = doc.y;
 
     // Example dynamic dataset
-    const rows = [
+    rows = [
         [
             "Annual Fee: Service as per 'Partner Cooperation Agreement'. This text is intentionally long so it wraps into multiple lines properly.",
             "01.01.2025 to 01.01.2026",
@@ -157,7 +245,7 @@ const generateInvoice = () => {
     // PAYMENT TERMS
     // =====================
     doc.moveDown(4);
-    doc.rect(margin, doc.y, pageWidth - 25, 20).fill("#eaeaea");
+    doc.rect(margin, doc.y, pageWidth, 20).fill("#eaeaea");
 
     // Draw text on top
     doc.fillColor("black").font("Helvetica-Bold").fontSize(12)
@@ -191,7 +279,7 @@ const generateInvoice = () => {
         .text("GERMAN WORLD CLUB FZCO", 0, footerY, { align: "center" })
         .text("Dubai Silicon Oasis • Digital Park • Building A2", { align: "center" })
         .text("Dubai • United Arab Emirates", { align: "center" })
-        .text("© 2025 German World Club FZCO", { align: "center" });
+        
     // doc.fontSize(10).fillColor("gray").text("© 2025 German World Club FZCO", { align: "center" });
 
     doc.end();
