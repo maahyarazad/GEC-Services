@@ -9,8 +9,8 @@ const WhatsAppButton = () => {
       className="whatsapp"
       style={{
         position: "fixed",
-        bottom: "32px",
-        right: "32px",
+        bottom: "16px",
+        right: "16px",
         display: "flex",
         flexWrap: "wrap",
         alignItems: "center",
@@ -25,7 +25,7 @@ const WhatsAppButton = () => {
     >
        <FaWhatsapp
         color="white"
-        size={22}
+        size={25}
         // style={{ marginRight: "8px" }}
       />
       <p

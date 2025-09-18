@@ -207,6 +207,8 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
             
             registration_config.event_id = performa_invoice_data.userId;
             
+            await generateQRWithText(registration_config.event, registration_config.event_id);
+
             const qrPath = `./qr-files/${registration_config.event_id}.png`;
             
             const [qrBuffer] = await Promise.all([
@@ -220,18 +222,19 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
             
             const invoice_filename = `INVOICE-${getAttachedInvoiceFilename(data)}.pdf`;
             // Maahyar CM: In case of multiple refresh we don't want to send duplicate email
-            await ProcessRequest({invoice_filename, ...registration_config});
             if (performa_invoice_data !== null && performa_invoice_data.status === 1) {
-
+                
                 return res.status(200).json({
                     message: "Payment status retrieved successfully",
                     data: registration_config
                 });
             }
-
+            
             // Maahyar CM:
             // Change the pre invoice order status and also use the data.customer json to add the missing that to the registration record
             await generateInvoice({ invoice_data: { ...performa_invoice_data }, payment_data: { ...data.result } });
+
+            await ProcessRequest({invoice_filename, ...registration_config});
 
             if (performa_invoice_data) {
                 performa_invoice_data.status = true;
@@ -422,8 +425,6 @@ async function ProcessRequest(data) {
     try {
 
         await event_confirm_registration_email_with_invoice(data);
-        // await generateQRWithText(data.event, data.event_id);
-
 
     } catch (error) {
         console.error("Edit error:", error);

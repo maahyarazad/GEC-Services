@@ -4,7 +4,7 @@ import RegistrationRequestForm from "../RegistrationRequestForm";
 import { DataGrid } from '@mui/x-data-grid';
 import { Switch, Button, Box, Tooltip, FormControlLabel } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import { MdFormatListBulletedAdd } from "react-icons/md";
+
 import AlertDialog from '../../utils/AlertDialog';
 import lockRegistrationImage from '../../../assets/media/lock_registration.png'
 import Stepper from '@mui/material/Stepper';
@@ -16,7 +16,7 @@ import { MdDisabledVisible } from "react-icons/md";
 import { FaAddressCard } from "react-icons/fa";
 import GECBackground from "../../../assets/media/GECBackground.webp";
 import StarsField from "../../../assets/media/stars-field.webm";
-import { IoIosInformationCircleOutline } from "react-icons/io";
+import { HiOutlineBanknotes } from "react-icons/hi2";
 import { MdAddCircleOutline } from "react-icons/md";
 
 const getColumns = ({ onEdit, onLock, onShowCode }) => [
@@ -57,8 +57,9 @@ const getColumns = ({ onEdit, onLock, onShowCode }) => [
     {
         field: 'paymentRequired',
         headerName: 'Payment Required',
-        width: 150,
-        valueFormatter: (params) => (params.value === "true" ? "Yes" : "No"),
+        width: 135,
+        renderCell: (params) => {console.log(params.value );
+            return (params.value === "true" ?  <FaCheckCircle color="green" size={18} /> : <></>)},
     },
     { field: 'title', headerName: 'Title', width: 130 },
     {
