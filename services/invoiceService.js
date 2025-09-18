@@ -2,11 +2,13 @@ const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
 
-const generateInvoice = () => {
+const generateInvoice = async (data) => {
+    try{
     const doc = new PDFDocument({ margin: 50 });
     const outputPath = path.join(__dirname, "output.pdf");
     // Pipe to file
-    doc.pipe(fs.createWriteStream(outputPath));
+    const stream = fs.createWriteStream(outputPath);
+    doc.pipe(stream);
     doc.lineWidth(0.5);
     // =====================
     // HEADER
@@ -24,7 +26,7 @@ const generateInvoice = () => {
 
     // Add INVOICE text on the right
     doc.fontSize(20).fillColor("gray")
-        .font("Helvetica-Bold")
+        .font("Times-Roman")
         .text("INVOICE", doc.page.width - margin - 150, logoY + 20, {
             width: 150,
             align: "right"
@@ -32,21 +34,21 @@ const generateInvoice = () => {
 
 
 
-
+        const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 
     // Draw background
     doc.rect(margin, doc.y, pageWidth, 20).fill("#eaeaea");
         
     // Draw text on top
-    doc.fillColor("black").font("Helvetica-Bold").fontSize(12)
+    doc.fillColor("black").font("Times-Bold").fontSize(12)
         .text("BILL TO", margin, doc.y + 5, {
             lineGap: 5 // tweak this to visually center text
         }); // add small padding inside rect
 
-    doc.font("Helvetica").fontSize(11)
-        .text("Marston-Domsel GmbH", { x: margin + 5, continued: false })
-        .text("Attn: Martin Esser", { x: margin + 5 })
-        .text("Bergheimer Str.15, 53909 Zulpich / Germany", { x: margin + 5 });
+    doc.font("Times-Roman").fontSize(11)
+        // .text("Marston-Domsel GmbH", { x: margin + 5, continued: false })
+        .text(`${capitalize(data.invoice_data.firstName)} ${capitalize(data.invoice_data.lastName)}`, { x: margin + 5 });
+        // .text("Bergheimer Str.15, 53909 Zulpich / Germany", { x: margin + 5 });
 
 
 
@@ -82,7 +84,7 @@ const generateInvoice = () => {
         doc.rect(x, headerY, cols[i], baseRowHeight).fillAndStroke("#eaeaea", "#000");
 
         // Draw text
-        doc.fillColor("black").font("Helvetica-Bold").fontSize(9)
+        doc.fillColor("black").font("Times-Roman").fontSize(9)
             .text(header, x + 5, headerY + 7, {
                 width: cols[i] - 10,
                 align: "left"
@@ -101,10 +103,20 @@ const generateInvoice = () => {
     // ------------------
     let currentY = doc.y;
 
+    const isoDate = data.payment_data.timestamp;
+const date = new Date(isoDate);
+
+const day = String(date.getDate()).padStart(2, "0");
+const month = String(date.getMonth() + 1).padStart(2, "0"); // months are 0-based
+const year = String(date.getFullYear()).slice(-2);
+
+const formattedDate = `${day}.${month}.${year}`;
+
+
     // Example dynamic dataset
     let rows = [
         [
-            "PCS 23/12/24/001", "01.01.25", "GWC-0101-202523M"
+            `${data.payment_data.id}`, `${formattedDate}`, `GWC-${day}${month}-${date.getFullYear()}00${data.payment_data.id.slice(data.payment_data.id.length-2, data.payment_data.id.length)}`
         ],
     ];
 
@@ -123,7 +135,7 @@ const generateInvoice = () => {
         let x = 50;
         row.forEach((val, i) => {
             doc.rect(x, currentY, cols[i], rowHeight).stroke();
-            doc.fillColor("black").font("Helvetica").fontSize(8)
+            doc.fillColor("black").font("Times-Roman").fontSize(8)
                 .text(val, x + 5, currentY + 7, {
                     width: cols[i] - 10,
                     align: i === 0 ? "left" : "right"
@@ -144,12 +156,12 @@ const generateInvoice = () => {
 
     headers = [
         "Description",
-        "Period",
-        "Net Rate (AED)",
+        // "Period",
+        `Net Rate (${data.payment_data.currency})`,
         "Unit",
-        "Net Amount (AED)",
-        "Tax",
-        "Total Gross (AED)"
+        `Net Amount (${data.payment_data.currency})`,
+        `Tax${data.payment_data.currency === "AED" ? "(5%)" : ""}`,
+        `Total Gross (${data.payment_data.currency})`
     ];
 
     // ------------------
@@ -157,7 +169,7 @@ const generateInvoice = () => {
     // ------------------
 
     // Optional: define relative widths (percentages)
-    colPercents = [0.25, 0.15, 0.12, 0.08, 0.15, 0.08, 0.17]; // must sum <= 1
+    colPercents = [0.40, 0.12, 0.06, 0.15, 0.1, 0.17]; // must sum <= 1
 
     // Compute actual widths based on page width
     totalWidth = pageWidth * 1;
@@ -171,7 +183,7 @@ const generateInvoice = () => {
         doc.rect(x, headerY, cols[i], baseRowHeight).fillAndStroke("#eaeaea", "#000");
 
         // Draw text
-        doc.fillColor("black").font("Helvetica-Bold").fontSize(9)
+        doc.fillColor("black").font("Times-Roman").fontSize(9)
             .text(header, x + 5, headerY + 7, {
                 width: cols[i] - 10,
                 align: i === 0 ? "left" : "right"
@@ -193,23 +205,14 @@ const generateInvoice = () => {
     // Example dynamic dataset
     rows = [
         [
-            "Annual Fee: Service as per 'Partner Cooperation Agreement'. This text is intentionally long so it wraps into multiple lines properly.",
-            "01.01.2025 to 01.01.2026",
-            "20,000.00",
+            `${data.invoice_data.recordType} - ${data.invoice_data.registeredForEvent}`,
+            // "01.01.2025 to 01.01.2026",
+            `${data.payment_data.amount}.00`,
             "1",
-            "20,000.00",
-            "0.00",
-            "20,000.00"
-        ],
-        [
-            "Another service with a shorter description",
-            "02.01.2025 to 02.01.2026",
-            "5,000.00",
-            "2",
-            "10,000.00",
-            "0.00",
-            "10,000.00"
-        ]
+            `${data.payment_data.currency === "AED" ? data.invoice_data.recordFee : "0"}.00`,
+            `${data.payment_data.currency === "AED" ? Math.round(data.invoice_data.recordFee * 0.05) : "0"}.00`,
+            `${data.payment_data.amount}.00`
+        ]       
     ];
 
     rows.forEach((row) => {
@@ -227,7 +230,7 @@ const generateInvoice = () => {
         let x = 50;
         row.forEach((val, i) => {
             doc.rect(x, currentY, cols[i], rowHeight).stroke();
-            doc.fillColor("black").font("Helvetica").fontSize(8)
+            doc.fillColor("black").font("Times-Roman").fontSize(8)
                 .text(val, x + 5, currentY + 7, {
                     width: cols[i] - 10,
                     align: i === 0 ? "left" : "right"
@@ -248,14 +251,14 @@ const generateInvoice = () => {
     doc.rect(margin, doc.y, pageWidth, 20).fill("#eaeaea");
 
     // Draw text on top
-    doc.fillColor("black").font("Helvetica-Bold").fontSize(12)
+    doc.fillColor("black").font("Times-Roman").fontSize(12)
         .text("PAYMENT TERMS", margin, doc.y + 5, {
             lineGap: 5 // tweak this to visually center text
         }); // add small padding inside rect
 
 
 
-    doc.font("Helvetica").fontSize(11).text(
+    doc.font("Times-Roman").fontSize(11).text(
         "The invoice is due on receipt. Kindly issue a cheque after receiving this invoice or pay via bank transfer to (in case of bank transfer please send a payment avis):",
         { width: 500 }
     );
@@ -275,7 +278,7 @@ const generateInvoice = () => {
     doc.moveDown(4);
 
     const footerY = doc.page.height - 100; // 50px from bottom
-    doc.fontSize(10).font("Helvetica").fillColor("gray")
+    doc.fontSize(10).font("Times-Roman").fillColor("gray")
         .text("GERMAN WORLD CLUB FZCO", 0, footerY, { align: "center" })
         .text("Dubai Silicon Oasis • Digital Park • Building A2", { align: "center" })
         .text("Dubai • United Arab Emirates", { align: "center" })
@@ -283,6 +286,19 @@ const generateInvoice = () => {
     // doc.fontSize(10).fillColor("gray").text("© 2025 German World Club FZCO", { align: "center" });
 
     doc.end();
+
+      await new Promise((resolve, reject) => {
+        stream.on("finish", resolve);
+        stream.on("error", reject);
+    });
+
+    console.log("PDF written to", outputPath);
+    
+    }catch(err){
+         console.error("Error generating PDF:", err);
+        throw err;
+    }
+    
 }
 
 

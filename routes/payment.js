@@ -8,11 +8,11 @@ const multer = require("multer");
 const { generateRecordId } = require("../services/generatorService");
 const  {generateQRWithText} = require("../services/qrGenerator");
 const {event_confirm_registration_email, company_data_confirmation_email} = require("../services/emailService");
+const {generateInvoice} = require ("../services/invoiceService");
 const upload = multer({
     storage: multer.memoryStorage()
     , limits: { fileSize: 5 * 1024 * 1024 }
 }); // 5MB max
-
 const fs = require("fs").promises;
 // keep only DB table columns
 const allowedKeys = [
@@ -87,9 +87,8 @@ router.post("/payment/create-record", upload.none(), async (req, res) => {
     data.status = false;
     data.sourceId = data.registration_config_id;
     data.recordType = "Event Participation Fee";
-    const fee = Math.round(amountValue * 100) / 100;
-    data.recordFee = fee;
-    data.vat = String(data.currency) === "AED" ? 0.05 : 0;
+    const currency = String(data.currency).replace(/['"]/g, "").trim();
+    data.vat = currency === "AED" ? 0.05 : 0;
 
     const sanitized = Object.fromEntries(
         Object.entries(data)
@@ -195,15 +194,16 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
                 error: data,
             });
         }
-
+        //http://localhost:5175/registration/wirtschaftswunder-middle-east-wachstum-und-profitabilitat-fur-ihr-unternehmen-the/success?reference=ordexc-PI-gec-wmewupfiut-17581835476538241&checkout=1843589075646491537
         if(data.result.status === "PAID"){
 
             const performa_invoice_data = await dbService.findById("event_proforma_invoice", data.result.orderId);
             // Maahyar CM:
             // Change the pre invoice order status and also use the data.customer json to add the missing that to the registration record
-
+            await generateInvoice({invoice_data: {...performa_invoice_data}, payment_data: {...data.result}});
             if(performa_invoice_data){
                 performa_invoice_data.status = true;
+                
                 await dbService.update("event_proforma_invoice",performa_invoice_data.id, performa_invoice_data );
                 
                 registration_config = await dbService.findById("registration_config", performa_invoice_data.sourceId);
@@ -236,8 +236,9 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
 });
 
 async function prepareOrder(data) {
-    const tax = data.recordFee * data.vat;
-    const totalAmount = data.recordFee + tax;
+    const tax = Math.round(Number(data.recordFee) * data.vat);
+    
+    const subtotal = Math.round( Number(data.recordFee));
     const sanitized = {};
     const filteredOut = {};
 
@@ -257,15 +258,15 @@ async function prepareOrder(data) {
 
 
     await handleRegistration(filteredOut, sanitized)
-
+    
     return {
         requestId: `ordexc-${sanitized.id}`,
         orderId: sanitized.id,
         currency: JSON.parse(data.currency),
-        amount: totalAmount,
+        amount: subtotal + tax,
         totals: {
-            subtotal: 699,
-            tax,
+            subtotal: subtotal ,
+            tax: tax,
             shipping: 0,
             handling: 0,
             discount: 0,

@@ -87,7 +87,7 @@ export const TemplateForm = () => {
     const from = params.get("from");
     const login_email = params.get("email");
     const login_memberId = params.get("memberId");
-    
+    const tax = 0.05;
 
 
     // http://localhost:5175/registration/october-party/success?reference=ordexc-PI-gec-op-17567159285689843&checkout=1842050180199175015
@@ -162,9 +162,10 @@ export const TemplateForm = () => {
                     if (x.loginRequired === "false") {
                         setTarget(values.rows[0]);
                     }
-                    
+                    debugger;
                     if(x.paymentRequired === "true"){
-                        setInitialTargetFee(values.rows[0].recordFee)
+                        
+                        setInitialTargetFee(values.rows[0].recordFee === "AED" ? (Number(values.rows[0].recordFee * 1.05)) :values.rows[0].recordFee)
                         setInitialCurrency(values.rows[0].currency)
                         setChosenCurrency(values.rows[0].currency)
                         // await fetchCurrencyData(values.rows[0].currency);
@@ -1201,10 +1202,10 @@ export const TemplateForm = () => {
 
                                                 if (target.paymentRequired === "true") {
                                                     
-                                                    return <span>Confirm & Pay {target.recordFee} {chosenCurrency}
-                                                    {initialCurrency !== chosenCurrency && (
+                                                    return <span>Confirm & Pay {target.currency === "AED" ?  Math.round(target.recordFee *(1+tax)) : Math.round(target.recordFee)} {target.currency}
+                                                    {/* {initialCurrency !== chosenCurrency && (
                                             <small style={{fontSize : '0.8rem'}}> (approximately)</small>
-                                        )}
+                                        )} */}
                                                     </span>;
                                                 }
 

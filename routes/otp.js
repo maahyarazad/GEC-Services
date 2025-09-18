@@ -8,7 +8,7 @@ const dbService = require("../services/dbService");
 const {email_otp} = require("../services/emailService");
 const twilioClient = require('twilio')(process.env.TWILIO_ACOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const smsglobal = require('smsglobal')(process.env.SMSGLOBAL_KEY, process.env.SMSGLOBAL_SECRET);
-const {generateInvoice} = require('../services/invoceService');
+
 const path = require("path");
 
 
@@ -90,8 +90,7 @@ const sendOtpToEmail = async (data, req, res) => {
 
     try {
 
-        generateInvoice();
-        // await email_otp(data)
+        await email_otp(data)
 
         return { status: true, code: 200, message: 'OTP sent successfully' };
     } catch (error) {

@@ -178,6 +178,7 @@ export default function NewRegistrationPage({
                 })
             );
         }
+        debugger;
         if (initialValues.paymentRequired) {
             setCurrency(initialValues?.currency)
         }
@@ -203,7 +204,7 @@ export default function NewRegistrationPage({
 
 
             Object.entries(values).forEach(([key, value]) => {
-                console.log(key, value);
+                
                 switch (key) {
                     case "id":
                         if (initialData) {
@@ -212,7 +213,8 @@ export default function NewRegistrationPage({
                         break;
 
                     case "currency":
-                        if (values.paymentRequired === "true") {
+                        debugger;
+                        if (values.paymentRequired) {
                             formData.append("currency", currency);
                         }
                         break;
@@ -497,7 +499,7 @@ export default function NewRegistrationPage({
                                                             key={cur}
                                                             type="button"
                                                             className={`btn btn-sm ${
-                                                                field.value === cur ? "btn-dark" : "btn-outline-scondary"
+                                                                currency === cur ? "btn-dark" : "btn-outline-scondary"
                                                             }`}
                                                             disabled={true}
                                                             onClick={() => form.setFieldValue(field.name, cur)}
@@ -993,12 +995,15 @@ export default function NewRegistrationPage({
                                                     checked={field.value}
                                                     onChange={(e) => {
                                                         field.onChange(e);
+                                                        debugger;
                                                         if (e.target.checked) {
                                                             setCurrency("AED");
-                                                            setFieldValue("currency", "AED")
+                                                            
+                                                            setFieldValue("currency", "AED");
                                                         } else {
                                                             setCurrency("EUR");
-                                                            setFieldValue("currency", "EUR")
+                                                            setFieldValue("currency", "EUR");
+                                                            
                                                         }
                                                     }}
                                                     onBlur={field.onBlur}
