@@ -29,60 +29,74 @@ import { GrCatalog } from "react-icons/gr";
 import { GrCatalogOption } from "react-icons/gr";
 import { MdPictureAsPdf } from "react-icons/md";
 
+
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
 });
-import {useNavigate} from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { MemberCardDataGrid } from "../gallery/MemberCardDataGrid";
 import PDFGenerator from "./PDFGenerator/PDFGenerator";
 
 export const Admin = ({ data }) => {
+
+    
 
     const initialValues = {
         login_code: '',
     };
     const navigate = useNavigate();
     const statusRef = useRef();
+    const [loginClass, setLoginClass] = useState(null);
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-    const [adminUser, setAdminUser] = useState(null);
+    const [adminUser, setAdminUser] = useState(false);
     const [showPassword, setShowPassowrd] = useState(false);
 
     const checkAuth = useCallback(async () => {
         try {
-                
-                const res = await fetch(`${import.meta.env.VITE_SERVERURL}/admin/check-auth`, {
-                    method: "GET",
-                    credentials: "include",
-                });
-                
-                if (res.status === 401) {
-                    
-                    console.warn("Unauthorized");
-                    setAdminUser(null);
-                    
-                    return;
-                    }
 
-                if (res.ok) {
-                    const data = await res.json();
-                    setAdminUser(data.authenticated === true);
-                }
+            const res = await fetch(`${import.meta.env.VITE_SERVERURL}/admin/check-auth`, {
+                method: "GET",
+                credentials: "include",
+            });
 
+            if (res.status === 401) {
 
-            } catch (err) {
-                console.error("Auth check failed:", err);
+                console.warn("Unauthorized");
                 setAdminUser(null);
-            } finally {
-                setIsCheckingAuth(false);
+
+                return;
             }
+
+            if (res.ok) {
+                const data = await res.json();
+                setAdminUser(true);
+            }
+
+
+        } catch (err) {
+            console.error("Auth check failed:", err);
+            setAdminUser(null);
+        } finally {
+            setIsCheckingAuth(false);
+        }
     }, [])
-    
+
 
     useEffect(() => {
         checkAuth();
     }, [checkAuth]);
 
+
+
+
     const handleLoginSubmit = async (values, { setSubmitting, resetForm }) => {
+        const setStatus = (message, type = "danger") => {
+            if (statusRef.current) {
+                setLoginClass(`text-${type}`);
+                statusRef.current.textContent = message;
+            }
+        };
+
         try {
             setSubmitting(true);
 
@@ -95,82 +109,76 @@ export const Admin = ({ data }) => {
                 body: JSON.stringify({ password: values.login_code }),
             });
 
-              if (res.status === 429) {
-              const errorData = await res.json();
-              statusRef.current.textContent = errorData.error || "Too many attempts, please try again later.";
-             
-              return;
+            if (res.status === 429) {
+                const errorData = await res.json();
+                return setStatus(errorData.error || "Too many attempts, please try again later.");
+
+
             }
-            
+
             if (res.status === 401) {
-              const errorData = await res.json();
-              statusRef.current.textContent = errorData.error || "Unauthorized.";
-             
-              return;
+                const errorData = await res.json();
+                return setStatus(errorData.error || "Too many attempts, please try again later.");
             }
 
             if (res.ok) {
                 const data = await res.json();
-
+                
                 if (data.success) {
                     // backend sets secure cookie, you just store a flag in state
                     setAdminUser(true);
                     resetForm();
-                    if (statusRef.current) {
-                        statusRef.current.textContent = "Login successful!";
-                    }
+                    return setStatus("Login successful!", "dark");
+
                 } else {
                     if (statusRef.current) {
-                        statusRef.current.textContent = "Invalid Password!";
+                        return setStatus("Invalid Password!");
                     }
                 }
             } else {
-                if (statusRef.current) {
-                    statusRef.current.textContent = "Login failed. Please try again.";
-                }
+
+                setStatus(data.error || "Login failed. Please try again.");
             }
         } catch (err) {
             console.error("Login error:", err);
-            if (statusRef.current) {
-                statusRef.current.textContent = "An unexpected error occurred.";
-            }
+            setStatus("An unexpected error occurred.");
         } finally {
             setSubmitting(false);
         }
     };
 
 
-    const tabStyle = { textTransform: 'none', alignSelf: 'baseline', mi: '10px'  };
-const tabConfig = [
-  {
-    icon: <GiArchiveRegister size={20} />,
-    label: "Registration Config",
-  },
-  {
-    icon: <GrCatalogOption size={20} />,
-    label: "Events",
-  },
-  {
-    icon: <FcSurvey size={24} />,
-    label: "Surveys",
-  },
-  {
-    icon: <IoIdCardOutline size={24} />,
-    label: "Member Cards",
-  },
-  {
-    icon: <GrCatalog size={20} />,
-    label: "GIC Data",
-  },
-  {
-    icon: <BsPeopleFill size={20} />,
-    label: "Member Data",
-  },
-    {
-    icon: <MdPictureAsPdf size={20} />,
-    label: "Procurement PDF Generator",
-  },
-];
+    const tabStyle = { textTransform: 'none', alignSelf: 'baseline', mi: '10px' };
+    const tabConfig = [
+        {
+            icon: <GiArchiveRegister size={20} />,
+            label: "Registration Config",
+        },
+        {
+            icon: <GrCatalogOption size={20} />,
+            label: "Events",
+        },
+        {
+            icon: <FcSurvey size={24} />,
+            label: "Surveys",
+        },
+        {
+            icon: <IoIdCardOutline size={24} />,
+            label: "Member Cards",
+        },
+        {
+            icon: <GrCatalog size={20} />,
+            label: "GIC Data",
+        },
+        {
+            icon: <BsPeopleFill size={20} />,
+            label: "Member Data",
+        },
+        {
+            icon: <MdPictureAsPdf size={20} />,
+            label: "Procurement PDF Generator",
+        },
+    ];
 
     const [tabValue, setTabValue] = useState(0);
 
@@ -184,13 +192,13 @@ const tabConfig = [
             content = <RegistrationList />;
             break;
         case 1:
-            content = <RegistrationDataGrid/>;
+            content = <RegistrationDataGrid />;
             break;
         case 2:
             content = <SurveyDataGrid />;
             break;
         case 3:
-            content = <MemberCardDataGrid/>;
+            content = <MemberCardDataGrid />;
             break;
         case 4:
             content = <GICDataGrid />;
@@ -208,9 +216,9 @@ const tabConfig = [
 
             <CircularProgress />
         </div>
-    ) : adminUser !== null ? (
+    ) : adminUser ? (
         <>
-            <Header />
+            <Header adminUser={adminUser} setAdminUser={setAdminUser}/>
             <div className="admin">
                 <div>
                     <Box
@@ -224,26 +232,26 @@ const tabConfig = [
                             aria-label=""
                             TabIndicatorProps={{
                                 sx: {
-                                left: 0,
-                                right: 'auto',
-                                width: 3,
-                                bgcolor: 'primary.main',
+                                    left: 0,
+                                    right: 'auto',
+                                    width: 3,
+                                    bgcolor: 'primary.main',
                                 }
                             }}
                             sx={{
                                 '& .MuiTab-root': {
-                                minHeight: 45,  // reduce height of all tabs
-                                py: 0.5,
+                                    minHeight: 45,  // reduce height of all tabs
+                                    py: 0.5,
                                 },
                             }}
                         >
-                           {tabConfig.map((tab, index) => (
+                            {tabConfig.map((tab, index) => (
                                 <Tab
-                                key={index}
-                                icon={tab.icon}
-                                iconPosition="start"
-                                label={tab.label}
-                                style={tabStyle}
+                                    key={index}
+                                    icon={tab.icon}
+                                    iconPosition="start"
+                                    label={tab.label}
+                                    style={tabStyle}
                                 />
                             ))}
 
@@ -321,13 +329,10 @@ const tabConfig = [
                 </Formik>
                 <p
                     ref={statusRef}
-                    className="text-danger"
+                    className={loginClass}
                 ></p>
             </div>
         </div>
     );
 };
 
-Admin.propTypes = {
-    data: PropTypes.array.isRequired,
-};

@@ -40,12 +40,13 @@ const upload = multer({ storage: storage });
 
 const loginLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 15 minutes
-  max: 5,                   // limit each IP to 5 requests per window
+  max: 10,                   // limit each IP to 5 requests per window
   message: {
     status: 429,
     error: "Too many login attempts, please try again after 5 minutes."
   },
   headers: true, // Send rate limit info in headers (X-RateLimit-*)
+  skipSuccessfulRequests: true
 });
 
 router.post(
@@ -69,6 +70,7 @@ router.post(
           registration_data.id
         );
         if (!existing) {
+          
           return res
             .status(404)
             .json({ status: false, message: "Record not found" });
@@ -281,7 +283,7 @@ router.post("/registration-config/optional-login", async (req, res) => {
   }
 });
 
-router.post("/registration-config-access" ,loginLimiter, upload.none(), async (req, res) => {
+router.post("/registration-config-access" , upload.none(), loginLimiter,async (req, res) => {
   try {
     const data = req.body;
     const registration_code = data.registration_code
@@ -323,6 +325,7 @@ router.post("/registration-config-access" ,loginLimiter, upload.none(), async (r
         );
         
         if (page_data) {
+          
           return res.status(200).json({
             status: true,
             message: "Login Success",
@@ -349,6 +352,7 @@ router.post("/registration-config-access" ,loginLimiter, upload.none(), async (r
         page_data[0].registration_code = registration_code;
         
         if (page_data) {
+          
           return res.status(200).json({
             status: true,
             message: "Login Success",
@@ -364,6 +368,7 @@ router.post("/registration-config-access" ,loginLimiter, upload.none(), async (r
         registration_code
       );
       if (!page_data || page_data.length == 0) {
+          
         return res
           .status(401)
           .json({ status: false, message: "Invalid authorization code, contact us on Whatsapp." });
@@ -372,7 +377,7 @@ router.post("/registration-config-access" ,loginLimiter, upload.none(), async (r
 
     // await sendOtpToPhone(data.mobile_number, req, res, client);
     // await dbService.create("registration_client_access", data);
-
+    
     return res.status(200).json({
       status: true,
       message: "Login Success",

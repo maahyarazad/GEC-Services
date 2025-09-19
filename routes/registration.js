@@ -15,16 +15,17 @@ const jwt = require("jsonwebtoken");
 const authorize_admin = require("../middleware/auth");
 const rateLimit = require("express-rate-limit");
 
+// Create rate limiter
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000, // 5 minutes
   max: 5,                   // limit each IP to 5 requests per window
   message: {
     status: 429,
     error: "Too many login attempts, please try again after 15 minutes."
   },
-  headers: true, // Send rate limit info in headers (X-RateLimit-*)
+  headers: true,
+  skipSuccessfulRequests: true // built-in option to skip successful responses
 });
-
 
 const upload = multer({ 
     storage: multer.memoryStorage()
@@ -284,26 +285,56 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
     }
 });
 
-router.post("/admin/login", loginLimiter, upload.none() , (req, res) => {
-  const { password } = req.body;
+router.post("/admin/login",upload.none(),loginLimiter, (req, res) => {
+    const { password } = req.body;
 
-  if (password === process.env.VITE_ADMIN_PASSWORD) {
-    const token = jwt.sign({ role: "admin",  mapboxToken: process.env.VITE_APP_MAPBOX_TOKEN  }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    if (password === process.env.VITE_ADMIN_PASSWORD) {
+      const token = jwt.sign(
+        { role: "admin", mapboxToken: process.env.VITE_APP_MAPBOX_TOKEN },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+      );
 
-    // Set token in secure httpOnly cookie
-    res.cookie("a-usr", token, {
-      httpOnly: true,                     // cannot be accessed via JS
-      secure: true,                       // HTTPS only
-      sameSite: "none",                   // allow cross-site cookie
-      maxAge: 60 * 60 * 1000              // 1 hour
-    });
+      res.cookie("a-usr", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+        maxAge: 60 * 60 * 1000
+      });
 
-    
-    return res.json({ success: true });
+      return res.json({ success: true });
+    }
+
+    // Invalid password counts towards rate limit
+    return res.status(401).json({ error: "Invalid password" });
+  }
+);
+
+
+
+
+
+router.post("/admin/logout", (req, res) => {
+  const token = req?.cookies["a-usr"];
+  if (!token) {
+    return res.status(401).json({ authenticated: false, message: "No token found" });
   }
 
-  res.status(401).json({ error: "Invalid password" });
+  try {
+    // Clear the cookie
+    res.clearCookie("a-usr", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/",
+    });
+
+    return res.json({ authenticated: false, message: "Logged out successfully" });
+  } catch (err) {
+    return res.status(401).json({ authenticated: false, message: "Invalid or expired token" });
+  }
 });
+
 
 router.get("/admin/check-auth", (req, res) => {
   const token = req?.cookies["a-usr"];

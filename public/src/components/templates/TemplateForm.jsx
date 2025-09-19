@@ -162,7 +162,7 @@ export const TemplateForm = () => {
                     if (x.loginRequired === "false") {
                         setTarget(values.rows[0]);
                     }
-                    debugger;
+                    
                     if(x.paymentRequired === "true"){
                         
                         setInitialTargetFee(values.rows[0].recordFee === "AED" ? (Number(values.rows[0].recordFee * 1.05)) :values.rows[0].recordFee)

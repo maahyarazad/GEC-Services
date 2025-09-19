@@ -178,7 +178,7 @@ export default function NewRegistrationPage({
                 })
             );
         }
-        debugger;
+        
         if (initialValues.paymentRequired) {
             setCurrency(initialValues?.currency)
         }
@@ -213,7 +213,7 @@ export default function NewRegistrationPage({
                         break;
 
                     case "currency":
-                        debugger;
+                        
                         if (values.paymentRequired) {
                             formData.append("currency", currency);
                         }
@@ -995,7 +995,7 @@ export default function NewRegistrationPage({
                                                     checked={field.value}
                                                     onChange={(e) => {
                                                         field.onChange(e);
-                                                        debugger;
+                                                        
                                                         if (e.target.checked) {
                                                             setCurrency("AED");
                                                             

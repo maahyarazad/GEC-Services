@@ -58,7 +58,7 @@ const getColumns = ({ onEdit, onLock, onShowCode }) => [
         field: 'paymentRequired',
         headerName: 'Payment Required',
         width: 135,
-        renderCell: (params) => {console.log(params.value );
+        renderCell: (params) => {
             return (params.value === "true" ?  <FaCheckCircle color="green" size={18} /> : <></>)},
     },
     { field: 'title', headerName: 'Title', width: 130 },
