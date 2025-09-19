@@ -120,8 +120,8 @@ const getColumns = ({ onEdit, onLock, onShowCode }) => [
             if(use_member_card === "true"){
                 return <Box>
                              <Tooltip
-                                title="Users should use their email and the Member CardId to login"
-                                componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}
+                                title="Users should use their Member Card ID to log in."
+                                componentsProps={{ tooltip: { sx: { fontSize: 12 } } }}
                             >
                                 
                                 <FaAddressCard color="orange" size={25}/>
