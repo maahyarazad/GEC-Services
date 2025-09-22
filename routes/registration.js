@@ -155,7 +155,8 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
             const metadata = {};
             Object.entries(data).forEach(([key, value]) => {
                 if (key.startsWith("metadata_")) {
-                    if (value !== null) {
+                    
+                    if (value !== null && value!== "") {
 
                         // Strip the prefix if you want clean keys in JSON
                         const cleanKey = key.replace("metadata_", "");
@@ -189,7 +190,18 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                 
                 data.metadata_json =  JSON.stringify(metadata);
                 reg_config[0].metadata_json = JSON.stringify(config_metadata);
-                await dbService.update("registration_config", reg_config[0].id, reg_config[0]);
+                try{
+                    await dbService.update("registration_config", reg_config[0].id, reg_config[0]);
+
+                }catch(err){
+                    return res.status(400).json({ status: false, message: 'This slot has already been reserved. Please clear the cache using the Clear Cache button and try again.' });
+                }
+            }else{
+                 Object.keys(data).forEach((key) => {
+                    if (key.startsWith("metadata_")) {
+                        delete data[key];
+                    }
+                });
             }
 
             create_result = await dbService.createSafe(table_name, data);

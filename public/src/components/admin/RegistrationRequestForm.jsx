@@ -52,8 +52,8 @@ const validationSchema = Yup.object({
 
     // description: Yup.string().required('Description is required'),
 
-    // event_date: Yup.date()
-    //   .required("Event date is required")
+    event_date: Yup.date()
+      .required("Event date is required"),
     //   .min(new Date(), "Event date must be in the future"),
 
     // event_location_name: Yup.string()
@@ -203,11 +203,11 @@ export default function NewRegistrationPage({
         setSubmitSuccess(false);
 
         try {
-            debugger;
+            
             const formData = new FormData();
             const metadata = values?.metadata_json!== "" ? JSON.parse(values.metadata_json) : {};
             const overwrite_flag = values?.metadata_json === "";
-debugger;
+
             Object.entries(values).forEach(([key, value]) => {
                 
                 switch (key) {
@@ -245,7 +245,7 @@ debugger;
                         if (overwrite_flag && key.startsWith("metadata_")) {
                             
                             if(value !== null){
-                                debugger;
+                                
                                 
                                 // Strip the prefix if you want clean keys in JSON
                                 const cleanKey = key.replace("metadata_", "");
@@ -260,7 +260,7 @@ debugger;
             });
             
             // After loop: add metadata JSON if any
-                        debugger;
+                        
             if (overwrite_flag && metadata !== null) {
                 const slots = {};
 
@@ -274,7 +274,7 @@ debugger;
                 
             }
 
-            debugger;
+            
             if(metadata !== null) formData.append("metadata_json", JSON.stringify(metadata));
             
 

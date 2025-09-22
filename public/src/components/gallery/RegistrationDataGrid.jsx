@@ -40,6 +40,7 @@ const columns = [
             ) : null;
         }
     },
+    { field: 'metadata_json', headerName: 'metadata_json', width: 130, filterable: true },
     { field: 'event', headerName: 'Event', width: 130, filterable: true },
     { field: 'firstName', headerName: 'Firstname', width: 130, filterable: true },
     { field: 'lastName', headerName: 'Lastname', width: 130, filterable: true },

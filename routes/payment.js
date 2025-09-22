@@ -220,7 +220,13 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
                }
 
                registration_config.metadata_json = JSON.stringify(config_metadata);
-               await dbService.update("registration_config", registration_config.id, registration_config);
+               try{
+                    await dbService.update("registration_config", registration_config.id, registration_config);
+
+                }catch(err){
+                    return res.status(400).json({ status: false, message: 'This slot has already been reserved. Please clear the cache using the Clear Cache button and try again.' });
+                }
+               
            }
             registration_config.email = performa_invoice_data.email;
             
@@ -228,11 +234,6 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
             
             registration_config.event_id = performa_invoice_data.userId;
 
-
-
-
-
-            
 
             const qrPath = path.join(__dirname, ".." ,"qr-files", `${registration_config.event_id}.png`);
 
@@ -307,7 +308,7 @@ async function prepareOrder(data, registration_config) {
     });
 
 
-    await handleRegistration(filteredOut, sanitized, registration_config)
+    await handleRegistration(filteredOut, sanitized)
 
     return {
         requestId: `ordexc-${sanitized.id}`,
@@ -360,7 +361,7 @@ async function prepareOrder(data, registration_config) {
 }
 
 
-async function handleRegistration(data, sanitized, registration_config) {
+async function handleRegistration(data, sanitized) {
     try {
         let table_name;
         let event_time, event_location, event_location_name;
@@ -441,8 +442,31 @@ async function handleRegistration(data, sanitized, registration_config) {
             table_name = "registration";
 
             data.event_id = sanitized.userId;
+            const metadata = {};
+            Object.entries(data).forEach(([key, value]) => {
+                if (key.startsWith("metadata_")) {
+                    
+                    if (value !== null && value!== "") {
 
-            
+                        // Strip the prefix if you want clean keys in JSON
+                        const cleanKey = key.replace("metadata_", "");
+                        metadata[cleanKey] = value;
+                    }
+                }
+                
+            });
+
+
+            Object.keys(data).forEach((key) => {
+                if (key.startsWith("metadata_")) {
+
+                    delete data[key];
+                }
+            });
+
+             if (Object.keys(metadata).length > 0) {
+                data.metadata_json = JSON.stringify(metadata);
+             }
 
             create_result = await dbService.createSafe(table_name, data);
         }

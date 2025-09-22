@@ -33,9 +33,9 @@ export function CustomDateTimePicker({
 
     React.useEffect(() => {
         
+        
         if (target.metadata_json) {
         try {
-            console.log(target);
         // If it's already an object, skip parsing
         const parsed = typeof target.metadata_json === "string"
             ? JSON.parse(target.metadata_json)
@@ -57,6 +57,7 @@ export function CustomDateTimePicker({
         
 
         for (const [hour, value] of Object.entries(metadata.slots)) {
+            
         // clone the base date (important: avoid mutating dateObj directly)
             const slotDate = new Date(dateObj);
             slotDate.setHours(Number(hour), 0, 0, 0); // set hour, reset minutes/seconds
@@ -155,9 +156,8 @@ export function CustomDateTimePicker({
                     }}
                     onChange={(newValue) => {
                         // Save as formatted string for Formik
-                        setFieldValue(name, newValue);
                         
-
+                        setFieldValue(name, newValue);
                     }}
                     // onAccept={() => setFieldTouched(name, true)} // mark as touched on confirm
                     // onClose={() => setFieldTouched(name, true)}  // mark as touched on close

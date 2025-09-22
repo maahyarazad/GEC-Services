@@ -133,7 +133,6 @@ export const TemplateForm = () => {
     const serverAPICall = useCallback(async () => {
         try {
             setLoading(true);
-            
             // const value = location.pathname;
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/optional-login`, {
                 method: 'POST',
@@ -155,6 +154,7 @@ export const TemplateForm = () => {
                 // Maahyar CM: Only one record return from server
                 values.rows.map(async (x) => {
                     
+
                     if(x.use_member_card === "true"){
                         setEmailRequired(true);
                     }
@@ -453,7 +453,7 @@ export const TemplateForm = () => {
             // End Handle GICFormLogic   
 
 
-            debugger;
+            
             
             if (target.paymentRequired === "true") {
                 formData.append("registration_config_id", JSON.stringify(target.id));
