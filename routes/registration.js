@@ -160,9 +160,6 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
 
                         // Strip the prefix if you want clean keys in JSON
                         const cleanKey = key.replace("metadata_", "");
-                        const normalizedTime = new Date(value); // keep it as a Date object
-                        normalizedTime.setHours(normalizedTime.getHours() + 4); // add 4 hours
-                        const adjusted = normalizedTime.toISOString(); // convert back to ISO string if needed
                         metadata[cleanKey] = value;
                     }
                 }

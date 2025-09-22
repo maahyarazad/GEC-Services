@@ -248,7 +248,7 @@ export const TemplateForm = () => {
             }
             
             if (otp_response.ok) {
-                
+                otpRef?.current?.clear();
                 statusRef.current.classList.remove("text-danger");
                 setGlobalWhatsapp(values["email"]);
                 setCurrentResponseStatus(otp_response.ok);
@@ -274,7 +274,7 @@ export const TemplateForm = () => {
     const handlePostOTP = async (value) => {
         try {
             
-
+            
             const data = {
                 otp: value,
                 userAgent: navigator.userAgent,

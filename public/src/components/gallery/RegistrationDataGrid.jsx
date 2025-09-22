@@ -40,7 +40,21 @@ const columns = [
             ) : null;
         }
     },
-    { field: 'metadata_json', headerName: 'metadata_json', width: 130, filterable: true },
+    {
+            field: 'metadata_json',
+            headerName: 'Schedule Time',
+            width: 130,
+            filterable: false,
+            renderCell: (params) => {
+                const raw = params?.row?.metadata_json;
+                return raw ? (<>{new Date(JSON.parse(raw).selected_time).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            })}</>) : (<></>)
+
+            }
+        },
+
     { field: 'event', headerName: 'Event', width: 130, filterable: true },
     { field: 'firstName', headerName: 'Firstname', width: 130, filterable: true },
     { field: 'lastName', headerName: 'Lastname', width: 130, filterable: true },
