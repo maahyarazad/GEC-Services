@@ -103,7 +103,8 @@ router.post("/payment/create-record", upload.none(), async (req, res) => {
     try {
 
         create_result = await dbService.createSafe(table_name, sanitized);
-        const order = await prepareOrder(data)
+        const registration_config = await dbService.findById("registration_config", data.registration_config_id);
+        const order = await prepareOrder(data, registration_config)
         // Step 2: Forward the saved record to payment endpoint
         console.log(order)
         const paymentResponse = await fetch(`${process.env.PAYMENNTTESTURL}`, {
@@ -201,11 +202,36 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
             
             const registration_config = await dbService.findById("registration_config", performa_invoice_data.sourceId);
             
+            if (registration_config.metadata_json !== "") {
+              
+               const _data = await dbService.findExact("registration", "event_id", performa_invoice_data.userId);
+               const config_metadata = JSON.parse(registration_config.metadata_json);
+
+               if (_data.length > 0) {
+                   const _metadata_json = JSON.parse(_data[0].metadata_json)
+                   // Convert selected_time to Date object
+                   const selectedDate = new Date(_metadata_json.selected_time);
+                   const selectedHour = selectedDate.getHours(); // get the hour (0-23)
+
+                   // Fill the slot for that hour with the selected_time
+                   if (config_metadata.slots && config_metadata.slots.hasOwnProperty(selectedHour)) {
+                       config_metadata.slots[selectedHour] = selectedDate;
+                   }
+               }
+
+               registration_config.metadata_json = JSON.stringify(config_metadata);
+               await dbService.update("registration_config", registration_config.id, registration_config);
+           }
             registration_config.email = performa_invoice_data.email;
             
             registration_config.event = performa_invoice_data.registeredForEvent;
             
             registration_config.event_id = performa_invoice_data.userId;
+
+
+
+
+
             
 
             const qrPath = path.join(__dirname, ".." ,"qr-files", `${registration_config.event_id}.png`);
@@ -261,7 +287,7 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
 
 });
 
-async function prepareOrder(data) {
+async function prepareOrder(data, registration_config) {
     const tax = Math.round(Number(data.recordFee) * data.vat);
 
     const subtotal = Math.round(Number(data.recordFee));
@@ -281,7 +307,7 @@ async function prepareOrder(data) {
     });
 
 
-    await handleRegistration(filteredOut, sanitized)
+    await handleRegistration(filteredOut, sanitized, registration_config)
 
     return {
         requestId: `ordexc-${sanitized.id}`,
@@ -334,7 +360,7 @@ async function prepareOrder(data) {
 }
 
 
-async function handleRegistration(data, sanitized) {
+async function handleRegistration(data, sanitized, registration_config) {
     try {
         let table_name;
         let event_time, event_location, event_location_name;
@@ -414,7 +440,10 @@ async function handleRegistration(data, sanitized) {
         } else {
             table_name = "registration";
 
-            data.event_id = sanitized.userId
+            data.event_id = sanitized.userId;
+
+            
+
             create_result = await dbService.createSafe(table_name, data);
         }
 

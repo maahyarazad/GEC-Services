@@ -167,7 +167,6 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
 
             if (Object.keys(metadata).length > 0) {
                
-                
                 const config_metadata = JSON.parse(reg_config[0].metadata_json);
 
                 if (data.metadata_selected_time) {

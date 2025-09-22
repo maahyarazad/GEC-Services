@@ -32,8 +32,10 @@ export function CustomDateTimePicker({
 
 
     React.useEffect(() => {
-    if (target?.metadata_json) {
+        
+        if (target.metadata_json) {
         try {
+            console.log(target);
         // If it's already an object, skip parsing
         const parsed = typeof target.metadata_json === "string"
             ? JSON.parse(target.metadata_json)
@@ -51,7 +53,7 @@ export function CustomDateTimePicker({
     if (metadata !== null) {
 
         const dateObj = new Date(target.event_date);
-
+        
         
 
         for (const [hour, value] of Object.entries(metadata.slots)) {

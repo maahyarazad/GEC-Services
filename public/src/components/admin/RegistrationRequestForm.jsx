@@ -127,9 +127,10 @@ export default function NewRegistrationPage({
         gic: initialData?.gic === "true",
         vatEnabled: initialData?.vatEnabled === "true",
         consultationEnabled: initialData?.consultationEnabled === "true",
-        metadata_start_time: initialData?.consultationEnabled === "true" ? 10 : null,
-        metadata_end_time: initialData?.consultationEnabled === "true" ? 20 : null,
-        
+        metadata_start_time: 10,
+        metadata_end_time: 20,
+        metadata_json: initialData?.metadata_json || "",
+
         textarea: initialData?.textarea === "true",
         fieldIcon: initialData?.fieldIcon === "true",
         countDown: initialData?.countDown === "true",
@@ -178,7 +179,7 @@ export default function NewRegistrationPage({
     useEffect(() => {
         if (initialValues.title && typeof initialValues.title === "string") {
 
-
+            
             setSlug(
                 slugify(initialValues.title, {
                     lower: true,
@@ -202,9 +203,11 @@ export default function NewRegistrationPage({
         setSubmitSuccess(false);
 
         try {
+            debugger;
             const formData = new FormData();
-            const metadata = {};
-
+            const metadata = values?.metadata_json!== "" ? JSON.parse(values.metadata_json) : {};
+            const overwrite_flag = values?.metadata_json === "";
+debugger;
             Object.entries(values).forEach(([key, value]) => {
                 
                 switch (key) {
@@ -239,24 +242,27 @@ export default function NewRegistrationPage({
 
                    
                     default:
-                        if (key.startsWith("metadata_")) {
+                        if (overwrite_flag && key.startsWith("metadata_")) {
+                            
                             if(value !== null){
-
+                                debugger;
+                                
                                 // Strip the prefix if you want clean keys in JSON
                                 const cleanKey = key.replace("metadata_", "");
                                 metadata[cleanKey] = value;
                             }
-                        } else {
-                            formData.append(key, value);
-                        }
+                        } 
+
+                        if(!key.startsWith("metadata_")) formData.append(key, value);
+
                         break;
                 }
             });
-
+            
             // After loop: add metadata JSON if any
-            if (Object.keys(metadata).length > 0) {
+                        debugger;
+            if (overwrite_flag && metadata !== null) {
                 const slots = {};
-                debugger;
 
                 // 10 → 21 (8PM is 20, but inclusive makes 12 slots)
                 for (let hour = metadata.start_time; hour < metadata.end_time; hour++) { 
@@ -265,8 +271,13 @@ export default function NewRegistrationPage({
 
                 // Add slots into metadata
                 metadata.slots = slots;
-                formData.append("metadata_json", JSON.stringify(metadata));
+                
             }
+
+            debugger;
+            if(metadata !== null) formData.append("metadata_json", JSON.stringify(metadata));
+            
+
 
             const response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/api/registration-config`,
@@ -406,7 +417,7 @@ export default function NewRegistrationPage({
                                         Maximum Number of Token per Guest
                                     </label>
                                     <Field
-                                        disabled={values.tokensPerGuest === 999999}
+                                        
                                         name="tokensPerGuest"
                                         type="number"
                                         className={`form-control ${errors.tokensPerGuest && touched.tokensPerGuest
@@ -1226,7 +1237,7 @@ export default function NewRegistrationPage({
 
                                         const errorFields = Object.keys(formErrors);
                                         if (errorFields.length > 0) {
-
+                                            
                                             const firstErrorField = document.querySelector(
                                                 `[name="${errorFields[0]}"]`
                                             );

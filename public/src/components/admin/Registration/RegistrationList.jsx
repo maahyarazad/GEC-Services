@@ -54,6 +54,19 @@ const getColumns = ({ onEdit, onLock, onShowCode }) => [
             }
         }
     },
+     {
+        field: 'metadata_json', headerName: 'metadata_json', width: 130, renderCell: (params) => {
+            const url = params?.row?.page;
+
+            if (url) {
+                const _url = `/registration/${url}`;
+                return (
+                   <></>
+                )
+
+            }
+        }
+    },
     {
         field: 'paymentRequired',
         headerName: 'Payment Required',
