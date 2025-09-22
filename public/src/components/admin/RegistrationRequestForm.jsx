@@ -17,6 +17,8 @@ import { Button, Tooltip, CircularProgress, TextField, MenuItem } from "@mui/mat
 import EventLocationInput from "../utils/EventLocationInput";
 import LockRegistrationSwitch from "../utils/LockRegistrationSwitch";
 
+
+
 const validationSchema = Yup.object({
     title: Yup.string().required("Title is required"),
     send_button_text: Yup.string().required("Send Button Text is required"),
@@ -68,6 +70,9 @@ const validationSchema = Yup.object({
     textarea: Yup.boolean(),
     filedIcon: Yup.boolean(),
     use_member_card: Yup.boolean(),
+    consultationEnabled: Yup.boolean(),
+
+
 
 });
 
@@ -86,7 +91,7 @@ export default function NewRegistrationPage({
     const [file, setFile] = useState(null);
     const [initialLat, setInitialLat] = useState(null);
     const [initialLon, setInitialLon] = useState(null);
-    const [currency, setCurrency] = useState("AED");
+    const [currency, setCurrency] = useState("EUR");
     const fileInputRef = useRef(null);
     const containerRef = useRef(null);
 
@@ -121,6 +126,9 @@ export default function NewRegistrationPage({
         surveyForm: initialData?.surveyForm === "true",
         gic: initialData?.gic === "true",
         vatEnabled: initialData?.vatEnabled === "true",
+        consultationEnabled: initialData?.consultationEnabled === "true",
+        metadata_start_time: initialData?.consultationEnabled === "true" ? 10 : null,
+        metadata_end_time: initialData?.consultationEnabled === "true" ? 20 : null,
         
         textarea: initialData?.textarea === "true",
         fieldIcon: initialData?.fieldIcon === "true",
@@ -185,13 +193,7 @@ export default function NewRegistrationPage({
 
     }, [initialValues.title, initialValues.paymentRequired]);
 
-    // useEffect(() => {
-    //   debugger;
 
-    //   if(disableLogin === "true"){
-    //     initialValues.loginRequired = Boolean(false);
-    //   }
-    // }, []);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const handleSubmit = async (values) => {
@@ -201,7 +203,7 @@ export default function NewRegistrationPage({
 
         try {
             const formData = new FormData();
-
+            const metadata = {};
 
             Object.entries(values).forEach(([key, value]) => {
                 
@@ -235,13 +237,36 @@ export default function NewRegistrationPage({
                         }
                         break;
 
+                   
                     default:
-                        formData.append(key, value);
+                        if (key.startsWith("metadata_")) {
+                            if(value !== null){
+
+                                // Strip the prefix if you want clean keys in JSON
+                                const cleanKey = key.replace("metadata_", "");
+                                metadata[cleanKey] = value;
+                            }
+                        } else {
+                            formData.append(key, value);
+                        }
                         break;
                 }
             });
 
+            // After loop: add metadata JSON if any
+            if (Object.keys(metadata).length > 0) {
+                const slots = {};
+                debugger;
 
+                // 10 → 21 (8PM is 20, but inclusive makes 12 slots)
+                for (let hour = metadata.start_time; hour < metadata.end_time; hour++) { 
+                    slots[hour] = null;
+                }
+
+                // Add slots into metadata
+                metadata.slots = slots;
+                formData.append("metadata_json", JSON.stringify(metadata));
+            }
 
             const response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/api/registration-config`,
@@ -1030,6 +1055,79 @@ export default function NewRegistrationPage({
 
                                 <div className="col-6">
                                     <div className="pb-3"><h4>Optional Fields</h4></div>
+
+                                    <div className="form-check form-switch mb-3">
+                                        <Field name="consultationEnabled">
+                                            {({ field }) => (
+                                                <input
+                                                    name={field.name}
+                                                    checked={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    id="consultationEnabled"
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                />
+                                            )}
+                                        </Field>
+                                        <label className="form-check-label" htmlFor="consultationEnabled">
+                                            Enable Consultation Feature
+                                        </label>
+                                    </div>
+                
+                                                                {values.consultationEnabled && (
+                                    <div className="col-12 d-flex">
+                                        
+                                    <div className="align-items-center col-4">
+                                        <label htmlFor="send_button_text" className="form-label">
+                                            Start Time
+                                        </label>
+                                        <Field
+                                            
+                                            
+                                            name="metadata_start_time"
+                                            type="number"
+                                            className={`form-control ${errors.metadata_start_time && touched.metadata_start_time
+                                                ? "is-invalid"
+                                                : ""
+                                                }`}
+                                            placeholder=""
+                                        />
+                                        <div style={{ minHeight: 30 }}>
+                                            <ErrorMessage
+                                                name="metadata_start_time"
+                                                component="div"
+                                                className="text-danger small mt-1"
+                                            />
+                                        </div>
+                                    </div>
+                                     <div className="align-items-center col-4">
+                                        <label htmlFor="send_button_text" className="form-label">
+                                            End Time
+                                        </label>
+                                        <Field
+                                            
+                                            
+                                            name="metadata_end_time"
+                                            type="number"
+                                            className={`form-control ${errors.metadata_end_time && touched.metadata_end_time
+                                                ? "is-invalid"
+                                                : ""
+                                                }`}
+                                            placeholder=""
+                                        />
+                                        <div style={{ minHeight: 30 }}>
+                                            <ErrorMessage
+                                                name="metadata_end_time"
+                                                component="div"
+                                                className="text-danger small mt-1"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                                                )}
+
+
 
                                     <div className="form-check form-switch mb-3">
                                         <Field name="countDown">

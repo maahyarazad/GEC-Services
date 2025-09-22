@@ -160,6 +160,7 @@ export const TemplateForm = () => {
                     }
 
                     if (x.loginRequired === "false") {
+                        // setPhoneRegistered(true);
                         setTarget(values.rows[0]);
                     }
                     
@@ -204,6 +205,7 @@ export const TemplateForm = () => {
             setLoading(true);
             const gecuser = getEncryptedLocalStorage("gec-registration");
             if (gecuser) {
+                
                 setTarget(gecuser);
             }
             
@@ -450,6 +452,8 @@ export const TemplateForm = () => {
             });
             // End Handle GICFormLogic   
 
+
+            debugger;
             
             if (target.paymentRequired === "true") {
                 formData.append("registration_config_id", JSON.stringify(target.id));
@@ -1161,6 +1165,18 @@ export const TemplateForm = () => {
                                     </div>
 )}
 
+
+                                            {target.consultationEnabled === "true" && (
+                                                <CustomDateTimePicker 
+                                                
+                                                errors={errors} 
+                                                touched={touched} 
+                                                target={target} 
+                                                setFieldValue={setFieldValue} 
+                                                values={values} 
+                                                name="metadata_selected_time" 
+                                                setFieldTouched={setFieldTouched}/>
+                                            )}
 
                                     <Box className="d-flex justify-content-end w-100 my-2">
                                         <Button

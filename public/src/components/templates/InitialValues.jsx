@@ -8,6 +8,7 @@ export const initialValues = {
         companyName: "",
         birthday: "",
         textarea: "",
+        metadata_selected_time:"",
         fileUpload: null,
         consent: false,
         company_partnerBrand:"",

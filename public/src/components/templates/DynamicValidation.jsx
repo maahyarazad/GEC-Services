@@ -1,5 +1,5 @@
 import * as Yup from 'yup';
-
+import dayjs from "dayjs";
 const phoneSchema = Yup.string()
   .matches(/^\+?[0-9]{10,15}$/, "Phone number must be 10–15 digits, and may start with +.");
 
@@ -110,6 +110,12 @@ export const getValidationSchema = (target) => {
           .max(new Date(), "Birthday cannot be in the future.")
           .required("Birthday is required.")
       : Yup.date().nullable().notRequired(),
+
+    metadata_selected_time: target?.consultationEnabled === 'true'
+      ? Yup.mixed()
+    .test("is-valid-dayjs", "Invalid time", (value) => value && value.isValid && value.isValid())
+          .required("Consultation time is required.")
+      : Yup.mixed().nullable().notRequired(),
 
     consent: target?.IdentityConsent === 'true'
       ? Yup.boolean().oneOf([true], "You must agree to the terms and conditions.")

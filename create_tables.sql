@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS registration (
   companyName VARCHAR(255),
   birthday DATE,
   event_id VARCHAR(20),
+  metadata_json TEXT,
   metadata_createdAt DATETIME DEFAULT (datetime('now')),
   metadata_modifiedAt DATETIME
 );
@@ -42,6 +43,7 @@ CREATE TABLE IF NOT EXISTS registration_config (
   gic BOOLEAN,
   loginRequired BOOLEAN,
   vatEnabled BOOLEAN,
+  consultationEnabled BOOLEAN,
   countDown BOOLEAN,
   textarea BOOLEAN,
   fieldIcon BOOLEAN,
@@ -53,6 +55,7 @@ CREATE TABLE IF NOT EXISTS registration_config (
   event_location VARCHAR(255), 
   event_location_name VARCHAR(255), 
   description TEXT,
+  metadata_json TEXT,
   Image TEXT,
   maxTokensPerGuest INT,
   registration_code VARCHAR(6),
