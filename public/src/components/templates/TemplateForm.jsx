@@ -418,6 +418,7 @@ export const TemplateForm = () => {
 
             // Start Handle SurveyFormLogic   
             const dataObj = Object.fromEntries(formData.entries());
+            
             const company_data = Object.fromEntries(
                 Object.entries(dataObj).filter(([key]) => key.startsWith("company_"))
             );
@@ -469,7 +470,7 @@ export const TemplateForm = () => {
                 
                 if (payment_response.status) {
                     const payment_response_data = await payment_response.json();
-                    console.log(payment_response_data);
+                    
                     
                     // Navigate to payment gateway
                     window.location.href = payment_response_data.payment?.result?.redirectUrl;

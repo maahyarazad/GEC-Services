@@ -450,7 +450,12 @@ async function handleRegistration(data, sanitized) {
 
                         // Strip the prefix if you want clean keys in JSON
                         const cleanKey = key.replace("metadata_", "");
-                        metadata[cleanKey] = value;
+
+                        const normalizedTime = new Date(value); // keep it as a Date object
+                        normalizedTime.setHours(normalizedTime.getHours() + 4); // add 4 hours
+                        const adjusted = normalizedTime.toISOString(); // convert back to ISO string if needed
+                        
+                        metadata[cleanKey] = adjusted;
                     }
                 }
                 
