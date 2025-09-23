@@ -167,7 +167,7 @@ export const RegistrationDataGrid = () => {
         try {
             setIsDownloadings(true);
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-csv-data`);
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-csv-data`,{credentials:"include"});
 
             if (!response.ok) {
                 throw new Error('Failed to fetch CSV file');

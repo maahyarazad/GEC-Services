@@ -40,7 +40,7 @@ import { CustomDateTimePicker } from "../utils/CustomDateTimePicker";
 import GECBackground from "../../assets/media/GECBackground.webp";
 import StarsField from "../../assets/media/stars-field.webm";
 import WhatsAppButton from "../utils/WhatsappButton";
-
+import GECLogo from "../../assets/media/gec-logo.webp";
 
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
 //     const { setFieldValue } = useFormikContext();
@@ -699,7 +699,7 @@ export const TemplateForm = () => {
 
                                     {/* Autofill phone and whatsapp fields */}
                                     {/* <AutofillPhoneAndWhatsapp mobileNumber={target.mobile_number} /> */}
-
+                                    <img src={GECLogo} height={70} alt="german-emirates-club"/>
                                     <h1 className="mb-2">{target.title}</h1>
                                     {target.surveyForm === "false" && (
 

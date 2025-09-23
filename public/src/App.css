@@ -26,7 +26,8 @@
 }
 
 :root {
-  --primary: #e57d38;
+  /* --primary: #e57d38; */
+  --primary: #ED791F;
   /* --primary: #f58545; */
   --dark: #1b1b1b;
   --littledark: #676767;

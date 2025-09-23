@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { Box, CircularProgress, Button } from '@mui/material';
+import { Box, CircularProgress, Button, Tooltip } from '@mui/material';
+import { BsFiletypeCsv } from "react-icons/bs";
 const PAGE_SIZE = 10;
 
 const columns = [
@@ -92,7 +93,7 @@ export const SurveyDataGrid = () => {
                 filterParams
             ].filter(Boolean).join('&');
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/survey?${queryParams}`,{credentials:"include"});
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/survey?${queryParams}`,{credentials:"include"});
             const response_data = await response.json();
 
             setSurveyList(response_data.data || []);
@@ -116,7 +117,7 @@ export const SurveyDataGrid = () => {
         try {
             setIsDownloadings(true);
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/survey-csv-data`);
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/survey-csv-data`,{credentials:"include"});
 
             if (!response.ok) {
                 throw new Error('Failed to fetch CSV file');
@@ -147,22 +148,45 @@ export const SurveyDataGrid = () => {
 
 
         <Box sx={{ padding: 1 }}>
-            <div className='row mb-1'>
-
-                <div className="d-lg-flex justify-content-end">
-                    
-                    <div className="">
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
-                            sx={{ fontSize: 13, textTransform: 'none' }}
-                        >
-                            Apply Filters
-                        </Button>
-                    </div>
-                </div>
-            </div>
+                           <div className='row mb-1'>
+                               <div className='col-lg-12 d-lg-flex justify-content-between'>
+                                   <div className="">
+                                       <Tooltip title="Download CSV data" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
+                                       </Tooltip>
+                                       {isDownloading ? <div className='d-flex'>
+                                           <span className='me-2'>Downloading</span>
+                                           <CircularProgress
+                                               size={20}
+                                               color="inherit"
+                                           />
+                                       </div>
+           
+           
+                                           :
+                                           <Button
+                                               variant="outlined"
+                                               startIcon={<BsFiletypeCsv size={20} />}
+                                               onClick={handleExport}
+                                               sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none' }}
+                                           >
+                                               Download (All Records) CSV
+                                           </Button>
+                                       }
+           
+                                   </div>
+                                   <div className="">
+                                       <Button
+                                           variant="contained"
+                                           color="primary"
+                                           onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
+                                           sx={{ fontSize: 13, textTransform: 'none' }}
+                                       >
+                                           Apply Filters
+                                       </Button>
+                                   </div>
+           
+                               </div>
+                           </div>
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                     <CircularProgress />

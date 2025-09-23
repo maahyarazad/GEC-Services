@@ -1,21 +1,21 @@
 import { useFormikContext } from 'formik';
 import { Field } from 'formik';
-import AlertDialog from '../utils/AlertDialog';
+import AlertDialog from './AlertDialog';
 import { useRef } from 'react';
-import lockRegistrationImage from '../../assets/media/lock_registration.webp';
-const LockRegistrationSwitch = 
+import enableScheduling from '../../assets/media/enableScheduling.webp';
+const EnableScheduling = 
 () => {
   const { setFieldValue, values } = useFormikContext();
  const dialogRef = useRef();
 
 
   const handleSwitchChange = (field, e) => {
-    
-    if(field.value === "false"){
+    debugger;
+    if(field.value === false){
       dialogRef.current.openDialog(
         <div>
-          <p>Enabling this option will <strong>lock the registration page and prevent further submissions.</strong> Are you sure you want to proceed?</p>
-          <img src={lockRegistrationImage} alt="lock registration" className='mt-1 rounded-1' width={150} />
+          <p>Enabling this option will initialize the slots from 10 AM to 8 PM in hourly intervals <strong>(you can customize them in the next step)</strong>. Once you enable this and <strong>save it</strong>, you won’t be able to change it, as the scheduling system uses this data to prevent duplicate reservations.</p>
+          <img src={enableScheduling} alt="enableScheduling" width={200} className='mt-1 rounded-1'/>
         </div>,
         'Confirm Action',
         () => {
@@ -36,7 +36,7 @@ const LockRegistrationSwitch =
   return (
     <div className="form-check form-switch mb-3">
       <AlertDialog ref={dialogRef} />
-      <Field name="lockRegistration">
+      <Field name="consultationEnabled">
         {({ field }) => (
           <input
             name={field.name}
@@ -45,17 +45,17 @@ const LockRegistrationSwitch =
               handleSwitchChange(field, e);
             }}
             onBlur={field.onBlur}
-            id="lockRegistration"
+            id="consultationEnabled"
             className="form-check-input"
             type="checkbox"
           />
         )}
       </Field>
-      <label className="form-check-label" htmlFor="lockRegistration">
-        Lock Registration
+      <label className="form-check-label" htmlFor="consultationEnabled">
+        Enable Scheduling
       </label>
     </div>
   );
 };
 
-export default LockRegistrationSwitch;
+export default EnableScheduling;

@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const dbService = require("../services/dbService");
 const authorize_admin = require("../middleware/auth")
+const { exportTableAsCSV } = require("../services/csvParser");
 
-router.get('/survey', authorize_admin, async (req, res) => {
+router.get('/api/survey', authorize_admin, async (req, res) => {
   try {
   
     const { filters, data } = await dbService.QuerySqlConverter(req.query, "Company");
@@ -22,5 +23,26 @@ router.get('/survey', authorize_admin, async (req, res) => {
   }
 });
 
+
+router.get('/api/survey-csv-data', authorize_admin, async (req, res) => {
+    try {
+
+        const data = await dbService.findAll("company");
+
+        const csv = await exportTableAsCSV(data); // Await CSV generation
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename=registration-data-${Date.now()}.csv`
+        );
+
+        res.send(csv); // Send the actual CSV string
+
+    } catch (error) {
+        console.error("Error in fetching data from sql server:", error);
+        res.status(500).json({ status: false, message: 'Server error' });
+    }
+});
 
 module.exports = router;

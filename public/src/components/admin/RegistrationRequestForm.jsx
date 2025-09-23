@@ -16,6 +16,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Button, Tooltip, CircularProgress, TextField, MenuItem } from "@mui/material";
 import EventLocationInput from "../utils/EventLocationInput";
 import LockRegistrationSwitch from "../utils/LockRegistrationSwitch";
+import EnableScheduling from "../utils/EnableScheduling";
 
 
 
@@ -1067,7 +1068,7 @@ export default function NewRegistrationPage({
                                 <div className="col-6">
                                     <div className="pb-3"><h4>Optional Fields</h4></div>
 
-                                    <div className="form-check form-switch mb-3">
+                                    {/* <div className="form-check form-switch mb-3">
                                         <Field name="consultationEnabled">
                                             {({ field }) => (
                                                 <input
@@ -1084,7 +1085,8 @@ export default function NewRegistrationPage({
                                         <label className="form-check-label" htmlFor="consultationEnabled">
                                             Enable Consultation Feature
                                         </label>
-                                    </div>
+                                    </div> */}
+                                    <EnableScheduling/>
                 
                                                                 {values.consultationEnabled && (
                                     <div className="col-12 d-flex">

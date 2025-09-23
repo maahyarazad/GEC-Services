@@ -6,7 +6,7 @@ import { Switch, Button, Box, Tooltip, FormControlLabel } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import AlertDialog from '../../utils/AlertDialog';
-import lockRegistrationImage from '../../../assets/media/lock_registration.png'
+import lockRegistrationImage from '../../../assets/media/lock_registration.webp';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
@@ -353,8 +353,8 @@ export const RegistrationList = () => {
 
             dialogRef.current.openDialog(
                 <div>
-                    <p>Enabling this option will lock the registration page and prevent further submissions. Are you sure you want to proceed?</p>
-                    <img src={lockRegistrationImage} alt="Lock" style={{ maxWidth: '100%', marginTop: 8 }} />
+                    <p>Enabling this option will <strong>lock the registration page and prevent further submissions.</strong> Are you sure you want to proceed?</p>
+                    <img src={lockRegistrationImage} alt="Lock" width={400} className="mt-1 rounded-1"/>
                 </div>,
                 'Confirm Action',
                 () => {
