@@ -9,6 +9,8 @@ export const SuccessTemplatePage = ({}) => {
     const reference = searchParams.get("reference");
     const checkout = searchParams.get("checkout");
     const [paymentStatus, setPaymentStatus] = useState(null);
+  
+    const [selectedTime, setSelectedTime] = useState(null);
     const [error, setError] = useState(null);
     const currentYear = new Date().getFullYear();
 
@@ -44,6 +46,45 @@ export const SuccessTemplatePage = ({}) => {
         }
     }
 
+
+    const fetchEventStatus = async (eventId) => {
+        if (!eventId) return;
+
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/registration/${eventId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+
+            }
+            );
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to fetch event status");
+            }
+
+            const response_data = await response.json();
+            if(response_data){
+              const metadata = JSON.parse(response_data.metadata_json);
+              const selectedDate = new Date(metadata.selected_time);
+              setSelectedTime(selectedDate.toLocaleTimeString([], {hour: "2-digit",minute: "2-digit"}))
+
+            }
+            
+
+
+        } catch (err) {
+            console.error("Error fetching event status:", err);
+            setError(err.message);
+        } finally {
+
+        }
+    }
+
+
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
@@ -73,6 +114,7 @@ export const SuccessTemplatePage = ({}) => {
                         const reference = queryParams.get("reference");
                         const checkout = queryParams.get("checkout");
                         await fetchPaymentStatus(checkout);
+                        await fetchEventStatus(reference.replace("ordexc-PI-", ""));
                     }
                 });
 
@@ -175,6 +217,11 @@ export const SuccessTemplatePage = ({}) => {
                       <p>
                         <strong>Date:</strong> {paymentStatus.event_date}
                       </p>
+                      {selectedTime && (
+                        <p>
+                          <strong>Reserved Time:</strong> {selectedTime}
+                        </p>
+                      )}
                       {paymentStatus.event_time && (
                         <p>
                           <strong>Time:</strong> {paymentStatus.event_time}

@@ -1068,27 +1068,9 @@ export default function NewRegistrationPage({
                                 <div className="col-6">
                                     <div className="pb-3"><h4>Optional Fields</h4></div>
 
-                                    {/* <div className="form-check form-switch mb-3">
-                                        <Field name="consultationEnabled">
-                                            {({ field }) => (
-                                                <input
-                                                    name={field.name}
-                                                    checked={field.value}
-                                                    onChange={field.onChange}
-                                                    onBlur={field.onBlur}
-                                                    id="consultationEnabled"
-                                                    className="form-check-input"
-                                                    type="checkbox"
-                                                />
-                                            )}
-                                        </Field>
-                                        <label className="form-check-label" htmlFor="consultationEnabled">
-                                            Enable Consultation Feature
-                                        </label>
-                                    </div> */}
                                     <EnableScheduling/>
                 
-                                                                {values.consultationEnabled && (
+                                    {values.consultationEnabled && (
                                     <div className="col-12 d-flex">
                                         
                                     <div className="align-items-center col-4">

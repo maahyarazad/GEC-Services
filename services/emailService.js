@@ -309,7 +309,7 @@ async function event_confirm_registration_email(reqBody) {
     const mapRoot = path.join(__dirname, "..", "maps");
     const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
     const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
-
+    const { selected_time_for_email } = reqBody;
     try {
         const qrBuffer = fs.readFileSync(qrPath);
         const mapBuffer = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : null;
@@ -388,6 +388,9 @@ async function event_confirm_registration_email(reqBody) {
                   <p>Vielen Dank für Ihre Anmeldung zum folgenden Event:<strong>${reqBody.title}</strong>. Wir schätzen Ihr Interesse und freuen uns auf Ihre
 Teilnahme.</p>
                   <p><strong>Datum:</strong> ${reqBody.event_date}</p>
+                  ${selected_time_for_email 
+  ? `<p><strong>Uhrzeit:</strong> ${selected_time_for_email}</p>` 
+  : ""}
                   ${eventTimeSection}
                   ${eventLocationName}
                 </td>
@@ -444,7 +447,7 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
     const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
     const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
     const invoicePath = path.join(__dirname, "..", "invoice_storage", `${reqBody.event}`,  `${reqBody.invoice_filename}`);
-    
+    const {selected_time_for_email} = reqBody;
 
     try {
         const qrBuffer = fs.readFileSync(qrPath);
@@ -533,6 +536,9 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
                   <p>Vielen Dank für Ihre Anmeldung zum folgenden Event:<strong>${reqBody.title}</strong>. Wir schätzen Ihr Interesse und freuen uns auf Ihre
 Teilnahme.</p>
                   <p><strong>Datum:</strong> ${reqBody.event_date}</p>
+                                    ${selected_time_for_email 
+  ? `<p><strong>Uhrzeit:</strong> ${selected_time_for_email}</p>` 
+  : ""}
                   ${eventTimeSection}
                   ${eventLocationName}
                 </td>

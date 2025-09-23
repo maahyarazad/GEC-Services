@@ -202,6 +202,8 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
             
             const registration_config = await dbService.findById("registration_config", performa_invoice_data.sourceId);
             
+            let selected_time_for_email = "";
+
             if (registration_config.metadata_json !== "") {
               
                const _data = await dbService.findExact("registration", "event_id", performa_invoice_data.userId);
@@ -212,9 +214,10 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
                    // Convert selected_time to Date object
                    const selectedDate = new Date(_metadata_json.selected_time);
 
+                   selected_time_for_email = selectedDate.toLocaleTimeString([], {hour: "2-digit",minute: "2-digit"});
 
                    const selectedHour = selectedDate.getHours(); // get the hour (0-23)
-
+                    
                    // Fill the slot for that hour with the selected_time
                    if (config_metadata.slots && config_metadata.slots.hasOwnProperty(selectedHour)) {
                        config_metadata.slots[selectedHour] = selectedDate;
@@ -268,7 +271,7 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
             // Change the pre invoice order status and also use the data.customer json to add the missing that to the registration record
             await generateInvoice({ invoice_data: { ...performa_invoice_data }, payment_data: { ...data.result } });
 
-            await ProcessRequest({invoice_filename, ...registration_config});
+            await ProcessRequest({invoice_filename, ...registration_config, selected_time_for_email});
 
             if (performa_invoice_data) {
                 performa_invoice_data.status = true;

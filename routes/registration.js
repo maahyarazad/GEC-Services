@@ -103,7 +103,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
 
         data.event_id = generateRecordId(data.event, false);
         let create_result;
-
+        let selected_time_for_email = "";
 
         if (data.company_data) {
             table_name = "Company";
@@ -173,6 +173,9 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                 if (data.metadata_selected_time) {
                     // Convert selected_time to Date object
                     const selectedDate = new Date(data.metadata_selected_time);
+
+                    selected_time_for_email = selectedDate.toLocaleTimeString([], {hour: "2-digit",minute: "2-digit"});
+
                     const selectedHour = selectedDate.getHours(); // get the hour (0-23)
 
                     // Fill the slot for that hour with the selected_time
@@ -240,7 +243,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                     data.event_location = event_location;
                     data.event_location_name = event_location_name;
 
-                    await event_confirm_registration_email(data);
+                    await event_confirm_registration_email({ ...data, selected_time_for_email });
                     break;
                 }
             }
@@ -407,6 +410,18 @@ router.get("/admin/check-auth", (req, res) => {
 });
 
 
+router.get("/registration/:id", upload.none(), async (req, res) => {
+     try {
+        
+        const { id } = req.params;
+        const data = await dbService.findByColumn("registration", "event_id", id)
+    
+        return res.status(200).send(data);
+        
+    } catch(err) {
+        return res.status(401).json({ message: err });
+    }
+});
 
 
 module.exports = router;
