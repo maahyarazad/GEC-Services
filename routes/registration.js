@@ -14,6 +14,12 @@ require('dotenv').config();
 const jwt = require("jsonwebtoken");
 const authorize_admin = require("../middleware/auth");
 const rateLimit = require("express-rate-limit");
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc'); 
+const timezone = require('dayjs/plugin/timezone'); 
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 // Create rate limiter
 const loginLimiter = rateLimit({
@@ -172,9 +178,10 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
 
                 if (data.metadata_selected_time) {
                     // Convert selected_time to Date object
-                    const selectedDate = new Date(data.metadata_selected_time);
+                    
+                    const selectedDate = dayjs(data.metadata_selected_time).local();
 
-                    const selectedHour = selectedDate.getHours(); // get the hour (0-23)
+                    const selectedHour = selectedDate.hour();
                     selected_time_for_email = `${selectedHour}:00`;
 
 

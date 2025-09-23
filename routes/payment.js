@@ -32,6 +32,13 @@ const allowedKeys = [
     "vat"
 ];
 
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc'); 
+const timezone = require('dayjs/plugin/timezone'); 
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 
 router.get("/latest/:currency", async (req, res) => {
     const { currency } = req.params;
@@ -212,10 +219,12 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
                if (_data.length > 0) {
                    const _metadata_json = JSON.parse(_data[0].metadata_json)
                    // Convert selected_time to Date object
-                   const selectedDate = new Date(_metadata_json.selected_time);
-                    
-                    const selectedHour = selectedDate.getHours; // get the hour (0-23)
+                   
+                    const selectedDate = dayjs(_metadata_json.selected_time).local();
+
+                    const selectedHour = selectedDate.hour();
                     selected_time_for_email = `${selectedHour}:00`;
+
 
                    // Fill the slot for that hour with the selected_time
                    if (config_metadata.slots && config_metadata.slots.hasOwnProperty(selectedHour)) {
