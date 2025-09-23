@@ -23,7 +23,7 @@ export default function BirthdayForm() {
         initialValues={{ birthday: null }}
         validationSchema={validationSchema}
         onSubmit={(values) => {
-          console.log("Form submitted:", values);
+          // console.log("Form submitted:", values);
         }}
       >
         {({ values, setFieldValue, touched, errors, handleSubmit }) => (

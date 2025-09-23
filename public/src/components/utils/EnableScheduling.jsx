@@ -10,7 +10,7 @@ const EnableScheduling =
 
 
   const handleSwitchChange = (field, e) => {
-    debugger;
+    
     if(field.value === false){
       dialogRef.current.openDialog(
         <div>
