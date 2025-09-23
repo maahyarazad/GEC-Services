@@ -410,7 +410,7 @@ router.get("/admin/check-auth", (req, res) => {
 });
 
 
-router.get("/registration/:id", upload.none(), async (req, res) => {
+router.get("/registration-data/:id", upload.none(), async (req, res) => {
      try {
         
         const { id } = req.params;

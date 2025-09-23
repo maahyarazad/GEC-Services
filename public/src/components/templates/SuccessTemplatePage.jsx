@@ -52,7 +52,7 @@ export const SuccessTemplatePage = ({}) => {
 
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_SERVERURL}/registration/${eventId}`, {
+                `${import.meta.env.VITE_SERVERURL}/registration-data/${eventId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
