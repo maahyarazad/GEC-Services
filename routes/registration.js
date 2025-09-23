@@ -174,9 +174,9 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                     // Convert selected_time to Date object
                     const selectedDate = new Date(data.metadata_selected_time);
 
-                    selected_time_for_email = selectedDate.toLocaleTimeString([], {hour: "2-digit",minute: "2-digit"});
-
                     const selectedHour = selectedDate.getHours(); // get the hour (0-23)
+                    selected_time_for_email = `${selectedHour}:00`;
+
 
                     // Fill the slot for that hour with the selected_time
                     if (config_metadata.slots && config_metadata.slots.hasOwnProperty(selectedHour)) {

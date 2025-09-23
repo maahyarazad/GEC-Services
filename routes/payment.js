@@ -213,11 +213,10 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
                    const _metadata_json = JSON.parse(_data[0].metadata_json)
                    // Convert selected_time to Date object
                    const selectedDate = new Date(_metadata_json.selected_time);
-
-                   selected_time_for_email = selectedDate.toLocaleTimeString([], {hour: "2-digit",minute: "2-digit"});
-
-                   const selectedHour = selectedDate.getHours(); // get the hour (0-23)
                     
+                    const selectedHour = selectedDate.getHours; // get the hour (0-23)
+                    selected_time_for_email = `${selectedHour}:00`;
+
                    // Fill the slot for that hour with the selected_time
                    if (config_metadata.slots && config_metadata.slots.hasOwnProperty(selectedHour)) {
                        config_metadata.slots[selectedHour] = selectedHour;

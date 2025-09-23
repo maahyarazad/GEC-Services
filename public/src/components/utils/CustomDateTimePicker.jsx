@@ -1,15 +1,12 @@
 import * as React from "react";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs from "dayjs";
 import { PickersActionBar } from "@mui/x-date-pickers/PickersActionBar";
-import IconButton from "@mui/material/IconButton";
-import ClearIcon from "@mui/icons-material/Clear";
-import { Button } from "@mui/material";
-import { Formik, Form, Field, ErrorMessage } from "formik";
-import { object } from "prop-types";
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
+
 export function CustomDateTimePicker({
     target,
     setFieldValue,
@@ -143,9 +140,9 @@ export function CustomDateTimePicker({
             <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <TimePicker
                     label="Select Time"
-                    value={values[name] ? dayjs(values[name]) : null}
-                    views={['hours']}
-                    defaultValue={dayjs(target.event_date)}
+                        value={values[name] ? dayjs(values[name]).local() : null}
+                        defaultValue={dayjs(target.event_date).local()}
+                        views={['hours']}
                     minTime={minTime}
                     maxTime={maxTime}
                     minutesStep={15}
@@ -154,10 +151,14 @@ export function CustomDateTimePicker({
                     slots={{
                         actionBar: PickersActionBar,
                     }}
-                    onChange={(newValue) => {
-                        // Save as formatted string for Formik
-                        
-                        setFieldValue(name, newValue);
+                   onChange={(newValue) => {
+                        if (newValue) {
+                            // Convert to UTC ISO string before saving to Formik
+                            const utcValue = dayjs(newValue).utc().format(); // e.g., "2025-09-23T09:00:00Z"
+                            setFieldValue(name, utcValue);
+                        } else {
+                            setFieldValue(name, null);
+                        }
                     }}
                     // onAccept={() => setFieldTouched(name, true)} // mark as touched on confirm
                     // onClose={() => setFieldTouched(name, true)}  // mark as touched on close

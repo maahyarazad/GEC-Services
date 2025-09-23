@@ -111,11 +111,13 @@ export const getValidationSchema = (target) => {
           .required("Birthday is required.")
       : Yup.date().nullable().notRequired(),
 
-    metadata_selected_time: target?.consultationEnabled === 'true'
-      ? Yup.mixed()
-    .test("is-valid-dayjs", "Invalid time", (value) => value && value.isValid && value.isValid())
-          .required("Consultation time is required.")
-      : Yup.mixed().nullable().notRequired(),
+metadata_selected_time: target?.consultationEnabled === 'true'
+  ? Yup.string()
+      .required("Time is required.")
+      .test("is-valid-time", "Invalid time", (value) => {
+          return value ? dayjs(value).isValid() : false;
+      })
+  : Yup.string().nullable().notRequired(),
 
     consent: target?.IdentityConsent === 'true'
       ? Yup.boolean().oneOf([true], "You must agree to the terms and conditions.")
