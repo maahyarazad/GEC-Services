@@ -307,7 +307,7 @@ export default function NewRegistrationPage({
                     setPreview(null);
                     setSlug(null);
                     // resetForm();
-                }, 3000);
+                }, 1000);
 
                 if (fileInputRef.current) {
                     fileInputRef.current.value = null;

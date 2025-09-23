@@ -228,7 +228,11 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
 
                    // Fill the slot for that hour with the selected_time
                    if (config_metadata.slots && config_metadata.slots.hasOwnProperty(selectedHour)) {
-                       config_metadata.slots[selectedHour] = selectedHour;
+                       config_metadata.slots[selectedHour] = {hour: selectedHour, registerant_info:{
+                            fullname: `${_data.firstName} ${_data.lastName}`,
+                            email:_data.email,
+                            phone_number:_data.phone
+                        }};
                    }
                }
 

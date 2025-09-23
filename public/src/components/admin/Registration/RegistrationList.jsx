@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import Modal from "../../Modal";
 import RegistrationRequestForm from "../RegistrationRequestForm";
 import { DataGrid } from '@mui/x-data-grid';
-import { Switch, Button, Box, Tooltip, FormControlLabel } from '@mui/material';
+import { Switch, Button, Box, Tooltip, FormControlLabel, IconButton } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import AlertDialog from '../../utils/AlertDialog';
@@ -16,10 +16,11 @@ import { MdDisabledVisible } from "react-icons/md";
 import { FaAddressCard } from "react-icons/fa";
 import GECBackground from "../../../assets/media/GECBackground.webp";
 import StarsField from "../../../assets/media/stars-field.webm";
-import { HiOutlineBanknotes } from "react-icons/hi2";
+import Slots from "../../utils/Slots";
 import { MdAddCircleOutline } from "react-icons/md";
+import { GrSchedules } from "react-icons/gr";
 
-const getColumns = ({ onEdit, onLock, onShowCode }) => [
+const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     {
         field: 'lockRegistration', headerName: 'Active Page', width: 100, renderCell: (params) => {
@@ -55,14 +56,28 @@ const getColumns = ({ onEdit, onLock, onShowCode }) => [
         }
     },
      {
-        field: 'metadata_json', headerName: 'metadata_json', width: 130, renderCell: (params) => {
-            const url = params?.row?.page;
+        field: 'metadata_json', headerName: 'Booking', width: 130, renderCell: (params) => {
+            const json = params?.row?.metadata_json;
 
-            if (url) {
-                const _url = `/registration/${url}`;
+            if (json) {
+                const _data = JSON.parse(json);
                 return (
-                   <></>
-                )
+                   
+                   <Box>
+                    <Tooltip
+                        title="Show the reserved slots"
+                        componentsProps={{ tooltip: { sx: { fontSize: 12 } } }}
+                    >
+                        <IconButton
+                        onClick={() => onShowBookingData(_data)}
+                        sx={{ textTransform: "none" }}
+                        >
+                        <GrSchedules color="black" size={18} />
+                        </IconButton>
+                    </Tooltip>
+                    </Box>
+                    
+                );
 
             }
         }
@@ -160,7 +175,7 @@ const getColumns = ({ onEdit, onLock, onShowCode }) => [
                         <Box>
                             <Tooltip
                                 title="Show the Registration Code"
-                                componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}
+                                componentsProps={{ tooltip: { sx: { fontSize: 12 } } }}
                             >
                                 <Button
                                     variant="contained"
@@ -197,7 +212,7 @@ const getColumns = ({ onEdit, onLock, onShowCode }) => [
                 >
                     Edit
                 </Button>
-                <Tooltip title="Switch Registration Lock" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
+                <Tooltip title="Switch Registration Lock" componentsProps={{ tooltip: { sx: { fontSize: 12 } } }}>
                     <Switch
                         checked={params.row.lockRegistration === true || params.row.lockRegistration === "true"}
                         onChange={() => onLock(params.row)}
@@ -218,7 +233,9 @@ export const RegistrationList = () => {
     const [newReg, setNewReg] = useState(false);
     const [editReg, setEditReg] = useState(false);
     const [codeModal, setCodeModal] = useState(false);
+    const [bookingModal, setBookingModal] = useState(false);
     const [initialData, setInitialData] = useState(null);
+    const [bookingData, setBookingData] = useState(null);
     const [codeList, setCodeList] = useState(null);
     const [codeEventTitle, setCodeEventTitle] = useState(null);
     const [memberCount, setMemberCount] = useState(0);
@@ -336,6 +353,11 @@ export const RegistrationList = () => {
         }
     }
 
+    const ShowBookingData = (_data) => {
+        setBookingData(_data);
+        setBookingModal(true);
+    };
+    
     const openEdit = (row) => {
         const selectedRow = registrationList?.find((x) => x.id === row.id);
 
@@ -398,30 +420,13 @@ export const RegistrationList = () => {
         setActiveStep((prev) => prev - 1);
     };
 
-    const timeoutRef = useRef(null);
-
-    const handleModalClose = () => {
-        setEditReg(false);
-        setIsParentModalOpen(false);
-        timeoutRef.current = setTimeout(() => {
-            setInitialData(null);
-        }, 200);
-    };
-
-        useEffect(() => {
-        return () => {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-        };
-    }, []);
 
     return (
         <Box sx={{ padding: 1 }}>
             <AlertDialog ref={dialogRef} />
             <div className="d-flex justify-content-start mb-1">
                 <div className="">
-                    <Tooltip title="Add New Registration Page" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
+                    <Tooltip title="Add New Registration Page" componentsProps={{ tooltip: { sx: { fontSize: 12 } } }}>
                     </Tooltip>
                     <Button
                         variant="outlined"
@@ -445,7 +450,7 @@ export const RegistrationList = () => {
                     <DataGrid
                         rowCount={rowCount}
                         rows={registrationList}
-                        columns={getColumns({ onEdit: openEdit, onLock: switchLock, onShowCode: showCodeList })}
+                        columns={getColumns({ onEdit: openEdit, onLock: switchLock, onShowCode: showCodeList, onShowBookingData: ShowBookingData })}
                         pageSize={5}
                         rowsPerPageOptions={[5]}
                         disableSelectionOnClick
@@ -458,7 +463,9 @@ export const RegistrationList = () => {
 
 
             <Modal isOpen={editReg} _style={{minWidth: '50vw',minHeight: '95vh' }}
-                onRequestClose={handleModalClose}
+                onRequestClose={()=>{  setEditReg(false);
+        setIsParentModalOpen(false);}}
+                 onAfterClose={() => setInitialData(null)}
                 title={`Modify ${initialData?.title}`}>
                 <RegistrationRequestForm initialData={initialData} isParentModalOpen={isParentModalOpen} modalSwitch={() => {
                     setEditReg(false);
@@ -470,23 +477,29 @@ export const RegistrationList = () => {
 
 
             <Modal isOpen={codeModal}
-                onRequestClose={() => { setCodeList(null); setCodeModal(false); }}
+                onRequestClose={() =>  setCodeModal(false) }
+                onAfterClose={() => setCodeList(null)}
                 title={`${codeEventTitle} Registration Keys`}>
                 <RegistrationKeyList data={codeList} />
             </Modal>
 
-
+            <Modal isOpen={bookingModal}
+                onRequestClose={() => setBookingModal(false)}
+                onAfterClose={() => setBookingData(null)}
+                title={`Booking Status`}>
+                <Slots data={bookingData}/>
+            </Modal>
 
             <Modal 
                 _style={activeStep === 0? {}:{minWidth: '50vw',minHeight: '95vh' }}
                 isOpen={newReg} 
                 onRequestClose={() => {
-                setNewReg(false);
-                setIsParentModalOpen(false);
-                setActiveStep(0); // reset step on close
-                
-                fetchData();
-            }} title="New Registration Page">
+                    setNewReg(false);
+                    setIsParentModalOpen(false);
+
+                }}
+                 onAfterClose={() =>  {fetchData();  setActiveStep(0);}}
+            title="New Registration Page">
                 <Stepper activeStep={activeStep} alternativeLabel>
                     {steps.map((label) => (
                         <Step key={label}>

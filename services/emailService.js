@@ -385,9 +385,9 @@ async function event_confirm_registration_email(reqBody) {
             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; padding:0 30px 30px;">
               <tr>
                 <td style="padding:20px; font-size:16px; color:#333333; line-height:1.6;">
-                  <p>Vielen Dank für Ihre Anmeldung zum folgenden Event:<strong>${reqBody.title}</strong>. Wir schätzen Ihr Interesse und freuen uns auf Ihre
+                  <p style="color:#333333">Vielen Dank für Ihre Anmeldung zum folgenden Event:<strong>${reqBody.title}</strong>. Wir schätzen Ihr Interesse und freuen uns auf Ihre
 Teilnahme.</p>
-                  <p><strong>Datum:</strong> ${reqBody.event_date}</p>
+                  <p style="color:#333333"><strong>Datum:</strong> ${reqBody.event_date}</p>
                   ${selected_time_for_email 
   ? `<p><strong>Uhrzeit:</strong> ${selected_time_for_email}</p>` 
   : ""}
