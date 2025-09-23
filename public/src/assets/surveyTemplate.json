@@ -39,7 +39,7 @@
             "fields": [
               { "label": "Name", "name": "company_hrHead", "icon": "MdPerson", "type": "text" },
               { "label": "Mobile/WhatsApp", "name": "company_hrHead_contactNumber", "icon": "MdPhone", "type": "text" },
-              { "label": "Landline", "name": "company_chrHead_landline", "icon": "MdPhone", "type": "text" },
+              { "label": "Landline", "name": "company_hrHead_landline", "icon": "MdPhone", "type": "text" },
               { "label": "Email", "name": "company_hrHead_email", "icon": "MdEmail", "type": "email" }
             ]
           },
