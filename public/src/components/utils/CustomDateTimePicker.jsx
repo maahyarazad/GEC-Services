@@ -100,7 +100,7 @@ export function CustomDateTimePicker({
 
         if (view === 'hours') {
             // Maahyar CM: Iterates over the array until a condition is true.
-            return reservedSlots.some(slot => new Date(slot).getHours() === value.hour());
+            return reservedSlots.some(slot => slot === value.hour());
         }
         // Return false for other views (minutes, seconds)
         return false;

@@ -49,7 +49,7 @@ const columns = [
                 const raw = params?.row?.metadata_json;
                 return raw ? (<>{new Date(JSON.parse(raw).selected_time).toLocaleTimeString([], {
             hour: "2-digit",
-            minute: "2-digit",
+            minute: "2-digit"
             })}</>) : (<></>)
 
             }

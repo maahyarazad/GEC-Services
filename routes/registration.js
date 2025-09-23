@@ -180,7 +180,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
 
                     // Fill the slot for that hour with the selected_time
                     if (config_metadata.slots && config_metadata.slots.hasOwnProperty(selectedHour)) {
-                        config_metadata.slots[selectedHour] = data.metadata_selected_time;
+                        config_metadata.slots[selectedHour] = selectedHour;
                     }
                 }
 

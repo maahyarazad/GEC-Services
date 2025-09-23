@@ -220,7 +220,7 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
                     
                    // Fill the slot for that hour with the selected_time
                    if (config_metadata.slots && config_metadata.slots.hasOwnProperty(selectedHour)) {
-                       config_metadata.slots[selectedHour] = selectedDate;
+                       config_metadata.slots[selectedHour] = selectedHour;
                    }
                }
 
