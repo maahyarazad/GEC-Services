@@ -24,10 +24,13 @@ const lineStyle = {
                         return (
                             <div key={hour} className="col-12 col-md-4 py-1">
                                 <Card
-                                    style={{
-                                        backgroundColor: isTaken ? '#ccc' : '',
-
-                                        border: '1px solid #ccc',
+                                   style={{
+                                        backgroundColor: isTaken ? "#f5f5f5" : "white", // avoid 'default'
+                                        border: "1px solid #ccc",
+                                        boxShadow: isTaken
+                                        ? "0 2px 6px rgba(0,0,0,0.15)" // shadow if taken
+                                        : "0 1px 3px rgba(0,0,0,0.1)", // lighter shadow if available
+                                        transition: "box-shadow 0.3s ease",
                                     }}
                                 >
                                     <CardContent style={{ padding: '5px 4px 5px 4px', minHeight: 50 }}>
