@@ -17,7 +17,7 @@ import { Button, Tooltip, CircularProgress, TextField, MenuItem } from "@mui/mat
 import EventLocationInput from "../utils/EventLocationInput";
 import LockRegistrationSwitch from "../utils/LockRegistrationSwitch";
 import EnableScheduling from "../utils/EnableScheduling";
-
+import {config} from '../../ui_config';
 
 
 const validationSchema = Yup.object({
@@ -587,11 +587,7 @@ export default function NewRegistrationPage({
                                                         </span>
                                                     </div>
                                                 }
-                                                componentsProps={{
-                                                    tooltip: {
-                                                        sx: { fontSize: 14 },
-                                                    },
-                                                }}
+                                                componentsProps={config.tooltip_config}
                                             >
                                                 <Field
                                                     name="event_time"

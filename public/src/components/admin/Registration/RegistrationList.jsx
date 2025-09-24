@@ -19,7 +19,7 @@ import StarsField from "../../../assets/media/stars-field.webm";
 import Slots from "../../utils/Slots";
 import { MdAddCircleOutline } from "react-icons/md";
 import { GrSchedules } from "react-icons/gr";
-
+import {config} from '../../../ui_config';
 const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, fetchingCodeList }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     {
@@ -66,13 +66,13 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, fetchingCod
                    <Box>
                     <Tooltip
                         title="Show the reserved slots"
-                        componentsProps={{ tooltip: { sx: { fontSize: 12 } } }}
+                        componentsProps={config.tooltip_config}
                     >
                         <IconButton
                         onClick={() => onShowBookingData(_data)}
                         sx={{ textTransform: "none" }}
                         >
-                        <GrSchedules color="black" size={18} />
+                        <GrSchedules color="red" size={18} />
                         </IconButton>
                     </Tooltip>
                     </Box>
@@ -149,7 +149,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, fetchingCod
                 return <Box>
                              <Tooltip
                                 title="Users should use their Member Card ID to log in."
-                                componentsProps={{ tooltip: { sx: { fontSize: 12 } } }}
+                                componentsProps={config.tooltip_config}
                             >
                                 
                                 <FaAddressCard color="orange" size={25}/>
@@ -176,7 +176,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, fetchingCod
                            
                             <Tooltip
                                 title="Show the Registration Code"
-                                componentsProps={{ tooltip: { sx: { fontSize: 12 } } }}
+                                componentsProps={config.tooltip_config}
                             >
                                 <Button
                                     variant="contained"
@@ -214,7 +214,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, fetchingCod
                 >
                     Edit
                 </Button>
-                <Tooltip title="Switch Registration Lock" componentsProps={{ tooltip: { sx: { fontSize: 12 } } }}>
+                <Tooltip title="Switch Registration Lock" componentsProps={config.tooltip_config}>
                     <Switch
                         checked={params.row.lockRegistration === true || params.row.lockRegistration === "true"}
                         onChange={() => onLock(params.row)}
@@ -432,7 +432,7 @@ export const RegistrationList = () => {
             <AlertDialog ref={dialogRef} />
             <div className="d-flex justify-content-start mb-1">
                 <div className="">
-                    <Tooltip title="Add New Registration Page" componentsProps={{ tooltip: { sx: { fontSize: 12 } } }}>
+                    <Tooltip title="Add New Registration Page" componentsProps={config.tooltip_config}>
                     </Tooltip>
                     <Button
                         variant="outlined"

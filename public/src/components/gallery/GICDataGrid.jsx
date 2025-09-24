@@ -4,6 +4,8 @@ import { Box, CircularProgress, Button, Tooltip } from '@mui/material';
 import { MdLockReset } from "react-icons/md";
 import { IoShieldCheckmarkSharp } from "react-icons/io5";
 import { FaExclamation } from "react-icons/fa";
+import {config} from '../../ui_config';
+
 const columns = ({ onResendPasswordReset, loadingRowId }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     {
@@ -14,11 +16,13 @@ const columns = ({ onResendPasswordReset, loadingRowId }) => [
         filterable: true,
         renderCell: (params) =>
             params.row.change_password_required ? (
-                <Tooltip title="User has not updated the temporary password yet">
+                <Tooltip title="User has not updated the temporary password yet"
+                componentsProps={config.tooltip_config}>
                     <FaExclamation color="red" size={20} />
                 </Tooltip>
             ) : (
-                <Tooltip title="User has successfully updated their password">
+                <Tooltip title="User has successfully updated their password"
+                componentsProps={config.tooltip_config}>
                     <IoShieldCheckmarkSharp color="green" size={20} />
                 </Tooltip>
             ),
@@ -31,7 +35,8 @@ const columns = ({ onResendPasswordReset, loadingRowId }) => [
         filterable: false,
         renderCell: (params) => (
             <Box>
-                <Tooltip title="Send reset password email to this user">
+                <Tooltip componentsProps={config.tooltip_config}
+                title="Send reset password email to this user">
 
                     <Button
                         variant="contained"

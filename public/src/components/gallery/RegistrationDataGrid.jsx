@@ -4,6 +4,8 @@ import { Box, CircularProgress, Tooltip, Button, Typography } from '@mui/materia
 import { BsFiletypeCsv } from "react-icons/bs";
 import { FaCircleCheck } from "react-icons/fa6";
 import MessageModalTrigger from '../utils/MessageModalTrigger';
+import {config} from '../../ui_config';
+
 const PAGE_SIZE = 10;
 
 const columns = [
@@ -18,7 +20,8 @@ const columns = [
         renderCell: (params) => {
             const modified = params?.row?.metadata_modifiedAt;
             return modified ? (
-                <Tooltip title={`Completed at ${modified}`}>
+                <Tooltip componentsProps={config.tooltip_config}
+                title={`Completed at ${modified}`}>
                     <FaCircleCheck size={16} color="#28a745" /> {/* Bootstrap green */}
                 </Tooltip>
             ) : null;
@@ -34,7 +37,8 @@ const columns = [
         renderCell: (params) => {
 
             return params?.row?.status ? (
-                <Tooltip title={`Payment Id ${params?.row?.id}`}>
+                <Tooltip componentsProps={config.tooltip_config}
+                title={`Payment Id ${params?.row?.id}`}>
                     <FaCircleCheck size={16} color="#28a745" /> {/* Bootstrap green */}
                 </Tooltip>
             ) : null;
@@ -202,7 +206,7 @@ export const RegistrationDataGrid = () => {
                 <div className='row mb-1'>
                     <div className='col-lg-12 d-lg-flex justify-content-between'>
                         <div className="">
-                            <Tooltip title="Download CSV data" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
+                            <Tooltip title="Download CSV data" componentsProps={config.tooltip_config}>
                             </Tooltip>
                             {isDownloading ? <div className='d-flex'>
                                 <span className='me-2'>Downloading</span>

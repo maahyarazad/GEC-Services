@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { Box, CircularProgress, Button, Tooltip } from '@mui/material';
 import { BsFiletypeCsv } from "react-icons/bs";
+import {config} from '../../ui_config';
+
 const PAGE_SIZE = 10;
 
 const columns = [
@@ -151,7 +153,7 @@ export const SurveyDataGrid = () => {
                            <div className='row mb-1'>
                                <div className='col-lg-12 d-lg-flex justify-content-between'>
                                    <div className="">
-                                       <Tooltip title="Download CSV data" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
+                                       <Tooltip title="Download CSV data" componentsProps={config.tooltip_config}>
                                        </Tooltip>
                                        {isDownloading ? <div className='d-flex'>
                                            <span className='me-2'>Downloading</span>

@@ -5,6 +5,7 @@ import { Tooltip } from "@mui/material";
 import eventLocation from "../../assets/media/event_navigation.png";
 import { IoClose } from "react-icons/io5";
 import PropTypes from "prop-types";
+import {config} from '../../ui_config';
 const EventLocationInput = ({
   errors,
   touched,
@@ -46,11 +47,7 @@ const EventLocationInput = ({
               </span>
             </div>
           }
-          componentsProps={{
-            tooltip: {
-              sx: { fontSize: 14 },
-            },
-          }}
+          componentsProps={config.tooltip_config}
         >
           <div className="align-items-center">
             <label htmlFor="event_location" className="form-label">

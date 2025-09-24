@@ -6,7 +6,8 @@ import GEC_logo from "../../assets/media/gec-logo.webp";
 import { RiLogoutBoxRLine } from "react-icons/ri";
 import { Tooltip } from "@mui/material";
 import { useNavigate } from "react-router";
-import { useAppState } from "../../AppState";
+import {config} from '../../ui_config';
+
 export const Header = ({ adminUser, setAdminUser }) => {
 
 
@@ -56,7 +57,8 @@ export const Header = ({ adminUser, setAdminUser }) => {
                         <strong className="pe-2">
                             <p id="setTheTime">{dateTime}</p>
                         </strong>
-                        <Tooltip title="Logout">
+                        <Tooltip componentsProps={config.tooltip_config}
+                        title="Logout">
                             <div onClick={HandleLogout} style={{ cursor: 'pointer' }}>
                                 <RiLogoutBoxRLine size={22} />
                             </div>

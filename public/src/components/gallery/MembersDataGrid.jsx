@@ -7,6 +7,7 @@ import { MdFormatListBulletedAdd } from "react-icons/md";
 import Modal from "../../components/Modal";
 import debounce from 'lodash/debounce';
 import { MdAddCircleOutline } from "react-icons/md";
+import {config} from '../../ui_config';
 
 const columns = ({ onEdit, onSwitchActive }) => [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -35,7 +36,7 @@ const columns = ({ onEdit, onSwitchActive }) => [
                 >
                     Edit
                 </Button>
-                <Tooltip title="Switch Active Member" componentsProps={{ tooltip: { sx: { fontSize: 14 } } }}>
+                <Tooltip title="Switch Active Member" componentsProps={config.tooltip_config}>
                     <Switch
                         checked={params.row.active_member === true || params.row.active_member === "true"}
                         onChange={() => onSwitchActive(params.row)}
