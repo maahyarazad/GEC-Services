@@ -13,8 +13,6 @@ const registration = require('./routes/registration.js');
 const member = require('./routes/member.js');
 const registration_keys = require('./routes/registration_keys.js');
 const maps = require('./routes/maps.js');
-const google_wallet = require('./routes/google_wallet.js');
-const apple_member_card = require('./routes/apple_member_card.js');
 const member_card = require('./routes/member_card.js');
 const survey = require('./routes/survey.js');
 const gic_user = require('./routes/gic_user.js');
@@ -87,6 +85,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/uploads', express.static(path.join(__dirname, 'file_storage')));
+app.use('/apple_pass', express.static(path.join(__dirname, 'pass_storage')));
 app.use('/maps', express.static(path.join(__dirname, 'maps')));
 app.use('/', express.static(path.join(__dirname, 'public')));
 
@@ -98,8 +97,6 @@ app.use('/', gic_user);
 app.use('/', member);
 app.use('/', registration_keys);
 app.use('/', maps);
-app.use('/', google_wallet);
-app.use('/', apple_member_card);
 app.use('/', payment);
 app.use('/', member_card);
 app.use('/api/', authorize);

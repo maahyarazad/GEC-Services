@@ -305,14 +305,19 @@ async function comfirm_message_email(reqBody) {
 }
 
 async function event_confirm_registration_email(reqBody) {
+    const fileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
+    const pkpassPath = path.join("apple_pass",`${reqBody.event}` ,`${reqBody.event_id}.pkpass`);
     const tempPath = path.join(__dirname, "..", "qr-files");
     const mapRoot = path.join(__dirname, "..", "maps");
     const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
     const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
+    
     const { selected_time_for_email } = reqBody;
     try {
         const qrBuffer = fs.readFileSync(qrPath);
+        const fileStorageBuffer = fs.existsSync(fileStorage) ? fs.readFileSync(fileStorage) : null;
         const mapBuffer = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : null;
+        
 
         const attachments = [];
 
@@ -331,6 +336,15 @@ async function event_confirm_registration_email(reqBody) {
                 content: mapBuffer,
                 contentType: 'image/png',
                 cid: 'event-location',
+            });
+        }
+
+        if (fileStorageBuffer) {
+            attachments.push({
+                filename: `apple-wallet.png`,
+                content: fileStorageBuffer,
+                contentType: 'image/png',
+                cid: 'applewalletimg',
             });
         }
 
@@ -403,6 +417,19 @@ Teilnahme.</p>
                 </td>
               </tr>
               <tr>
+                <td align="center" style="padding:20px; font-size:16px; color:#333333;">
+                  <a href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
+                  <img 
+                    src="cid:applewalletimg" 
+                    alt="Add to Apple Wallet" 
+                    style="height:40px; border:0;"
+                  />
+
+                </a>
+                </td>
+              </tr>
+
+              <tr>
                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
                   <p>
                     Wenn Sie Fragen haben, kontaktieren Sie uns bitte unter <br/>
@@ -442,6 +469,9 @@ Teilnahme.</p>
 }
 
 async function event_confirm_registration_email_with_invoice(reqBody) {
+
+    const fileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
+    const pkpassPath = path.join("apple_pass",`${reqBody.event}` ,`${reqBody.event_id}.pkpass`);
     const tempPath = path.join(__dirname, "..", "qr-files");
     const mapRoot = path.join(__dirname, "..", "maps");
     const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
@@ -453,6 +483,7 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
         const qrBuffer = fs.readFileSync(qrPath);
         const mapBuffer = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : null;
         const invoiceBuffer = fs.existsSync(invoicePath) ? fs.readFileSync(invoicePath) : null;
+        const fileStorageBuffer = fs.existsSync(fileStorage) ? fs.readFileSync(fileStorage) : null;
 
         const attachments = [];
 
@@ -481,6 +512,16 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
               contentType: 'application/pdf',
           });
         }
+
+        if (fileStorageBuffer) {
+            attachments.push({
+                filename: `apple-wallet.png`,
+                content: fileStorageBuffer,
+                contentType: 'image/png',
+                cid: 'applewalletimg',
+            });
+        }
+
 
         const currentYear = new Date().getFullYear();
 
@@ -550,6 +591,20 @@ Teilnahme.</p>
                   <img src="cid:qr-code" alt="QR-Code" width="200" height="200" style="display:block;" />
                 </td>
               </tr>
+
+            <tr>
+                <td align="center" style="padding:20px; font-size:16px; color:#333333;">
+                  <a href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
+                  <img 
+                    src="cid:applewalletimg" 
+                    alt="Add to Apple Wallet" 
+                    style="height:40px; border:0;"
+                  />
+
+                </a>
+                </td>
+              </tr>
+
               <tr>
                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
                   <p>

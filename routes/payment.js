@@ -7,6 +7,7 @@ require('dotenv').config();
 const multer = require("multer");
 const { generateRecordId } = require("../services/generatorService");
 const { generateQRWithText } = require("../services/qrGenerator");
+const { generateApplePass } = require("../services/applePassService");
 const { company_data_confirmation_email, event_confirm_registration_email_with_invoice } = require("../services/emailService");
 const { generateInvoice } = require("../services/invoiceService");
 const upload = multer({
@@ -259,11 +260,13 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
 
             const qrPath = path.join(__dirname, ".." ,"qr-files", `${registration_config.event_id}.png`);
 
+            // skip creating qrcode on refresh page
             try {
                 await fs.access(qrPath); // will throw if not found
                 console.log("QR already exists, skipping generation.");
             } catch {
                 await generateQRWithText(registration_config.event, registration_config.event_id);
+                
             }
 
             const qrBuffer = await fs.readFile(qrPath);
@@ -284,6 +287,14 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
                 });
             }
             
+            await generateApplePass({
+                event_id: performa_invoice_data.userId,
+                firstName: performa_invoice_data.firstName,
+                lastName: performa_invoice_data.lastName,
+                title: performa_invoice_data.registeredForEvent,
+                event_page: performa_invoice_data.registeredForEvent,
+                event_date: registration_config.event_date,
+            });
             // Maahyar CM:
             // Change the pre invoice order status and also use the data.customer json to add the missing that to the registration record
             await generateInvoice({ invoice_data: { ...performa_invoice_data }, payment_data: { ...data.result } });

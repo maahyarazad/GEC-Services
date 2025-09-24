@@ -67,7 +67,8 @@ export const SuccessTemplatePage = ({}) => {
             }
 
             const response_data = await response.json();
-            if(response_data){
+            if(response_data && response_data.metadata_json){
+              
               const metadata = JSON.parse(response_data.metadata_json);
               const selectedDate = new Date(metadata.selected_time);
               setSelectedTime(selectedDate.toLocaleTimeString([], {hour: "2-digit",minute: "2-digit"}))

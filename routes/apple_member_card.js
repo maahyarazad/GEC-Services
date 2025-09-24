@@ -68,7 +68,8 @@ event_name: "test"
 
     const _buffer = pass.getAsBuffer();
     // const passPath = path.join(__dirname, "..", "pass_storage", `${data.event_name}`);
-    const passPath = path.join(__dirname, "..", "pass_storage", `German Emirates Club 20th Birthday Party`, 'gec-gec2bp-17587099448758625.pkpass');
+    const passPath = path.join(__dirname, "..", "pass_storage", `wirtschaftswunder-middle-east-wachstum-und-profitabilitat-fur-ihr-unternehmen-the`, 'gec-wmewupfiut-17587164361981941.pkpass');
+
     
     // // Create folder if it doesn't exist
     // if (!fs.existsSync(passPath)) {
