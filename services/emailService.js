@@ -422,7 +422,7 @@ Teilnahme.</p>
                   <img 
                     src="cid:applewalletimg" 
                     alt="Add to Apple Wallet" 
-                    style="height:40px; border:0;"
+                    style="height:60px; border:0;"
                   />
 
                 </a>
@@ -598,7 +598,7 @@ Teilnahme.</p>
                   <img 
                     src="cid:applewalletimg" 
                     alt="Add to Apple Wallet" 
-                    style="height:40px; border:0;"
+                    style="height:60px; border:0;"
                   />
 
                 </a>
