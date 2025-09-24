@@ -57,10 +57,9 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, fetchingCod
     },
      {
         field: 'metadata_json', headerName: 'Booking', width: 130, renderCell: (params) => {
-            const json = params?.row?.metadata_json;
-
-            if (json) {
-                const _data = JSON.parse(json);
+            const itHasBooking = params?.row?.consultationEnabled === "true";
+            if (itHasBooking) {
+                const _data = JSON.parse(params?.row?.metadata_json);
                 return (
                    
                    <Box>
@@ -79,6 +78,8 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, fetchingCod
                     
                 );
 
+            }else{
+                return <></>
             }
         }
     },
