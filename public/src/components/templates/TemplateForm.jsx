@@ -454,7 +454,7 @@ export const TemplateForm = () => {
             // End Handle GICFormLogic   
 
 
-            
+            const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             
             if (target.paymentRequired === "true") {
                 formData.append("registration_config_id", JSON.stringify(target.id));
@@ -464,6 +464,9 @@ export const TemplateForm = () => {
                     `${import.meta.env.VITE_SERVERURL}/payment/create-record`,
                     {
                         method: "POST",
+                        headers:{
+                            "X-User-Timezone": userTimeZone
+                        },
                         body: formData,
                     }
                 );
@@ -486,6 +489,9 @@ export const TemplateForm = () => {
                     `${import.meta.env.VITE_SERVERURL}/registration`,
                     {
                         method: "POST",
+                        headers:{
+                            "X-User-Timezone": userTimeZone
+                        },
                         body: formData,
                     }
                 );

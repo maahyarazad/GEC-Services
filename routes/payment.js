@@ -77,7 +77,7 @@ router.get('/payment', async (req, res) => {
 //CREATE A RECORD RECEIPT ON REGISTRATION BUTTON CLICK
 //DONE BEFORE SENDING USER TO PAYMENNT LANDING PAGE
 router.post("/payment/create-record", upload.none(), async (req, res) => {
-
+    const userTimezone = req.get('X-User-Timezone'); 
     const table_name = "event_proforma_invoice";
     const { registration_code, title, event_date, ...data } = req.body;
     const uniqeIdentifier = generateRecordId(data.event, false);
@@ -110,8 +110,9 @@ router.post("/payment/create-record", upload.none(), async (req, res) => {
     try {
 
         create_result = await dbService.createSafe(table_name, sanitized);
-        const registration_config = await dbService.findById("registration_config", data.registration_config_id);
-        const order = await prepareOrder(data, registration_config)
+
+        const order = await prepareOrder(data, userTimezone);
+
         // Step 2: Forward the saved record to payment endpoint
         console.log(order)
         const paymentResponse = await fetch(`${process.env.PAYMENNTTESTURL}`, {
@@ -220,18 +221,22 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
                    const _metadata_json = JSON.parse(_data[0].metadata_json)
                    // Convert selected_time to Date object
                    
-                    const selectedDate = dayjs(_metadata_json.selected_time).local();
+                    
 
+                    const selectedDate_UTC = dayjs(_metadata_json.selected_time).utc();
+                    const selectedDate = selectedDate_UTC.tz(data.result.billingAddress.city);
                     const selectedHour = selectedDate.hour();
                     selected_time_for_email = `${selectedHour}:00`;
+                    
+
 
 
                    // Fill the slot for that hour with the selected_time
                    if (config_metadata.slots && config_metadata.slots.hasOwnProperty(selectedHour)) {
                        config_metadata.slots[selectedHour] = {hour: selectedHour, registerant_info:{
-                            fullname: `${_data.firstName} ${_data.lastName}`,
-                            email:_data.email,
-                            phone_number:_data.phone
+                            fullname: `${performa_invoice_data.firstName} ${performa_invoice_data.lastName}`,
+                            email:performa_invoice_data.email,
+                            phoneNumber:performa_invoice_data.phoneNumber
                         }};
                    }
                }
@@ -305,7 +310,7 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
 
 });
 
-async function prepareOrder(data, registration_config) {
+async function prepareOrder(data, userTimezone) {
     const tax = Math.round(Number(data.recordFee) * data.vat);
 
     const subtotal = Math.round(Number(data.recordFee));
@@ -360,14 +365,14 @@ async function prepareOrder(data, registration_config) {
             name: `${sanitized.firstName} ${sanitized.lastName}`,
             address1: sanitized.registeredForEvent,
             address2: filteredOut.companyName,
-            city: "Dubai",
+            city: userTimezone,
             state: "Dubai",
             zip: "00000",
             country: "AE",
             set: true,
         },
         metadata: {
-            ...filteredOut
+            ...filteredOut, set: true
         },
         returnUrl: `${process.env.CLIENT_ORIGIN}/registration/${sanitized.registeredForEvent}/success`,
         branchId: 0,

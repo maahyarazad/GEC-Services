@@ -16,11 +16,11 @@ const lineStyle = {
 
         return (
             <div className="px-1">
-                <div className="row">
+                <div className="row m-0">
                     {Object.keys(data.slots).map((hour) => {
                         const slot = data.slots[hour];
                         const isTaken = slot && slot.registerant_info;
-
+                        console.log(slot);
                         return (
                             <div key={hour} className="col-12 col-md-4 py-1">
                                 <Card
@@ -40,14 +40,14 @@ const lineStyle = {
                                             {isTaken ? (
                                                 <div className='text-sm'>
                                                     <p className="text-muted mb-0" style={lineStyle}>
-                                                        Booked by {slot.registerant_info.fullname}
+                                                        Booked by: <strong>{slot.registerant_info.fullname}</strong>
                                                     </p>
                                                     <p className="text-muted mb-0" style={lineStyle}>
 
                                                         {slot.registerant_info.email}
                                                     </p>
                                                     <p className="text-muted mb-0" style={lineStyle}>
-                                                        {slot.registerant_info.phone_number}
+                                                        {slot.registerant_info.phoneNumber}
                                                     </p>
                                                 </div>
                                             ) : (

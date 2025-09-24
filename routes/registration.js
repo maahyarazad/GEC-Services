@@ -41,6 +41,7 @@ const upload = multer({
 router.post("/registration", upload.single('attachment_file'), async (req, res) => {
     try {
 
+        const userTimezone = req.get('X-User-Timezone'); 
         let table_name = "registration";
 
         const { registration_code, title, event_date, ...data } = req.body;
@@ -179,8 +180,8 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                 if (data.metadata_selected_time) {
                     // Convert selected_time to Date object
                     
-                    const selectedDate = dayjs(data.metadata_selected_time).local();
-
+                    const selectedDate_UTC = dayjs(data.metadata_selected_time).utc();
+                    const selectedDate = selectedDate_UTC.tz(userTimezone);
                     const selectedHour = selectedDate.hour();
                     selected_time_for_email = `${selectedHour}:00`;
 
@@ -190,7 +191,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                         config_metadata.slots[selectedHour] = {hour: selectedHour, registerant_info:{
                             fullname: `${data.firstName} ${data.lastName}`,
                             email:data.email,
-                            phone_number:data.phone
+                            phoneNumber:data.phone
                         }};
                     }
                 }
