@@ -20,7 +20,7 @@ import Slots from "../../utils/Slots";
 import { MdAddCircleOutline } from "react-icons/md";
 import { GrSchedules } from "react-icons/gr";
 
-const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData }) => [
+const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, fetchingCodeList }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     {
         field: 'lockRegistration', headerName: 'Active Page', width: 100, renderCell: (params) => {
@@ -173,6 +173,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData }) => [
                 } else {
                     return (
                         <Box>
+                           
                             <Tooltip
                                 title="Show the Registration Code"
                                 componentsProps={{ tooltip: { sx: { fontSize: 12 } } }}
@@ -184,7 +185,8 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData }) => [
                                     style={{ textTransform: 'none' }}
                                     onClick={() => onShowCode(params.row)}
                                 >
-                                    Code List
+                                    {fetchingCodeList ? ( <CircularProgress size={20} color="white"/>):"Code List" }
+                                    
                                 </Button>
                             </Tooltip>
                         </Box>
@@ -237,6 +239,7 @@ export const RegistrationList = () => {
     const [initialData, setInitialData] = useState(null);
     const [bookingData, setBookingData] = useState(null);
     const [codeList, setCodeList] = useState(null);
+    const [fetchingCodeList, setFetchingCodeList] = useState(false);
     const [codeEventTitle, setCodeEventTitle] = useState(null);
     const [memberCount, setMemberCount] = useState(0);
     const [isParentModalOpen, setIsParentModalOpen] = useState(false);
@@ -329,19 +332,20 @@ export const RegistrationList = () => {
 
     const showCodeList = async (row) => {
         try {
-
+            setFetchingCodeList(true);
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-keys`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: "include",
                 body: JSON.stringify({ id: row.id }),
             });
-
+            
             if (!response.ok) {
                 throw new Error('Failed to fetch registration keys');
             }
 
             const result = await response.json();
+
             if (result.data) {
                 setCodeEventTitle(row.title);
                 setCodeList(result.data);
@@ -350,6 +354,8 @@ export const RegistrationList = () => {
 
         } catch (err) {
             console.error('Error fetching data:', err);
+        }finally{
+            setFetchingCodeList(false)
         }
     }
 
@@ -450,7 +456,7 @@ export const RegistrationList = () => {
                     <DataGrid
                         rowCount={rowCount}
                         rows={registrationList}
-                        columns={getColumns({ onEdit: openEdit, onLock: switchLock, onShowCode: showCodeList, onShowBookingData: ShowBookingData })}
+                        columns={getColumns({ onEdit: openEdit, onLock: switchLock, onShowCode: showCodeList, onShowBookingData: ShowBookingData, fetchingCodeList: fetchingCodeList })}
                         pageSize={5}
                         rowsPerPageOptions={[5]}
                         disableSelectionOnClick
