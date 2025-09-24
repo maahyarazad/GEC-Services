@@ -53,8 +53,8 @@ const validationSchema = Yup.object({
 
     // description: Yup.string().required('Description is required'),
 
-    event_date: Yup.date()
-      .required("Event date is required"),
+    event_date: Yup.date(),
+    //   .required("Event date is required"),
     //   .min(new Date(), "Event date must be in the future"),
 
     // event_location_name: Yup.string()

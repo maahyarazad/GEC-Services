@@ -5,7 +5,7 @@ const dbService = require("../services/dbService");
 const multer = require("multer");
 const { generateQRWithText } = require("../services/qrGenerator");
 const { validateFileMimeType } = require("../services/validateFileType");
-const { comfirm_message_email, event_confirm_registration_email, company_data_confirmation_email, gic__reset_password } = require("../services/emailService");
+const { comfirm_message_email, event_confirm_registration_email, company_data_confirmation_email, gic__reset_password, email_request_received } = require("../services/emailService");
 const { generatePassword, hashPassword } = require("../services/userService");
 const { generateRecordId } = require("../services/generatorService");
 const path = require("path");
@@ -17,6 +17,7 @@ const rateLimit = require("express-rate-limit");
 const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc'); 
 const timezone = require('dayjs/plugin/timezone'); 
+const {generateApplePass} = require('../services/applePassService');
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -246,7 +247,9 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                         dbService.update("registration_keys", key[0].id, key[0]);
                     }
 
-                    await generateQRWithText(data.event, data.event_id);
+                    if(event_date){
+                        await generateQRWithText(data.event, data.event_id);
+                    }
 
                     // Add Title for email
                     data.title = title;
@@ -255,7 +258,12 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                     data.event_location = event_location;
                     data.event_location_name = event_location_name;
 
-                    await event_confirm_registration_email({ ...data, selected_time_for_email });
+                    if(event_date){
+                        await generateApplePass(data)
+                        await event_confirm_registration_email({ ...data, selected_time_for_email });
+                    }else{
+                        await email_request_received(data);
+                    }
                     break;
                 }
             }

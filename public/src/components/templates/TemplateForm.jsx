@@ -709,14 +709,16 @@ export const TemplateForm = () => {
                                     <h1 className="mb-2">{target.title}</h1>
                                     {target.surveyForm === "false" && (
 
-                                        <h4 className="mb-1">
-                                            {new Date(target.event_date).toLocaleDateString("en-GB", {
-                                                day: "2-digit",
-                                                month: "long",
-                                                year: "numeric",
-                                                weekday: "long",
-                                            })}
-                                        </h4>
+                                             <h4 className="mb-1">
+                                                {target.event_date ? (
+                                                    new Date(target.event_date).toLocaleDateString("en-GB", {
+                                                    day: "2-digit",
+                                                    month: "long",
+                                                    year: "numeric",
+                                                    weekday: "long",
+                                                    })
+                                                ) : ""}
+                                                </h4>
                                     )}
                                     <div className="clearance-flat"></div>
 

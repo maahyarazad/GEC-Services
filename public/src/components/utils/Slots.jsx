@@ -9,7 +9,7 @@ const lineStyle = {
   whiteSpace: "nowrap", 
   overflow: "hidden", 
   textOverflow: "ellipsis", 
-  maxWidth: "180px"  // adjust width as needed
+  maxWidth: 150
 };
 
     if (data) {

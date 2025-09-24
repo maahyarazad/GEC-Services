@@ -12,10 +12,18 @@ const upload = multer({
 const {emailMembershipCard} = require("../services/emailService");
 const fs = require("fs");
 
-router.post("/membership-card",upload.none(),async (req, res) => {
+router.get("/membership-card",upload.none(),async (req, res) => {
   try {
     // const memberId = req.params.memberId;
-    const data = req.body;
+    // const data = req.body;
+    const data = {
+      usrId: 18726817628712,
+      title: "Mr",
+first_name:"Maahyar",
+name:"Azad",
+cardnumber: "9187289173298",
+event_name: "test"
+    }
     const wwdrPath = path.join(__dirname, "../certs/AppleWWDRCAG4.pem");
     const signerCertPath = path.join(__dirname, "../certs/signerCert.pem");
     const signerKeyPath = path.join(__dirname, "../certs/signerKey.pem");
@@ -43,6 +51,8 @@ router.post("/membership-card",upload.none(),async (req, res) => {
       }
     },{
     serialNumber: "AAGH44625236dddaffbda",
+    description: "VIP Membership Card",   // 👈 overrides pass.json
+    logoText: "German Emirates Club VIP", // 👈 overrides pass.json
   });
 
     const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
@@ -54,28 +64,37 @@ router.post("/membership-card",upload.none(),async (req, res) => {
 
 
 
-  pass.setExpirationDate(expirationDate);
+    pass.setExpirationDate(expirationDate);
 
-    const buffer = await pass.getAsBuffer();
-    // const passPath = path.join(process.cwd(),"routes" ,"MyCard.pkpass");
-    // const buffer = fs.readFileSync(passPath);
-    // fs.writeFileSync("MyVirtualCard.pkpass", buffer);
-    // res.setHeader("Content-Type", "application/vnd.apple.pkpass");
-    // res.setHeader(
-    //   "Content-Disposition",
-    //   `attachment; filename="MyCard.pkpass"`
-    // );
-    // res.send(buffer); //`
+    const _buffer = pass.getAsBuffer();
+    // const passPath = path.join(__dirname, "..", "pass_storage", `${data.event_name}`);
+    const passPath = path.join(__dirname, "..", "pass_storage", `German Emirates Club 20th Birthday Party`, 'gec-gec2bp-17587099448758625.pkpass');
+    
+    // // Create folder if it doesn't exist
+    // if (!fs.existsSync(passPath)) {
+    //   fs.mkdirSync(passPath, { recursive: true });
+    // }
+    
+    // fs.writeFileSync("MyVirtualCard.pkpass", _buffer);
+    const buffer = fs.readFileSync(passPath);
 
-  await emailMembershipCard({
-      email: "maahyarazad@gmail.com",                // recipient email
-      memberName: `${data.title} ${data.first_name} ${data.name}`, // full name
-      cardNumber: data.cardnumber,      // card number
-      expiryDate: formattedDate,        // formatted expiry date
-      membershipTier: "membership"      // optional: package or membership tier
-  }, buffer);
+    res.setHeader("Content-Type", "application/vnd.apple.pkpass");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="MyVirtualCard.pkpass"`
+    );
+    res.send(buffer); 
 
-    res.status(201).send("Success");
+  // await emailMembershipCard({
+  //     email: "maahyarazad@gmail.com",                // recipient email
+  //     memberName: `${data.title} ${data.first_name} ${data.name}`, // full name
+  //     cardNumber: data.cardnumber,      // card number
+  //     expiryDate: formattedDate,        // formatted expiry date
+  //     membershipTier: "membership"      // optional: package or membership tier
+  // }, buffer);
+
+    // res.status(201).send("Success");
+    
 
   } catch (err) {
     console.error("Error generating pass:", err);

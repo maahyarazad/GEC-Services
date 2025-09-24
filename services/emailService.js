@@ -665,6 +665,82 @@ async function email_otp(reqBody) {
     }
 }
 
+
+async function email_request_received(reqBody) {
+    const { email, title, firstName, lastName } = reqBody;
+    try {
+        const currentYear = new Date().getFullYear();
+
+        const htmlBody = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>${title} - Request Received</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
+      <thead>
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); overflow: hidden; margin: 40px auto;">
+              <tr>
+                <td bgcolor="#D9B144" style="color: #ffffff; text-align: center; padding: 20px; font-size: 22px; font-weight: bold; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+                  ${title} - Request Received
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; padding: 30px;">
+              <tr>
+                <td style="color: #333333; font-size: 16px; line-height: 1.6; padding: 0 20px;">
+                  <p style="color: #333333;">
+                    Dear ${firstName} ${lastName},
+                  </p>
+                  <p style="color: #333333;">
+                    Your request for <strong>${title}</strong> has been successfully received. 
+                  </p>
+                  <p style="color: #333333;">
+                    Our team will review your request and get back to you shortly with further details. 
+                  </p>
+                  <p style="color: #333333;">
+                    Thank you for your interest in being part of <strong>${title}</strong>.
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-size: 13px; color: #777777; text-align: center; padding: 20px; border-top: 1px solid #dddddd;">
+                  &copy; ${currentYear} German Emirates Club. All rights reserved.
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>
+`;
+
+        return await sendRawEmailWithAttachments({
+            to: reqBody.email,
+            subject: `Request Received – ${title}`,
+            html: htmlBody,
+            text: `Your request for ${title} has been received. Our team will contact you soon.`,
+        });
+
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+
 async function company_data_confirmation_email(reqBody) {
   try {
     const currentYear = new Date().getFullYear();
@@ -958,4 +1034,11 @@ const attachments = [
 
 
 
-module.exports = { emailMembershipCard, comfirm_message_email, event_confirm_registration_email, event_confirm_registration_email_aws, email_otp, company_data_confirmation_email , gic__reset_password, event_confirm_registration_email_with_invoice};
+module.exports = { emailMembershipCard, 
+  comfirm_message_email, 
+  event_confirm_registration_email,
+   event_confirm_registration_email_aws,
+    email_otp, company_data_confirmation_email ,
+     gic__reset_password,
+     email_request_received,
+      event_confirm_registration_email_with_invoice};

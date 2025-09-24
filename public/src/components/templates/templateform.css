@@ -86,7 +86,7 @@
 
       z-index: 10;
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.75); /* semi-transparent background */
+      background: rgba(255, 255, 255); /* semi-transparent background */
       backdrop-filter: blur(2px); /* <--- the blur effect */
       -webkit-backdrop-filter: blur(2px); /* for Safari support */
       color: #000;
@@ -256,7 +256,7 @@
       width: 100% !important;
       > .target-description {
         padding-right: 2rem;
-              background: rgba(255, 255, 255, 1); /* semi-transparent background */
+              background: rgba(255, 255, 255); /* semi-transparent background */
       backdrop-filter: blur(0px); /* <--- the blur effect */
       -webkit-backdrop-filter: blur(0px); /* for Safari support */
                 /* width: calc(100% - 48px); */
