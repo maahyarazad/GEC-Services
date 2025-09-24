@@ -13,7 +13,7 @@ export const UseFetchData = async (xpath, xkey) => {
     }
 
     const data = await response.json();
-    // console.log(data);
+    
   } catch (error) {
     console.log(error);
   }

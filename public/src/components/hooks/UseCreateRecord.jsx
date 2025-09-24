@@ -18,7 +18,7 @@ export const UseCreateRecord = async (xData, xKey, xValue, xPath, xCommand, xEnd
     }
 
     const data = await response.json();
-    // console.log(data);
+    
     return data;
   } catch (error) {
     console.log(error.message);

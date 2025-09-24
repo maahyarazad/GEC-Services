@@ -220,7 +220,7 @@ export const SurveyDataGrid = () => {
                             setPaginationModel(newModel);
                         }}
                         onSortModelChange={(newModel) => {
-                            // console.log('Sort model changed:', newModel);
+                            
                             setSortModel(newModel)
                         }}
                         filterModel={filterModel}

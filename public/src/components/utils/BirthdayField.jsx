@@ -14,8 +14,8 @@ export default function BirthdayField({ values, setFieldValue, setFieldTouched, 
         value={values.birthday ? dayjs(values.birthday) : null}
         onChange={(newValue) => {
     setFieldValue("birthday", newValue ? newValue.format("YYYY-MM-DD") : "");
-    console.log(newValue);
-    console.log(values.birthday);
+    // console.log(newValue);
+    // console.log(values.birthday);
   }}
        
         

@@ -72,7 +72,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, fetchingCod
                         onClick={() => onShowBookingData(_data)}
                         sx={{ textTransform: "none" }}
                         >
-                        <GrSchedules color="red" size={18} />
+                        <GrSchedules color="dark" size={18} />
                         </IconButton>
                     </Tooltip>
                     </Box>

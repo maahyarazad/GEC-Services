@@ -1,5 +1,5 @@
 export const UseLogin = async (formData) => {
-  console.log(formData);
+  // console.log(formData);
   try {
     const response = await fetch(`${import.meta.env.VITE_SERVERURL}/access`, {
       method: "POST",
@@ -14,7 +14,7 @@ export const UseLogin = async (formData) => {
     }
 
     const data = await response.json();
-    console.log(data);
+    // console.log(data);
     return data;
   } catch (error) {
     console.error("Login failed:", error);

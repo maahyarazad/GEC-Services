@@ -273,7 +273,7 @@ export const RegistrationDataGrid = () => {
                             setPaginationModel(newModel);
                         }}
                         onSortModelChange={(newModel) => {
-                            // console.log('Sort model changed:', newModel);
+
                             setSortModel(newModel)
                         }}
                         filterModel={filterModel}
