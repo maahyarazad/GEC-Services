@@ -40,7 +40,7 @@ import { CustomDateTimePicker } from "../utils/CustomDateTimePicker";
 import GECBackground from "../../assets/media/GECBackground.webp";
 import StarsField from "../../assets/media/stars-field.webm";
 import WhatsAppButton from "../utils/WhatsappButton";
-import GECLogo from "../../assets/media/gec-logo.webp";
+import GECLogo from "../../assets/media/20-Jahre.webp";
 
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
 //     const { setFieldValue } = useFormikContext();
@@ -750,7 +750,7 @@ export const TemplateForm = () => {
                                                                     disabled={phoneRegistered}
                                                                     size="small"
                                                                     fullWidth
-                                                                    label="Email/E-mail"
+                                                                    label="E-mail"
                                                                     helperText={<ErrorMessage name="email" />}
                                                                     className="pb-2"
                                                                     error={touched.email && Boolean(errors.email)}
@@ -781,7 +781,7 @@ export const TemplateForm = () => {
 
                                                                 size="small"
                                                                 fullWidth
-                                                                label="Phone Number/Telefonnummer"
+                                                                label="Telefonnummer"
                                                                 helperText={<ErrorMessage name="phone" />}
                                                                 className="pb-2"
                                                                 error={touched.phone && Boolean(errors.phone)}
@@ -883,7 +883,7 @@ export const TemplateForm = () => {
                                                             <p>Send OTP</p>
                                                         </Button>
                                                         <div className="d-flex justify-content-center w-100">
-                                                            <p className="text-center">Verify your email before submit your registration</p>
+                                                            <p className="text-center">Bestätigen Sie Ihre E-Mail, bevor Sie Ihre Registrierung absenden.</p>
                                                         </div>
                                                         </>
                                                     )}
@@ -900,7 +900,7 @@ export const TemplateForm = () => {
                                                                 select
                                                                 size="small"
 
-                                                                label="Gender/Geschlecht"
+                                                                label="Geschlecht"
                                                                 helperText={<ErrorMessage name="gender" />}
                                                                 className="pb-2"
                                                                 error={touched.gender && Boolean(errors.gender)}
@@ -941,7 +941,7 @@ export const TemplateForm = () => {
                                                                 as={TextField}
                                                                 size="small"
                                                                 fullWidth
-                                                                label="First Name/Vorname"
+                                                                label="Vorname"
                                                                 helperText={<ErrorMessage name="firstName" />}
                                                                 className="pb-2"
                                                                 type="text"
@@ -969,7 +969,7 @@ export const TemplateForm = () => {
                                                                 as={TextField}
                                                                 size="small"
                                                                 fullWidth
-                                                                label="Last Name/Nachname"
+                                                                label="Nachname"
                                                                 helperText={<ErrorMessage name="lastName" />}
                                                                 className="pb-2"
                                                                 type="text"
@@ -1014,7 +1014,7 @@ export const TemplateForm = () => {
                                                             as={TextField}
                                                             size="small"
                                                             fullWidth
-                                                            label="Company Name/Firmenname"
+                                                            label="Firmenname"
                                                             helperText={<ErrorMessage name="companyName" />}
                                                             className="pb-2"
                                                             type="text"
@@ -1044,7 +1044,7 @@ export const TemplateForm = () => {
                                                             as={TextField}
                                                             size="small"
                                                             fullWidth
-                                                            label="Message"
+                                                            label="Nachricht"
                                                             helperText={<ErrorMessage name="textarea" />}
                                                             className="pb-2"
                                                             type="text"

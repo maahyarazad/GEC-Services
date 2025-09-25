@@ -390,4 +390,48 @@ router.post("/registration-config-access" , upload.none(), loginLimiter,async (r
   }
 });
 
+router.post(
+  "/api/registration-config/duplicate-record",
+  authorize_admin,
+  upload.single("none"),
+  async (req, res) => {
+    try {
+      const table_name = "registration_config";
+      const { Image, ...data } = req.body;
+
+      const id = data.id;
+
+      // Check if the record exists
+      const existing = await dbService.findById(table_name, id);
+      if (!existing) {
+        return res
+          .status(404)
+          .json({ status: false, message: "Record not found" });
+      }
+
+          // 2. Modify record (append " copy" to title)
+    const newRecord = {
+      ...existing,
+      title: `${existing.title}-copy`,
+      page: `${existing.page}-copy`,
+    };
+    delete newRecord.createdAt;
+    delete newRecord.modifiedAt;
+    delete newRecord.id;
+
+    
+    const insert_data = dbService.create(table_name, newRecord);
+          res.json({
+            status: true,
+            message: "Data saved successfully",
+          });
+
+      
+    } catch (error) {
+      console.error("Edit error:", error);
+      res.status(500).json({ status: false, message: "Server error" });
+    }
+  }
+);
+
 module.exports = router;

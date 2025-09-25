@@ -2,7 +2,7 @@ import "./header.css";
 import PropTypes from "prop-types";
 import { useState } from "react";
 import CHookDateTime from "./CHookDateTime";
-import GEC_logo from "../../assets/media/gec-logo.webp";
+import GEC_logo from "../../assets/media/20-Jahre.webp";
 import { RiLogoutBoxRLine } from "react-icons/ri";
 import { Tooltip } from "@mui/material";
 import { useNavigate } from "react-router";

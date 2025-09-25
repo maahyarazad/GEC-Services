@@ -20,7 +20,10 @@ import Slots from "../../utils/Slots";
 import { MdAddCircleOutline } from "react-icons/md";
 import { GrSchedules } from "react-icons/gr";
 import {config} from '../../../ui_config';
-const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, fetchingCodeList }) => [
+import { IoDuplicate } from "react-icons/io5";
+import { FaRegEdit } from "react-icons/fa";
+
+const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate ,fetchingCodeList }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     {
         field: 'lockRegistration', headerName: 'Active Page', width: 100, renderCell: (params) => {
@@ -200,30 +203,36 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, fetchingCod
 
     {
         field: 'actions',
-        headerName: 'Actions - Page Lock',
+        headerName: 'Actions',
         width: 180,
         sortable: false,
         filterable: false,
         renderCell: (params) => (
             <Box>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                    style={{ marginRight: 8, textTransform: 'none' }}
-                    onClick={() => onEdit(params.row)}
-                >
-                    Edit
-                </Button>
-                <Tooltip title="Switch Registration Lock" componentsProps={config.tooltip_config}>
+                
+                <IconButton
+                       title="Edit"
+                       onClick={() => onEdit(params.row)}
+                    >
+                            <FaRegEdit color="dark" size={18} />
+                    </IconButton>
+               
+
+
+
+                    <IconButton
+                        onClick={() => onDuplicate(params.row)}
+                       title="Create a duplicate registration from this configuration"
+                    >
+                            <IoDuplicate color="primary" size={18} />
+                    </IconButton>
+
                     <Switch
+                    title="Switch Registration Lock"
                         checked={params.row.lockRegistration === true || params.row.lockRegistration === "true"}
                         onChange={() => onLock(params.row)}
                         color="primary"
                     />
-                </Tooltip>
-
-
             </Box>
         ),
     },
@@ -274,7 +283,7 @@ export const RegistrationList = () => {
         }
     }, []);
 
-
+    
 
     const getMemberCount = useCallback(async () => {
         try {
@@ -303,6 +312,32 @@ export const RegistrationList = () => {
         fetchData();
         getMemberCount();
     }, [fetchData, getMemberCount, setRowCount]);
+
+
+    const handleDuplicateCreation = async (selectedRow) => {
+         try {
+            const formData = new FormData();
+            for (const key in selectedRow) {
+                formData.append(key, selectedRow[key]);
+            }
+            
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-config/duplicate-record/`, {
+                method: 'POST',
+                body: formData,
+                credentials: "include"
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch registration data');
+            }
+
+            const configData = await response.json();
+            fetchData();
+
+        } catch (err) {
+            console.error('Error fetching data:', err);
+        }
+    };
 
 
     const handleSwitchLock = async (selectedRow) => {
@@ -457,7 +492,11 @@ export const RegistrationList = () => {
                     <DataGrid
                         rowCount={rowCount}
                         rows={registrationList}
-                        columns={getColumns({ onEdit: openEdit, onLock: switchLock, onShowCode: showCodeList, onShowBookingData: ShowBookingData, fetchingCodeList: fetchingCodeList })}
+                        columns={getColumns({ onEdit: openEdit
+                            , onLock: switchLock, onShowCode: showCodeList
+                            , onShowBookingData: ShowBookingData
+                            , onDuplicate: handleDuplicateCreation
+                            , fetchingCodeList: fetchingCodeList })}
                         pageSize={5}
                         rowsPerPageOptions={[5]}
                         disableSelectionOnClick
