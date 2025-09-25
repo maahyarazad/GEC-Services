@@ -63,6 +63,8 @@ const SimpleSnackbar = forwardRef((_, ref) => {
             slotProps={{
                 content: {
                 sx: {
+                    position: 'fixed',
+                    top: 15,
                     fontSize: { xs: '1rem', sm: '1.2rem' },
                     backgroundColor: '#f7f7f7',
                     color: '#141414',
@@ -74,8 +76,8 @@ const SimpleSnackbar = forwardRef((_, ref) => {
                     flexDirection: { xs: 'column', sm: 'row' },
                     alignItems: 'center',
                     width: '90%',
-                    maxWidth: 700,
-                    minWidth: { lg: 400 },   
+                    maxWidth: 600,
+                    minWidth: { lg: 300 },   
                     '& .MuiSnackbarContent-message': {
 
                         width: '100%',

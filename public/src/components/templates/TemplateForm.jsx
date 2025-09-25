@@ -309,7 +309,7 @@ export const TemplateForm = () => {
 
                 setPhoneRegistered(true);
                 setShowOtpInput(false);
-                // registrationHeader.current?.scrollIntoView({behavior:'smooth'});
+                registrationHeader.current?.scrollIntoView({behavior:'smooth'});
                 snackbarRef.current?.openSnackbar(otp_response_data.message, "success");
             } else {
                 statusRef.current.textContent = otp_response_data.message;
@@ -319,7 +319,7 @@ export const TemplateForm = () => {
         } catch (err) {
             
             if (statusRef.current) {
-                // registrationHeader.current?.scrollIntoView({behavior:'smooth'});
+                
                 statusRef.current.textContent = `Verification failed: ${err.message}`;
                 statusRef.current.classList.add("text-danger");
             }
@@ -481,7 +481,7 @@ export const TemplateForm = () => {
                     // Navigate to payment gateway
                     window.location.href = payment_response_data.payment?.result?.redirectUrl;
                 } else {
-                    // registrationHeader.current?.scrollIntoView({behavior:'smooth'});
+                    registrationHeader.current?.scrollIntoView({behavior:'smooth'});
                     snackbarRef.current?.openSnackbar(
                         payment_response.error.message,
                         ""
@@ -503,7 +503,7 @@ export const TemplateForm = () => {
                 const registration_response_data = await registration_response.json();
 
                 if (registration_response_data.status) {
-                    // registrationHeader.current?.scrollIntoView({behavior:'smooth'});
+                    registrationHeader.current?.scrollIntoView({behavior:'smooth'});
                     snackbarRef.current?.openSnackbar(
                         registration_response_data.message,
                         "success"
@@ -534,7 +534,7 @@ export const TemplateForm = () => {
 
                     setSelectedDate("");
                 } else {
-                    // registrationHeader.current?.scrollIntoView({behavior:'smooth'});
+                    
                     snackbarRef.current?.openSnackbar(
                         registration_response_data.message,
                         ""
@@ -543,7 +543,7 @@ export const TemplateForm = () => {
             }
 
         } catch (e) {
-            // registrationHeader.current?.scrollIntoView({behavior:'smooth'});
+            
             snackbarRef.current?.openSnackbar(e.message);
         } finally {
             setIsSubmitting(false);
@@ -665,7 +665,7 @@ export const TemplateForm = () => {
                                 <CountDownComponent props={{ event_date: target.event_date }} />
                             </div>
                         )}
-
+<div ref={registrationHeader}></div>
                         <Formik
                             enableReinitialize={true}
                             initialValues={{
@@ -713,7 +713,7 @@ export const TemplateForm = () => {
                                     {/* Autofill phone and whatsapp fields */}
                                     {/* <AutofillPhoneAndWhatsapp mobileNumber={target.mobile_number} /> */}
                                     <img src={GECLogo} height={70} alt="german-emirates-club"/>
-                                    <h1 className="mb-2" ref={registrationHeader}>{target.title}</h1>
+                                    <h1 className="mb-2">{target.title}</h1>
                                     {target.surveyForm === "false" && (
 
                                              <h4 className="mb-1">
