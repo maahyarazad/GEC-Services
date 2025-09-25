@@ -49,6 +49,11 @@ const OtpInput = forwardRef(({ length = 5, onChange, onComplete }, ref) => {
             onChange?.("");
             inputsRef.current[0]?.focus();
         },
+
+        blurAll: () => {
+            inputsRef.current.forEach((input) => input?.blur());
+        }
+
     }));
 
     return (

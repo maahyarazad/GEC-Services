@@ -310,6 +310,8 @@ export const TemplateForm = () => {
                 setPhoneRegistered(true);
                 setShowOtpInput(false);
                 registrationHeader.current?.scrollIntoView({behavior:'smooth'});
+                otpRef?.current?.blurAll();
+                registrationHeader.current?.focus();
                 snackbarRef.current?.openSnackbar(otp_response_data.message, "success");
             } else {
                 statusRef.current.textContent = otp_response_data.message;
@@ -482,6 +484,7 @@ export const TemplateForm = () => {
                     window.location.href = payment_response_data.payment?.result?.redirectUrl;
                 } else {
                     registrationHeader.current?.scrollIntoView({behavior:'smooth'});
+                    registrationHeader.current?.focus();
                     snackbarRef.current?.openSnackbar(
                         payment_response.error.message,
                         ""
@@ -504,6 +507,7 @@ export const TemplateForm = () => {
 
                 if (registration_response_data.status) {
                     registrationHeader.current?.scrollIntoView({behavior:'smooth'});
+                    registrationHeader.current?.focus();
                     snackbarRef.current?.openSnackbar(
                         registration_response_data.message,
                         "success"
