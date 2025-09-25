@@ -371,7 +371,7 @@ router.post("/registration-config-access" , upload.none(), loginLimiter,async (r
           
         return res
           .status(401)
-          .json({ status: false, message: "Invalid authorization code, contact us on Whatsapp." });
+          .json({ status: false, message: "Don’t have a valid MemberCard? Gosh darn—it’s time! Grab it now: 056 20 500 66, or click on the WhatsApp button to inquire." });
       }
       
 

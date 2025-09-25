@@ -63,6 +63,12 @@ CREATE TABLE IF NOT EXISTS registration_config (
   modifiedAt DATETIME
 );
 
+CREATE TABLE IF NOT EXISTS news_letter_emails (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email VARCHAR(255) NOT NULL,
+  request_source VARCHAR(500) NOT NULL
+);
+
 
 CREATE TABLE IF NOT EXISTS registration_client_access (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -153,6 +159,7 @@ CREATE Table IF NOT EXISTS event_proforma_invoice (
     recordFee DECIMAL(10,2) DEFAULT 0,         -- 60.00
     vat DECIMAL(4,2) DEFAULT 0.00              -- 0.05 (5%)
 );
+
 
 
 CREATE TABLE IF NOT EXISTS GIC_Users (

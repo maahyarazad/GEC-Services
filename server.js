@@ -17,6 +17,7 @@ const member_card = require('./routes/member_card.js');
 const survey = require('./routes/survey.js');
 const gic_user = require('./routes/gic_user.js');
 const payment = require('./routes/payment.js');
+const email_storage = require('./routes/email_storage.js');
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
 
@@ -99,6 +100,7 @@ app.use('/', registration_keys);
 app.use('/', maps);
 app.use('/', payment);
 app.use('/', member_card);
+app.use('/', email_storage);
 app.use('/api/', authorize);
 
 // Route to serve your main HTML file
