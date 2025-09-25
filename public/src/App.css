@@ -691,7 +691,7 @@ tr.eventhide {
 .swal2-success-line-tip {
   width: 12.5px;
   top: 23px;
-  left: 7px;
+  left: 5px;
   transform: rotate(45deg);
   animation: swal2-animate-success-line-tip 0.2s ease-out;
 }
@@ -699,7 +699,7 @@ tr.eventhide {
 .swal2-success-line-long {
   width: 23.5px;
   top: 19px;
-  left: 13px;
+  left: 11px;
   transform: rotate(-45deg);
   animation: swal2-animate-success-line-long 0.2s ease-out;
 }
@@ -828,11 +828,11 @@ tr.eventhide {
 
 
 @media screen and (max-width: 768px) {
-  html {
+  /* html {
     transform: scale(1.1);
     transform-origin: top left;
     width: 90.909%;
-  }
+  } */
 
   h1, h2 {
     font-size: 1.6rem !important;
