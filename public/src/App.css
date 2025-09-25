@@ -825,3 +825,27 @@ tr.eventhide {
 .MuiSelect-select{
   max-height: 37px;
 }
+
+
+@media screen and (max-width: 768px) {
+  html {
+    transform: scale(1.1);
+    transform-origin: top left;
+    width: 90.909%;
+  }
+
+  h1, h2 {
+    font-size: 1.6rem !important;
+  }
+
+  h3, h4,h5 {
+    font-size: 1rem !important;
+  }
+
+  .gec-member-card {
+    display: block;       /* makes image act like a block */
+    margin: 0 auto;       /* centers horizontally */
+    max-width: 100%;      /* prevents overflow */
+    height: auto;         /* keeps aspect ratio */
+  }
+}

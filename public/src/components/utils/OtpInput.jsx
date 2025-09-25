@@ -56,7 +56,9 @@ const OtpInput = forwardRef(({ length = 5, onChange, onComplete }, ref) => {
             {otp.map((digit, idx) => (
                 <input
                     key={idx}
-                    type="text"
+                    type="text"                // keep as text
+                    inputMode="numeric"        // tells mobile to show number keypad
+                    pattern="[0-9]*"           // restricts input to digits
                     maxLength="1"
                     value={digit}
                     ref={(el) => (inputsRef.current[idx] = el)}

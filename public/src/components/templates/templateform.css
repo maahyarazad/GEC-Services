@@ -247,7 +247,7 @@
     }
 
     > .slider-button.opened{
-      left: 83dvw !important;
+      left: 75vw !important;
        transition: left 0.3s ease-in-out;
     }
 

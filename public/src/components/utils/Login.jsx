@@ -148,7 +148,7 @@ export const Login = ({ emailRequired, event }) => {
                            
                             {emailRequired && (
                                 <>
-                                <img src={GECCard_Back} alt="GEC-Member-Card"/>
+                                <img src={GECCard_Back} alt="GEC-Member-Card" className="gec-member-card"/>
                                     {/* <Field
                                         onChange={(e) => {
                                             setFieldValue('email', e.target.value)
