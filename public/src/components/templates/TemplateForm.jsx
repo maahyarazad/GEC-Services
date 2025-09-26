@@ -80,6 +80,7 @@ export const TemplateForm = () => {
     const [initialCurrency, setInitialCurrency] = useState(null);
     const [initialTargetFee, setInitialTargetFee] = useState(null);
     const [rates, setRates] = useState(null);
+    const [target, setTarget] = useState(null);
     const navigate = useNavigate();
 
 
@@ -95,7 +96,7 @@ export const TemplateForm = () => {
 
     const fetchCurrencyData = useCallback(async (currency) => {
         try {
-            setLoading(true);
+            
             
             
             // const response = await fetch(`https://open.er-api.com/v6/latest/${currency}`, {
@@ -126,14 +127,14 @@ export const TemplateForm = () => {
         } catch (err) {
             console.error('Error fetching data:', err);
         } finally {
-            setLoading(false);
+            
         }
     },[]);
 
 
     const serverAPICall = useCallback(async () => {
         try {
-            setLoading(true);
+            
             // const value = location.pathname;
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/optional-login`, {
                 method: 'POST',
@@ -155,14 +156,22 @@ export const TemplateForm = () => {
                 // Maahyar CM: Only one record return from server
                 values.rows.map(async (x) => {
                     
+                    if(x.archived === 1){
+                        navigate("/404")
+                    }
+                    
 
                     if(x.use_member_card === "true"){
                         setEmailRequired(true);
                     }
 
                     if (x.loginRequired === "false") {
+
                         // setPhoneRegistered(true);
+                        debugger;
                         setTarget(values.rows[0]);
+                        setLoading(false);
+                        
                     }
                     
                     if(x.paymentRequired === "true"){
@@ -188,36 +197,33 @@ export const TemplateForm = () => {
         } catch (err) {
             console.error('Error fetching data:', err);
         } finally {
-            setLoading(false);
+            
         }
     },[]);
 
     
 
     useEffect(() => {
-        serverAPICall();
-       
-
-    }, [serverAPICall]);
-
-
-    useEffect(() => {
-        try{
-            setLoading(true);
+        const init = async () => {
             const gecuser = getEncryptedLocalStorage("gec-registration");
-            if (gecuser) {
-                
-                setTarget(gecuser);
-            }
-            
-        }catch(err){
-            
-        }finally{
-            setLoading(false);
-            
-        }
-    }, []);
+            await serverAPICall();
+            const url = window.location.pathname; // e.g., "/users/123"
+            const parts = url.split("/").filter(Boolean); // ["users", "123"]
+            const lastPart = parts[parts.length - 1];
 
+            debugger;
+            if (gecuser.page === lastPart) {
+                setTarget(gecuser);
+                setLoading(false);
+            }
+
+            setLoading(false);
+        };
+
+        init();
+    }, []);
+    
+    
 
     const handleSendOtp = async (values) => {
         try {
@@ -328,7 +334,7 @@ export const TemplateForm = () => {
         }
     };
 
-    const [target, setTarget] = useState(null);
+
     const [showSubmit, setShowSubmit] = useState(false);
     const [selectedDate, setSelectedDate] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -570,698 +576,702 @@ export const TemplateForm = () => {
                 <CircularProgress />
             </div>
         )
-    }
+    }else{
+        
+        if (!target) {
+            return <Login emailRequired={emailRequired} event={event}/>;
+        }else{
 
-    if (!target) {
-        return <Login emailRequired={emailRequired} event={event}/>;
-    }
-
-    return (
-        <>
-            <SimpleSnackbar ref={snackbarRef} />
-
-            <div
-                className="template-form"
-            >
-                <button
-                    onClick={() => setExapndedDescriptionMobileView(prev => !prev)}
-                    className="cta-button simple"
-                >
-                    <IoMdInformationCircleOutline size={20} />
-                </button>
-                <button onClick={clearLocalStorage} className="cta-button simple">
-                    <IoCloseCircleOutline size={20} />
-                </button>
-                {(() => {
-                    const trimmedDescription = (target.description || "").trim();
-
-                    // Strip HTML tags and check if there's meaningful content
-                    const plainText = trimmedDescription.replace(/<[^>]*>/g, "").trim();
-
-                    if (plainText) {
-                        return (
-
-
-                            <button
-                                className={`cta-button simple slider-button ${exapndedDescriptionMobileView ? "opened" : ""}`}
-                                onClick={() => setExapndedDescriptionMobileView(prev => !prev)}
-                            >
-                                {exapndedDescriptionMobileView ?
-                                    <IoClose size={25} />
-                                    :
-                                    <></>
-                                }
-                            </button>
-                        );
-                    }
-
-                    return null;
-                })()}
-
-                <div className={showDivFirst ? "active" : ""}>
-                    {(() => {
-                        const trimmedDescription = (target.description || "").trim();
-
-                        // Strip HTML tags and check if there's meaningful content
-                        const plainText = trimmedDescription.replace(/<[^>]*>/g, "").trim();
-
-                        if (plainText) {
-                            return (
-                                <div
-                                    className={`target-description ql-editor ${exapndedDescriptionMobileView ? "expanded" : ""}`}
-                                    dangerouslySetInnerHTML={{ __html: trimmedDescription }}
-                                />
-
-                            );
-                        }
-
-                        return null;
-                    })()}
-
-                    {(() => {
-                        const file = target.Image || "";
-                        const extension = file.split(".").pop().toLowerCase();
-                        const isVideo = ["mp4", "webm", "ogg"].includes(extension);
-                        const fileUrl = `${import.meta.env.VITE_SERVERURL}/uploads/${file}`;
-                        
-                        if (isVideo) {
-                            return <video src={fileUrl} loop autoPlay muted playsInline 
-                            onError={(e) => {
-                                e.target.onerror = null; // prevent infinite loop
-                                e.target.src = StarsField;
-                            }}
-                            />;
-                        } else {
-                            return <img src={fileUrl} alt={target.title} onError={(e) => {
-                                e.target.onerror = null; // prevent infinite loop
-                                e.target.src = GECBackground;
-                            }}/>;
-                        }
-                    })()}
-                </div>
-
-                <div>
-                <div className={`${target.lockRegistration === "true" ? "locked-template-form" : ""
-                    }`}>
-                        {target.countDown === "true" && (
-                            <div style={{ position: "relative", paddingBottom: 20 }}>
-                                {/* <CountDownComponent props={{event_date: "2025-07-20T00:00:00Z"}}/> */}
-                                <CountDownComponent props={{ event_date: target.event_date }} />
-                            </div>
-                        )}
-<div ref={registrationHeader}></div>
-                        <Formik
-                            enableReinitialize={true}
-                            initialValues={{
-                                ...initialValues,
-                                // email: login_email, // set your dynamic value here
-                            }}
-                            validationSchema={getValidationSchema(target)}
-                            onSubmit={async (values, { resetForm, setFieldValue }) => {
-                                await handleSubmitRegistration(values, {
-
-                                    resetForm,
-                                    setFieldValue,
-                                });
-                            }}
+            return (
+                <>
+                    <SimpleSnackbar ref={snackbarRef} />
+        
+                    <div
+                        className="template-form"
+                    >
+                        <button
+                            onClick={() => setExapndedDescriptionMobileView(prev => !prev)}
+                            className="cta-button simple"
                         >
-                            {({
-                                setFieldValue,
-                                errors,
-                                touched,
-                                values,
-                                validateForm,
-                                setTouched,
-                                setFieldTouched
-                            }) => (
-                                <Form>
-
-
-
-
-                                    {/* <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={clearLocalStorage}
-                    type="button"
-                    style={{
-                      pointerEvents: "auto",
-                      opacity: 1,
-                      width: "100%",
-                      textTransform: "none",
-                    }}
-                  >
-                    Clear Cache and Exit
-                  </Button> */}
-
-                                    {/* Autofill phone and whatsapp fields */}
-                                    {/* <AutofillPhoneAndWhatsapp mobileNumber={target.mobile_number} /> */}
-                                    <img src={GECLogo} height={70} alt="german-emirates-club"/>
-                                    <h1 className="mb-2">{target.title}</h1>
-                                    {target.surveyForm === "false" && (
-
-                                             <h4 className="mb-1">
-                                                {target.event_date ? (
-                                                    new Date(target.event_date).toLocaleDateString("en-GB", {
-                                                    day: "2-digit",
-                                                    month: "long",
-                                                    year: "numeric",
-                                                    weekday: "long",
-                                                    })
-                                                ) : ""}
-                                                </h4>
-                                    )}
-                                    <div className="clearance-flat"></div>
-
-                                    {target.gic === "false" && (
-                                        <>
+                            <IoMdInformationCircleOutline size={20} />
+                        </button>
+                        <button onClick={clearLocalStorage} className="cta-button simple">
+                            <IoCloseCircleOutline size={20} />
+                        </button>
+                        {(() => {
+                            const trimmedDescription = (target.description || "").trim();
+        
+                            // Strip HTML tags and check if there's meaningful content
+                            const plainText = trimmedDescription.replace(/<[^>]*>/g, "").trim();
+        
+                            if (plainText) {
+                                return (
+        
+        
+                                    <button
+                                        className={`cta-button simple slider-button ${exapndedDescriptionMobileView ? "opened" : ""}`}
+                                        onClick={() => setExapndedDescriptionMobileView(prev => !prev)}
+                                    >
+                                        {exapndedDescriptionMobileView ?
+                                            <IoClose size={25} />
+                                            :
+                                            <></>
+                                        }
+                                    </button>
+                                );
+                            }
+        
+                            return null;
+                        })()}
+        
+                        <div className={showDivFirst ? "active" : ""}>
+                            {(() => {
+                                const trimmedDescription = (target.description || "").trim();
+        
+                                // Strip HTML tags and check if there's meaningful content
+                                const plainText = trimmedDescription.replace(/<[^>]*>/g, "").trim();
+        
+                                if (plainText) {
+                                    return (
+                                        <div
+                                            className={`target-description ql-editor ${exapndedDescriptionMobileView ? "expanded" : ""}`}
+                                            dangerouslySetInnerHTML={{ __html: trimmedDescription }}
+                                        />
+        
+                                    );
+                                }
+        
+                                return null;
+                            })()}
+        
+                            {(() => {
+                                const file = target.Image || "";
+                                const extension = file.split(".").pop().toLowerCase();
+                                const isVideo = ["mp4", "webm", "ogg"].includes(extension);
+                                const fileUrl = `${import.meta.env.VITE_SERVERURL}/uploads/${file}`;
+                                
+                                if (isVideo) {
+                                    return <video src={fileUrl} loop autoPlay muted playsInline 
+                                    onError={(e) => {
+                                        e.target.onerror = null; // prevent infinite loop
+                                        e.target.src = StarsField;
+                                    }}
+                                    />;
+                                } else {
+                                    return <img src={fileUrl} alt={target.title} onError={(e) => {
+                                        e.target.onerror = null; // prevent infinite loop
+                                        e.target.src = GECBackground;
+                                    }}/>;
+                                }
+                            })()}
+                        </div>
+        
+                        <div>
+                        <div className={`${target.lockRegistration === "true" ? "locked-template-form" : ""
+                            }`}>
+                                {target.countDown === "true" && (
+                                    <div style={{ position: "relative", paddingBottom: 20 }}>
+                                        {/* <CountDownComponent props={{event_date: "2025-07-20T00:00:00Z"}}/> */}
+                                        <CountDownComponent props={{ event_date: target.event_date }} />
+                                    </div>
+                                )}
+        <div ref={registrationHeader}></div>
+                                <Formik
+                                    enableReinitialize={true}
+                                    initialValues={{
+                                        ...initialValues,
+                                        // email: login_email, // set your dynamic value here
+                                    }}
+                                    validationSchema={getValidationSchema(target)}
+                                    onSubmit={async (values, { resetForm, setFieldValue }) => {
+                                        await handleSubmitRegistration(values, {
+        
+                                            resetForm,
+                                            setFieldValue,
+                                        });
+                                    }}
+                                >
+                                    {({
+                                        setFieldValue,
+                                        errors,
+                                        touched,
+                                        values,
+                                        validateForm,
+                                        setTouched,
+                                        setFieldTouched
+                                    }) => (
+                                        <Form>
+        
+        
+        
+        
+                                            {/* <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={clearLocalStorage}
+                            type="button"
+                            style={{
+                              pointerEvents: "auto",
+                              opacity: 1,
+                              width: "100%",
+                              textTransform: "none",
+                            }}
+                          >
+                            Clear Cache and Exit
+                          </Button> */}
+        
+                                            {/* Autofill phone and whatsapp fields */}
+                                            {/* <AutofillPhoneAndWhatsapp mobileNumber={target.mobile_number} /> */}
+                                            <img src={GECLogo} height={70} alt="german-emirates-club"/>
+                                            <h1 className="mb-2">{target.title}</h1>
                                             {target.surveyForm === "false" && (
-
+        
+                                                     <h4 className="mb-1">
+                                                        {target.event_date ? (
+                                                            new Date(target.event_date).toLocaleDateString("en-GB", {
+                                                            day: "2-digit",
+                                                            month: "long",
+                                                            year: "numeric",
+                                                            weekday: "long",
+                                                            })
+                                                        ) : ""}
+                                                        </h4>
+                                            )}
+                                            <div className="clearance-flat"></div>
+        
+                                            {target.gic === "false" && (
                                                 <>
-                                                    <div className="full">
-                                                        <div className="w-100">
-
+                                                    {target.surveyForm === "false" && (
+        
+                                                        <>
+                                                            <div className="full">
+                                                                <div className="w-100">
+        
+                                                                    <div className="input-group">
+                                                                        <Field
+                                                                        
+                                                                            as={TextField}
+                                                                            type="email"
+                                                                            name="email"
+                                                                            disabled={phoneRegistered}
+                                                                            size="small"
+                                                                            fullWidth
+                                                                            label="E-mail"
+                                                                            helperText={<ErrorMessage name="email" />}
+                                                                            className="pb-2"
+                                                                            error={touched.email && Boolean(errors.email)}
+                                                                            InputProps={{
+                                                                                startAdornment: (
+                                                                                    <InputAdornment position="start">
+                                                                                        {target.fieldIcon === "true" && (
+        
+                                                                                            <MdEmail />
+                                                                                        )}
+                                                                                    </InputAdornment>
+                                                                                ),
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+        
+                                                            </div>
+        
+                                                            <div className="full">
+        
+                                                                <div className="input-group">
+        
+                                                                    <Field
+                                                                        as={TextField}
+        
+                                                                        name="phone"
+        
+                                                                        size="small"
+                                                                        fullWidth
+                                                                        label="Telefonnummer"
+                                                                        helperText={<ErrorMessage name="phone" />}
+                                                                        className="pb-2"
+                                                                        error={touched.phone && Boolean(errors.phone)}
+                                                                        InputProps={{
+                                                                            startAdornment: (
+                                                                                <InputAdornment position="start">
+                                                                                    {target.fieldIcon === "true" && (
+        
+                                                                                        <FaPhoneAlt />
+                                                                                    )}
+                                                                                </InputAdornment>
+                                                                            ),
+                                                                        }}
+                                                                    />
+                                                                </div>
+        
+                                                            </div>
+        
+                                                            <div className="full">
+        
+                                                                <div className="input-group">
+        
+                                                                    <Field
+                                                                        as={TextField}
+        
+                                                                        name="whatsapp"
+        
+                                                                        size="small"
+                                                                        fullWidth
+                                                                        label="WhatsApp Number"
+                                                                        helperText={<ErrorMessage name="whatsapp" />}
+                                                                        className="pb-2"
+                                                                        error={touched.whatsapp && Boolean(errors.whatsapp)}
+                                                                        InputProps={{
+                                                                            startAdornment: (
+                                                                                <InputAdornment position="start">
+                                                                                    {target.fieldIcon === "true" && (
+        
+                                                                                        <FaWhatsapp />
+                                                                                    )}
+                                                                                </InputAdornment>
+                                                                            ),
+                                                                        }}
+                                                                    // We are using email verification
+                                                                    // disabled={phoneRegistered}
+                                                                    />
+                                                                </div>
+        
+                                                            </div>
+        
+                                                            <div className={`otp-slide ${showOtpInput ? "show" : ""}`}>
+                                                                <div ref={statusRef}></div>
+        
+                                                                {currentResponseStatus && (
+                                                                    <>
+                                                                        <OtpInput
+                                                                            ref={otpRef}
+                                                                            onComplete={(val) => {
+                                                                                handlePostOTP(val);
+                                                                            }}
+                                                                        />
+                                                                        {validOtp && (
+                                                                            <OtpTimer
+                                                                                loginResponseData={currentResponseStatus}
+                                                                                onExpiredChange={handleExpiredChange}
+                                                                            />
+                                                                        )}
+                                                                    </>
+                                                                )}
+                                                            </div>
+        
+                                                            {!phoneRegistered && (
+                                                                <>
+                                                               
+                                                                <Button
+                                                                    variant="contained"
+                                                                    color="primary"
+                                                                    disabled={validOtp === true}
+                                                                    type="button"
+                                                                    onClick={async () => {
+                                                                        const formErrors = await validateForm(); // validate entire form
+        
+                                                                        if (formErrors.email) {
+                                                                            setTouched({ email: true });
+                                                                        }
+        
+                                                                        if (!formErrors.email && values.email) {
+                                                                            handleSendOtp(values);
+                                                                        }
+                                                                    }}
+                                                                    style={{
+                                                                        pointerEvents: "auto",
+                                                                        opacity: 1,
+                                                                        width: "100%",
+                                                                        textTransform: "none",
+                                                                    }}
+                                                                >
+                                                                    
+                                                                    <p>Send OTP</p>
+                                                                </Button>
+                                                                <div className="d-flex justify-content-center w-100">
+                                                                    <p className="text-center">Bestätigen Sie Ihre E-Mail, bevor Sie Ihre Registrierung absenden.</p>
+                                                                </div>
+                                                                </>
+                                                            )}
+        
+                                                            <div className="spacer"></div>
+        
+                                                            <div className="full">
+        
+                                                                <div className="input-group">
+        
+        
+                                                                    <Field name="gender"
+                                                                        as={TextField}
+                                                                        select
+                                                                        size="small"
+        
+                                                                        label="Geschlecht"
+                                                                        helperText={<ErrorMessage name="gender" />}
+                                                                        className="pb-2"
+                                                                        error={touched.gender && Boolean(errors.gender)}
+                                                                        InputProps={{
+                                                                            startAdornment: (
+                                                                                <InputAdornment position="start">
+                                                                                    {target.fieldIcon === "true" && (
+        
+                                                                                        <BsGenderAmbiguous />
+                                                                                    )}
+                                                                                </InputAdornment>
+                                                                            ),
+                                                                        }}
+                                                                        SelectProps={{
+                                                                            displayEmpty: true,
+                                                                            renderValue: (selected) =>
+                                                                                selected && selected.length > 0 ? (
+                                                                                    selected
+                                                                                ) : (
+                                                                                    <span style={{ color: "#9e9e9e", fontSize: "0.8rem" }}>
+                                                                                        Select Gender
+                                                                                    </span>
+                                                                                ),
+                                                                        }}
+                                                                    >
+                                                                        <MenuItem value="Male">Male</MenuItem>
+                                                                        <MenuItem value="Female">Female</MenuItem>
+                                                                    </Field>
+                                                                </div>
+                                                            </div>
+        
+                                                            <div className="full">
+        
+                                                                <div className="input-group">
+        
+        
+                                                                    <Field
+                                                                        as={TextField}
+                                                                        size="small"
+                                                                        fullWidth
+                                                                        label="Vorname"
+                                                                        helperText={<ErrorMessage name="firstName" />}
+                                                                        className="pb-2"
+                                                                        type="text"
+                                                                        name="firstName"
+                                                                        error={touched.firstName && Boolean(errors.firstName)}
+                                                                        InputProps={{
+                                                                            startAdornment: (
+                                                                                <InputAdornment position="start">
+                                                                                    {target.fieldIcon === "true" && (
+        
+                                                                                        <MdDriveFileRenameOutline />
+                                                                                    )}
+                                                                                </InputAdornment>
+                                                                            ),
+                                                                        }}
+                                                                    />
+                                                                </div>
+        
+                                                            </div>
+        
+                                                            <div className="full">
+        
+                                                                <div className="input-group">
+                                                                    <Field
+                                                                        as={TextField}
+                                                                        size="small"
+                                                                        fullWidth
+                                                                        label="Nachname"
+                                                                        helperText={<ErrorMessage name="lastName" />}
+                                                                        className="pb-2"
+                                                                        type="text"
+                                                                        name="lastName"
+                                                                        error={touched.lastName && Boolean(errors.lastName)}
+                                                                        InputProps={{
+                                                                            startAdornment: (
+                                                                                <InputAdornment position="start">
+                                                                                    {target.fieldIcon === "true" && (
+        
+                                                                                        <MdDriveFileRenameOutline />
+                                                                                    )}
+                                                                                </InputAdornment>
+                                                                            ),
+                                                                        }}
+                                                                    />
+                                                                </div>
+        
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                    {target.birthdayRequired === "true" && (
+                                                        <div className="full">
+        
                                                             <div className="input-group">
-                                                                <Field
                                                                 
+                                                                
+        
+                                                                <BirthdayField errors={errors} setFieldValue={setFieldValue} values={values} touched={touched} setFieldTouched={setFieldTouched}/>
+                                                                
+                                                            </div>
+        
+                                                        </div>
+                                                    )}
+        
+                                                    {target.companyRequired === "true" && (
+                                                        <div className="full">
+        
+                                                            <div className="input-group">
+        
+                                                                <Field
                                                                     as={TextField}
-                                                                    type="email"
-                                                                    name="email"
-                                                                    disabled={phoneRegistered}
                                                                     size="small"
                                                                     fullWidth
-                                                                    label="E-mail"
-                                                                    helperText={<ErrorMessage name="email" />}
+                                                                    label="Firmenname"
+                                                                    helperText={<ErrorMessage name="companyName" />}
                                                                     className="pb-2"
-                                                                    error={touched.email && Boolean(errors.email)}
+                                                                    type="text"
+                                                                    name="companyName"
+                                                                    error={touched.companyName && Boolean(errors.companyName)}
                                                                     InputProps={{
                                                                         startAdornment: (
                                                                             <InputAdornment position="start">
                                                                                 {target.fieldIcon === "true" && (
-
-                                                                                    <MdEmail />
+        
+                                                                                    <LuBriefcaseBusiness />
                                                                                 )}
                                                                             </InputAdornment>
                                                                         ),
                                                                     }}
                                                                 />
                                                             </div>
+        
                                                         </div>
-
-                                                    </div>
-
-                                                    <div className="full">
-
-                                                        <div className="input-group">
-
-                                                            <Field
-                                                                as={TextField}
-
-                                                                name="phone"
-
-                                                                size="small"
-                                                                fullWidth
-                                                                label="Telefonnummer"
-                                                                helperText={<ErrorMessage name="phone" />}
-                                                                className="pb-2"
-                                                                error={touched.phone && Boolean(errors.phone)}
-                                                                InputProps={{
-                                                                    startAdornment: (
-                                                                        <InputAdornment position="start">
-                                                                            {target.fieldIcon === "true" && (
-
-                                                                                <FaPhoneAlt />
-                                                                            )}
-                                                                        </InputAdornment>
-                                                                    ),
-                                                                }}
-                                                            />
-                                                        </div>
-
-                                                    </div>
-
-                                                    <div className="full">
-
-                                                        <div className="input-group">
-
-                                                            <Field
-                                                                as={TextField}
-
-                                                                name="whatsapp"
-
-                                                                size="small"
-                                                                fullWidth
-                                                                label="WhatsApp Number"
-                                                                helperText={<ErrorMessage name="whatsapp" />}
-                                                                className="pb-2"
-                                                                error={touched.whatsapp && Boolean(errors.whatsapp)}
-                                                                InputProps={{
-                                                                    startAdornment: (
-                                                                        <InputAdornment position="start">
-                                                                            {target.fieldIcon === "true" && (
-
-                                                                                <FaWhatsapp />
-                                                                            )}
-                                                                        </InputAdornment>
-                                                                    ),
-                                                                }}
-                                                            // We are using email verification
-                                                            // disabled={phoneRegistered}
-                                                            />
-                                                        </div>
-
-                                                    </div>
-
-                                                    <div className={`otp-slide ${showOtpInput ? "show" : ""}`}>
-                                                        <div ref={statusRef}></div>
-
-                                                        {currentResponseStatus && (
-                                                            <>
-                                                                <OtpInput
-                                                                    ref={otpRef}
-                                                                    onComplete={(val) => {
-                                                                        handlePostOTP(val);
+                                                    )}
+        
+                                                    {target.textarea === "true" && (
+                                                        <div className="full">
+        
+                                                            <div className="input-group">
+                                                                <Field
+                                                                    as={TextField}
+                                                                    size="small"
+                                                                    fullWidth
+                                                                    label="Nachricht"
+                                                                    helperText={<ErrorMessage name="textarea" />}
+                                                                    className="pb-2"
+                                                                    type="text"
+                                                                    name="textarea"
+                                                                    multiline
+                                                                    minRows={4} // adjust the number of visible rows
+                                                                    error={touched.textarea && Boolean(errors.textarea)}
+                                                                    InputProps={{
+                                                                        startAdornment: (
+                                                                            <InputAdornment position="start">
+                                                                                {target.fieldIcon === "true" && <LuBriefcaseBusiness />}
+                                                                            </InputAdornment>
+                                                                        ),
                                                                     }}
                                                                 />
-                                                                {validOtp && (
-                                                                    <OtpTimer
-                                                                        loginResponseData={currentResponseStatus}
-                                                                        onExpiredChange={handleExpiredChange}
-                                                                    />
-                                                                )}
-                                                            </>
-                                                        )}
-                                                    </div>
-
-                                                    {!phoneRegistered && (
-                                                        <>
-                                                       
-                                                        <Button
-                                                            variant="contained"
-                                                            color="primary"
-                                                            disabled={validOtp === true}
-                                                            type="button"
-                                                            onClick={async () => {
-                                                                const formErrors = await validateForm(); // validate entire form
-
-                                                                if (formErrors.email) {
-                                                                    setTouched({ email: true });
-                                                                }
-
-                                                                if (!formErrors.email && values.email) {
-                                                                    handleSendOtp(values);
-                                                                }
-                                                            }}
-                                                            style={{
-                                                                pointerEvents: "auto",
-                                                                opacity: 1,
-                                                                width: "100%",
-                                                                textTransform: "none",
-                                                            }}
-                                                        >
-                                                            
-                                                            <p>Send OTP</p>
-                                                        </Button>
-                                                        <div className="d-flex justify-content-center w-100">
-                                                            <p className="text-center">Bestätigen Sie Ihre E-Mail, bevor Sie Ihre Registrierung absenden.</p>
+                                                            </div>
+        
                                                         </div>
-                                                        </>
                                                     )}
-
-                                                    <div className="spacer"></div>
-
-                                                    <div className="full">
-
-                                                        <div className="input-group">
-
-
-                                                            <Field name="gender"
-                                                                as={TextField}
-                                                                select
-                                                                size="small"
-
-                                                                label="Geschlecht"
-                                                                helperText={<ErrorMessage name="gender" />}
-                                                                className="pb-2"
-                                                                error={touched.gender && Boolean(errors.gender)}
-                                                                InputProps={{
-                                                                    startAdornment: (
-                                                                        <InputAdornment position="start">
-                                                                            {target.fieldIcon === "true" && (
-
-                                                                                <BsGenderAmbiguous />
-                                                                            )}
-                                                                        </InputAdornment>
-                                                                    ),
-                                                                }}
-                                                                SelectProps={{
-                                                                    displayEmpty: true,
-                                                                    renderValue: (selected) =>
-                                                                        selected && selected.length > 0 ? (
-                                                                            selected
-                                                                        ) : (
-                                                                            <span style={{ color: "#9e9e9e", fontSize: "0.8rem" }}>
-                                                                                Select Gender
-                                                                            </span>
-                                                                        ),
-                                                                }}
-                                                            >
-                                                                <MenuItem value="Male">Male</MenuItem>
-                                                                <MenuItem value="Female">Female</MenuItem>
-                                                            </Field>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="full">
-
-                                                        <div className="input-group">
-
-
-                                                            <Field
-                                                                as={TextField}
-                                                                size="small"
-                                                                fullWidth
-                                                                label="Vorname"
-                                                                helperText={<ErrorMessage name="firstName" />}
-                                                                className="pb-2"
-                                                                type="text"
-                                                                name="firstName"
-                                                                error={touched.firstName && Boolean(errors.firstName)}
-                                                                InputProps={{
-                                                                    startAdornment: (
-                                                                        <InputAdornment position="start">
-                                                                            {target.fieldIcon === "true" && (
-
-                                                                                <MdDriveFileRenameOutline />
-                                                                            )}
-                                                                        </InputAdornment>
-                                                                    ),
-                                                                }}
-                                                            />
-                                                        </div>
-
-                                                    </div>
-
-                                                    <div className="full">
-
-                                                        <div className="input-group">
-                                                            <Field
-                                                                as={TextField}
-                                                                size="small"
-                                                                fullWidth
-                                                                label="Nachname"
-                                                                helperText={<ErrorMessage name="lastName" />}
-                                                                className="pb-2"
-                                                                type="text"
-                                                                name="lastName"
-                                                                error={touched.lastName && Boolean(errors.lastName)}
-                                                                InputProps={{
-                                                                    startAdornment: (
-                                                                        <InputAdornment position="start">
-                                                                            {target.fieldIcon === "true" && (
-
-                                                                                <MdDriveFileRenameOutline />
-                                                                            )}
-                                                                        </InputAdornment>
-                                                                    ),
-                                                                }}
-                                                            />
-                                                        </div>
-
-                                                    </div>
-                                                </>
-                                            )}
-                                            {target.birthdayRequired === "true" && (
-                                                <div className="full">
-
-                                                    <div className="input-group">
-                                                        
-                                                        
-
-                                                        <BirthdayField errors={errors} setFieldValue={setFieldValue} values={values} touched={touched} setFieldTouched={setFieldTouched}/>
-                                                        
-                                                    </div>
-
-                                                </div>
-                                            )}
-
-                                            {target.companyRequired === "true" && (
-                                                <div className="full">
-
-                                                    <div className="input-group">
-
-                                                        <Field
-                                                            as={TextField}
-                                                            size="small"
-                                                            fullWidth
-                                                            label="Firmenname"
-                                                            helperText={<ErrorMessage name="companyName" />}
-                                                            className="pb-2"
-                                                            type="text"
-                                                            name="companyName"
-                                                            error={touched.companyName && Boolean(errors.companyName)}
-                                                            InputProps={{
-                                                                startAdornment: (
-                                                                    <InputAdornment position="start">
-                                                                        {target.fieldIcon === "true" && (
-
-                                                                            <LuBriefcaseBusiness />
-                                                                        )}
-                                                                    </InputAdornment>
-                                                                ),
-                                                            }}
-                                                        />
-                                                    </div>
-
-                                                </div>
-                                            )}
-
-                                            {target.textarea === "true" && (
-                                                <div className="full">
-
-                                                    <div className="input-group">
-                                                        <Field
-                                                            as={TextField}
-                                                            size="small"
-                                                            fullWidth
-                                                            label="Nachricht"
-                                                            helperText={<ErrorMessage name="textarea" />}
-                                                            className="pb-2"
-                                                            type="text"
-                                                            name="textarea"
-                                                            multiline
-                                                            minRows={4} // adjust the number of visible rows
-                                                            error={touched.textarea && Boolean(errors.textarea)}
-                                                            InputProps={{
-                                                                startAdornment: (
-                                                                    <InputAdornment position="start">
-                                                                        {target.fieldIcon === "true" && <LuBriefcaseBusiness />}
-                                                                    </InputAdornment>
-                                                                ),
-                                                            }}
-                                                        />
-                                                    </div>
-
-                                                </div>
-                                            )}
-
-                                            {target.fileUpload === "true" && (
-                                                <div className="full">
-                                                    <div className="clearance"></div>
-                                                    <label className="full" htmlFor="fileUpload">
-                                                        <p>
-                                                            Please attach any documentation to support your
-                                                            application.
-                                                        </p>
-                                                    </label>
-                                                    <input
-                                                        ref={fileInputRef}
-                                                        id="fileUpload"
-                                                        name="fileUpload"
-                                                        type="file"
-                                                        accept=".pdf, .doc, .docx, .ppt, .pptx, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation"
-                                                        className={`form-control ${errors.fileUpload && touched.fileUpload
-                                                            ? "is-invalid"
-                                                            : ""
-                                                            }`}
-                                                        onChange={(e) => {
-                                                            const file = e.currentTarget.files[0];
-                                                            if (file) {
-                                                                setFieldValue("fileUpload", file);
-                                                            }
-                                                        }}
-                                                    />
-
-                                                    <ErrorMessage
-                                                        name="fileUpload"
-                                                        component="div"
-                                                        className="invalid-feedback small"
-                                                    />
-                                                </div>
-                                            )}
-
-                                            {target.IdentityConsent === "true" && (
-                                                <div className="full">
-                                                    <label htmlFor="consent">
-                                                        I confirm that I have a valid proof of identification
-                                                        and consent to present it at the venue.
-                                                    </label>
-                                                    <Field name="consent">
-                                                        {({ field, form }) => (
+        
+                                                    {target.fileUpload === "true" && (
+                                                        <div className="full">
+                                                            <div className="clearance"></div>
+                                                            <label className="full" htmlFor="fileUpload">
+                                                                <p>
+                                                                    Please attach any documentation to support your
+                                                                    application.
+                                                                </p>
+                                                            </label>
                                                             <input
-                                                                ref={identityConsentRef}
-                                                                {...field}
-                                                                type="checkbox"
-                                                                id="consent"
-                                                                className={`form-check-input ${form.errors.consent && form.touched.consent
+                                                                ref={fileInputRef}
+                                                                id="fileUpload"
+                                                                name="fileUpload"
+                                                                type="file"
+                                                                accept=".pdf, .doc, .docx, .ppt, .pptx, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                                                                className={`form-control ${errors.fileUpload && touched.fileUpload
                                                                     ? "is-invalid"
                                                                     : ""
                                                                     }`}
                                                                 onChange={(e) => {
-                                                                    field.onChange(e);
-                                                                    setShowSubmit(e.target.checked);
+                                                                    const file = e.currentTarget.files[0];
+                                                                    if (file) {
+                                                                        setFieldValue("fileUpload", file);
+                                                                    }
                                                                 }}
                                                             />
-                                                        )}
-                                                    </Field>
-                                                    <ErrorMessage
-                                                        name="consent"
-                                                        component="div"
-                                                        className="invalid-feedback small"
-                                                    />
-                                                </div>
+        
+                                                            <ErrorMessage
+                                                                name="fileUpload"
+                                                                component="div"
+                                                                className="invalid-feedback small"
+                                                            />
+                                                        </div>
+                                                    )}
+        
+                                                    {target.IdentityConsent === "true" && (
+                                                        <div className="full">
+                                                            <label htmlFor="consent">
+                                                                I confirm that I have a valid proof of identification
+                                                                and consent to present it at the venue.
+                                                            </label>
+                                                            <Field name="consent">
+                                                                {({ field, form }) => (
+                                                                    <input
+                                                                        ref={identityConsentRef}
+                                                                        {...field}
+                                                                        type="checkbox"
+                                                                        id="consent"
+                                                                        className={`form-check-input ${form.errors.consent && form.touched.consent
+                                                                            ? "is-invalid"
+                                                                            : ""
+                                                                            }`}
+                                                                        onChange={(e) => {
+                                                                            field.onChange(e);
+                                                                            setShowSubmit(e.target.checked);
+                                                                        }}
+                                                                    />
+                                                                )}
+                                                            </Field>
+                                                            <ErrorMessage
+                                                                name="consent"
+                                                                component="div"
+                                                                className="invalid-feedback small"
+                                                            />
+                                                        </div>
+                                                    )}
+        
+                                                    {target.surveyForm === "true" && (
+                                                        <SurveyTemplateForm errors={errors} touched={touched} target={target} />
+                                                    )}
+                                                </>
                                             )}
-
-                                            {target.surveyForm === "true" && (
-                                                <SurveyTemplateForm errors={errors} touched={touched} target={target} />
+        
+                                            {target.gic === "true" && (
+                                                <GICRegistrationForm errors={errors} touched={touched} target={target} initialValues={initialValues} setFieldValue={setFieldValue} />
                                             )}
-                                        </>
-                                    )}
-
-                                    {target.gic === "true" && (
-                                        <GICRegistrationForm errors={errors} touched={touched} target={target} initialValues={initialValues} setFieldValue={setFieldValue} />
-                                    )}
-
-                                    {target.paymentRequired === "true" &&(
-
-                                     <div className="full">
-
-                                        <div className="input-group">
-
-{/* {rates !== null && (
-
-                                            <Field
-                                                as={TextField}
-                                                select
-                                                size="small"
-                                                value={chosenCurrency}
-                                                label="Currency"
-                                                sx={{minWidth:127}}
-                                                className="pb-2"
-                                                onChange={(e) => {
-                                                    // Currency Switch Logic goes here
-                                                    if(e.target.value != initialCurrency){
-                                                            target.recordFee = convertCurrency(initialTargetFee, initialCurrency, e.target.value)
-
-                                                        }else{
-                                                            target.recordFee = initialTargetFee;
-                                                            
+        
+                                            {target.paymentRequired === "true" &&(
+        
+                                             <div className="full">
+        
+                                                <div className="input-group">
+        
+        {/* {rates !== null && (
+        
+                                                    <Field
+                                                        as={TextField}
+                                                        select
+                                                        size="small"
+                                                        value={chosenCurrency}
+                                                        label="Currency"
+                                                        sx={{minWidth:127}}
+                                                        className="pb-2"
+                                                        onChange={(e) => {
+                                                            // Currency Switch Logic goes here
+                                                            if(e.target.value != initialCurrency){
+                                                                    target.recordFee = convertCurrency(initialTargetFee, initialCurrency, e.target.value)
+        
+                                                                }else{
+                                                                    target.recordFee = initialTargetFee;
+                                                                    
+                                                                }
+                                                                
+                                                                
+                                                                setChosenCurrency(e.target.value);
+                                                            }
                                                         }
-                                                        
-                                                        
-                                                        setChosenCurrency(e.target.value);
-                                                    }
-                                                }
-                                            >
-                                                <MenuItem value="AED">AED</MenuItem>
-                                                <MenuItem value="EUR">EUR</MenuItem>
-                                                <MenuItem value="USD">USD</MenuItem>
-                                                <MenuItem value="GBP">GBP</MenuItem>
-                                            </Field>
-)} */}
-                                        </div>
-                                        
-                                        
-                                    </div>
-)}
-
-
-                                            {target.consultationEnabled === "true" && (
-                                                <CustomDateTimePicker 
+                                                    >
+                                                        <MenuItem value="AED">AED</MenuItem>
+                                                        <MenuItem value="EUR">EUR</MenuItem>
+                                                        <MenuItem value="USD">USD</MenuItem>
+                                                        <MenuItem value="GBP">GBP</MenuItem>
+                                                    </Field>
+        )} */}
+                                                </div>
                                                 
-                                                errors={errors} 
-                                                touched={touched} 
-                                                target={target} 
-                                                setFieldValue={setFieldValue} 
-                                                values={values} 
-                                                name="metadata_selected_time" 
-                                                setFieldTouched={setFieldTouched}/>
-                                            )}
-
-                                    <Box className="d-flex justify-content-end w-100 my-2">
-                                        <Button
-                                            onClick={async () => {
-
-                                                const formErrors = await validateForm();
-
-                                                const errorFields = Object.keys(formErrors);
-                                                if (errorFields.length > 0) {
-
-                                                    const firstErrorField = document.querySelector(
-                                                        `[name="${errorFields[0]}"]`
-                                                    );
-
-                                                    if (firstErrorField) {
-                                                        firstErrorField.scrollIntoView({ behavior: "smooth", block: "start" });
-                                                        // firstErrorField.focus();
-                                                    }
-
-                                                    return;
-                                                }
-                                            }}
-                                            variant="contained"
-                                            color="primary"
-                                            disabled={!phoneRegistered}
-                                            type="submit"
-                                            style={{
-                                                pointerEvents: "auto",
-                                                opacity: 1,
-                                                width: "100%",
-                                                textTransform: "none",
-                                            }}
-                                        >
-
-                                            {(() => {
-                                                if (isSubmitting) {
-                                                    return <CircularProgress size={20} color="inherit" />;
-                                                }
-
-                                                if (target.paymentRequired === "true") {
-                                                    
-                                                    return <span>Confirm & Pay {target.currency === "AED" ?  Math.round(target.recordFee *(1+tax)) : Math.round(target.recordFee)} {target.currency}
-                                                    {/* {initialCurrency !== chosenCurrency && (
-                                            <small style={{fontSize : '0.8rem'}}> (approximately)</small>
-                                        )} */}
-                                                    </span>;
-                                                }
-
-                                                return <span>{target.send_button_text}</span>;
-                                            })()}
-                                        </Button>
-                                    </Box>
-                                    <WhatsAppButton/>
-                                </Form>
+                                                
+                                            </div>
+        )}
+        
+        
+                                                    {target.consultationEnabled === "true" && (
+                                                        <CustomDateTimePicker 
+                                                        
+                                                        errors={errors} 
+                                                        touched={touched} 
+                                                        target={target} 
+                                                        setFieldValue={setFieldValue} 
+                                                        values={values} 
+                                                        name="metadata_selected_time" 
+                                                        setFieldTouched={setFieldTouched}/>
+                                                    )}
+        
+                                            <Box className="d-flex justify-content-end w-100 my-2">
+                                                <Button
+                                                    onClick={async () => {
+        
+                                                        const formErrors = await validateForm();
+        
+                                                        const errorFields = Object.keys(formErrors);
+                                                        if (errorFields.length > 0) {
+        
+                                                            const firstErrorField = document.querySelector(
+                                                                `[name="${errorFields[0]}"]`
+                                                            );
+        
+                                                            if (firstErrorField) {
+                                                                firstErrorField.scrollIntoView({ behavior: "smooth", block: "start" });
+                                                                // firstErrorField.focus();
+                                                            }
+        
+                                                            return;
+                                                        }
+                                                    }}
+                                                    variant="contained"
+                                                    color="primary"
+                                                    disabled={!phoneRegistered}
+                                                    type="submit"
+                                                    style={{
+                                                        pointerEvents: "auto",
+                                                        opacity: 1,
+                                                        width: "100%",
+                                                        textTransform: "none",
+                                                    }}
+                                                >
+        
+                                                    {(() => {
+                                                        if (isSubmitting) {
+                                                            return <CircularProgress size={20} color="inherit" />;
+                                                        }
+        
+                                                        if (target.paymentRequired === "true") {
+                                                            
+                                                            return <span>Confirm & Pay {target.currency === "AED" ?  Math.round(target.recordFee *(1+tax)) : Math.round(target.recordFee)} {target.currency}
+                                                            {/* {initialCurrency !== chosenCurrency && (
+                                                    <small style={{fontSize : '0.8rem'}}> (approximately)</small>
+                                                )} */}
+                                                            </span>;
+                                                        }
+        
+                                                        return <span>{target.send_button_text}</span>;
+                                                    })()}
+                                                </Button>
+                                            </Box>
+                                            <WhatsAppButton/>
+                                        </Form>
+                                    )}
+                                </Formik>
+                            {target.lockRegistration === "true" && (
+                                <div className="locked-overlay-message">
+                                    Registration has been closed!
+                                </div>
                             )}
-                        </Formik>
-                    {target.lockRegistration === "true" && (
-                        <div className="locked-overlay-message">
-                            Registration has been closed!
+                            </div>
                         </div>
-                    )}
                     </div>
-                </div>
-            </div>
+        
+                </>
+            );
+        }
+    }
 
-        </>
-    );
+
 };

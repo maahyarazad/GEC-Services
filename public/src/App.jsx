@@ -8,6 +8,8 @@ import 'nprogress/nprogress.css';
 import NProgress from 'nprogress';
 import { useEffect, useRef } from "react";
 import {SuccessTemplatePage} from "./components/templates/SuccessTemplatePage";
+import NotFound from "./components/pages/NotFound";
+
 const RouteLoader = () => {
   const location = useLocation();
   const prevPathRef = useRef(location.pathname);
@@ -37,6 +39,7 @@ function AppRoutes() {
         <Route path="/registration/:event/success" element={<SuccessTemplatePage />} />
         <Route path="/guest-registration/:eventSlug" element={<GuestRegistration />} />
         <Route path="/admin" element={<Admin />} />
+          <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );
