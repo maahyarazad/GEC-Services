@@ -68,25 +68,6 @@ export const MemberCardDataGrid = () => {
         }
     };
 
-    const [initialData, setInitialData] = useState(null);
-
-    const fetchDashboardData = useCallback(async()=>{
-        try {
-                setLoading(true);
-                
-
-                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member_card_report`, {credentials:"include"});
-                
-            } catch (err) {
-                console.error('Failed to fetch:', err);
-            } finally {
-                setLoading(false);
-            }
-    },
-        
-        []
-    );
-
     const fetchData = useCallback(
         async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
             setLoading(true);
@@ -123,13 +104,13 @@ export const MemberCardDataGrid = () => {
                 setLoading(false);
             }
         },
-        [setLoading, setMembers, setRowCount]
+        []
     );
 
     useEffect(() => {
         fetchData(paginationModel, sortModel, filterModel);
-        fetchDashboardData();
-    }, [paginationModel, sortModel, applyFilterTrigger, fetchDashboardData]);
+        
+    }, [paginationModel, sortModel, applyFilterTrigger]);
 
 
     return (

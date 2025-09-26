@@ -22,6 +22,8 @@ import { GrSchedules } from "react-icons/gr";
 import {config} from '../../../ui_config';
 import { IoDuplicate } from "react-icons/io5";
 import { FaRegEdit } from "react-icons/fa";
+import { IoMdArchive } from "react-icons/io";
+
 
 const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate ,fetchingCodeList }) => [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -226,6 +228,12 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
                     >
                             <IoDuplicate color="primary" size={18} />
                     </IconButton>
+                    <IconButton
+                        onClick={() => onDuplicate(params.row)}
+                       title="Archive registration page"
+                    >
+                            <IoMdArchive color="primary" size={18} />
+                    </IconButton>
 
                     <Switch
                     title="Switch Registration Lock"
@@ -310,8 +318,12 @@ export const RegistrationList = () => {
 
     useEffect(() => {
         fetchData();
+        
+    }, [fetchData, setRowCount]);
+    useEffect(() => {
+        
         getMemberCount();
-    }, [fetchData, getMemberCount, setRowCount]);
+    }, []);
 
 
     const handleDuplicateCreation = async (selectedRow) => {

@@ -65,6 +65,7 @@ export const MemberDataGrid = () => {
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
     const [editReg, setEditReg] = useState(false);
     const [initialData, setInitialData] = useState(null);
+    
     const fetchData = useCallback(
         async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
             setLoading(true);
