@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS registration_config (
   registration_code VARCHAR(6),
   createdAt DATETIME DEFAULT (datetime('now')),
   modifiedAt DATETIME
-, surveyForm BOOLEAN NOT NULL DEFAULT 0, gic BOOLEAN, recordFee REAL DEFAULT 0.0, loginRequired BOOLEAN, currency VARCHAR(3), use_member_card BOOLEAN, vatEnabled BOOLEAN default false, consultationEnabled BOOLEAN default false, metadata_json TEXT DEFAULT '', archived BOOLEAN default 'false')
+, surveyForm BOOLEAN NOT NULL DEFAULT 0, gic BOOLEAN, recordFee REAL DEFAULT 0.0, loginRequired BOOLEAN, currency VARCHAR(3), use_member_card BOOLEAN, vatEnabled BOOLEAN default false, consultationEnabled BOOLEAN default false, metadata_json TEXT DEFAULT '', archived BOOLEAN default 'false');
 
 CREATE TABLE IF NOT EXISTS news_letter_emails (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

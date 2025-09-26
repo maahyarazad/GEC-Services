@@ -10,38 +10,8 @@ const twilioClient = require('twilio')(process.env.TWILIO_ACOUNT_SID, process.en
 const smsglobal = require('smsglobal')(process.env.SMSGLOBAL_KEY, process.env.SMSGLOBAL_SECRET);
 
 const path = require("path");
-
-
-const otpRequestMap = new Map();
-const otpLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 1,
-  standardHeaders: true,
-  legacyHeaders: false,
-
-  handler: (req, res, next, options) => {
-    const key = req.ip; // or use req.body.phone/email for per-user tracking
-    const now = Date.now();
-    const lastRequestTime = otpRequestMap.get(key) || 0;
-    const elapsed = now - lastRequestTime;
-
-    if (elapsed < 60000) {
-      return res.status(429).json({
-        status: 429,
-        error: `You can only request one OTP per minute. Please wait ${Math.floor((60000-elapsed)/1000)} seconds before trying again.`
-      });
-    }
-
-    
-    // Update last request timestamp and allow the request
-    next(); // continue to your route
-  }
-});
-
-
-
 const multer = require("multer");
-const { config } = require('dotenv');
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, "file_storage/");
@@ -73,6 +43,36 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 
+const otpRequestMap = new Map();
+const otpLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 1,
+  standardHeaders: true,
+  legacyHeaders: false,
+
+  handler: (req, res, next, options) => {
+    const key = req.ip; // or use req.body.phone/email for per-user tracking
+    const now = Date.now();
+    const lastRequestTime = otpRequestMap.get(key) || 0;
+    const elapsed = now - lastRequestTime;
+
+    if (elapsed < 60000) {
+      return res.status(429).json({
+        status: 429,
+        error: `You can only request one OTP per minute. Please wait ${Math.floor((60000-elapsed)/1000)} seconds before trying again.`
+      });
+    }
+
+    
+    // Update last request timestamp and allow the request
+    next(); // continue to your route
+  }
+});
+
+
+
+
+
 const sendOtpToEmail = async (data, req, res) => {
     if (!data.email) {
         return { status: false, code: 400, message: 'Email is required' };
@@ -86,7 +86,7 @@ const sendOtpToEmail = async (data, req, res) => {
     const otp = generateOTP();
     data.otp = otp;
     req.session.otp = otp;
-    req.session.otpExpires = Date.now() + 1 * 59 * 1000; // expires in 1 mins
+    req.session.otpExpires = Date.now() + 5 * 59 * 1000; // expires in 5 mins
 
     try {
 

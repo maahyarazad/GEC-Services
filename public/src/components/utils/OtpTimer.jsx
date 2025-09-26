@@ -30,12 +30,17 @@ const OtpTimer = ({ initialSeconds = 59, loginResponseData = {}, onResend, onExp
         }
     };
     
-    
+      // Format seconds into mm:ss
+    const formatTime = (secs) => {
+        const minutes = Math.floor(secs / 60);
+        const seconds = secs % 60;
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
 
     return (
        <div className="mt-2">
             {!expired ? (
-                <span>OTP expires in: {secondsLeft} seconds</span>
+                <span>OTP expires in: {formatTime(secondsLeft)} minutes</span>
             ) : (
                 null
             )}

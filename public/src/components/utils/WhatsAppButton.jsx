@@ -1,9 +1,20 @@
+import PropTypes from "prop-types";
 import React from "react";
 import { FaWhatsapp } from "react-icons/fa";
-const WhatsAppButton = () => {
+const WhatsAppButton = ({data}) => {
+  
+  
+  
+  if(!data?.metadata_json){
+    return <></>
+  }
+
+  const metadata = JSON.parse(data.metadata_json);
+
+
   return (
     <a
-      href="https://wa.link/9ydml5"
+      href={`https://api.whatsapp.com/send?phone=${metadata.whatsapp_number}&text=${metadata.whatsapp_message}`}
       target="_blank"
       rel="noopener noreferrer"
       className="whatsapp"
@@ -44,3 +55,5 @@ const WhatsAppButton = () => {
 };
 
 export default WhatsAppButton;
+
+PropTypes

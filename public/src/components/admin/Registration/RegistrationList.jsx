@@ -229,7 +229,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
                             <IoDuplicate color="primary" size={18} />
                     </IconButton>
                     <IconButton
-                        onClick={() => onArchive(params.row.id)}
+                        onClick={() => onArchive(params.row)}
                        title="Archive registration page"
                     >
                             <IoMdArchive color="primary" size={18} />
@@ -478,7 +478,7 @@ export const RegistrationList = () => {
     const archiveAlert = (row) => {
         dialogRef.current.openDialog(
             <div>
-                Enabling this option will <strong>archive the registration record and hide it from active listings. </strong> 
+                Do you want to <strong>archive the registration record and hide it from active listings. </strong> 
                 Are you sure you want to proceed?
                 </div>,
             'Confirm Action',

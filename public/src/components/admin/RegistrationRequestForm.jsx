@@ -72,6 +72,7 @@ const validationSchema = Yup.object({
     filedIcon: Yup.boolean(),
     use_member_card: Yup.boolean(),
     consultationEnabled: Yup.boolean(),
+    archived: Yup.boolean(),
 
 
 
@@ -130,6 +131,8 @@ export default function NewRegistrationPage({
         consultationEnabled: initialData?.consultationEnabled === "true",
         metadata_start_time: 10,
         metadata_end_time: 20,
+        metadata_whatsapp_number: 971562050066,
+        metadata_whatsapp_message: "Hallo! Ich benötige Hilfe bei...",
         metadata_json: initialData?.metadata_json || "",
 
         textarea: initialData?.textarea === "true",
@@ -145,6 +148,8 @@ export default function NewRegistrationPage({
         event_location: initialData?.event_location || "",
         event_location_name: initialData?.event_location_name || "",
         uniqeCodeAccess: enableUniqueMemberCode ? uniqeCodeAccess : 1,
+        archived: 0,
+        custom_whatsapp: initialData?.custom_whatsapp === "true",
     };
 
     useEffect(() => {
@@ -205,6 +210,7 @@ export default function NewRegistrationPage({
 
         try {
             
+            
             const formData = new FormData();
             const metadata = values?.metadata_json!== "" ? JSON.parse(values.metadata_json) : {};
             const overwrite_flag = values?.metadata_json === "";
@@ -247,12 +253,17 @@ export default function NewRegistrationPage({
                             
                             if(value !== null){
                                 
-                                
                                 // Strip the prefix if you want clean keys in JSON
                                 const cleanKey = key.replace("metadata_", "");
                                 metadata[cleanKey] = value;
                             }
                         } 
+
+                        if(key.startsWith("metadata_whatsapp")) {
+                            
+                            const cleanKey = key.replace("metadata_", "");
+                            metadata[cleanKey] = value;
+                        }
 
                         if(!key.startsWith("metadata_")) formData.append(key, value);
 
@@ -278,8 +289,9 @@ export default function NewRegistrationPage({
             
             if(metadata !== null) formData.append("metadata_json", JSON.stringify(metadata));
             
+            
 
-
+            
             const response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/api/registration-config`,
                 {
@@ -1118,6 +1130,80 @@ export default function NewRegistrationPage({
                                 </div>
                                                                 )}
 
+ <div className="form-check form-switch mb-3">
+                                        <Field name="custom_whatsapp">
+                                            {({ field }) => (
+                                                <input
+                                                    name={field.name}
+                                                    checked={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    id="countDown"
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                />
+                                            )}
+                                        </Field>
+                                        <label className="form-check-label" htmlFor="custom_whatsapp">
+                                            Custom WhatsApp
+                                        </label>
+                                    </div>
+
+                                    {values.custom_whatsapp && (
+                                    <div className="col-12 d-flex">
+                                        
+                                        <div className="row">
+
+                                    <div className="align-items-center col-12">
+                                        <label htmlFor="send_button_text" className="form-label">
+                                            <small>Whatsapp Number</small>
+                                        </label>
+                                        <Field
+                                            
+                                            
+                                            name="metadata_whatsapp_number"
+                                            type="text"
+                                            className={`form-control ${errors.metadata_whatsapp_number && touched.metadata_whatsapp_number
+                                                ? "is-invalid"
+                                                : ""
+                                                }`}
+                                            placeholder=""
+                                        />
+                                        <div style={{ minHeight: 30 }}>
+                                            <ErrorMessage
+                                                name="metadata_whatsapp_number"
+                                                component="div"
+                                                className="text-danger small mt-1"
+                                            />
+                                        </div>
+                                    </div>
+                                     <div className="align-items-center col-12">
+                                        <label htmlFor="send_button_text" className="form-label">
+                                            Screen Message
+                                        </label>
+                                        <Field
+                                            
+                                            
+                                            name="metadata_whatsapp_message"
+                                            type="text"
+                                            className={`form-control ${errors.metadata_whatsapp_message && touched.metadata_whatsapp_message
+                                                ? "is-invalid"
+                                                : ""
+                                                }`}
+                                            placeholder=""
+                                        />
+                                        <div style={{ minHeight: 30 }}>
+                                            <ErrorMessage
+                                                name="metadata_whatsapp_message"
+                                                component="div"
+                                                className="text-danger small mt-1"
+                                            />
+                                        </div>
+                                    </div>
+                                        </div>
+                                </div>
+                                                                )}
+
 
 
                                     <div className="form-check form-switch mb-3">
@@ -1216,6 +1302,7 @@ export default function NewRegistrationPage({
                                         const formErrors = await validateForm();
 
                                         const errorFields = Object.keys(formErrors);
+                                        
                                         if (errorFields.length > 0) {
                                             
                                             const firstErrorField = document.querySelector(

@@ -168,7 +168,7 @@ export const TemplateForm = () => {
                     if (x.loginRequired === "false") {
 
                         // setPhoneRegistered(true);
-                        debugger;
+                        
                         setTarget(values.rows[0]);
                         setLoading(false);
                         
@@ -211,8 +211,8 @@ export const TemplateForm = () => {
             const parts = url.split("/").filter(Boolean); // ["users", "123"]
             const lastPart = parts[parts.length - 1];
 
-            debugger;
-            if (gecuser.page === lastPart) {
+            
+            if (gecuser?.page === lastPart) {
                 setTarget(gecuser);
                 setLoading(false);
             }
@@ -851,6 +851,7 @@ export const TemplateForm = () => {
                                                                         />
                                                                         {validOtp && (
                                                                             <OtpTimer
+                                                                                initialSeconds={300}
                                                                                 loginResponseData={currentResponseStatus}
                                                                                 onExpiredChange={handleExpiredChange}
                                                                             />
@@ -1255,7 +1256,7 @@ export const TemplateForm = () => {
                                                     })()}
                                                 </Button>
                                             </Box>
-                                            <WhatsAppButton/>
+                                            <WhatsAppButton data={target}/>
                                         </Form>
                                     )}
                                 </Formik>
