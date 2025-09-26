@@ -18,6 +18,11 @@ const EnableScheduling =
           <img src={enableScheduling} alt="enableScheduling" width={200} className='mt-1 rounded-1'/>
         </div>,
         'Confirm Action',
+        
+            {
+                text: 'Enable',
+                color: 'success'
+            },
         () => {
           
           setFieldValue(field.name, !field.value);

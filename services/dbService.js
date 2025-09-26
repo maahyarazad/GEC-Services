@@ -57,6 +57,38 @@ const dbService = {
         });
     },
 
+
+    findAllQueryFilter: (table) => {
+        return new Promise((resolve, reject) => {
+            // Step 1: get table schema
+            const pragmaSql = `PRAGMA table_info(${table});`;
+
+            db.all(pragmaSql, [], (err, columns) => {
+                if (err) return reject(err);
+
+                // Step 2: possible soft-delete column names
+                const softDeleteColumns = ["isDeleted", "archive", "archived", "deleted"];
+
+                // Find if any soft-delete column exists in this table
+                const foundColumn = columns.find(col =>
+                    softDeleteColumns.includes(col.name)
+                );
+
+                // Step 3: build query
+                const sql = foundColumn
+                    ? `SELECT * FROM ${table} WHERE ${foundColumn.name} != 1 OR ${foundColumn.name} IS NULL`
+                    : `SELECT * FROM ${table}`;
+
+                // Step 4: run the query
+                db.all(sql, [], (err, rows) => {
+                    if (err) return reject(err);
+                    resolve(rows);
+                });
+            });
+        });
+    },
+
+
     findById: (table, id) => {
         const sql = `SELECT * FROM ${table} WHERE id = ?`;
         return new Promise((resolve, reject) => {
@@ -67,27 +99,29 @@ const dbService = {
         });
     },
 
-    updateWhere: (table, id, data, column) => {
-        if (!data || Object.keys(data).length === 0) {
-            return Promise.reject(new Error("No data provided to update"));
-        }
-
-        const keys = Object.keys(data);
-        const values = Object.values(data);
-
-        
-        const setClause = keys.map(key => `${key} = ?`).join(", ");
-
-        // SQL query with WHERE clause
-        const sql = `UPDATE ${table} SET ${setClause} WHERE ${column} = ?`;
-
+    updateWhere: (table, updates, where) => {
         return new Promise((resolve, reject) => {
-            db.run(sql, [...values, id], function (err) {
+            if (!updates || Object.keys(updates).length === 0) {
+                return reject(new Error("No update fields provided"));
+            }
+
+            // Build SET clause
+            const setClause = Object.keys(updates).map(key => `${key} = ?`).join(", ");
+            const setValues = Object.values(updates);
+
+            // Build WHERE clause
+            const whereClause = Object.keys(where).map(key => `${key} = ?`).join(" AND ");
+            const whereValues = Object.values(where);
+
+            const sql = `UPDATE ${table} SET ${setClause} WHERE ${whereClause}`;
+
+            db.run(sql, [...setValues, ...whereValues], function (err) {
                 if (err) return reject(err);
-                resolve({ changes: this.changes });
+                resolve({ changes: this.changes }); // number of rows updated
             });
         });
     },
+
 
 
     update: (table, id, data) => {

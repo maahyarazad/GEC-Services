@@ -214,44 +214,36 @@ router.post(
   }
 );
 
-router.post(
-  "/api/registration-config/switch-registration-lock",
-  authorize_admin,
-  upload.single("none"),
-  async (req, res) => {
-    try {
-      const table_name = "registration_config";
-      const { Image, ...data } = req.body;
+router.patch("/api/registration-config-switch", authorize_admin, async (req, res) => {
+  try {
+    const id = Number(req.query.id);
 
-      const id = data.id;
-
-      // Check if the record exists
-      const existing = await dbService.findById(table_name, id);
-      if (!existing) {
-        return res
-          .status(404)
-          .json({ status: false, message: "Record not found" });
-      }
-
-      data.lockRegistration = String(!(data.lockRegistration === "true"));
-
-      const updated = await dbService.update(table_name, id, {
-        ...data,
-        modifiedAt: new Date().toISOString(),
-      });
-
-      res.json({ status: true, message: "Data updated successfully", updated });
-    } catch (error) {
-      console.error("Edit error:", error);
-      res.status(500).json({ status: false, message: "Server error" });
+    if (!id) {
+      return res.status(400).json({ status: false, message: "Missing id parameter" });
     }
+
+    const val = req.query.switch;
+    const result = await dbService.updateWhere(
+      "registration_config",
+      { lockRegistration: val, modifiedAt: new Date().toISOString() },
+      { id }
+    );
+
+    if (result.changes === 0) {
+      return res.status(404).json({ status: false, message: "Record not found" });
+    }
+
+    res.status(200).json({ status: true, message: "Record switched successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: false, message: "Server error" });
   }
-);
+});
 
 router.get("/api/registration-config", authorize_admin ,async (req, res) => {
   try {
     const table_name = "registration_config";
-    const rows = await dbService.findAll(table_name);
+    const rows = await dbService.findAllQueryFilter(table_name);
 
     res.json({ status: true, message: "Data fetched successfully", rows });
   } catch (error) {
@@ -259,6 +251,33 @@ router.get("/api/registration-config", authorize_admin ,async (req, res) => {
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
+
+
+router.patch("/api/registration-config-archive", authorize_admin, async (req, res) => {
+  try {
+    const id = Number(req.query.id);
+
+    if (!id) {
+      return res.status(400).json({ status: false, message: "Missing id parameter" });
+    }
+
+    const result = await dbService.updateWhere(
+      "registration_config",
+      { archived: 1 , modifiedAt: new Date().toISOString() },
+      { id }
+    );
+
+    if (result.changes === 0) {
+      return res.status(404).json({ status: false, message: "Record not found" });
+    }
+
+    res.status(200).json({ status: true, message: "Record archived successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
 
 router.post("/registration-config/optional-login", async (req, res) => {
   try {

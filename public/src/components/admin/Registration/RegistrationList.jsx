@@ -25,7 +25,7 @@ import { FaRegEdit } from "react-icons/fa";
 import { IoMdArchive } from "react-icons/io";
 
 
-const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate ,fetchingCodeList }) => [
+const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate, onArchive ,fetchingCodeList }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     {
         field: 'lockRegistration', headerName: 'Active Page', width: 100, renderCell: (params) => {
@@ -229,7 +229,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
                             <IoDuplicate color="primary" size={18} />
                     </IconButton>
                     <IconButton
-                        onClick={() => onDuplicate(params.row)}
+                        onClick={() => onArchive(params.row.id)}
                        title="Archive registration page"
                     >
                             <IoMdArchive color="primary" size={18} />
@@ -326,6 +326,29 @@ export const RegistrationList = () => {
     }, []);
 
 
+
+    const handleArchive = async (id) => {
+         try {
+            
+            
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-config-archive?id=${id}`, {
+                method: 'PATCH',
+                credentials: "include"
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch registration data');
+            }
+
+            const configData = await response.json();
+            fetchData();
+
+        } catch (err) {
+            console.error('Error fetching data:', err);
+        }
+    };
+
+
     const handleDuplicateCreation = async (selectedRow) => {
          try {
             const formData = new FormData();
@@ -352,16 +375,12 @@ export const RegistrationList = () => {
     };
 
 
-    const handleSwitchLock = async (selectedRow) => {
-        try {
-            const formData = new FormData();
-            for (const key in selectedRow) {
-                formData.append(key, selectedRow[key]);
-            }
+    const handleSwitchLock = async (id, val) => {
+       try {
             
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-config/switch-registration-lock/`, {
-                method: 'POST',
-                body: formData,
+            
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-config-switch?id=${id}&switch=${val}`, {
+                method: 'PATCH',
                 credentials: "include"
             });
 
@@ -424,23 +443,25 @@ export const RegistrationList = () => {
     };
 
     const switchLock = (row) => {
-        
         if(row.lockRegistration === "false"){
 
             dialogRef.current.openDialog(
                 <div>
-                    <p>Enabling this option will <strong>lock the registration page and prevent further submissions.</strong> Are you sure you want to proceed?</p>
+                    <div>Enabling this option will <strong>lock the registration page and prevent further submissions.</strong> Are you sure you want to proceed?</div>
                     <img src={lockRegistrationImage} alt="Lock" width={400} className="mt-1 rounded-1"/>
                 </div>,
                 'Confirm Action',
+                {
+                    text: 'Lock Page',
+                    color: 'error'
+                },
                 () => {
                     
                     const selectedRow = registrationList?.find((x) => x.id === row.id);
                     if (selectedRow) {
-                        selectedRow.Image = null;
-                        handleSwitchLock(selectedRow)
+                        
+                        handleSwitchLock(selectedRow.id, 'true')
                     }
-    
                 },
                 () => {
     
@@ -448,12 +469,36 @@ export const RegistrationList = () => {
             );
         }else{
             const selectedRow = registrationList?.find((x) => x.id === row.id);
-                    if (selectedRow) {
-                        selectedRow.Image = null;
-                        handleSwitchLock(selectedRow)
-                    }
+            if (selectedRow) {
+                handleSwitchLock(selectedRow.id, 'false')
+            }
         }
+    };
 
+    const archiveAlert = (row) => {
+        dialogRef.current.openDialog(
+            <div>
+                Enabling this option will <strong>archive the registration record and hide it from active listings. </strong> 
+                Are you sure you want to proceed?
+                </div>,
+            'Confirm Action',
+            {
+                text: 'Archive',
+                color: 'error'
+            },
+            () => {
+                
+                const selectedRow = registrationList?.find((x) => x.id === row.id);
+                if (selectedRow) {
+                    
+                    handleArchive(selectedRow.id)
+                }
+            },
+            () => {
+
+            },
+        );
+       
     };
 
     const [enableUniqueMemberCode, setEnableUniqueMemberCode] = useState(false);
@@ -508,6 +553,7 @@ export const RegistrationList = () => {
                             , onLock: switchLock, onShowCode: showCodeList
                             , onShowBookingData: ShowBookingData
                             , onDuplicate: handleDuplicateCreation
+                            , onArchive: archiveAlert
                             , fetchingCodeList: fetchingCodeList })}
                         pageSize={5}
                         rowsPerPageOptions={[5]}

@@ -15,12 +15,14 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 const AlertDialog = ({ref}) => {
   const [open, setOpen] = React.useState(false);
   const [message, setMessage] = React.useState('');
+  const [btnStyle, setBtnStyle] = React.useState('');
   const [actionTitle, setActionTitle] = React.useState('');
   const onProceedRef = React.useRef(null);
   const onCancelRef = React.useRef(null);
 
-  const openDialog = (msg, actionTitle, onProceed, onCancel) => {
+  const openDialog = (msg, actionTitle, btnStyle, onProceed, onCancel) => {
     if (msg) setMessage(msg);
+    if (btnStyle) setBtnStyle(btnStyle);
     if (actionTitle) setActionTitle(actionTitle);
     onProceedRef.current = onProceed;
     onCancelRef.current = onCancel;
@@ -58,9 +60,16 @@ const AlertDialog = ({ref}) => {
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleCancel} style={{ textTransform: 'none' }} autoFocus variant='contained' >Cancel</Button>
-        <Button onClick={handleProceed} style={{ textTransform: 'none' }}  variant="outlined" >
-          Proceed
+    <Button 
+      onClick={handleCancel} size='small'
+      style={{ textTransform: 'none' }} 
+      variant="contained"
+    >
+      Cancel
+    </Button>
+        <Button size='small'
+        onClick={handleProceed} style={{ textTransform: 'none' }}  variant="outlined" color={btnStyle.color}>
+          {btnStyle.text}
         </Button>
       </DialogActions>
     </Dialog>

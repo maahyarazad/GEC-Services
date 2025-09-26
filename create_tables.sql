@@ -28,25 +28,19 @@ CREATE TABLE IF NOT EXISTS registration_keys (
   FOREIGN KEY (registration_config_id) REFERENCES registration_config(id) ON DELETE CASCADE
 );
 
+
+
 CREATE TABLE IF NOT EXISTS registration_config (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   page VARCHAR(100),
   paymentRequired BOOLEAN,
-  currency VARCHAR(3),
-  recordFee REAL DEFAULT 0.0,
   birthdayRequired BOOLEAN,
   companyRequired BOOLEAN,
   lockRegistration BOOLEAN,
   IdentityConsent BOOLEAN,
   fileUpload BOOLEAN,
-  surveyForm BOOLEAN,
-  gic BOOLEAN,
-  loginRequired BOOLEAN,
-  vatEnabled BOOLEAN,
-  consultationEnabled BOOLEAN,
   countDown BOOLEAN,
   textarea BOOLEAN,
-  fieldIcon BOOLEAN,
   fieldIcon BOOLEAN,
   title VARCHAR(255),
   send_button_text VARCHAR(255),
@@ -55,13 +49,12 @@ CREATE TABLE IF NOT EXISTS registration_config (
   event_location VARCHAR(255), 
   event_location_name VARCHAR(255), 
   description TEXT,
-  metadata_json TEXT,
   Image TEXT,
   maxTokensPerGuest INT,
   registration_code VARCHAR(6),
   createdAt DATETIME DEFAULT (datetime('now')),
   modifiedAt DATETIME
-);
+, surveyForm BOOLEAN NOT NULL DEFAULT 0, gic BOOLEAN, recordFee REAL DEFAULT 0.0, loginRequired BOOLEAN, currency VARCHAR(3), use_member_card BOOLEAN, vatEnabled BOOLEAN default false, consultationEnabled BOOLEAN default false, metadata_json TEXT DEFAULT '', archived BOOLEAN default 'false')
 
 CREATE TABLE IF NOT EXISTS news_letter_emails (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
