@@ -17,8 +17,8 @@ header {
       display: inline-block;
       button#burgerMenu {
         position: relative;
-        width: 20px;
-        height: 20px;
+        width: 32px;
+        height: 32px;
         background-color: unset;
         border: unset;
         display: inline-block;

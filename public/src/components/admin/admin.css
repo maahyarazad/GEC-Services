@@ -8,20 +8,45 @@
   justify-content: space-between;
   background-color: var(--light);
   padding: 16px;
-  > div {
-    position: relative;
+}
+.admin > div {
+  background-color: var(--white);
+  position: relative;
+  height: 99%;
+}
+.admin > div:nth-of-type(1) {
+  width: 15%;
+  justify-self: center;
+  justify-content: flex-start;
+  display: flex;
+}
+.admin > div:nth-of-type(2) {
+  width: calc(85% - 16px);
+}
+@media screen and (max-width: 768px) {
+  .admin > div {
     background-color: var(--white);
-    height: 99%;
+    position: relative;
+    width: 100dvw;
+    padding: 0;
   }
-
-  > div:nth-of-type(1) {
-    width: 15%;
+  .admin > div:nth-of-type(1) {
+    left: -100dvw;
+    position: absolute;
     justify-self: center;
     justify-content: flex-start;
     display: flex;
+    z-index: 999;
+    transition: left 0.3s ease-in-out, width 0.3s ease-in-out;
   }
-
-  > div:nth-of-type(2) {
-    width: calc(85% - 16px);
+  .admin > div:nth-of-type(1).show {
+    width: 70dvw;
+    position: absolute;
+    left: 0 !important;
+    transition: left 0.3s ease-in-out, width 0.3s ease-in-out;
   }
-}
+  .admin > div:nth-of-type(2) {
+    position: absolute;
+    width: 100%;
+  }
+}/*# sourceMappingURL=admin.css.map */

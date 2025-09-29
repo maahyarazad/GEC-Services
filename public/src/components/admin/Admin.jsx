@@ -181,6 +181,29 @@ export const Admin = ({ data }) => {
     ];
 
     const [tabValue, setTabValue] = useState(0);
+    const [burgerActive, setBurgerActive] = useState(false);
+    const [showMenu, setShowMenu] = useState(null);
+    
+    useEffect(()=>{
+    const setWidth = () => {
+      const width = window.innerWidth;
+      if(width < 768){
+        setShowMenu(true);
+      }else{
+        setShowMenu(false);
+      }
+    };
+    
+    setWidth();
+      
+    window.addEventListener("resize", setWidth);
+  
+    return () => {
+      window.removeEventListener("resize", setWidth);
+    };
+    }, []);
+
+
 
     const handletabChange = (event, newValue) => {
         setTabValue(newValue);
@@ -218,9 +241,9 @@ export const Admin = ({ data }) => {
         </div>
     ) : adminUser ? (
         <>
-            <Header adminUser={adminUser} setAdminUser={setAdminUser}/>
+            <Header adminUser={adminUser} setAdminUser={setAdminUser} showMenu={showMenu} burgerActive={burgerActive} setBurgerActive={setBurgerActive}/>
             <div className="admin">
-                <div>
+                <div className={burgerActive ? "show" : ""}>
                     <Box
                         sx={{ flexGrow: 1, bgcolor: 'background.paper', display: 'flex' }}
                     >
@@ -258,7 +281,7 @@ export const Admin = ({ data }) => {
                         </Tabs>
                     </Box>
                 </div>
-                <div>{content}</div>
+                <div >{content}</div>
             </div>
         </>
     ) : (

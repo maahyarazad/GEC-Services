@@ -1,6 +1,6 @@
 import "./header.css";
 import PropTypes from "prop-types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CHookDateTime from "./CHookDateTime";
 import GEC_logo from "../../assets/media/20-Jahre.webp";
 import { RiLogoutBoxRLine } from "react-icons/ri";
@@ -8,8 +8,14 @@ import { Tooltip } from "@mui/material";
 import { useNavigate } from "react-router";
 import {config} from '../../ui_config';
 
-export const Header = ({ adminUser, setAdminUser }) => {
+export const Header = ({ adminUser, setAdminUser, showMenu, burgerActive,setBurgerActive  }) => {
 
+
+    const handleBurgerMenu = () => {
+        setBurgerActive((prev) => !prev);
+        
+    
+    }
 
     const dateTime = CHookDateTime();
     const navigate = useNavigate();
@@ -40,14 +46,19 @@ export const Header = ({ adminUser, setAdminUser }) => {
         <>
             <header>
                 <div>
+                    
                     <span>
-                        {/* <button
-              onClick={handleBurgerMenu}
-              id="burgerMenu"
-              className={burgerActive ? "click" : null}
-            >
-              <span></span>
-            </button> */}
+                    <div className={showMenu ? "" : `d-none`}>
+
+                        <button 
+                        onClick={handleBurgerMenu}
+                        id="burgerMenu"
+                        className={burgerActive ? "click" : null}
+                        >
+                        <span></span>
+                        </button>
+                    </div>
+                    
                         <a to="/">
                             <img alt="GEC Logo" src={GEC_logo}></img>
                         </a>
