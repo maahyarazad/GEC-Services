@@ -207,6 +207,7 @@ export const Admin = ({ data }) => {
 
     const handletabChange = (event, newValue) => {
         setTabValue(newValue);
+        setBurgerActive(false);
     };
 
     let content;
