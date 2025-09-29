@@ -18,16 +18,18 @@ const RouteLoader = () => {
     if (location.pathname !== prevPathRef.current) {
       NProgress.start();
     }
-
+    
     // Let the DOM update before stopping
     requestAnimationFrame(() => {
       NProgress.done();
       prevPathRef.current = location.pathname;
     });
   }, [location]);
-
+  
   return null;
 };
+
+
 
 function AppRoutes() {
   return (
@@ -46,6 +48,23 @@ function AppRoutes() {
 }
 
 function App() {
+  useEffect(() => {
+    const setVhVar = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty("--vh", `${vh}px`);
+    };
+  
+    // Run at start
+    setVhVar();
+  
+    // Update on resize / orientation change
+    window.addEventListener("resize", setVhVar);
+  
+    return () => {
+      window.removeEventListener("resize", setVhVar);
+    };
+    
+  }, []);
   return (
     <BrowserRouter>
       <AppRoutes />

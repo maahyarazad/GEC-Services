@@ -204,7 +204,7 @@
     position: relative;
     overflow: visible;
     border: 0;
-    
+    height: 100dvh;
     > button:nth-of-type(1) {
       display: block;
       right: unset;
@@ -237,9 +237,10 @@
 
     > .slider-button{
       left: 10.5dvw;
-      
+      -webkit-backface-visibility: hidden;
       position: absolute;
       top: 10.5dvh;
+      top: calc(10.5 * var(--vh));
       z-index: 99;
       display:block;
       transition: left 0.3s ease-in-out;

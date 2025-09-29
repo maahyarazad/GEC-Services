@@ -118,7 +118,7 @@ export const Admin = ({ data }) => {
 
             if (res.status === 401) {
                 const errorData = await res.json();
-                return setStatus(errorData.error || "Too many attempts, please try again later.");
+                return setStatus(errorData.error || "Unauthorized, please try again later.");
             }
 
             if (res.ok) {
