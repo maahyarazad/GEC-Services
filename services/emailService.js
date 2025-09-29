@@ -686,7 +686,7 @@ async function email_otp(reqBody) {
                     <span style="font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #D9B144;">${otp}</span>
                   </p>
                   <p style="color: #333333;">
-                    This OTP is valid for the next <strong>1 minutes</strong>. Please do not share it with anyone.
+                    This OTP is valid for the next <strong>5 minutes</strong>. Please do not share it with anyone.
                   </p>
                   <p style="color: #333333;">
                     If you did not request this OTP, please ignore this email.
