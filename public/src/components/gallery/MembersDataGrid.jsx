@@ -7,7 +7,7 @@ import { MdFormatListBulletedAdd } from "react-icons/md";
 import Modal from "../../components/Modal";
 import debounce from 'lodash/debounce';
 import { MdAddCircleOutline } from "react-icons/md";
-import {config} from '../../ui_config';
+import { config } from '../../ui_config';
 
 const columns = ({ onEdit, onSwitchActive }) => [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -65,7 +65,7 @@ export const MemberDataGrid = () => {
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
     const [editReg, setEditReg] = useState(false);
     const [initialData, setInitialData] = useState(null);
-    
+
     const fetchData = useCallback(
         async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
             setLoading(true);
@@ -90,7 +90,7 @@ export const MemberDataGrid = () => {
                     filterParams,
                 ].filter(Boolean).join('&');
 
-                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member?${queryParams}`, {credentials:"include"});
+                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member?${queryParams}`, { credentials: "include" });
                 const data = await response.json();
 
                 setMembers(data.data || []);
@@ -116,14 +116,24 @@ export const MemberDataGrid = () => {
     const handleExport = async () => {
         try {
             setIsDownloading(true);
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-csv-data`, {credentials:"include"});
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-csv-data`, { credentials: "include" });
             if (!response.ok) throw new Error('Failed to fetch CSV');
+
+            const contentDisposition = response.headers.get("Content-Disposition");
+
+            let fileName = "download.csv"; // fallback
+            if (contentDisposition) {
+                const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (match) {
+                    fileName = match[1];
+                }
+            }
 
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'members.csv');
+            link.setAttribute('download', fileName);
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -138,7 +148,7 @@ export const MemberDataGrid = () => {
 
     const openEdit = (row) => {
         const selectedRow = members?.find((x) => x.id === row.id);
-        
+
         if (selectedRow) {
             setInitialData(selectedRow);
             setEditReg(true);
@@ -149,31 +159,31 @@ export const MemberDataGrid = () => {
     const handleModalSwitch = () => {
         setEditReg(false);
         fetchData(paginationModel, sortModel, filterModel);
-        
+
         timeoutRef.current = setTimeout(() => {
             setInitialData(null);
         }, 100);
-        };
+    };
 
-        useEffect(() => {
+    useEffect(() => {
         return () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
         };
-        }, []);
+    }, []);
 
     // const openEdit = async (row) => {
     //     try{
 
     //         initialData = row;
     //         const formData = new FormData();
-    
+
     //         if (row) {
     //             formData.append('id', row.id);
     //             formData.append('active-member-switch', row.active_member);
     //         };
-    
-    
-    
+
+
+
     //         const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member`, {
     //             method: 'POST',
     //             body: formData,
@@ -190,24 +200,24 @@ export const MemberDataGrid = () => {
     // };
 
     const switchActive = async (row) => {
-        try{
+        try {
             const formData = new FormData();
             if (row) {
                 formData.append('id', row.id);
                 formData.append('active_member', row.active_member);
             };
-    
+
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/active-member-switch`, {
                 method: 'POST',
                 body: formData,
-                credentials : "include"
+                credentials: "include"
             });
 
-            if(!response.ok) throw new Error('Failed to switch member activation.');
+            if (!response.ok) throw new Error('Failed to switch member activation.');
 
             fetchData(paginationModel, sortModel, filterModel);
 
-        }catch (err) {
+        } catch (err) {
             console.error('Error fetching data:', err);
         }
     };
@@ -216,59 +226,57 @@ export const MemberDataGrid = () => {
         <Box sx={{ padding: 1 }}>
 
 
-                <div className='row mb-1'>
-                    <div className='col-12 d-lg-flex justify-content-between'>
-                        <div className='d-lg-flex'>
+            <div className='row mb-1'>
+                <div className='col-12 d-lg-flex justify-content-between'>
+                    <div className='d-lg-flex'>
 
-                            <div className='me-1'>
-
-                                <Button
-                                    
-                                    variant="outlined"
-                                    startIcon={<MdAddCircleOutline size={20} />}
-                                    onClick={() => setNewReg(true)}
-                                    sx={{ fontSize: 13, textTransform: 'none', wordBreak: 'break-all'}}
-                                >
-                                    Add Member
-                                </Button>
-                            </div>
-                            <div className='me-1'>
-    {isDownloading ? (
-                                    <div className='d-flex mw-2'>
-                                        <span className=''>Downloading</span>
-                                        <CircularProgress size={20} color="inherit" />
-                                    </div>
-                                ) : (
-                                    <Button
-                                        
-                                        variant="outlined"
-                                        startIcon={<BsFiletypeCsv size={20} />}
-                                        onClick={handleExport}
-                                        sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all' }}
-                                    >
-                                        Download (All Records) CSV
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-                        <div className=''>
+                        <div className='me-1'>
 
                             <Button
-                            
-                                variant="contained"
-                                color="primary"
-                                onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
-                                sx={{ fontSize: 13, textTransform: 'none' }}
+
+                                variant="outlined"
+                                startIcon={<MdAddCircleOutline size={20} />}
+                                onClick={() => setNewReg(true)}
+                                sx={{ fontSize: 13, textTransform: 'none', wordBreak: 'break-all' }}
                             >
-                                Apply Filters
+                                Add Member
                             </Button>
                         </div>
-                            
+                        <div className='me-1'>
+                            <Button
 
+                                variant="outlined"
+                                startIcon={<BsFiletypeCsv size={20} />}
+                                onClick={handleExport}
+                                sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all' }}
+                            >
+                                {isDownloading ? (
+                                    <CircularProgress size={20} color="inherit" />
+                                ) : (
+                                    "Download (All Records) CSV"
+                                )}
 
+                            </Button>
+                        </div>
                     </div>
-                   
+                    <div className=''>
+
+                        <Button
+
+                            variant="contained"
+                            color="primary"
+                            onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
+                            sx={{ fontSize: 13, textTransform: 'none' }}
+                        >
+                            Apply Filters
+                        </Button>
+                    </div>
+
+
+
                 </div>
+
+            </div>
 
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -315,10 +323,10 @@ export const MemberDataGrid = () => {
             <Modal isOpen={editReg}
                 onRequestClose={handleModalSwitch}
                 title={`Modify ${initialData?.firstName} ${initialData?.lastName}`}>
-               <MemberRequestForm
+                <MemberRequestForm
                     initialData={initialData}
                     modalSwitch={handleModalSwitch}
-                    />
+                />
             </Modal>
         </Box>
     );

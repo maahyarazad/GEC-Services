@@ -120,9 +120,19 @@ export const SurveyDataGrid = () => {
             setIsDownloadings(true);
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/survey-csv-data`,{credentials:"include"});
-
             if (!response.ok) {
                 throw new Error('Failed to fetch CSV file');
+            }
+            
+
+            const contentDisposition = response.headers.get("Content-Disposition");
+
+            let fileName = "download.csv"; // fallback
+            if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (match) {
+                    fileName = match[1];
+                }
             }
 
             const blob = await response.blob();
@@ -130,7 +140,7 @@ export const SurveyDataGrid = () => {
 
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'survey.csv'); // Set desired file name
+            link.setAttribute('download', fileName); // Set desired file name
             document.body.appendChild(link);
             link.click();
 
@@ -155,25 +165,20 @@ export const SurveyDataGrid = () => {
                                    <div className="">
                                        <Tooltip title="Download CSV data" componentsProps={config.tooltip_config}>
                                        </Tooltip>
-                                       {isDownloading ? <div className='d-flex'>
-                                           <span className='me-2'>Downloading</span>
-                                           <CircularProgress
-                                               size={20}
-                                               color="inherit"
-                                           />
-                                       </div>
-           
-           
-                                           :
-                                           <Button
-                                               variant="outlined"
-                                               startIcon={<BsFiletypeCsv size={20} />}
-                                               onClick={handleExport}
-                                               sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none' }}
-                                           >
-                                               Download (All Records) CSV
-                                           </Button>
-                                       }
+                                       <Button
+
+                            variant="outlined"
+                            startIcon={<BsFiletypeCsv size={20} />}
+                            onClick={handleExport}
+                            sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all' }}
+                        >
+                            {isDownloading ? (
+                                <CircularProgress size={20} color="inherit" />
+                            ) : (
+                                "Download (All Records) CSV"
+                            )}
+
+                        </Button>
            
                                    </div>
                                    <div className="">

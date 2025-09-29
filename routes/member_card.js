@@ -6,6 +6,7 @@ const dbService = require("../services/dbService");
 require('dotenv').config();
 const multer = require("multer");
 const authorize_admin = require("../middleware/auth");
+const {exportTableAsCSV} = require('../services/csvParser');
 
 const upload = multer({
     storage: multer.memoryStorage()
@@ -33,6 +34,28 @@ router.get('/api/member_card', authorize_admin,async (req, res) => {
 
     } catch (error) {
         console.error("Error in /member:", error);
+        res.status(500).json({ status: false, message: 'Server error' });
+    }
+});
+
+
+router.get('/api/member-card-csv-data', authorize_admin, async (req, res) => {
+    try {
+
+        const data = await dbService.findAll("member_card");
+
+        const csv = await exportTableAsCSV(data); // Await CSV generation
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename=membership-data-${Date.now()}.csv`
+        );
+        res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+        res.send(csv); // Send the actual CSV string
+
+    } catch (error) {
+        console.error("Error in fetching data from sql server:", error);
         res.status(500).json({ status: false, message: 'Server error' });
     }
 });

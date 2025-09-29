@@ -3,6 +3,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import { Box, CircularProgress, Button, Tooltip } from '@mui/material';
 import DashboardCards from '../admin/Dashboard/DashboardCards';
 import { MdWorkspacePremium } from "react-icons/md";
+import { BsFiletypeCsv } from "react-icons/bs";
 const columns = ({ onResendPasswordReset, loadingRowId }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     {
@@ -68,6 +69,8 @@ export const MemberCardDataGrid = () => {
         }
     };
 
+
+
     const fetchData = useCallback(
         async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
             setLoading(true);
@@ -109,9 +112,49 @@ export const MemberCardDataGrid = () => {
 
     useEffect(() => {
         fetchData(paginationModel, sortModel, filterModel);
-        
+
     }, [paginationModel, sortModel, applyFilterTrigger]);
 
+
+    const handleExport = async () => {
+        try {
+            setIsDownloading(true);
+
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-card-csv-data`, { credentials: "include" });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch CSV file');
+            }
+
+            const contentDisposition = response.headers.get("Content-Disposition");
+            
+            let fileName = "download.csv"; // fallback
+            if (contentDisposition) {
+                const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (match) {
+                    fileName = match[1];
+                }
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileName); // Set desired file name
+            document.body.appendChild(link);
+            link.click();
+
+            // Cleanup
+            link.remove();
+            window.URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error("Download failed", error);
+        } finally {
+            setIsDownloading(false);
+        }
+    };
 
     return (
         <Box sx={{ padding: 1 }}>
@@ -120,10 +163,24 @@ export const MemberCardDataGrid = () => {
                 <div className="d-lg-flex justify-content-between align-items-center">
                     <div>
 
-                        <DashboardCards/>
+                        <DashboardCards />
                     </div>
-                    <div style={{alignSelf: 'end'}}>
+                    <div style={{ alignSelf: 'end' }}>
 
+                        <Button
+
+                            variant="outlined"
+                            startIcon={<BsFiletypeCsv size={20} />}
+                            onClick={handleExport}
+                            sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all', marginRight: 1 }}
+                        >
+                            {isDownloading ? (
+                                <CircularProgress size={20} color="inherit" />
+                            ) : (
+                                "Download (All Records) CSV"
+                            )}
+
+                        </Button>
                         <Button
                             variant="contained"
                             color="primary"
@@ -133,6 +190,7 @@ export const MemberCardDataGrid = () => {
                             Apply Filters
                         </Button>
                     </div>
+                   
                 </div>
 
             </div>

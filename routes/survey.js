@@ -34,9 +34,10 @@ router.get('/api/survey-csv-data', authorize_admin, async (req, res) => {
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader(
             'Content-Disposition',
-            `attachment; filename=registration-data-${Date.now()}.csv`
+            `attachment; filename=survey-data-${Date.now()}.csv`
         );
 
+        res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         res.send(csv); // Send the actual CSV string
 
     } catch (error) {

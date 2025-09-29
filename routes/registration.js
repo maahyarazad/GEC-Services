@@ -318,7 +318,7 @@ router.get('/api/registration-csv-data', authorize_admin, async (req, res) => {
             'Content-Disposition',
             `attachment; filename=registration-data-${Date.now()}.csv`
         );
-
+        res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         res.send(csv); // Send the actual CSV string
 
     } catch (error) {

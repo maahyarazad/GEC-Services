@@ -46,7 +46,7 @@ router.get('/api/member-csv-data',authorize_admin, async (req, res) => {
             'Content-Disposition',
             `attachment; filename=member-data-${Date.now()}.csv`
         );
-
+        res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
         res.send(csv); // Send the actual CSV string
 
     } catch (error) {
