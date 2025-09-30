@@ -112,7 +112,7 @@ export default function NewRegistrationPage({
     ? (() => {
         try {
           const parsed = JSON.parse(initialData.metadata_json);
-          debugger;
+          
           return parsed.whatsapp_number || 971562050066;
         } catch (e) {
           console.warn("Invalid JSON in metadata_json:", e);

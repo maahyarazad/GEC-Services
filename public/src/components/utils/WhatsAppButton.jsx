@@ -9,7 +9,7 @@ const WhatsAppButton = ({data}) => {
   
   useEffect(()=>{
     
-    debugger;
+    
     if(data?.metadata_json){
       const metadata = JSON.parse(data.metadata_json);
       setNumber(metadata.whatsapp_number);

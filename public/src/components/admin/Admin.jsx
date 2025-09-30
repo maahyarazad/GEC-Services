@@ -91,7 +91,8 @@ export const Admin = ({ data }) => {
 
 
     useEffect(() => {
-        const ws = new WebSocket(`ws://${import.meta.env.VITE_WS_SERVERURL}`); // ✅ make sure port matches server
+        // const ws = new WebSocket(`ws://${import.meta.env.VITE_WS_SERVERURL}`); // ✅ make sure port matches server
+        const ws = new WebSocket(`wss://${import.meta.env.VITE_WS_SERVERURL}`); // ✅ make sure port matches server
 
         ws.onopen = () => console.log("🟢 WebSocket connected to server");
 
