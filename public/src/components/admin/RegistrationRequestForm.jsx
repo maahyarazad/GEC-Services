@@ -107,6 +107,33 @@ export default function NewRegistrationPage({
         };
     }, []);
 
+    const metadata_whatsapp_number =
+  initialData?.metadata_json
+    ? (() => {
+        try {
+          const parsed = JSON.parse(initialData.metadata_json);
+          debugger;
+          return parsed.whatsapp_number || 971562050066;
+        } catch (e) {
+          console.warn("Invalid JSON in metadata_json:", e);
+          return 971562050066;
+        }
+      })()
+    : 971562050066;
+
+    const metadata_whatsapp_message =
+  initialData?.metadata_json
+    ? (() => {
+        try {
+          const parsed = JSON.parse(initialData.metadata_json);
+          return parsed.whatsapp_message || "Hallo! Ich benötige Hilfe bei...";
+        } catch (e) {
+          console.warn("Invalid JSON in metadata_json:", e);
+          return "Hallo! Ich benötige Hilfe bei...";
+        }
+      })()
+    : "Hallo! Ich benötige Hilfe bei...";
+
     const initialValues = {
         id: initialData?.id || null,
         page: initialData?.page || "",
@@ -131,8 +158,8 @@ export default function NewRegistrationPage({
         consultationEnabled: initialData?.consultationEnabled === "true",
         metadata_start_time: 10,
         metadata_end_time: 20,
-        metadata_whatsapp_number: 971562050066,
-        metadata_whatsapp_message: "Hallo! Ich benötige Hilfe bei...",
+        metadata_whatsapp_number: metadata_whatsapp_number,
+        metadata_whatsapp_message: metadata_whatsapp_message,
         metadata_json: initialData?.metadata_json || "",
 
         textarea: initialData?.textarea === "true",
