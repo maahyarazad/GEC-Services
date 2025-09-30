@@ -1,0 +1,122 @@
+.whatsapp-broadcast {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 16;
+  padding: 8px 8px;
+  
+  border: solid 1px var(--light);
+  border-radius: 5px;
+
+  > div {
+    position: relative;
+    width: calc(33.33% - 16px);
+    display: block;
+    border-radius: 4px;
+    > h5:first-of-type {
+      margin-bottom: 16px;
+    }
+
+    > span:not(.choice-set) {
+      display: none;
+      > input,
+      > textarea {
+        width: 100%;
+        resize: none;
+      }
+    }
+
+    > span.show:not(.choice-set) {
+      display: block;
+    }
+  }
+
+  .list-container,
+  .messaging-container {
+    textarea {
+      padding: 4px;
+    }
+  }
+
+  .example-container {
+    p#exampleMessage {
+      overflow: scroll;
+
+      border-radius: 4px;
+      margin-top: 16px;
+      margin-bottom: 16px;
+      height: 16rem;
+      border: 8px solid var(--white);
+      padding: 8px;
+      background-color: var(--light);
+      box-shadow: rgba(0, 0, 0, 0.02) 0px 1px 3px 0px,
+        rgba(27, 31, 35, 0.15) 0px 0px 0px 1px;
+    }
+  }
+}
+
+span.lists.error {
+  outline: 4px solid var(--error);
+}
+
+span.lists {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  outline: 1px solid var(--grey);
+  border-radius: 4px;
+  padding: 4px;
+  height: 12rem;
+  overflow-y: scroll;
+
+  > button.active {
+    background-color: var(--pastelblue);
+    > p {
+      color: var(--googleblue);
+    }
+  }
+  > button {
+    width: 100%;
+    text-align: left;
+    padding: 4px 16px;
+    border: 1px solid var(--white);
+    background-color: var(--light);
+    border-radius: unset;
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  .whatsapp-broadcast {
+    > div {
+      width: 100%;
+    }
+  }
+}
+
+.choice-set {
+  margin-top: 8px;
+  margin-left: 8px;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+
+  > p {
+    margin: 0 8px;
+  }
+
+  > button {
+    font-size: 0.75rem;
+    border: unset;
+    padding: 0;
+    color: var(--googleblue);
+    border-bottom: 1px solid transparent;
+    border-radius: unset;
+  }
+
+  > button:hover {
+    border-bottom: 1px solid var(--blue);
+  }
+}

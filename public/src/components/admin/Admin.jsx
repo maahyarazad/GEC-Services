@@ -1,6 +1,5 @@
 
 import { Header } from "../utils/Header";
-import PropTypes from "prop-types";
 import "./admin.css";
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -23,28 +22,30 @@ import { BsCalendar2Event } from "react-icons/bs";
 import { BsPeopleFill } from "react-icons/bs";
 import { FcSurvey } from "react-icons/fc";
 import { GICDataGrid } from "../gallery/GICDataGrid";
-import { PaymentDataGrid } from "../gallery/PaymentDataGrid";
+import { WhatsappBroadcast } from "../../components/admin/WhatsApp/WhatsApp";
 import { IoIdCardOutline } from "react-icons/io5";
 import { GrCatalog } from "react-icons/gr";
 import { GrCatalogOption } from "react-icons/gr";
 import { MdPictureAsPdf } from "react-icons/md";
-
+import { FaWhatsapp } from "react-icons/fa";
 
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
 });
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { MemberCardDataGrid } from "../gallery/MemberCardDataGrid";
 import PDFGenerator from "./PDFGenerator/PDFGenerator";
 
+
 export const Admin = ({ data }) => {
 
-    
+
 
     const initialValues = {
         login_code: '',
     };
     const navigate = useNavigate();
+    const location = useLocation();
     const statusRef = useRef();
     const [loginClass, setLoginClass] = useState(null);
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -84,9 +85,37 @@ export const Admin = ({ data }) => {
 
     useEffect(() => {
         checkAuth();
+
     }, [checkAuth]);
 
 
+
+    useEffect(() => {
+        const ws = new WebSocket(`ws://${import.meta.env.VITE_WS_SERVERURL}`); // ✅ make sure port matches server
+
+        ws.onopen = () => console.log("🟢 WebSocket connected to server");
+
+        ws.onmessage = (event) => {
+            if (event.data) {
+
+                const auth = JSON.parse(event.data);
+
+                if (!auth.Auth) {
+                    setAdminUser(null)
+                }
+            }
+
+        };
+
+        ws.onclose = () => console.log("🔴 WebSocket connection closed");
+
+        ws.onerror = (err) => console.error("⚠️ WebSocket error:", err);
+
+        return () => {
+            console.log("🛑 Closing WebSocket connection");
+            ws.close();
+        };
+    }, []);
 
 
     const handleLoginSubmit = async (values, { setSubmitting, resetForm }) => {
@@ -123,11 +152,15 @@ export const Admin = ({ data }) => {
 
             if (res.ok) {
                 const data = await res.json();
-                
+
                 if (data.success) {
                     // backend sets secure cookie, you just store a flag in state
                     setAdminUser(true);
                     resetForm();
+
+                    navigate(`/admin?tab=registration-config`, {
+                        state: { tab: 'registration-config' },
+                    });
                     return setStatus("Login successful!", "dark");
 
                 } else {
@@ -178,37 +211,87 @@ export const Admin = ({ data }) => {
             icon: <MdPictureAsPdf size={20} />,
             label: "Procurement PDF Generator",
         },
+        {
+            icon: <FaWhatsapp size={20} />,
+            label: "WhatsApp Broadcast",
+        },
     ];
 
     const [tabValue, setTabValue] = useState(0);
     const [burgerActive, setBurgerActive] = useState(false);
     const [showMenu, setShowMenu] = useState(null);
-    
-    useEffect(()=>{
-    const setWidth = () => {
-      const width = window.innerWidth;
-      if(width < 768){
-        setShowMenu(true);
-      }else{
-        setShowMenu(false);
-      }
-    };
-    
-    setWidth();
-      
-    window.addEventListener("resize", setWidth);
-  
-    return () => {
-      window.removeEventListener("resize", setWidth);
-    };
+
+    useEffect(() => {
+        const setWidth = () => {
+            const width = window.innerWidth;
+            if (width < 768) {
+                setShowMenu(true);
+            } else {
+                setShowMenu(false);
+            }
+        };
+
+        setWidth();
+
+        window.addEventListener("resize", setWidth);
+
+        return () => {
+            window.removeEventListener("resize", setWidth);
+        };
     }, []);
 
 
+    const slugify = (text) =>
+        text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
+
+    useEffect(() => {
+        const tabSlug = slugify(tabConfig[0].label);
+
+        if (location.search) {
+            const params = new URLSearchParams(location.search);
+
+            const index = tabConfig.findIndex(tab => slugify(tab.label) === params.get("tab"));
+            setTabValue(index);
+
+
+        } else {
+
+            navigate(`/admin?tab=${tabSlug}`, {
+                state: { tab: tabSlug },
+            });
+
+            setTabValue(0);
+        }
+
+    }, [])
 
     const handletabChange = (event, newValue) => {
+
+        const tabSlug = slugify(tabConfig[newValue].label);
+
+        // Push new history entry with state
+        navigate(`/admin?tab=${tabSlug}`, {
+            state: { tab: tabSlug },
+        });
         setTabValue(newValue);
         setBurgerActive(false);
     };
+
+
+
+    useEffect(() => {
+        const onPopState = () => {
+            const tabFromState = window.history.state?.usr?.tab;
+            if (tabFromState) {
+                const index = tabConfig.findIndex(tab => slugify(tab.label) === tabFromState);
+                setTabValue(index);
+            }
+        };
+
+        window.addEventListener("popstate", onPopState);
+        return () => window.removeEventListener("popstate", onPopState);
+    }, []);
+
 
     let content;
     switch (tabValue) {
@@ -233,6 +316,9 @@ export const Admin = ({ data }) => {
         case 6:
             content = <PDFGenerator />;
             break;
+        case 7:
+            content = <WhatsappBroadcast />;
+            break;
     }
 
     return isCheckingAuth ? (
@@ -242,7 +328,7 @@ export const Admin = ({ data }) => {
         </div>
     ) : adminUser ? (
         <>
-            <Header adminUser={adminUser} setAdminUser={setAdminUser} showMenu={showMenu} burgerActive={burgerActive} setBurgerActive={setBurgerActive}/>
+            <Header adminUser={adminUser} setAdminUser={setAdminUser} showMenu={showMenu} burgerActive={burgerActive} setBurgerActive={setBurgerActive} />
             <div className="admin">
                 <div className={burgerActive ? "show" : ""}>
                     <Box

@@ -32,7 +32,7 @@ export const Header = ({ adminUser, setAdminUser, showMenu, burgerActive,setBurg
             if (response.ok) {
 
                 setAdminUser(null);
-                // navigate("/admin");
+                navigate("/admin");
             }
 
         } catch (err) {

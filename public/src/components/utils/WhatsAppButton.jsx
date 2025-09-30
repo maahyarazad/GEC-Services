@@ -1,20 +1,26 @@
 import PropTypes from "prop-types";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FaWhatsapp } from "react-icons/fa";
 const WhatsAppButton = ({data}) => {
   
+  const [number, setNumber] = useState(971562050066);
+  const [message, setMessage] = useState("Hallo! Ich benötige Hilfe bei...");
   
   
-  if(!data?.metadata_json){
-    return <></>
-  }
-
-  const metadata = JSON.parse(data.metadata_json);
+  useEffect(()=>{
+    
+    debugger;
+    if(data?.metadata_json){
+      const metadata = JSON.parse(data.metadata_json);
+      setNumber(metadata.whatsapp_number);
+      setMessage(metadata.whatsapp_message);
+    }
+  },[data])
 
 
   return (
     <a
-      href={`https://api.whatsapp.com/send?phone=${metadata.whatsapp_number}&text=${metadata.whatsapp_message}`}
+      href={`https://api.whatsapp.com/send?phone=${number}&text=${message}`}
       target="_blank"
       rel="noopener noreferrer"
       className="whatsapp"

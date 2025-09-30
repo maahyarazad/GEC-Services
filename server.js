@@ -18,8 +18,10 @@ const survey = require('./routes/survey.js');
 const gic_user = require('./routes/gic_user.js');
 const payment = require('./routes/payment.js');
 const email_storage = require('./routes/email_storage.js');
+const whatsapp_sender = require('./routes/whatsapp_sender.js');
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
+const { createWebSocketServer } = require("./websocket/admin.js");
 
 // Setup DB connection
 const db = new sqlite3.Database("./app.db", (err) => {
@@ -48,7 +50,7 @@ const db = new sqlite3.Database("./app.db", (err) => {
 })();
 
 app.use(session({
-    secret: 'your-secret-key',       // required
+    secret: process.env.SERVER_SESSION_SECRET,       // required
     resave: false,                   // don't save session if unmodified
     saveUninitialized: true,         // save new but empty sessions
     cookie: {
@@ -58,6 +60,9 @@ app.use(session({
         sameSite: 'lax', // or 'none' if cross-site with credentials
     }
 }));
+
+// Create HTTP server
+const server = require("http").createServer(app);
 
 const allowedOrigins = [
   process.env.CLIENT_ORIGIN,    // e.g., http://localhost:5175
@@ -101,6 +106,7 @@ app.use('/', maps);
 app.use('/', payment);
 app.use('/', member_card);
 app.use('/', email_storage);
+app.use('/', whatsapp_sender);
 app.use('/api/', authorize);
 
 // Route to serve your main HTML file
@@ -112,8 +118,14 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// Attach websocket to same server
+createWebSocketServer(server);
 
 // Start the server
-app.listen(PORT, () => {
-    console.log(`Jack: I'm good on port ${PORT}`);
+// app.listen(PORT, () => {
+//     console.log(`Jack: I'm good on port ${PORT}`);
+// });
+
+server.listen(PORT, () => {
+  console.log(`🚀 Server + WS listening on http://localhost:${PORT}`);
 });
