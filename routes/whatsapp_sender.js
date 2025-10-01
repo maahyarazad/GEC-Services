@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const authorize_admin = require("../middleware/auth")
-const twilioClient = require('twilio')(process.env.TWILIO_ACOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const twilioClient = require('twilio')(process.env.TWILIO_ACOUNT_SID, process.env.TWILIO_AUTH_TOKEN) ;
+  // twilioClient.region = 'au1';
+// twilioClient.edge = 'sydney';
 const dbService = require("../services/dbService");
 
 router.post('/whatsapp-sender', async (req, res) => {
@@ -18,7 +20,7 @@ router.post('/whatsapp-sender', async (req, res) => {
     const message = await twilioClient.messages.create({
       messagingServiceSid: process.env.TWILIO_SERVICE_SID,
       to: `whatsapp:${mobile_number}`,
-    contentSid: "HXbdc228d683b012d1edbaa1a8fd61212a", // your template ID
+      contentSid: "HXbdc228d683b012d1edbaa1a8fd61212a", // your template ID
       contentVariables: JSON.stringify({
         1: "John" // maps to {{1}} in your template
       }),

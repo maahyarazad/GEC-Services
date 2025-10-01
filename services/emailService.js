@@ -305,7 +305,8 @@ async function comfirm_message_email(reqBody) {
 }
 
 async function event_confirm_registration_email(reqBody) {
-    const fileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
+    const applefileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
+    const googlefileStorage = path.join(__dirname, "..", "file_storage", "enUS_add_to_google_wallet_add-wallet-badge.png");
     const pkpassPath = path.join("apple_pass",`${reqBody.event}` ,`${reqBody.event_id}.pkpass`);
     const tempPath = path.join(__dirname, "..", "qr-files");
     const mapRoot = path.join(__dirname, "..", "maps");
@@ -313,9 +314,11 @@ async function event_confirm_registration_email(reqBody) {
     const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
     
     const { selected_time_for_email } = reqBody;
+    const { googleWalletLink } = reqBody;
     try {
         const qrBuffer = fs.readFileSync(qrPath);
-        const fileStorageBuffer = fs.existsSync(fileStorage) ? fs.readFileSync(fileStorage) : null;
+        const applefileStorageBuffer = fs.existsSync(applefileStorage) ? fs.readFileSync(applefileStorage) : null;
+        const googlefileStorageBuffer = fs.existsSync(googlefileStorage) ? fs.readFileSync(googlefileStorage) : null;
         const mapBuffer = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : null;
         
 
@@ -339,13 +342,22 @@ async function event_confirm_registration_email(reqBody) {
             });
         }
 
-        if (fileStorageBuffer) {
+        if (applefileStorageBuffer) {
             attachments.push({
                 filename: `apple-wallet.png`,
-                content: fileStorageBuffer,
+                content: applefileStorageBuffer,
                 contentType: 'image/png',
                 cid: 'applewalletimg',
             });
+        }
+
+        if (googlefileStorageBuffer) {
+            attachments.push({
+            filename: "enUS_add_to_google_wallet_add-wallet-badge.png",
+            content: googlefileStorageBuffer,
+            contentType: "image/png",
+            cid: "googlewalletimg",
+          });
         }
 
         const currentYear = new Date().getFullYear();
@@ -376,7 +388,7 @@ async function event_confirm_registration_email(reqBody) {
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>${reqBody.title} Anmeldung</title>
+    <title>${slugToTitle(reqBody.title)} Anmeldung</title>
   </head>
   <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
@@ -399,7 +411,7 @@ async function event_confirm_registration_email(reqBody) {
             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; padding:0 30px 30px;">
               <tr>
                 <td style="padding:20px; font-size:16px; color:#333333; line-height:1.6;">
-                  <p style="color:#333333">Vielen Dank für Ihre Anmeldung zum folgenden Event:<strong>${reqBody.title}</strong>. Wir schätzen Ihr Interesse und freuen uns auf Ihre
+                  <p style="color:#333333">Vielen Dank für Ihre Anmeldung zum folgenden Event:<strong>${slugToTitle(reqBody.title)}</strong>. Wir schätzen Ihr Interesse und freuen uns auf Ihre
 Teilnahme.</p>
                   <p style="color:#333333"><strong>Datum:</strong> ${reqBody.event_date}</p>
                   ${selected_time_for_email 
@@ -416,18 +428,34 @@ Teilnahme.</p>
                   <img src="cid:qr-code" alt="QR-Code" width="200" height="200" style="display:block;" />
                 </td>
               </tr>
-              <tr>
-                <td align="center" style="padding:20px; font-size:16px; color:#333333;">
-                  <a href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
-                  <img 
-                    src="cid:applewalletimg" 
-                    alt="Add to Apple Wallet" 
-                    style="height:60px; border:0;"
-                  />
 
-                </a>
-                </td>
-              </tr>
+             <tr>
+              <td align="center" style="padding:20px; font-size:16px; color:#333333;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td style="padding-right:10px;">
+                      <a href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
+                        <img 
+                          src="cid:applewalletimg" 
+                          alt="Add to Apple Wallet" 
+                          style="height:60px; border:0; border-radius:12px; display:block;"
+                        />
+                      </a>
+                    </td>
+                    <td style="padding-left:10px;">
+                      <a href="${googleWalletLink}" style="display:inline-block;">
+                        <img 
+                          src="cid:googlewalletimg" 
+                          alt="Add to Google Wallet" 
+                          style="height:60px; border:0; border-radius:12px; display:block;"
+                        />
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
 
               <tr>
                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
@@ -470,7 +498,8 @@ Teilnahme.</p>
 
 async function event_confirm_registration_email_with_invoice(reqBody) {
 
-    const fileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
+    const applefileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
+    const googlefileStorage = path.join(__dirname, "..", "file_storage", "enUS_add_to_google_wallet_add-wallet-badge.png");
     const pkpassPath = path.join("apple_pass",`${reqBody.event}` ,`${reqBody.event_id}.pkpass`);
     const tempPath = path.join(__dirname, "..", "qr-files");
     const mapRoot = path.join(__dirname, "..", "maps");
@@ -478,12 +507,13 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
     const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
     const invoicePath = path.join(__dirname, "..", "invoice_storage", `${reqBody.event}`,  `${reqBody.invoice_filename}`);
     const {selected_time_for_email} = reqBody;
-
+    const { googleWalletLink } = reqBody;
     try {
         const qrBuffer = fs.readFileSync(qrPath);
         const mapBuffer = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : null;
         const invoiceBuffer = fs.existsSync(invoicePath) ? fs.readFileSync(invoicePath) : null;
-        const fileStorageBuffer = fs.existsSync(fileStorage) ? fs.readFileSync(fileStorage) : null;
+        const applefileStorageBuffer = fs.existsSync(applefileStorage) ? fs.readFileSync(applefileStorage) : null;
+        const googlefileStorageBuffer = fs.existsSync(googlefileStorage) ? fs.readFileSync(googlefileStorage) : null;
 
         const attachments = [];
 
@@ -513,12 +543,21 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
           });
         }
 
-        if (fileStorageBuffer) {
+        if (applefileStorageBuffer) {
             attachments.push({
                 filename: `apple-wallet.png`,
-                content: fileStorageBuffer,
+                content: applefileStorageBuffer,
                 contentType: 'image/png',
                 cid: 'applewalletimg',
+            });
+        }
+
+        if (googlefileStorageBuffer) {
+            attachments.push({
+                filename: `aenUS_add_to_google_wallet_add-wallet-badge.png`,
+                content: googlefileStorageBuffer,
+                contentType: 'image/png',
+                cid: 'googlewalletimg',
             });
         }
 
@@ -592,18 +631,32 @@ Teilnahme.</p>
                 </td>
               </tr>
 
-            <tr>
-                <td align="center" style="padding:20px; font-size:16px; color:#333333;">
-                  <a href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
-                  <img 
-                    src="cid:applewalletimg" 
-                    alt="Add to Apple Wallet" 
-                    style="height:60px; border:0;"
-                  />
-
-                </a>
-                </td>
-              </tr>
+           <tr>
+              <td align="center" style="padding:20px; font-size:16px; color:#333333;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td style="padding-right:10px;">
+                      <a href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
+                        <img 
+                          src="cid:applewalletimg" 
+                          alt="Add to Apple Wallet" 
+                          style="height:60px; border:0; border-radius:12px; display:block;"
+                        />
+                      </a>
+                    </td>
+                    <td style="padding-left:10px;">
+                      <a href="${googleWalletLink}" style="display:inline-block;">
+                        <img 
+                          src="cid:googlewalletimg" 
+                          alt="Add to Google Wallet" 
+                          style="height:60px; border:0; border-radius:12px; display:block;"
+                        />
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
 
               <tr>
                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">

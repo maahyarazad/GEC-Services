@@ -80,7 +80,7 @@ export const getValidationSchema = (target) => {
       .email("Please enter a valid email address.")
       .required("Email is required."),
 
-      gender: Yup.string().oneOf(["Male", "Female"]).required("Gender is required"),
+      // gender: Yup.string().oneOf(["Male", "Female"]).required("Gender is required"),
 
     phone: Yup.string()
       .matches(/^\+?[0-9]{10,15}$/, "Phone number must be 10–15 digits, and may start with +.")

@@ -19,6 +19,7 @@ const gic_user = require('./routes/gic_user.js');
 const payment = require('./routes/payment.js');
 const email_storage = require('./routes/email_storage.js');
 const whatsapp_sender = require('./routes/whatsapp_sender.js');
+const google_wallet = require('./routes/google_wallet.js');
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
 const { createWebSocketServer } = require("./websocket/admin.js");

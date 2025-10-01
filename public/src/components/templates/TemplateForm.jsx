@@ -728,7 +728,7 @@ export const TemplateForm = () => {
         
                                                      <h4 className="mb-1">
                                                         {target.event_date ? (
-                                                            new Date(target.event_date).toLocaleDateString("en-GB", {
+                                                            new Date(target.event_date).toLocaleDateString("de-DE", {
                                                             day: "2-digit",
                                                             month: "long",
                                                             year: "numeric",
@@ -787,7 +787,7 @@ export const TemplateForm = () => {
         
                                                                         size="small"
                                                                         fullWidth
-                                                                        label="Telefonnummer"
+                                                                        label="Handynummer"
                                                                         helperText={<ErrorMessage name="phone" />}
                                                                         className="pb-2"
                                                                         error={touched.phone && Boolean(errors.phone)}
@@ -887,7 +887,7 @@ export const TemplateForm = () => {
                                                                     }}
                                                                 >
                                                                     
-                                                                    <p>Send OTP</p>
+                                                                    <p>OTP gesendet</p>
                                                                 </Button>
                                                                 <div className="d-flex justify-content-center w-100">
                                                                     <p className="text-center">Bestätigen Sie Ihre E-Mail, bevor Sie Ihre Registrierung absenden.</p>
@@ -899,7 +899,7 @@ export const TemplateForm = () => {
         
                                                             <div className="full">
         
-                                                                <div className="input-group">
+                                                                {/* <div className="input-group">
         
         
                                                                     <Field name="gender"
@@ -936,7 +936,7 @@ export const TemplateForm = () => {
                                                                         <MenuItem value="Male">Male</MenuItem>
                                                                         <MenuItem value="Female">Female</MenuItem>
                                                                     </Field>
-                                                                </div>
+                                                                </div> */}
                                                             </div>
         
                                                             <div className="full">
@@ -1110,8 +1110,7 @@ export const TemplateForm = () => {
                                                     {target.IdentityConsent === "true" && (
                                                         <div className="full">
                                                             <label htmlFor="consent">
-                                                                I confirm that I have a valid proof of identification
-                                                                and consent to present it at the venue.
+                                                                Ich bestätige, dass ich einen gültigen Identitätsnachweis besitze und erkläre mich damit einverstanden, diesen am Veranstaltungsort vorzuzeigen.
                                                             </label>
                                                             <Field name="consent">
                                                                 {({ field, form }) => (
@@ -1213,7 +1212,7 @@ export const TemplateForm = () => {
         
                                                         const errorFields = Object.keys(formErrors);
                                                         if (errorFields.length > 0) {
-        
+                                                            debugger;
                                                             const firstErrorField = document.querySelector(
                                                                 `[name="${errorFields[0]}"]`
                                                             );
@@ -1245,7 +1244,7 @@ export const TemplateForm = () => {
         
                                                         if (target.paymentRequired === "true") {
                                                             
-                                                            return <span>Confirm & Pay {target.currency === "AED" ?  Math.round(target.recordFee *(1+tax)) : Math.round(target.recordFee)} {target.currency}
+                                                            return <span>Bestätigen & Bezahlen {target.currency === "AED" ?  Math.round(target.recordFee *(1+tax)) : Math.round(target.recordFee)} {target.currency}
                                                             {/* {initialCurrency !== chosenCurrency && (
                                                     <small style={{fontSize : '0.8rem'}}> (approximately)</small>
                                                 )} */}

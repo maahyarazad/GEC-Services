@@ -13,11 +13,19 @@ function slugToTitle(slug) {
         .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word
 }
 
+function titleToSlug(title) {
+  return title
+    .toLowerCase()            // convert to lowercase
+    .replace(/\s+/g, '-')     // replace spaces (or multiple spaces) with dashes
+    .replace(/[^\w-]+/g, ''); // remove any non-alphanumeric characters except dash
+}
+
 const generateApplePass = async (data) => {
 
     const passFolderName = data.title;
     const title = slugToTitle(data.title);
-    const { firstName, lastName, event_id, event_page, event_date } = data;
+    const event_page = titleToSlug(data.title);
+    const { firstName, lastName, event_id, event_date } = data;
     const wwdrPath = path.join(__dirname, "../certs/AppleWWDRCAG4.pem");
     const signerCertPath = path.join(__dirname, "../certs/signerCert.pem");
     const signerKeyPath = path.join(__dirname, "../certs/signerKey.pem");

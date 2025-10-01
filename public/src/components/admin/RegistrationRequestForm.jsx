@@ -166,7 +166,7 @@ export default function NewRegistrationPage({
         fieldIcon: initialData?.fieldIcon === "true",
         countDown: initialData?.countDown === "true",
         title: initialData?.title || "",
-        send_button_text: initialData?.send_button_text || "Submit",
+        send_button_text: initialData?.send_button_text || "Absenden",
         image: initialData?.Image || null,
         tokensPerGuest: initialData?.maxTokensPerGuest || "",
         description: initialData?.description || "",

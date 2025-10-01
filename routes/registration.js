@@ -18,6 +18,7 @@ const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc'); 
 const timezone = require('dayjs/plugin/timezone'); 
 const {generateApplePass} = require('../services/applePassService');
+const {generateGooglePass} = require('../services/googlePassService');
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -259,8 +260,9 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                     data.event_location_name = event_location_name;
 
                     if(event_date){
-                        await generateApplePass(data)
-                        await event_confirm_registration_email({ ...data, selected_time_for_email });
+                        await generateApplePass(data);
+                        const googleWalletLink = await generateGooglePass(data);
+                        await event_confirm_registration_email({ ...data, selected_time_for_email, googleWalletLink });
                     }else{
                         await email_request_received(data);
                     }

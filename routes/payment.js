@@ -10,6 +10,7 @@ const { generateQRWithText } = require("../services/qrGenerator");
 const { generateApplePass } = require("../services/applePassService");
 const { company_data_confirmation_email, event_confirm_registration_email_with_invoice } = require("../services/emailService");
 const { generateInvoice } = require("../services/invoiceService");
+const { generateGooglePass } = require("../services/googlePassService");
 const upload = multer({
     storage: multer.memoryStorage()
     , limits: { fileSize: 5 * 1024 * 1024 }
@@ -287,19 +288,24 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
                 });
             }
             
-            await generateApplePass({
+            const passData = {
                 event_id: performa_invoice_data.userId,
                 firstName: performa_invoice_data.firstName,
                 lastName: performa_invoice_data.lastName,
                 title: performa_invoice_data.registeredForEvent,
                 event_page: performa_invoice_data.registeredForEvent,
                 event_date: registration_config.event_date,
-            });
+            };
+
+            await generateApplePass(passData);
+            const googleWalletLink = await generateGooglePass(passData);
+
+
             // Maahyar CM:
             // Change the pre invoice order status and also use the data.customer json to add the missing that to the registration record
             await generateInvoice({ invoice_data: { ...performa_invoice_data }, payment_data: { ...data.result } });
 
-            await ProcessRequest({invoice_filename, ...registration_config, selected_time_for_email});
+            await ProcessRequest({invoice_filename, ...registration_config, selected_time_for_email, googleWalletLink});
 
             if (performa_invoice_data) {
                 performa_invoice_data.status = true;
