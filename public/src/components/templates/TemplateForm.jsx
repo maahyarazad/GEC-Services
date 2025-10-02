@@ -41,7 +41,7 @@ import GECBackground from "../../assets/media/GECBackground.webp";
 import StarsField from "../../assets/media/stars-field.webm";
 import WhatsAppButton from "../utils/WhatsappButton";
 import GECLogo from "../../assets/media/20-Jahre.webp";
-
+import { IoMdArrowRoundBack } from "react-icons/io";
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
 //     const { setFieldValue } = useFormikContext();
 
@@ -338,6 +338,7 @@ export const TemplateForm = () => {
     const [showSubmit, setShowSubmit] = useState(false);
     const [selectedDate, setSelectedDate] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [source, setIsSource] = useState(null);
 
     const snackbarRef = useRef();
     const fileInputRef = useRef();
@@ -366,18 +367,19 @@ export const TemplateForm = () => {
     // }, []);
 
     // Query Param
-    // useEffect(() => {
-    //     const params = new URLSearchParams(window.location.search);
-    //     const encrypted = params.get('__d__');
-    //     console.log('Encrypted param:', encrypted);
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+       const source = params.get('source')
+        if(source){
+            setIsSource(source);
+        }
 
-    //     if (encrypted) {
-    //     const data = decryptQueryParam(encrypted);
-    //     if (data) {
-    //         setTarget(data);
-    //     }
-    //     }
-    // }, []);
+    }, []);
+
+
+    const navigateToSource = () => {
+        window.location.assign(source);
+    };
 
     const clearLocalStorage = () => {
         removeEncryptedLocalStorage("gec-registration");
@@ -595,8 +597,9 @@ export const TemplateForm = () => {
                         >
                             <IoMdInformationCircleOutline size={20} />
                         </button>
-                        <button onClick={clearLocalStorage} className="cta-button simple">
-                            <IoCloseCircleOutline size={20} />
+                        <button onClick={source ? navigateToSource : clearLocalStorage} className={`${source ? "source" : "cache"} cta-button simple `}>
+                            
+                            {source ? (<IoMdArrowRoundBack size={20} />): (<IoCloseCircleOutline size={20} />)}
                         </button>
                         {(() => {
                             const trimmedDescription = (target.description || "").trim();

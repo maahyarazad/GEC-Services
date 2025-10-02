@@ -107,7 +107,7 @@ app.use('/', maps);
 app.use('/', payment);
 app.use('/', member_card);
 app.use('/', email_storage);
-app.use('/', whatsapp_sender);
+// app.use('/', whatsapp_sender);
 app.use('/api/', authorize);
 
 // Route to serve your main HTML file
