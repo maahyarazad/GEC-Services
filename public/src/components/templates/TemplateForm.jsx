@@ -153,6 +153,7 @@ export const TemplateForm = () => {
             const values = await response.json();
             
             if (values) {
+                debugger;
                 // Maahyar CM: Only one record return from server
                 values.rows.map(async (x) => {
                     

@@ -122,7 +122,7 @@ async function generateGooglePass(data) {
             },
             heroImage: {
                 sourceUri: {
-                    uri: "https://services.german-emirates-club.com/uploads/GEC_transparent.png"
+                    uri: "https://services.german-emirates-club.com/uploads/GEC_20_transparent.png"
                 },
                 contentDescription: {
                     defaultValue: {
