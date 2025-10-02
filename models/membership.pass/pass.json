@@ -7,7 +7,7 @@
   "description": "Membership Card",
   "logoText": "GEC Membership",
   "foregroundColor": "rgb(255,255,255)",
-  "labelColor": "rgb(212,175,55)",
+  "labelColor": "rgb(234, 193, 80)",
   "backgroundColor": "rgb(13,27,42)",
   "generic" : {
     "primaryFields" : [],
