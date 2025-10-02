@@ -153,6 +153,7 @@ export const TemplateForm = () => {
             const values = await response.json();
             
             if (values) {
+                                        debugger;
                 // Maahyar CM: Only one record return from server
                 values.rows.map(async (x) => {
                     
@@ -227,11 +228,12 @@ export const TemplateForm = () => {
 
     const handleSendOtp = async (values) => {
         try {
+            
             setShowOtpInput(true);
             const formData = new FormData();
 
             for (const key in values) {
-                if (key === "email") formData.append(key, values[key]);
+                if (key === "whatsapp") formData.append(key, values[key]);
             }
 
             formData.append("event", target.title);
@@ -756,7 +758,7 @@ export const TemplateForm = () => {
                                                                             as={TextField}
                                                                             type="email"
                                                                             name="email"
-                                                                            disabled={phoneRegistered}
+                                                                            // disabled={phoneRegistered}
                                                                             size="small"
                                                                             fullWidth
                                                                             label="E-mail"
@@ -835,7 +837,7 @@ export const TemplateForm = () => {
                                                                             ),
                                                                         }}
                                                                     // We are using email verification
-                                                                    // disabled={phoneRegistered}
+                                                                        disabled={phoneRegistered}
                                                                     />
                                                                 </div>
         
@@ -874,11 +876,11 @@ export const TemplateForm = () => {
                                                                     onClick={async () => {
                                                                         const formErrors = await validateForm(); // validate entire form
         
-                                                                        if (formErrors.email) {
-                                                                            setTouched({ email: true });
+                                                                        if (formErrors.whatsapp) {
+                                                                            setTouched({ whatsapp: true });
                                                                         }
         
-                                                                        if (!formErrors.email && values.email) {
+                                                                        if (!formErrors.whatsapp && values.whatsapp) {
                                                                             handleSendOtp(values);
                                                                         }
                                                                     }}

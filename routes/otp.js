@@ -6,9 +6,9 @@ const router = express.Router();
 const { generateRecordId, generateOTP } = require("../services/generatorService");
 const dbService = require("../services/dbService");
 const {email_otp} = require("../services/emailService");
-const twilioClient = require('twilio')(process.env.TWILIO_ACOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-const smsglobal = require('smsglobal')(process.env.SMSGLOBAL_KEY, process.env.SMSGLOBAL_SECRET);
 
+const smsglobal = require('smsglobal')(process.env.SMSGLOBAL_KEY, process.env.SMSGLOBAL_SECRET);
+const {otpSender} = require("../services/whatsAppSender");
 const path = require("path");
 const multer = require("multer");
 
@@ -86,7 +86,7 @@ const sendOtpToEmail = async (data, req, res) => {
     const otp = generateOTP();
     data.otp = otp;
     req.session.otp = otp;
-    req.session.otpExpires = Date.now() + 5 * 59 * 1000; // expires in 5 mins
+    req.session.otpExpires = Date.now() + Number(process.env.OTP_EXPIRATION_TIME) * 59 * 1000; 
 
     try {
 
@@ -101,8 +101,8 @@ const sendOtpToEmail = async (data, req, res) => {
 
 
 const sendOtpToPhone = async (data, req, res) => {
-    if (!data.phone) {
-        return { status: false, code: 400, message: 'Mobile number required' };
+    if (!data.whatsapp) {
+        return { status: false, code: 400, message: 'WhatsApp number required' };
     }
 
     if (req.session.otp) {
@@ -112,27 +112,14 @@ const sendOtpToPhone = async (data, req, res) => {
 
     const otp = generateOTP();
     req.session.otp = otp;
-    req.session.otpExpires = Date.now() + 1 * 59 * 1000; // expires in 1 mins
+    req.session.otpExpires = Date.now() + Number(process.env.OTP_EXPIRATION_TIME) * 59 * 1000; 
 
     try {
-        // await twilioClient.messages.create({
-        //     body: `Your OTP code is: ${otp}`,
-        //     from: process.env.TWILIO_PHONE  ,
-        //     to: `whatsapp:${mobile_number}`,
-        // });
 
-        var payload = {
-            origin: 'RegistrationApp',
-            message: `{*${otp}*} is your verification code.`,
-            destination: `${data.phone}`
-        };
-
-            // {*code*} placeholder is mandatory and will be replaced by an auto generated numeric code.
-
-            const response = await smsglobal.otp.send(payload);
+        const result = await otpSender({mobile_number: data.whatsapp, otp})
 
 
-        return { status: true, code: 200, message: 'OTP sent successfully' };
+        return { status: result.status, code: 200, message: 'OTP sent successfully' };
     } catch (error) {
         console.error("Failed to send OTP:", error.message);
         return { status: false, code: 500, message: 'Failed to send OTP' };
@@ -145,8 +132,8 @@ router.post("/send-otp",otpLimiter, upload.none() ,async (req, res) => {
         const key = req.ip; // or use req.body.phone/email for per-user tracking
         const now = Date.now();
         otpRequestMap.set(key, now);
-    //    const response = await sendOtpToPhone(data.whatsapp, req, res);
-       const response = await sendOtpToEmail(data, req, res);
+        const response = await sendOtpToPhone(data, req);
+    //    const response = await sendOtpToEmail(data, req, res);
        
        if(response.status){
            return res.status(200).json({

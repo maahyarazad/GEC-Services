@@ -15,17 +15,17 @@ router.post('/whatsapp-sender', async (req, res) => {
     .services(process.env.TWILIO_SERVICE_SID)
     .fetch();
 
-  console.log(service.sid);
-
-    const message = await twilioClient.messages.create({
-      messagingServiceSid: process.env.TWILIO_SERVICE_SID,
-      to: `whatsapp:${mobile_number}`,
-      contentSid: "HXbdc228d683b012d1edbaa1a8fd61212a", // your template ID
-      contentVariables: JSON.stringify({
-        1: "John" // maps to {{1}} in your template
-      }),
-    });
-
+      const message = await twilioClient.messages.create({
+        from: "whatsapp:+971521160991", // or use messagingServiceSid
+        to: `whatsapp:${mobile_number}`,
+        contentSid: process.env.TWILIO_OTP_CONTENT_SID, // your template ID
+        contentVariables: JSON.stringify({
+          "1": "654321",     // OTP code
+          "2": "5 minutes"   // code expiration (optional, if template supports)
+        }),
+      });
+      
+      console.log(message);
     res.status(200).json({
       success: true,
       message: 'OTP sent successfully via WhatsApp',
