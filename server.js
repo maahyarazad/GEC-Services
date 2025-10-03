@@ -18,12 +18,12 @@ const survey = require('./routes/survey.js');
 const gic_user = require('./routes/gic_user.js');
 const payment = require('./routes/payment.js');
 const email_storage = require('./routes/email_storage.js');
+const {GSheetParser} = require('./services/g_sheet_parser.js');
 const whatsapp_sender = require('./routes/whatsapp_sender.js');
-const google_wallet = require('./routes/google_wallet.js');
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
 const { createWebSocketServer } = require("./websocket/admin.js");
-
+const cron = require('node-cron');
 // Setup DB connection
 const db = new sqlite3.Database("./app.db", (err) => {
     if (err) {
@@ -107,8 +107,9 @@ app.use('/', maps);
 app.use('/', payment);
 app.use('/', member_card);
 app.use('/', email_storage);
-// app.use('/', whatsapp_sender);
+
 app.use('/api/', authorize);
+
 
 // Route to serve your main HTML file
 app.get("/", (req, res) => {
@@ -121,6 +122,18 @@ app.get("*", (req, res) => {
 
 // Attach websocket to same server
 createWebSocketServer(server);
+
+
+cron.schedule("0 */6 * * *", async () => {
+  try {
+    console.log("Running background job every 6 hours:", new Date());
+    await GSheetParser();
+    console.log("Background job finished at:", new Date());
+  } catch (err) {
+    console.error("Background job failed:", err);
+  }
+});
+
 
 // Start the server
 // app.listen(PORT, () => {

@@ -2,6 +2,11 @@ import React, {useState, useEffect, useCallback} from "react";
 import { Grid, Paper, Typography, Box, CircularProgress } from "@mui/material";
 import { IoPeople } from "react-icons/io5";
 import { MdWorkspacePremium, MdOutlineAccessTime } from "react-icons/md";
+const paidBlue = '#0f0faf';
+const nonpaidBlue = '#55729e';
+const red = '#cc0000';
+
+
 const DashboardCards = () => {
         const [loading, setLoading] = useState(true);
         const [panelData, setPanelData] = useState(null);
@@ -56,21 +61,21 @@ useEffect(() => {
         value: panelData.blue_paid,
         icon: <MdWorkspacePremium  size={35}/>,
         bgColor: "primary.white",
-        color:"#0D47A1"
+        color:paidBlue
       },
       {
         label: "Blue (Non Paid Type 5)",
         value: panelData.blue_non_paid,
         icon: <MdWorkspacePremium  size={35}/>,
         bgColor: "primary.white",
-        color:"#55729E"
+        color:nonpaidBlue
       },
       {
         label: "Red (Type 7)",
         value: panelData.red,
         icon: <MdWorkspacePremium  size={35}/>,
         bgColor: "primary.white",
-        color:"#cc0000"
+        color:red
       },
     ]);
   }, [panelData]);

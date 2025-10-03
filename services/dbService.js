@@ -33,6 +33,27 @@ const safeWrite = async (query, params = []) => {
 
 
 const dbService = {
+
+    createBulk: (table, rows) => {
+        if (!Array.isArray(rows) || rows.length === 0) {
+            return Promise.resolve([]);
+        }
+
+        const keys = Object.keys(rows[0]); // assume all rows have same keys
+        const placeholders = "(" + keys.map(() => "?").join(", ") + ")";
+        const sql = `INSERT INTO ${table} (${keys.join(", ")}) VALUES ${rows.map(() => placeholders).join(", ")}`;
+        const values = rows.flatMap(Object.values);
+
+        return new Promise((resolve, reject) => {
+            db.run(sql, values, function (err) {
+                if (err) return reject(err);
+                // this.lastID gives last inserted row, but SQLite doesn't give all IDs
+                resolve({ lastID: this.lastID, changes: this.changes });
+            });
+        });
+    },
+
+
     create: (table, data) => {
         const keys = Object.keys(data);
         const values = Object.values(data);
@@ -181,8 +202,8 @@ const dbService = {
 
         return new Promise((resolve, reject) => {
             db.all(sql, values, (err, rows) => {
-            if (err) return reject(err);
-            resolve(rows);
+                if (err) return reject(err);
+                resolve(rows);
             });
         });
     },
@@ -210,6 +231,22 @@ const dbService = {
             });
         });
     },
+
+    selectDistinctColumnQuery: (table, column) => {
+        if (!/^[a-zA-Z0-9_]+$/.test(column)) {
+            return Promise.reject(new Error("Invalid column name"));
+        }
+
+        const sql = `SELECT DISTINCT ${column} FROM ${table}`;
+
+        return new Promise((resolve, reject) => {
+            db.all(sql, (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows.map(r => r[column])); // return array of values
+            });
+        });
+    },
+
 
 
     // Optional: alternative version using safeWrite for sync writes
@@ -271,19 +308,19 @@ const dbService = {
                 ? `ORDER BY ${sortField} ${sortOrder.toUpperCase()}`
                 : "";
 
-                    // Optional LEFT JOIN
+        // Optional LEFT JOIN
         let joinClause = "";
-        if(Object.keys(leftJoin).length!== 0){
+        if (Object.keys(leftJoin).length !== 0) {
             joinClause = leftJoin
                 ? `LEFT JOIN ${leftJoin.table} ON ${leftJoin.on}`
                 : "";
         }
 
 
-            // Build SELECT columns string
-    const columnsClause = Array.isArray(columns) && columns.length > 0
-        ? columns.join(", ")
-        : "*";
+        // Build SELECT columns string
+        const columnsClause = Array.isArray(columns) && columns.length > 0
+            ? columns.join(", ")
+            : "*";
 
         const sql = `
             SELECT ${columnsClause} FROM ${table}
@@ -355,114 +392,114 @@ const dbService = {
     },
 
     insertWithKeys: async (table_name, registration_data, code_list) => {
-    return new Promise((resolve, reject) => {
-        db.serialize(() => {
-            db.run('BEGIN TRANSACTION');
+        return new Promise((resolve, reject) => {
+            db.serialize(() => {
+                db.run('BEGIN TRANSACTION');
 
-            // Insert the main registration_config
-            const keys = Object.keys(registration_data);
-            const values = Object.values(registration_data);
-            const placeholders = keys.map(() => "?").join(", ");
-            const sql = `INSERT INTO ${table_name} (${keys.join(", ")}) VALUES (${placeholders})`;
+                // Insert the main registration_config
+                const keys = Object.keys(registration_data);
+                const values = Object.values(registration_data);
+                const placeholders = keys.map(() => "?").join(", ");
+                const sql = `INSERT INTO ${table_name} (${keys.join(", ")}) VALUES (${placeholders})`;
 
-            db.run(sql, values, function (err) {
-                if (err) {
-                    db.run('ROLLBACK');
-                    return reject(err);
-                }
+                db.run(sql, values, function (err) {
+                    if (err) {
+                        db.run('ROLLBACK');
+                        return reject(err);
+                    }
 
-                const registration_config_id = this.lastID;
+                    const registration_config_id = this.lastID;
 
-                if (code_list.length > 0) {
-                    const stmt = db.prepare(`
+                    if (code_list.length > 0) {
+                        const stmt = db.prepare(`
                         INSERT INTO registration_keys (registration_config_id, key, memberId) 
                         VALUES (?, ?, ?)
                     `);
 
-                    try {
-                        for (const item of code_list) {
-                            stmt.run(registration_config_id, item.key, item.memberId);
-                        }
-
-                        stmt.finalize((finalizeErr) => {
-                            if (finalizeErr) {
-                                db.run('ROLLBACK');
-                                return reject(finalizeErr);
+                        try {
+                            for (const item of code_list) {
+                                stmt.run(registration_config_id, item.key, item.memberId);
                             }
-                            db.run('COMMIT');
-                            resolve({ id: registration_config_id });
-                        });
-                    } catch (insertErr) {
-                        db.run('ROLLBACK');
-                        return reject(insertErr);
+
+                            stmt.finalize((finalizeErr) => {
+                                if (finalizeErr) {
+                                    db.run('ROLLBACK');
+                                    return reject(finalizeErr);
+                                }
+                                db.run('COMMIT');
+                                resolve({ id: registration_config_id });
+                            });
+                        } catch (insertErr) {
+                            db.run('ROLLBACK');
+                            return reject(insertErr);
+                        }
+                    } else {
+                        db.run('COMMIT');
+                        resolve({ id: registration_config_id });
                     }
-                } else {
-                    db.run('COMMIT');
-                    resolve({ id: registration_config_id });
-                }
+                });
             });
         });
-    });
-},
+    },
 
-findByConditions: (table, conditions) => {
-    const keys = Object.keys(conditions);
-    const values = Object.values(conditions);
+    findByConditions: (table, conditions) => {
+        const keys = Object.keys(conditions);
+        const values = Object.values(conditions);
 
-    if (keys.length === 0) {
-        return Promise.reject(new Error("At least one condition is required."));
-    }
-
-    const whereClause = keys.map(key => `${key} = ?`).join(" AND ");
-    const sql = `SELECT * FROM ${table} WHERE ${whereClause}`;
-
-    return new Promise((resolve, reject) => {
-        db.all(sql, values, (err, rows) => {
-            if (err) return reject(err);
-            resolve(rows);
-        });
-    });
-},
-
-countExactWithConditions: (table, conditions) => {
-    const keys = Object.keys(conditions);
-
-    if (keys.length === 0) {
-        return Promise.reject(new Error("At least one condition is required."));
-    }
-
-    const whereParts = [];
-    const values = [];
-
-    for (const [key, condition] of Object.entries(conditions)) {
-        if (typeof condition === "object" && condition.op) {
-            if (condition.op.toUpperCase() === "BETWEEN") {
-                if (!Array.isArray(condition.value) || condition.value.length !== 2) {
-                    throw new Error(`BETWEEN requires an array with 2 values for ${key}`);
-                }
-                whereParts.push(`${key} BETWEEN ? AND ?`);
-                values.push(condition.value[0], condition.value[1]);
-            } else {
-                whereParts.push(`${key} ${condition.op} ?`);
-                values.push(condition.value);
-            }
-        } else {
-            // fallback: equals
-            whereParts.push(`${key} = ?`);
-            values.push(condition);
+        if (keys.length === 0) {
+            return Promise.reject(new Error("At least one condition is required."));
         }
-    }
 
-    const whereClause = whereParts.join(" AND ");
-    const sql = `SELECT count(*) as count FROM ${table} WHERE ${whereClause}`;
+        const whereClause = keys.map(key => `${key} = ?`).join(" AND ");
+        const sql = `SELECT * FROM ${table} WHERE ${whereClause}`;
 
-    return new Promise((resolve, reject) => {
-        db.get(sql, values, (err, row) => {
-            if (err) return reject(err);
-            resolve(row.count);
+        return new Promise((resolve, reject) => {
+            db.all(sql, values, (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
         });
-    });
-}
+    },
+
+    countExactWithConditions: (table, conditions) => {
+        const keys = Object.keys(conditions);
+
+        if (keys.length === 0) {
+            return Promise.reject(new Error("At least one condition is required."));
+        }
+
+        const whereParts = [];
+        const values = [];
+
+        for (const [key, condition] of Object.entries(conditions)) {
+            if (typeof condition === "object" && condition.op) {
+                if (condition.op.toUpperCase() === "BETWEEN") {
+                    if (!Array.isArray(condition.value) || condition.value.length !== 2) {
+                        throw new Error(`BETWEEN requires an array with 2 values for ${key}`);
+                    }
+                    whereParts.push(`${key} BETWEEN ? AND ?`);
+                    values.push(condition.value[0], condition.value[1]);
+                } else {
+                    whereParts.push(`${key} ${condition.op} ?`);
+                    values.push(condition.value);
+                }
+            } else {
+                // fallback: equals
+                whereParts.push(`${key} = ?`);
+                values.push(condition);
+            }
+        }
+
+        const whereClause = whereParts.join(" AND ");
+        const sql = `SELECT count(*) as count FROM ${table} WHERE ${whereClause}`;
+
+        return new Promise((resolve, reject) => {
+            db.get(sql, values, (err, row) => {
+                if (err) return reject(err);
+                resolve(row.count);
+            });
+        });
+    }
 
 
 };

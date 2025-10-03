@@ -4,6 +4,11 @@ import { Box, CircularProgress, Button, Tooltip } from '@mui/material';
 import DashboardCards from '../admin/Dashboard/DashboardCards';
 import { MdWorkspacePremium } from "react-icons/md";
 import { BsFiletypeCsv } from "react-icons/bs";
+const paidBlue = '#0f0faf';
+const nonpaidBlue = '#55729e';
+const red = '#cc0000';;
+
+
 const columns = ({ onResendPasswordReset, loadingRowId }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     {
@@ -11,11 +16,11 @@ const columns = ({ onResendPasswordReset, loadingRowId }) => [
         renderCell: (params) => {
             switch (params.row.type) {
                 case 7:
-                    return <><MdWorkspacePremium color="#AF0F0F" size={22} /></>
+                    return <MdWorkspacePremium color={red} size={22} />;
                 case 5:
-                    return <><MdWorkspacePremium color="#55729E" size={22} /></>;
+                        return <><MdWorkspacePremium color={nonpaidBlue} size={22} /></>;
                 default:
-                    return <MdWorkspacePremium color="#cc0000" size={22} />;
+                    return <><MdWorkspacePremium color={paidBlue} size={22} /></>
             }
         },
     },
