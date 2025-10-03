@@ -317,7 +317,7 @@ async function event_confirm_registration_email(reqBody) {
     const applefileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
     const googlefileStorage = path.join(__dirname, "..", "file_storage", "enUS_add_to_google_wallet_add-wallet-badge.png");
     
-    const pkpassPath = `https://services.german-emirates-club.com/pass_storage/${slug}/${reqBody.event_id}.pkpass`;
+    const pkpassPath = `/apple_pass/${slug}/${reqBody.event_id}.pkpass`;
     // const pkpassPath = path.join(__dirname, "..","pass_storage", `${slug}`, `${reqBody.event_id}.pkpass`);
     const tempPath = path.join(__dirname, "..", "qr-files");
     const mapRoot = path.join(__dirname, "..", "maps");
@@ -355,7 +355,7 @@ async function event_confirm_registration_email(reqBody) {
             });
         }
 
-        if (applefileStorageBuffer && fs.existsSync(pkpassPath)) {
+        if (applefileStorageBuffer) {
             attachments.push({
                 filename: `apple-wallet.png`,
                 content: applefileStorageBuffer,
@@ -439,8 +439,7 @@ async function event_confirm_registration_email(reqBody) {
                 
                   
                 
-                ${fs.existsSync(pkpassPath) ?
-                `  <tr>
+                <tr>
                   <td align="center" style="padding:20px; font-size:16px; color:#333333;">
                     <a href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
                       <img 
@@ -450,7 +449,7 @@ async function event_confirm_registration_email(reqBody) {
                       />
                     </a>
                   </td>
-                    </tr>` : ``}
+                    </tr>
                   
                   ${googleWalletLink ?
 
@@ -511,7 +510,7 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
     const applefileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
     const googlefileStorage = path.join(__dirname, "..", "file_storage", "enUS_add_to_google_wallet_add-wallet-badge.png");
     // const pkpassPath = path.join(__dirname, "..", "pass_storage", `${reqBody.event}`, `${reqBody.event_id}.pkpass`);
-    const pkpassPath = `https://services.german-emirates-club.com/pass_storage/${slug}/${reqBody.event_id}.pkpass`;
+    const pkpassPath = `/apple_pass/${reqBody.event}/${reqBody.event_id}.pkpass`;
     const tempPath = path.join(__dirname, "..", "qr-files");
     const mapRoot = path.join(__dirname, "..", "maps");
     const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
