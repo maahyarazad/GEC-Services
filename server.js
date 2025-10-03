@@ -34,6 +34,9 @@ const db = new sqlite3.Database("./app.db", (err) => {
 });
 
 
+
+
+
 // Read and apply SQL schema from app_tables.sql
 (async () => {
     try {

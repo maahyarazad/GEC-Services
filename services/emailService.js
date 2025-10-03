@@ -13,6 +13,12 @@ function slugToTitle(slug) {
         .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word
 }
 
+function titleToSlug(title) {
+  return title
+    .toLowerCase()            // convert to lowercase
+    .replace(/\s+/g, '-')     // replace spaces (or multiple spaces) with dashes
+    .replace(/[^\w-]+/g, ''); // remove any non-alphanumeric characters except dash
+}
 
 const ses = new SESClient({
     region: process.env.AWS_REGION, // e.g. "us-east-1"
@@ -306,9 +312,12 @@ async function comfirm_message_email(reqBody) {
 }
 
 async function event_confirm_registration_email(reqBody) {
+    const title = slugToTitle(reqBody.title);
+    const slug = titleToSlug(reqBody.title);
     const applefileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
     const googlefileStorage = path.join(__dirname, "..", "file_storage", "enUS_add_to_google_wallet_add-wallet-badge.png");
-    const pkpassPath = path.join("apple_pass", `${reqBody.event}`, `${reqBody.event_id}.pkpass`);
+    
+    const pkpassPath = path.join(__dirname, "..","pass_storage", `${slug}`, `${reqBody.event_id}.pkpass`);
     const tempPath = path.join(__dirname, "..", "qr-files");
     const mapRoot = path.join(__dirname, "..", "maps");
     const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
@@ -316,7 +325,6 @@ async function event_confirm_registration_email(reqBody) {
     const { langKey } = reqBody;
     const { selected_time_for_email } = reqBody;
     const { googleWalletLink } = reqBody;
-        const title = slugToTitle(reqBody.title);
 
 
     try {
@@ -346,7 +354,7 @@ async function event_confirm_registration_email(reqBody) {
             });
         }
 
-        if (applefileStorageBuffer && fs.existsSync(`${process.env.CLIENT_ORIGIN}/${pkpassPath}`)) {
+        if (applefileStorageBuffer && fs.existsSync(pkpassPath)) {
             attachments.push({
                 filename: `apple-wallet.png`,
                 content: applefileStorageBuffer,
@@ -430,7 +438,7 @@ async function event_confirm_registration_email(reqBody) {
                 
                   
                 
-                ${fs.existsSync(`${process.env.CLIENT_ORIGIN}/${pkpassPath}`) ?
+                ${fs.existsSync(pkpassPath) ?
                 `  <tr>
                   <td align="center" style="padding:20px; font-size:16px; color:#333333;">
                     <a href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
@@ -450,7 +458,7 @@ async function event_confirm_registration_email(reqBody) {
                       <img 
                         src="cid:googlewalletimg" 
                         alt="${emailTemplates[langKey].googleWalletAlt}" 
-                        style="height:60px; border:0; border-radius:12px; display:block;"
+                        style="height:54px; border:0; border-radius:12px; display:block;"
                       />
                     </a>
                   </td>  </tr>` : ``
@@ -501,7 +509,7 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
 
     const applefileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
     const googlefileStorage = path.join(__dirname, "..", "file_storage", "enUS_add_to_google_wallet_add-wallet-badge.png");
-    const pkpassPath = path.join("apple_pass", `${reqBody.event}`, `${reqBody.event_id}.pkpass`);
+    const pkpassPath = path.join(__dirname, "..", "pass_storage", `${reqBody.event}`, `${reqBody.event_id}.pkpass`);
     const tempPath = path.join(__dirname, "..", "qr-files");
     const mapRoot = path.join(__dirname, "..", "maps");
     const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);

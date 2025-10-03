@@ -22,7 +22,7 @@ function titleToSlug(title) {
 
 const generateApplePass = async (data) => {
 
-    const passFolderName = data.title;
+    
     const title = slugToTitle(data.title);
     const event_page = titleToSlug(data.title);
     const { firstName, lastName, event_id, event_date } = data;
@@ -71,7 +71,7 @@ const generateApplePass = async (data) => {
     pass.setExpirationDate(expirationDate);
 
     const _buffer = pass.getAsBuffer();
-    const passPath = path.join(__dirname, "..", "pass_storage", `${passFolderName}`);
+    const passPath = path.join(__dirname, "..", "pass_storage", `${event_page}`);
 
     // Create folder if it doesn't exist
     if (!fs.existsSync(passPath)) {

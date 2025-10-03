@@ -217,8 +217,9 @@ export const TemplateForm = () => {
             
             if (gecuser?.page === lastPart) {
                 
-                if(login_memberId[1] === "7"){
-                   setSelectedLanguage("english")
+                
+                if(login_memberId && login_memberId[1] === "7"){
+                   setSelectedLanguage("english");
                 }
                 setTarget(gecuser);
                 setLoading(false);
