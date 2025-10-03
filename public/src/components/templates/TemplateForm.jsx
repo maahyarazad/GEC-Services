@@ -42,6 +42,7 @@ import StarsField from "../../assets/media/stars-field.webm";
 import WhatsAppButton from "../utils/WhatsappButton";
 import GECLogo from "../../assets/media/20-Jahre.webp";
 import { IoMdArrowRoundBack } from "react-icons/io";
+import languageData from "../../assets/language";
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
 //     const { setFieldValue } = useFormikContext();
 
@@ -81,6 +82,7 @@ export const TemplateForm = () => {
     const [initialTargetFee, setInitialTargetFee] = useState(null);
     const [rates, setRates] = useState(null);
     const [target, setTarget] = useState(null);
+    const [selectedLanguage, setSelectedLanguage] = useState("german");
     const navigate = useNavigate();
 
 
@@ -153,7 +155,7 @@ export const TemplateForm = () => {
             const values = await response.json();
             
             if (values) {
-                debugger;
+                
                 // Maahyar CM: Only one record return from server
                 values.rows.map(async (x) => {
                     
@@ -214,6 +216,10 @@ export const TemplateForm = () => {
 
             
             if (gecuser?.page === lastPart) {
+                
+                if(login_memberId[1] === "7"){
+                   setSelectedLanguage("english")
+                }
                 setTarget(gecuser);
                 setLoading(false);
             }
@@ -506,7 +512,8 @@ export const TemplateForm = () => {
                     {
                         method: "POST",
                         headers:{
-                            "X-User-Timezone": userTimeZone
+                            "X-User-Timezone": userTimeZone,
+                            "X-User-Lang": selectedLanguage
                         },
                         body: formData,
                     }
@@ -732,7 +739,7 @@ export const TemplateForm = () => {
         
                                                      <h4 className="mb-1">
                                                         {target.event_date ? (
-                                                            new Date(target.event_date).toLocaleDateString("de-DE", {
+                                                            new Date(target.event_date).toLocaleDateString(languageData[selectedLanguage].date_format, {
                                                             day: "2-digit",
                                                             month: "long",
                                                             year: "numeric",
@@ -791,7 +798,7 @@ export const TemplateForm = () => {
         
                                                                         size="small"
                                                                         fullWidth
-                                                                        label="Handynummer"
+                                                                        label={languageData[selectedLanguage].phone}
                                                                         helperText={<ErrorMessage name="phone" />}
                                                                         className="pb-2"
                                                                         error={touched.phone && Boolean(errors.phone)}
@@ -891,10 +898,10 @@ export const TemplateForm = () => {
                                                                     }}
                                                                 >
                                                                     
-                                                                    <p>OTP gesendet</p>
+                                                                    <p>{languageData[selectedLanguage].otp_button_text}</p>
                                                                 </Button>
                                                                 <div className="d-flex justify-content-center w-100">
-                                                                    <p className="text-center">Bestätigen Sie Ihre E-Mail, bevor Sie Ihre Registrierung absenden.</p>
+                                                                    <p className="text-center">{languageData[selectedLanguage].confirm_email}</p>
                                                                 </div>
                                                                 </>
                                                             )}
@@ -952,7 +959,7 @@ export const TemplateForm = () => {
                                                                         as={TextField}
                                                                         size="small"
                                                                         fullWidth
-                                                                        label="Vorname"
+                                                                        label={languageData[selectedLanguage].firstname}
                                                                         helperText={<ErrorMessage name="firstName" />}
                                                                         className="pb-2"
                                                                         type="text"
@@ -980,7 +987,7 @@ export const TemplateForm = () => {
                                                                         as={TextField}
                                                                         size="small"
                                                                         fullWidth
-                                                                        label="Nachname"
+                                                                        label={languageData[selectedLanguage].lastname}
                                                                         helperText={<ErrorMessage name="lastName" />}
                                                                         className="pb-2"
                                                                         type="text"
@@ -1114,7 +1121,7 @@ export const TemplateForm = () => {
                                                     {target.IdentityConsent === "true" && (
                                                         <div className="full">
                                                             <label htmlFor="consent">
-                                                                Ich bestätige, dass ich einen gültigen Identitätsnachweis besitze und erkläre mich damit einverstanden, diesen am Veranstaltungsort vorzuzeigen.
+                                                                {languageData[selectedLanguage].confirm_identity}
                                                             </label>
                                                             <Field name="consent">
                                                                 {({ field, form }) => (
@@ -1216,7 +1223,7 @@ export const TemplateForm = () => {
         
                                                         const errorFields = Object.keys(formErrors);
                                                         if (errorFields.length > 0) {
-                                                            debugger;
+                                                            
                                                             const firstErrorField = document.querySelector(
                                                                 `[name="${errorFields[0]}"]`
                                                             );

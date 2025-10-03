@@ -6,7 +6,13 @@ const sgMail = require("@sendgrid/mail");
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const { SESClient, SendRawEmailCommand } = require("@aws-sdk/client-ses");
 const nodemailer = require("nodemailer");
-const { PassThrough } = require("stream");
+const { emailTemplates } = require('./templates/email_template');
+function slugToTitle(slug) {
+    return slug
+        .replace(/-/g, ' ')                // Replace dashes with spaces
+        .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word
+}
+
 
 const ses = new SESClient({
     region: process.env.AWS_REGION, // e.g. "us-east-1"
@@ -55,7 +61,7 @@ async function sendEmail({ to, subject, html, text }) {
 
 async function sendRawEmailWithAttachments({ to, subject, html, text = '', attachments = [] }) {
     const transporter = nodemailer.createTransport({
-        secure:false,
+        secure: false,
         host: process.env.SMTP_HOST,
         port: process.env.SMTP_PORT,
         auth: {
@@ -206,11 +212,6 @@ async function event_confirm_registration_email_aws(reqBody) {
     });
 }
 
-function slugToTitle(slug) {
-  return slug
-    .replace(/-/g, ' ')                // Replace dashes with spaces
-    .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word
-}
 
 
 async function comfirm_message_email(reqBody) {
@@ -307,20 +308,23 @@ async function comfirm_message_email(reqBody) {
 async function event_confirm_registration_email(reqBody) {
     const applefileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
     const googlefileStorage = path.join(__dirname, "..", "file_storage", "enUS_add_to_google_wallet_add-wallet-badge.png");
-    const pkpassPath = path.join("apple_pass",`${reqBody.event}` ,`${reqBody.event_id}.pkpass`);
+    const pkpassPath = path.join("apple_pass", `${reqBody.event}`, `${reqBody.event_id}.pkpass`);
     const tempPath = path.join(__dirname, "..", "qr-files");
     const mapRoot = path.join(__dirname, "..", "maps");
     const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
     const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
-    
+    const { langKey } = reqBody;
     const { selected_time_for_email } = reqBody;
     const { googleWalletLink } = reqBody;
+        const title = slugToTitle(reqBody.title);
+
+
     try {
         const qrBuffer = fs.readFileSync(qrPath);
         const applefileStorageBuffer = fs.existsSync(applefileStorage) ? fs.readFileSync(applefileStorage) : null;
         const googlefileStorageBuffer = fs.existsSync(googlefileStorage) ? fs.readFileSync(googlefileStorage) : null;
         const mapBuffer = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : null;
-        
+
 
         const attachments = [];
 
@@ -342,7 +346,7 @@ async function event_confirm_registration_email(reqBody) {
             });
         }
 
-        if (applefileStorageBuffer) {
+        if (applefileStorageBuffer && fs.existsSync(`${process.env.CLIENT_ORIGIN}/${pkpassPath}`)) {
             attachments.push({
                 filename: `apple-wallet.png`,
                 content: applefileStorageBuffer,
@@ -351,30 +355,25 @@ async function event_confirm_registration_email(reqBody) {
             });
         }
 
-        if (googlefileStorageBuffer) {
+        if (googlefileStorageBuffer && googleWalletLink) {
             attachments.push({
-            filename: "enUS_add_to_google_wallet_add-wallet-badge.png",
-            content: googlefileStorageBuffer,
-            contentType: "image/png",
-            cid: "googlewalletimg",
-          });
+                filename: "enUS_add_to_google_wallet_add-wallet-badge.png",
+                content: googlefileStorageBuffer,
+                contentType: "image/png",
+                cid: "googlewalletimg",
+            });
         }
 
         const currentYear = new Date().getFullYear();
 
-        const eventTimeSection = reqBody.event_time
-            ? `<p><strong>Zeit: </strong> ${reqBody.event_time}</p>`
-            : '';
-        const eventLocationName = reqBody.event_location_name
-            ? `<p><strong>Veranstaltungsort: </strong> ${reqBody.event_location_name}</p>`
-            : '';
+
 
         const eventLocationSection =
             reqBody.event && reqBody.event_location_name && reqBody.event_location
                 ? `
           <tr>
             <td align="center" style="padding:20px; font-size:16px; color:#333333;">
-              <p style="padding-bottom: 10px;"><strong>Veranstaltungsort – Karte antippen für Navigation.</strong></p>
+              <p style="padding-bottom: 10px;"><strong>${emailTemplates[langKey].locationLabel}</strong></p>
               <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(reqBody.event_location_name)}" target="_blank" rel="noopener noreferrer">
                 <img src="cid:event-location" alt="Event Location Map" width="200" height="200" style="border:0; display:block;" />
               </a>
@@ -388,7 +387,7 @@ async function event_confirm_registration_email(reqBody) {
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>${slugToTitle(reqBody.title)} Anmeldung</title>
+    <title>${emailTemplates[langKey].subject(title)}</title>
   </head>
   <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
@@ -398,7 +397,7 @@ async function event_confirm_registration_email(reqBody) {
             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1); margin:40px auto;">
               <tr>
                 <td bgcolor="#D9B144" style="color:#ffffff; text-align:center; padding:20px; font-size:22px; font-weight:bold; border-top-left-radius:8px; border-top-right-radius:8px;">
-                  Anmeldung Bestätigt
+                  ${emailTemplates[langKey].header}
                 </td>
               </tr>
             </table>
@@ -411,66 +410,69 @@ async function event_confirm_registration_email(reqBody) {
             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; padding:0 30px 30px;">
               <tr>
                 <td style="padding:20px; font-size:16px; color:#333333; line-height:1.6;">
-                  <p style="color:#333333">Vielen Dank für Ihre Anmeldung zum folgenden Event:<strong>${slugToTitle(reqBody.title)}</strong>. Wir schätzen Ihr Interesse und freuen uns auf Ihre
-Teilnahme.</p>
-                  <p style="color:#333333"><strong>Datum:</strong> ${reqBody.event_date}</p>
-                  ${selected_time_for_email 
-  ? `<p><strong>Uhrzeit:</strong> ${selected_time_for_email}</p>` 
-  : ""}
-                  ${eventTimeSection}
-                  ${eventLocationName}
+                  <p>${emailTemplates[langKey].greeting(title)}</p>
+                  <p><strong>${emailTemplates[langKey].dateLabel}:</strong> ${reqBody.event_date}</p>
+                  ${selected_time_for_email ? `<p><strong>${emailTemplates[langKey].timeLabel}:</strong> ${selected_time_for_email}</p>` : ""}
+                  ${emailTemplates[langKey].eventTimeSection(reqBody.event_time)}
+                  ${emailTemplates[langKey].eventLocationName(reqBody.event_location_name)}
+                  ${eventLocationSection}
                 </td>
               </tr>
-              ${eventLocationSection}
+
               <tr>
                 <td align="center" style="padding:20px; font-size:16px; color:#333333;">
-                  <p><strong>Bitte bewahren Sie diese E-Mail auf, damit wir Ihren QR-Code scannen können:</strong></p>
+                  <p><strong>${emailTemplates[langKey].qrMessage}</strong></p>
                   <img src="cid:qr-code" alt="QR-Code" width="200" height="200" style="display:block;" />
                 </td>
               </tr>
 
-             <tr>
-              <td align="center" style="padding:20px; font-size:16px; color:#333333;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-                  <tr>
-                    <td style="padding-right:10px;">
-                      <a href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
-                        <img 
-                          src="cid:applewalletimg" 
-                          alt="Add to Apple Wallet" 
-                          style="height:60px; border:0; border-radius:12px; display:block;"
-                        />
-                      </a>
-                    </td>
-                    <td style="padding-left:10px;">
-                      <a href="${googleWalletLink}" style="display:inline-block;">
-                        <img 
-                          src="cid:googlewalletimg" 
-                          alt="Add to Google Wallet" 
-                          style="height:60px; border:0; border-radius:12px; display:block;"
-                        />
-                      </a>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
+            
+                
+                  
+                
+                ${fs.existsSync(`${process.env.CLIENT_ORIGIN}/${pkpassPath}`) ?
+                `  <tr>
+                  <td align="center" style="padding:20px; font-size:16px; color:#333333;">
+                    <a href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
+                      <img 
+                        src="cid:applewalletimg" 
+                        alt="${emailTemplates[langKey].appleWalletAlt}" 
+                        style="height:60px; border:0; border-radius:12px; display:block;"
+                      />
+                    </a>
+                  </td>
+                    </tr>` : ``}
+                  
+                  ${googleWalletLink ?
+
+                `  <tr> <td align="center" style="padding:20px; font-size:16px; color:#333333;">
+                    <a href="${googleWalletLink}" style="display:inline-block;">
+                      <img 
+                        src="cid:googlewalletimg" 
+                        alt="${emailTemplates[langKey].googleWalletAlt}" 
+                        style="height:60px; border:0; border-radius:12px; display:block;"
+                      />
+                    </a>
+                  </td>  </tr>` : ``
+            }
+                     
+                   
+
 
 
               <tr>
                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
-                  <p>
-                    Wenn Sie Fragen haben, kontaktieren Sie uns bitte unter <br/>
-                    <a href="mailto:office5@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office5@german-emirates-club.com</a>.
-                  </p>
-                  <p>Mit freundlichen Grüßen,<br />Das Team des German Emirates Club</p>
+                  <p>${emailTemplates[langKey].contactMessage}</p>
+                  <p>${emailTemplates[langKey].closing}</p>
                 </td>
               </tr>
+
               <tr>
                 <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
-                  &copy; ${currentYear} German Emirates Club. Alle Rechte vorbehalten.
+                  ${emailTemplates[langKey].footer(currentYear)}
                 </td>
               </tr>
+
             </table>
           </td>
         </tr>
@@ -478,13 +480,12 @@ Teilnahme.</p>
     </table>
   </body>
 </html>
-
 `;
 
         // ✅ Send email using your own SMTP function
         return await sendRawEmailWithAttachments({
             to: reqBody.email,
-            subject: `Registration Completed – ${reqBody.title}`,
+            subject: `Registration Completed – ${title}`,
             html: htmlBody,
             text: 'Your registration is confirmed.',
             attachments
@@ -500,13 +501,13 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
 
     const applefileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
     const googlefileStorage = path.join(__dirname, "..", "file_storage", "enUS_add_to_google_wallet_add-wallet-badge.png");
-    const pkpassPath = path.join("apple_pass",`${reqBody.event}` ,`${reqBody.event_id}.pkpass`);
+    const pkpassPath = path.join("apple_pass", `${reqBody.event}`, `${reqBody.event_id}.pkpass`);
     const tempPath = path.join(__dirname, "..", "qr-files");
     const mapRoot = path.join(__dirname, "..", "maps");
     const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
     const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
-    const invoicePath = path.join(__dirname, "..", "invoice_storage", `${reqBody.event}`,  `${reqBody.invoice_filename}`);
-    const {selected_time_for_email} = reqBody;
+    const invoicePath = path.join(__dirname, "..", "invoice_storage", `${reqBody.event}`, `${reqBody.invoice_filename}`);
+    const { selected_time_for_email } = reqBody;
     const { googleWalletLink } = reqBody;
     try {
         const qrBuffer = fs.readFileSync(qrPath);
@@ -535,12 +536,12 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
             });
         }
 
-         if (invoiceBuffer) {
-          attachments.push({
-              filename: `${reqBody.invoice_filename}`,
-              content: invoiceBuffer,
-              contentType: 'application/pdf',
-          });
+        if (invoiceBuffer) {
+            attachments.push({
+                filename: `${reqBody.invoice_filename}`,
+                content: invoiceBuffer,
+                contentType: 'application/pdf',
+            });
         }
 
         if (applefileStorageBuffer) {
@@ -616,9 +617,9 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
                   <p>Vielen Dank für Ihre Anmeldung zum folgenden Event:<strong>${reqBody.title}</strong>. Wir schätzen Ihr Interesse und freuen uns auf Ihre
 Teilnahme.</p>
                   <p><strong>Datum:</strong> ${reqBody.event_date}</p>
-                                    ${selected_time_for_email 
-  ? `<p><strong>Uhrzeit:</strong> ${selected_time_for_email}</p>` 
-  : ""}
+                                    ${selected_time_for_email
+                ? `<p><strong>Uhrzeit:</strong> ${selected_time_for_email}</p>`
+                : ""}
                   ${eventTimeSection}
                   ${eventLocationName}
                 </td>
@@ -850,44 +851,44 @@ async function email_request_received(reqBody) {
 
 
 async function company_data_confirmation_email(reqBody) {
-  try {
-    const currentYear = new Date().getFullYear();
-    const event_name = slugToTitle(reqBody.event);
+    try {
+        const currentYear = new Date().getFullYear();
+        const event_name = slugToTitle(reqBody.event);
 
-    // Destructure company data
-    const {
-      company_partnerBrand,
-      company_partnerName,
-      company_cityCountry,
-      company_phone,
-      company_mobile,
-      company_email,
-      company_website,
-      company_employeeCount,
-      company_industry,
-      company_ceoOwnerGm,
-      company_ceoOwnerGm_contactNumber,
-      company_ceoOwnerGm_landline,
-      company_ceoOwnerGm_email,
-      company_hrHead,
-      company_hrHead_contactNumber,
-      company_hrHead_landline,
-      company_hrHead_email,
-      company_accountingHead,
-      company_accountingHead_contactNumber,
-      company_accountingHead_landline,
-      company_accountingHead_email,
-      company_marketingHead,
-      company_marketingHead_contactNumber,
-      company_marketingHead_landline,
-      company_marketingHead_email,
-      company_pa,
-      company_pa_contactNumber,
-      company_pa_landline,
-      company_pa_email
-    } = JSON.parse(reqBody.company_data);
+        // Destructure company data
+        const {
+            company_partnerBrand,
+            company_partnerName,
+            company_cityCountry,
+            company_phone,
+            company_mobile,
+            company_email,
+            company_website,
+            company_employeeCount,
+            company_industry,
+            company_ceoOwnerGm,
+            company_ceoOwnerGm_contactNumber,
+            company_ceoOwnerGm_landline,
+            company_ceoOwnerGm_email,
+            company_hrHead,
+            company_hrHead_contactNumber,
+            company_hrHead_landline,
+            company_hrHead_email,
+            company_accountingHead,
+            company_accountingHead_contactNumber,
+            company_accountingHead_landline,
+            company_accountingHead_email,
+            company_marketingHead,
+            company_marketingHead_contactNumber,
+            company_marketingHead_landline,
+            company_marketingHead_email,
+            company_pa,
+            company_pa_contactNumber,
+            company_pa_landline,
+            company_pa_email
+        } = JSON.parse(reqBody.company_data);
 
-    const htmlBody = `
+        const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -972,28 +973,28 @@ async function company_data_confirmation_email(reqBody) {
 `;
 
 
-    return await sendRawEmailWithAttachments({
-      to: company_email,
-      subject: `Company Data Received – ${event_name}`,
-      html: htmlBody,
-      text: `We have received your company information for ${event_name}.`,
-    });
+        return await sendRawEmailWithAttachments({
+            to: company_email,
+            subject: `Company Data Received – ${event_name}`,
+            html: htmlBody,
+            text: `We have received your company information for ${event_name}.`,
+        });
 
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
 }
 
 
 
 async function gic__reset_password(reqBody) {
-  const { password } = reqBody;
-  try {
-    const currentYear = new Date().getFullYear();
-    const org_name = "German Industrial Club";
+    const { password } = reqBody;
+    try {
+        const currentYear = new Date().getFullYear();
+        const org_name = "German Industrial Club";
 
-const htmlBody = `
+        const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -1046,17 +1047,17 @@ const htmlBody = `
 `;
 
 
-    return await sendRawEmailWithAttachments({
-      to: reqBody.email,
-      subject: `${org_name} - Reset Your Password`,
-      html: htmlBody,
-      text: `Your temporary password is: ${password}. Please log in and reset your password immediately.`,
-    });
+        return await sendRawEmailWithAttachments({
+            to: reqBody.email,
+            subject: `${org_name} - Reset Your Password`,
+            html: htmlBody,
+            text: `Your temporary password is: ${password}. Please log in and reset your password immediately.`,
+        });
 
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
 }
 
 async function emailMembershipCard(reqBody, pkpassBuffer) {
@@ -1117,13 +1118,13 @@ async function emailMembershipCard(reqBody, pkpassBuffer) {
 </html>
 `;
 
-const attachments = [
-    {
-        filename: 'membership.pkpass',  // The filename the recipient sees
-        content: pkpassBuffer,          // Your generated .pkpass as a Buffer
-        contentType: 'application/vnd.apple.pkpass' // MIME type for Apple Pass
-    }
-];
+        const attachments = [
+            {
+                filename: 'membership.pkpass',  // The filename the recipient sees
+                content: pkpassBuffer,          // Your generated .pkpass as a Buffer
+                contentType: 'application/vnd.apple.pkpass' // MIME type for Apple Pass
+            }
+        ];
 
         return await sendRawEmailWithAttachments({
             to: email,
@@ -1142,11 +1143,13 @@ const attachments = [
 
 
 
-module.exports = { emailMembershipCard, 
-  comfirm_message_email, 
-  event_confirm_registration_email,
-   event_confirm_registration_email_aws,
-    email_otp, company_data_confirmation_email ,
-     gic__reset_password,
-     email_request_received,
-      event_confirm_registration_email_with_invoice};
+module.exports = {
+    emailMembershipCard,
+    comfirm_message_email,
+    event_confirm_registration_email,
+    event_confirm_registration_email_aws,
+    email_otp, company_data_confirmation_email,
+    gic__reset_password,
+    email_request_received,
+    event_confirm_registration_email_with_invoice
+};

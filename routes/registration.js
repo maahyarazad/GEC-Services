@@ -44,6 +44,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
     try {
 
         const userTimezone = req.get('X-User-Timezone'); 
+        const langKey = req.get('X-User-Lang'); 
         let table_name = "registration";
 
         const { registration_code, title, event_date, ...data } = req.body;
@@ -260,9 +261,11 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                     data.event_location_name = event_location_name;
 
                     if(event_date){
+                        
                         await generateApplePass(data);
                         const googleWalletLink = await generateGooglePass(data);
-                        await event_confirm_registration_email({ ...data, selected_time_for_email, googleWalletLink });
+                        await event_confirm_registration_email({ ...data, selected_time_for_email, googleWalletLink, langKey });
+                        
                     }else{
                         await email_request_received(data);
                     }
@@ -270,7 +273,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                 }
             }
 
-            return res.json({ status: true, message: "Your request has been successfully processed.", create_result });
+            return res. json({ status: true, message: "Your request has been successfully processed.", create_result });
         }
 
         return res.json({ status: false, message: create_result.error });
