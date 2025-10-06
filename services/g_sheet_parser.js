@@ -15,10 +15,12 @@ const GSheetParser = async () => {
     const table_name = "member_card";
     const currentRecords = await dbService.selectDistinctColumnQuery(table_name, "card_number", "> 0")
 
-    const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSrwiNr_ACVq8hkB0Wejak8Rk-TV-6nIPYRsxhPzpHvsoQfcsWOMBvmv45rPWiMxv6t_2B2VJcxsGyg/pub?gid=325729194&single=true&output=csv";
+    
+    
 
     // Fetch CSV
-    const response = await fetch(url);
+    const response = await fetch(process.env.GOOGLE_SHEET_CARDHOLDER);
+    console.log(response);
     const csvData = await response.text();
 
     // Convert CSV text → JSON
@@ -52,7 +54,7 @@ const GSheetParser = async () => {
         const duplicate = currentRecords.includes(card_number);
 
         // date filtering (example: within last year, not older than a month ago)
-        const validDate = d >= oneYearAgo && d <= oneMonthsAgo;
+        const validDate = d >= oneYearAgo;
 
         return validCard && !duplicate && validDate;
     });

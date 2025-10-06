@@ -127,7 +127,7 @@ app.get("*", (req, res) => {
 createWebSocketServer(server);
 
 
-cron.schedule("0 */6 * * *", async () => {
+cron.schedule("*/2 * * * *", async () => {
   try {
     console.log("Running background job every 6 hours:", new Date());
     await GSheetParser();
