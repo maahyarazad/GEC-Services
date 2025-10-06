@@ -9,7 +9,9 @@ export default function BirthdayField({ values, setFieldValue, setFieldTouched, 
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <div className="pb-2">
       <DatePicker
+
         label="Birthday"
         value={values.birthday ? dayjs(values.birthday) : null}
         onChange={(newValue) => {
@@ -33,6 +35,7 @@ export default function BirthdayField({ values, setFieldValue, setFieldTouched, 
           },
         }}
       />
+      </div>
     </LocalizationProvider>
   );
 }

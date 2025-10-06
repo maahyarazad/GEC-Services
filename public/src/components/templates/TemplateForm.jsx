@@ -1064,6 +1064,7 @@ export const TemplateForm = () => {
                                                                     size="small"
                                                                     fullWidth
                                                                     label="Nachricht"
+                                                                    placeholder="Register your geuest here. example ::John Smith, +97158581234  "
                                                                     helperText={<ErrorMessage name="textarea" />}
                                                                     className="pb-2"
                                                                     type="text"

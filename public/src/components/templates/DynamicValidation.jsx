@@ -132,9 +132,9 @@ metadata_selected_time: target?.consultationEnabled === 'true'
           })
       : Yup.mixed().notRequired(),
 
-    textarea: target?.textarea === 'true'
-      ? Yup.string().required("Message is required.")
-      : Yup.string().notRequired(),
+    // textarea: target?.textarea === 'true'
+    //   ? Yup.string().required("Message is required.")
+    //   : Yup.string().notRequired(),
   });
 
   // Merge company schema
