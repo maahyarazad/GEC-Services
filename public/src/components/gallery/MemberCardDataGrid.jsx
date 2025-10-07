@@ -121,6 +121,25 @@ export const MemberCardDataGrid = () => {
     }, [paginationModel, sortModel, applyFilterTrigger]);
 
 
+const handsendEmail = async (type) => {
+    try {
+        const response = await fetch(
+            `${import.meta.env.VITE_SERVERURL}/api/send-party-invitation/?type=${encodeURIComponent(type)}`,
+            { credentials: "include" }
+        );
+
+        // optional: handle response
+        const data = await response.json();
+        console.log("Response:", data);
+
+    } catch (error) {
+        console.error("Error sending email:", error);
+    } finally {
+        // optional: cleanup or loading state
+    }
+};
+
+
     const handleExport = async () => {
         try {
             setIsDownloading(true);
@@ -194,6 +213,18 @@ export const MemberCardDataGrid = () => {
                         >
                             Apply Filters
                         </Button>
+                       
+                       <div className='mt-2'>
+
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={()=> handsendEmail(7)}
+                            sx={{ fontSize: 13, textTransform: 'none' }}
+                        >
+                            Send Email to Red
+                        </Button>
+                       </div>
                     </div>
                    
                 </div>

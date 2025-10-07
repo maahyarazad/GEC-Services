@@ -20,6 +20,7 @@ const payment = require('./routes/payment.js');
 const email_storage = require('./routes/email_storage.js');
 const {GSheetParser} = require('./services/g_sheet_parser.js');
 const whatsapp_sender = require('./routes/whatsapp_sender.js');
+const email_sender = require('./routes/email_sender.js');
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
 const { createWebSocketServer } = require("./websocket/admin.js");
@@ -110,8 +111,10 @@ app.use('/', maps);
 app.use('/', payment);
 app.use('/', member_card);
 app.use('/', email_storage);
+app.use('/', email_sender);
 
 app.use('/api/', authorize);
+
 
 
 // Route to serve your main HTML file
@@ -136,6 +139,7 @@ cron.schedule("0 */6 * * *", async () => {
     console.error("Background job failed:", err);
   }
 });
+
 
 
 // Start the server

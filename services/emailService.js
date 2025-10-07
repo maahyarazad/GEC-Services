@@ -1151,8 +1151,133 @@ async function emailMembershipCard(reqBody, pkpassBuffer) {
 }
 
 
+async function send_party_invitation  (data){
+    try{
+         const currentYear = new Date().getFullYear();
+        const {email} = data;
+const htmlBody = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>German Emirates Club 20th Anniversary Celebration</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f8f8f8; font-family: Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f8f8f8">
+      <tr>
+        <td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" border="0" 
+                 style="background-color: #ffffff; border-radius: 8px; overflow: hidden; margin: 40px auto; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+            
+            <!-- Header Image -->
+            <tr>
+              <td align="center" style="padding: 0;">
+                <img src="https://services.german-emirates-club.com/uploads/WhatsApp%20Image%202025-10-06%20at%2014.57.25.jpeg" 
+                     alt="German Emirates Club 20th Anniversary Celebration" 
+                     width="600" 
+                     style="display: block; width: 100%; height: auto; border: 0;" />
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding: 30px; color: #333333; font-size: 16px; line-height: 1.6;">
+                <p>Dear ClubPartners,</p>
+
+                <p>
+                  We're celebrating our <strong>20th anniversary</strong> – and we want to celebrate it with <strong>you & your Team!</strong>
+                </p>
+
+                <p>
+                  On <strong>Saturday, October 11, 2025</strong>, we cordially invite you to our 
+                  <strong>20th Anniversary Birthday Party.</strong>
+                </p>
+
+                <p>
+                  <strong>Venue:</strong> P7 Arena, Media One Hotel, Dubai<br/>
+                  <strong>Time:</strong> 10:00 PM to 3:00 AM
+                </p>
+
+                <p>Get ready for an unforgettable night with:</p>
+                <ul style="padding-left: 20px; margin: 10px 0;">
+                  <li>✨ Red carpet & star-studded atmosphere</li>
+                  <li>🍸 Welcome drinks & surprises</li>
+                  <li>🎧 DJs & live performances</li>
+                  <li>🍔 Midnight burger cake</li>
+                  <li>👗 "Dress as a Star" costume contest – with a <strong>10,000 AED prize</strong></li>
+                  <li>🎁 Mega raffle – win a dream trip for two!</li>
+                </ul>
+
+                <p>
+                  Whether you're going for glitter, glamour, or something extravagant – 
+                  <strong>dress like a star</strong> and join us for a fantastic party filled with 
+                  music, dancing, great fun, and surprises!
+                </p>
+
+                <p>
+                  Entrance is free, but we would love to receive a small <strong>gift</strong> from you as a birthday present! 🎁
+                </p>
+
+                <p style="text-align: center; margin: 30px 0;">
+                  <a href="https://events.german-emirates-club.com/birthday-bash" 
+                     style="background-color: #D9B144; color: #fff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-weight: bold;">
+                     Register Here
+                  </a>
+                </p>
+
+                <p style="text-align: center;">
+                  After registration, you’ll receive a confirmation email with a <strong>QR code</strong> for entry.
+                </p>
+
+                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+
+                <p style="text-align: center;">
+                  <strong>Table reservations are now open!</strong><br/>
+                  Secure your seats now and join us!
+                </p>
+
+                <p>
+                  We are so excited to celebrate this special anniversary with you!
+                </p>
+
+                <p style="margin-top: 30px;">
+                  Warm regards,<br/>
+                  <strong>Sylvia</strong> and the German Emirates Club Team
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="font-size: 13px; color: #777777; text-align: center; padding: 20px; border-top: 1px solid #eeeeee;">
+                &copy; ${currentYear} German Emirates Club. All rights reserved.
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+`;
+
+ return await sendRawEmailWithAttachments({
+            to: email,
+            subject: `🎉 You're Invited: German Emirates Club 20th Anniversary Celebration`,
+            html: htmlBody,
+            text: `🎉 You're Invited: German Emirates Club 20th Anniversary Celebration`,
+        });
+    }catch (error){
+ console.log(error);
+        throw error;
+    }
+   
+}
+
 
 module.exports = {
+    send_party_invitation,
     emailMembershipCard,
     comfirm_message_email,
     event_confirm_registration_email,
