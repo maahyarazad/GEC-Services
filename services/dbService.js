@@ -357,12 +357,19 @@ const dbService = {
         // Extract filters sent as filter_<field>=value
         const filters = {};
         Object.entries(queryFilters).forEach(([key, value]) => {
-            if (key.startsWith('filter_')) {
-                const field = key.replace('filter_', '');
-                if (value !== undefined && value !== "") {
-                    filters[field] = value;
-                }
+            if (!key.startsWith("filter_")) return;
+
+            let field = key.replace("filter_", "");
+            if (value === undefined || value === "") return;
+
+            if(Object.keys(leftJoin).length !== 0){
+                const alias = table_name[table_name.length -1];
+                filters[`${alias}.${field}`] = value;
+            }else{
+
+                filters[field] = value;
             }
+
         });
 
         const data = await dbService.getPaginatedFilteredData(
@@ -375,6 +382,7 @@ const dbService = {
             leftJoin,
             columns
         );
+
         return { filters, data };
     },
 

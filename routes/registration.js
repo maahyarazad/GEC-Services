@@ -297,9 +297,21 @@ router.get('/api/registration', authorize_admin, async (req, res) => {
                 "e.status"      // only the status column from event_proforma_invoice (aliased as e)
             ]);
 
-        const total = await dbService.getTotalCount("registration", filters);
 
-        return res.json({
+            // remove the alias from query 
+            const _filters = {};
+        if(filters){
+            for (const key in filters) {
+                var newKey = key.replace("r.", "");
+                
+                _filters[newKey] = filters[key];
+
+            }
+        }
+
+        const total = await dbService.getTotalCount("registration", _filters);
+
+        return res.     json({
             status: true,
             data,
             total
