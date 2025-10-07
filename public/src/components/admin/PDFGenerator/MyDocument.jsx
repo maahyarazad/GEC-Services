@@ -2,11 +2,26 @@ import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/render
 import styles from './Styles';
 
 import gec_logo from "../../../assets/media/bp-logo.png";
+import { useEffect } from 'react';
 
 const MyDocument = ({ formData, logo }) => {
     const subtotal = formData.items.reduce(
         (total, item) => total + (parseFloat(item.amount) || 0),
         0
+    );
+
+
+    const { positiveTotal, negativeTotal } = formData.items.reduce(
+    (totals, item) => {
+        const amount = parseFloat(item.amount) || 0;
+        if (amount >= 0) {
+        totals.positiveTotal += amount;
+        } else {
+        totals.negativeTotal += amount;
+        }
+        return totals;
+    },
+    { positiveTotal: 0, negativeTotal: 0 }
     );
 
 
@@ -83,6 +98,7 @@ const MyDocument = ({ formData, logo }) => {
 
                     {/* Items */}
                     {formData.items.map((item, i) => (
+                        
                         <View key={`item-${i}`}>
                             <View style={styles.tableRow} key={`item-${i}`}>
                                 <Text style={styles.tableColDescription}>{item.title || "No Title"}</Text>
@@ -92,36 +108,27 @@ const MyDocument = ({ formData, logo }) => {
                                 <Text style={styles.tableCol}>{item.vat || "-"}</Text>
                                 <Text style={styles.tableColAmount}>AED {item.amount || "0"}</Text>
                             </View>
-                            {formData.items.map((item, i) => (
-                                <View key={`item-${i}`}>
-                                    {/* First row: all fields except body */}
+                            {item.body !== null && (
+                                <View style={styles.tableBodyRow}>
+                                    <Text style={styles.tableBodyText} flex={6}>
+                                        {Object.entries(item).map(([key, value]) => {
 
-
-
-                                    {/* Second row: body only, other columns are empty */}
-                                    {item.body !== null && (
-                                        <View style={styles.tableBodyRow}>
-                                            <Text style={styles.tableBodyText} flex={6}>
-                                                {Object.entries(item).map(([key, value]) => {
-
-                                                    switch (key) {
-                                                        case "body":
-                                                            return value.split("\n").map((line, j) => (
-                                                                <Text key={j}>
-                                                                    {line}
-                                                                    {"\n"}
-                                                                </Text>
-                                                            ));
-                                                        default:
-                                                            return null;
-                                                    }
-                                                })}
-                                            </Text>
-                                        </View>
-                                    )}
-
+                                            switch (key) {
+                                                case "body":
+                                                    return value.split("\n").map((line, j) => (
+                                                        <Text key={j}>
+                                                            {line}
+                                                            {"\n"}
+                                                        </Text>
+                                                    ));
+                                                default:
+                                                    return null;
+                                            }
+                                        })}
+                                    </Text>
                                 </View>
-                            ))}
+                            )}
+
 
 
                         </View>
@@ -143,11 +150,11 @@ const MyDocument = ({ formData, logo }) => {
                     <View style={styles.totalLeft}>
                         <View style={styles.totalRowDefault}>
                             <Text>Subtotal:</Text>
-                            <Text>AED {subtotal.toFixed(2)}</Text>
+                            <Text>AED {positiveTotal.toFixed(2)}</Text>
                         </View>
                         <View style={styles.totalRowDefault}>
                             <Text style={styles.totalRow}>Total:</Text>
-                            <Text style={styles.totalRow}>AED {subtotal.toFixed(2)}</Text>
+                            <Text style={styles.totalRow}>AED {Number(positiveTotal.toFixed(2)) + Number(negativeTotal.toFixed(2))}</Text>
                         </View>
                     </View>
 
