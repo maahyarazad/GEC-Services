@@ -195,9 +195,17 @@ const dbService = {
 
     findExactWithConditions: (table, conditions) => {
         const columns = Object.keys(conditions);
-        const values = Object.values(conditions);
+        const values = [];
 
-        const whereClause = columns.map(col => `${col} = ?`).join(" AND ");
+        const whereClause = columns.map(col => {
+            if (conditions[col] === "IS NOT NULL") {
+                return `${col} IS NOT NULL`;
+            } else {
+                values.push(conditions[col]);
+                return `${col} = ?`;
+            }
+        }).join(" AND ");
+        
         const sql = `SELECT * FROM ${table} WHERE ${whereClause}`;
 
         return new Promise((resolve, reject) => {

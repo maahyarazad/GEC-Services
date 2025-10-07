@@ -8,12 +8,15 @@ router.get('/api/send-party-invitation', async (req, res) => {
     try {
         const queryParams = req.query;
 
-        const conditions = { type: Number(queryParams.type) };
+        const conditions = { 
+            type: Number(queryParams.type), 
+            email: "IS NOT NULL"  // special marker instead of a value
+        };
 
         const data = await dbService.findExactWithConditions('member_card', conditions)
 
 
-        const trim = "mariemazour@gmail.com";
+        const trim = "Krishna.Kumar@logwin-logistics.com";
 
 
         const index = data.findIndex(obj => obj.email === trim);

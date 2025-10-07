@@ -75,6 +75,8 @@ const allowedOrigins = [
   process.env.CLIENT_ORIGIN_EVENTS // e.g., http://localhost:5173
 ];
 
+app.set("trust proxy", 1);
+
 app.use(cors({
   origin: allowedOrigins,
   credentials: true
@@ -127,7 +129,7 @@ app.get("*", (req, res) => {
 });
 
 // Attach websocket to same server
-createWebSocketServer(server);
+createWebSocketServer(server, allowedOrigins);
 
 
 cron.schedule("0 */6 * * *", async () => {
@@ -146,6 +148,7 @@ cron.schedule("0 */6 * * *", async () => {
 // app.listen(PORT, () => {
 //     console.log(`Jack: I'm good on port ${PORT}`);
 // });
+
 
 server.listen(PORT, () => {
   console.log(`🚀 Server + WS listening on http://localhost:${PORT}`);

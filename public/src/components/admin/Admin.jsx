@@ -28,7 +28,7 @@ import { GrCatalog } from "react-icons/gr";
 import { GrCatalogOption } from "react-icons/gr";
 import { MdPictureAsPdf } from "react-icons/md";
 import { FaWhatsapp } from "react-icons/fa";
-
+import { io } from 'socket.io-client';
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
 });
@@ -91,30 +91,39 @@ export const Admin = ({ data }) => {
 
 
     useEffect(() => {
-        // const ws = new WebSocket(`ws://${import.meta.env.VITE_WS_SERVERURL}`); // ✅ make sure port matches server
-        const ws = new WebSocket(`wss://${import.meta.env.VITE_WS_SERVERURL}`); // ✅ make sure port matches server
+        // Create Socket.IO client
+        const socket = io(`${import.meta.env.VITE_SERVERURL}`, {
+            path: "/socket.io",
+            transports: ["websocket"], // force websocket
+        });
 
-        ws.onopen = () => console.log("🟢 WebSocket connected to server");
+        // Connection established
+        socket.on("connect", () => {
+            console.log("🟢 Socket.IO connected, id:", socket.id);
+        });
 
-        ws.onmessage = (event) => {
-            if (event.data) {
-
-                const auth = JSON.parse(event.data);
-
-                if (!auth.Auth) {
-                    setAdminUser(null)
-                }
+        // Auth messages from server
+        socket.on("auth", (data) => {
+            console.log("Auth update:", data);
+            if (!data.Auth) {
+                setAdminUser(null);
             }
+        });
 
-        };
+        // Handle disconnects
+        socket.on("disconnect", (reason) => {
+            console.log("🔴 Socket.IO disconnected:", reason);
+        });
 
-        ws.onclose = () => console.log("🔴 WebSocket connection closed");
+        // Handle errors
+        socket.on("connect_error", (err) => {
+            console.error("⚠️ Socket.IO connection error:", err);
+        });
 
-        ws.onerror = (err) => console.error("⚠️ WebSocket error:", err);
-
+        // Cleanup on unmount
         return () => {
-            console.log("🛑 Closing WebSocket connection");
-            ws.close();
+            console.log("🛑 Closing Socket.IO connection");
+            socket.disconnect();
         };
     }, []);
 

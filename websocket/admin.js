@@ -1,30 +1,38 @@
-require("dotenv").config();
-const { WebSocketServer } = require("ws");
 
-function createWebSocketServer(server) {
-  const wss = new WebSocketServer({ server });
+const { Server } = require("socket.io");
 
+function createWebSocketServer(server, allowedOrigins) {
 
-  wss.on("connection", (ws, req) => {
-    console.log("Client connected");
-
-    const interval = setInterval(() => {
-      const cookies = req.headers.cookie || "";
-      const token = cookies.split(";").find(c => c.trim().startsWith("a-usr="));
-      ws.send(JSON.stringify({ Auth: !!token }));
-    }, 10_000);
-
-    ws.on("close", () => {
-      console.log("Client disconnected");
-      clearInterval(interval);
+    const io = new Server(server, {
+        path: "/socket.io",
+        cors: {
+            origin: allowedOrigins,
+            credentials: true,
+        },
     });
 
-    ws.on("error", () => {
-      clearInterval(interval);
-    });
-  });
+    io.on("connection", (socket) => {
+        console.log("Client connected");
 
-  return wss;
+        // Check auth once on connection
+        const token = socket.handshake.headers.cookie?.includes("a-usr=") ?? false;
+        socket.emit("auth", { Auth: !!token });
+
+        // Set up interval for this client
+        const interval = setInterval(() => {
+            // Re-check token if you want live auth validation
+            const liveToken = socket.handshake.headers.cookie?.includes("a-usr=") ?? false;
+            socket.emit("auth", { Auth: !!liveToken });
+        }, 10_000); // every 10 seconds
+
+        // Clean up when client disconnects
+        socket.on("disconnect", () => {
+            console.log("Client disconnected");
+            clearInterval(interval);
+        });
+    });
+
+    return io;
 }
 
 module.exports = { createWebSocketServer };
