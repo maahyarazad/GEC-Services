@@ -358,9 +358,18 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
 
         if (result && result.length > 0) {
             const record = result[0];
+
+            if (record.metadata_modifiedAt !== null) {
+                return res.status(409).json({
+                    status: true,
+                    message: "This QR code has already been used for registration. Please contact support if you believe this is an error.",
+                    record
+                });
+            }
+
             record.metadata_modifiedAt = formatDateToMySQL(new Date(Date.now()));
             dbService.update(table_name, record.id, record)
-            return res.json({
+            return res.status(200).json({
                 status: true,
                 message: "Guest registration completed successfully. Thank you for your submission.",
                 record
@@ -369,7 +378,7 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
         }
 
         // If no result found
-        return res.json({
+        return res.status(404).json({
             status: false,
             message: "No registration record found for the provided event ID."
         });
