@@ -18,7 +18,7 @@ const survey = require('./routes/survey.js');
 const gic_user = require('./routes/gic_user.js');
 const payment = require('./routes/payment.js');
 const email_storage = require('./routes/email_storage.js');
-const {GSheetParser} = require('./services/g_sheet_parser.js');
+const GSheetService = require('./services/gSheetService.js');
 const whatsapp_sender = require('./routes/whatsapp_sender.js');
 const email_sender = require('./routes/email_sender.js');
 const cookieParser = require("cookie-parser");
@@ -135,7 +135,7 @@ createWebSocketServer(server, allowedOrigins);
 cron.schedule("0 */6 * * *", async () => {
   try {
     console.log("Running background job every 6 hours:", new Date());
-    await GSheetParser();
+    await GSheetService.GSheetParser();
     console.log("Background job finished at:", new Date());
   } catch (err) {
     console.error("Background job failed:", err);

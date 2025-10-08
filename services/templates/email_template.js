@@ -10,6 +10,8 @@ const emailTemplates = {
             time ? `<p><strong>Zeit: </strong> ${time}</p>` : "",
         qrMessage:
             "Bitte bewahren Sie diese E-Mail auf, damit wir Ihren QR-Code scannen können:",
+             passMessage: "Hinweis: Klicken Sie unten auf die Schaltflächen \"Apple Pass\" oder \"Google Pass\", um Ihren Event Access Pass auf Ihr Telefon herunterzuladen.",
+       
         appleWalletAlt: "Add to Apple Wallet",
         googleWalletAlt: "Add to Google Wallet",
                 eventLocationName: (event_location_name) =>
@@ -32,6 +34,8 @@ const emailTemplates = {
         eventLocationName: (event_location_name) =>
             event_location_name ? `<p><strong>Event Venue: </strong> ${event_location_name}</p>` : "",
         qrMessage: "Please keep this email so we can scan your QR code:",
+         passMessage:
+            "Note: Please make sure to click on Apple Pass or Google Pass buttons below to download your Event Access Pass on your phone",
         appleWalletAlt: "Add to Apple Wallet",
         googleWalletAlt: "Add to Google Wallet",
         locationSection: "Event Location – Tap map for navigation.",

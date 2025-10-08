@@ -81,7 +81,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                 currentCount = Number(key[0].tokenCount);
             } else {
                 const count_token = await dbService.findByConditions("registration", {
-                    phone: data.phone,
+                    email: data.email,
                     event: data.event
                 });
 
