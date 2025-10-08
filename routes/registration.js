@@ -384,17 +384,21 @@ router.post("/admin/login", upload.none(), loginLimiter, (req, res) => {
     const { password } = req.body;
 
     if (password === process.env.VITE_ADMIN_PASSWORD) {
+
+        const oneWeekInSeconds = 7 * 24 * 60 * 60;
+        const oneWeekInMilliseconds = oneWeekInSeconds * 1000;
+
         const token = jwt.sign(
             { role: "admin", mapboxToken: process.env.VITE_APP_MAPBOX_TOKEN },
             process.env.JWT_SECRET,
-            { expiresIn: "1h" }
+            { expiresIn: `${oneWeekInSeconds}s` }
         );
 
-        res.cookie("a-usr", token, {
+       res.cookie("a-usr", token, {
             httpOnly: true,
             secure: true,
             sameSite: "none",
-            maxAge: 60 * 60 * 1000
+            maxAge: oneWeekInMilliseconds, 
         });
 
         return res.json({ success: true });
