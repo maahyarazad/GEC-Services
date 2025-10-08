@@ -214,17 +214,17 @@ const handsendEmail = async (type) => {
                             Apply Filters
                         </Button>
                        
-                       <div className='mt-2'>
+                       {/* <div className='mt-2'>
 
                         <Button
                             variant="contained"
                             color="primary"
-                            onClick={()=> handsendEmail(7)}
+                            onClick={()=> handsendEmail(5)}
                             sx={{ fontSize: 13, textTransform: 'none' }}
                         >
                             Send Email to Red
                         </Button>
-                       </div>
+                       </div> */}
                     </div>
                    
                 </div>

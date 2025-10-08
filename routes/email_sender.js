@@ -15,16 +15,16 @@ router.get('/api/send-party-invitation', async (req, res) => {
 
         const data = await dbService.findExactWithConditions('member_card', conditions)
 
+        const email = "maahyarazad@gmail.com";
+        // const trim = "Krishna.Kumar@logwin-logistics.com";
+ 
 
-        const trim = "Krishna.Kumar@logwin-logistics.com";
+        // const index = data.findIndex(obj => obj.email === trim);
+        // const _data = data.slice(index + 1);
 
 
-        const index = data.findIndex(obj => obj.email === trim);
-        const _data = data.slice(index + 1);
-
-
-        for (let i = 0; i < _data.length; i++) {
-            const k = _data[i];
+        for (let i = 0; i < data.length; i++) {
+            const k = data[i];
             try {
                 await send_party_invitation({ email: k.email });
                 console.log(`✅ Sent to: ${k.email}`);

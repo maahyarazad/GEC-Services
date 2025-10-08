@@ -12,16 +12,16 @@ const MyDocument = ({ formData, logo }) => {
 
 
     const { positiveTotal, negativeTotal } = formData.items.reduce(
-    (totals, item) => {
-        const amount = parseFloat(item.amount) || 0;
-        if (amount >= 0) {
-        totals.positiveTotal += amount;
-        } else {
-        totals.negativeTotal += amount;
-        }
-        return totals;
-    },
-    { positiveTotal: 0, negativeTotal: 0 }
+        (totals, item) => {
+            const amount = parseFloat(item.amount) || 0;
+            if (amount >= 0) {
+                totals.positiveTotal += amount;
+            } else {
+                totals.negativeTotal += amount;
+            }
+            return totals;
+        },
+        { positiveTotal: 0, negativeTotal: 0 }
     );
 
 
@@ -98,7 +98,7 @@ const MyDocument = ({ formData, logo }) => {
 
                     {/* Items */}
                     {formData.items.map((item, i) => (
-                        
+
                         <View key={`item-${i}`}>
                             <View style={styles.tableRow} key={`item-${i}`}>
                                 <Text style={styles.tableColDescription}>{item.title || "No Title"}</Text>
@@ -225,8 +225,8 @@ const MyDocument = ({ formData, logo }) => {
                                     </View>
                                 );
                             }
-                        }}/>
-                        
+                        }} />
+
 
                     </View>
                 </View>
@@ -259,31 +259,37 @@ const MyDocument = ({ formData, logo }) => {
                     </View>
 
                     {/* Bottom-right signature */}
-                     <View style={{ flex: 1, paddingLeft: 10, marginBottom: 20 }} render={({ pageNumber, totalPages }) => {
-                            if (formData.payment_terms.signature_bottom_right_name !== "") {
+                    <View style={{ flex: 1, paddingLeft: 10, marginBottom: 20 }} render={({ pageNumber, totalPages }) => {
+                        if (formData.payment_terms.signature_bottom_right_name !== "") {
 
-                                return (
-                                    <View>
+                            return (
+                                <View>
 
-                                        <View style={styles.signatureLine} />
-                                        <Text style={styles.signatureText}>
-                                            {formData.payment_terms.signature_bottom_right_name}
-                                        </Text>
-                                        <Text style={styles.signatureText}>
-                                            {formData.payment_terms.signature_bottom_right_title}
-                                            {formData.payment_terms.signature_bottom_right_company}
-                                        </Text>
-                                    </View>
-                                );
-                            }
-                        }}/>
+                                    <View style={styles.signatureLine} />
+                                    <Text style={styles.signatureText}>
+                                        {formData.payment_terms.signature_bottom_right_name}
+                                    </Text>
+                                    <Text style={styles.signatureText}>
+                                        {formData.payment_terms.signature_bottom_right_title}
+                                        {formData.payment_terms.signature_bottom_right_company}
+                                    </Text>
+                                </View>
+                            );
+                        }
+                    }} />
 
                 </View>
 
-                <View style={styles.footer} fixed
-                    render={({ pageNumber, totalPages }) => {
-                        if (pageNumber === totalPages) {
-                            return (
+                <View
+                    style={styles.footer}
+                    fixed
+                    render={({ pageNumber, totalPages }) => (
+                        <View>
+
+
+
+                            {/* Only render full footer on last page */}
+                            {pageNumber === totalPages && (
                                 <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
                                     {/* Column 1 */}
                                     <View style={{ flex: 1, paddingRight: 10 }}>
@@ -308,11 +314,17 @@ const MyDocument = ({ formData, logo }) => {
                                         <Text style={styles.footerLine}>IBAN: AE 02 0030 0120 0563 2920 001</Text>
                                     </View>
                                 </View>
-                            );
-                        }
-                    }}
+                            )}
 
+                            {/* Always show page number */}
+                            <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                                <Text>{`Page ${pageNumber} of ${totalPages}`}</Text>
+                            </View>
+
+                        </View>
+                    )}
                 />
+
 
 
             </Page>

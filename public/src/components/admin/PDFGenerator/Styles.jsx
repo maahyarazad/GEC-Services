@@ -12,7 +12,7 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 20,
+        marginBottom: 40,
     },
     logo: {
         // width: 90,
@@ -24,6 +24,7 @@ const styles = StyleSheet.create({
         fontSize: 8,
     },
     projectLine1: {
+        
         fontSize: 8, // decreased from 13
         fontWeight: 600,
         textTransform: 'uppercase',
@@ -45,6 +46,7 @@ const styles = StyleSheet.create({
         textAlign: 'right',
     },
     companyInfo: {
+        
         flexDirection: 'row',
         justifyContent: 'flex-start',
         marginBottom: 20,
@@ -53,6 +55,7 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
     },
     companyName: {
+        
         fontSize: 11, // decreased from 14
         fontWeight: 700,
         textTransform: 'uppercase',
@@ -65,6 +68,7 @@ const styles = StyleSheet.create({
         color: '#000',
     },
     referencesContainer: {
+        marginBottom: 40,
         marginTop: 30,
         width: '100%'
     },
@@ -251,8 +255,6 @@ const styles = StyleSheet.create({
         left: 30,
         right: 30,
         width: '90%',   // ensures it spans properly
-        flexDirection: 'row',
-        justifyContent: 'space-between',
     },
 
     footerTitle: {

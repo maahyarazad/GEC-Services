@@ -1215,7 +1215,7 @@ const htmlBody = `
                 </p>
 
                 <p>
-                  Entrance is free, but we would love to receive a small <strong>gift</strong> from you as a birthday present! 🎁
+                  Participation is free for all ClubPartners and their teams with a valid corporate card.  Instead of a registration fee, we would love to receive a small gift from you as a birthday present! 🎁
                 </p>
 
                 <p style="text-align: center; margin: 30px 0;">

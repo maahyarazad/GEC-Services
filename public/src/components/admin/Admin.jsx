@@ -94,7 +94,8 @@ export const Admin = ({ data }) => {
         // Create Socket.IO client
         const socket = io(`${import.meta.env.VITE_SERVERURL}`, {
             path: "/socket.io",
-            transports: ["websocket"], // force websocket
+            transports: ["websocket"], // force websocket,
+            withCredentials: true,
         });
 
         // Connection established
