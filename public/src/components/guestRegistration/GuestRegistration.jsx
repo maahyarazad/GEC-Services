@@ -116,7 +116,7 @@ export const GuestRegistration = () => {
 
 
         } catch (err) {
-            debugger;
+            
             snackbarRef.current?.openSnackbar(err.message);
             setError("Failed to fetch registration.");
         } finally {

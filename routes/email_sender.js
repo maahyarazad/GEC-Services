@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const dbService = require("../services/dbService");
 const { send_party_invitation } = require("../services/emailService");
+const authorize_admin = require("../middleware/auth");
 
 // ✅ Accept query parameters using GET
-router.get('/api/send-party-invitation', async (req, res) => {
+router.get('/api/send-party-invitation', authorize_admin ,async (req, res) => {
     try {
         const queryParams = req.query;
 

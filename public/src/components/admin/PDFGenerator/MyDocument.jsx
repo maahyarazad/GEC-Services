@@ -160,7 +160,7 @@ const MyDocument = ({ formData, logo }) => {
 
                     <View style={styles.totalRight}>
                         <Text>Reference:</Text>
-                        <Text style={{ paddingLeft: 10 }}>please mention
+                        <Text style={{ paddingLeft: 10 }}>
                             <Text style={{ fontWeight: 600 }}>{formData.reference.reference_number}</Text>
                         </Text>
                     </View>

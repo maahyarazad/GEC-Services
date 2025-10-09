@@ -19,7 +19,7 @@ const gic_user = require('./routes/gic_user.js');
 const payment = require('./routes/payment.js');
 const email_storage = require('./routes/email_storage.js');
 const GSheetService = require('./services/gSheetService.js');
-const whatsapp_sender = require('./routes/whatsapp_sender.js');
+const g_sheet = require('./routes/gSheet.js');
 const email_sender = require('./routes/email_sender.js');
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
@@ -114,6 +114,7 @@ app.use('/', payment);
 app.use('/', member_card);
 app.use('/', email_storage);
 app.use('/', email_sender);
+app.use('/', g_sheet);
 
 app.use('/api/', authorize);
 
