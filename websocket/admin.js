@@ -31,12 +31,12 @@ function createWebSocketServer(server, allowedOrigins = []) {
     });
 
     io.use((socket, next) => {
-        console.log("Incoming connection headers:", socket.handshake.headers);
+        // console.log("Incoming connection headers:", socket.handshake.headers);
         next();
     });
 
     io.on("connection", (socket) => {
-        console.log(`✅ Client connected from ${socket.handshake.address}`);
+        // console.log(`✅ Client connected from ${socket.handshake.address}`);
 
         const hasToken = socket.handshake.headers.cookie?.includes("a-usr=") ?? false;
         socket.emit("auth", { Auth: !!hasToken });
@@ -47,7 +47,7 @@ function createWebSocketServer(server, allowedOrigins = []) {
         }, 10_000);
 
         socket.on("disconnect", (reason) => {
-            console.log(`❌ Client disconnected (${reason})`);
+            // console.log(`❌ Client disconnected (${reason})`);
             clearInterval(interval);
         });
     });

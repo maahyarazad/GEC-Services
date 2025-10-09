@@ -4,7 +4,7 @@ import RegistrationRequestForm from "../RegistrationRequestForm";
 import { DataGrid } from '@mui/x-data-grid';
 import { Switch, Button, Box, Tooltip, FormControlLabel, IconButton } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-
+import SimpleSnackbar from "../../utils/Snackbar";
 import AlertDialog from '../../utils/AlertDialog';
 import lockRegistrationImage from '../../../assets/media/lock_registration.webp';
 import Stepper from '@mui/material/Stepper';
@@ -25,7 +25,7 @@ import { FaRegEdit } from "react-icons/fa";
 import { IoMdArchive } from "react-icons/io";
 import { SiGooglesheets } from "react-icons/si";
 
-const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate, onArchive, onAutoRgister, fetchingCodeList, requestloading }) => [
+const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate, onArchive, onAutoRgister, requestloading }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     {
         field: 'lockRegistration', headerName: 'Active Page', width: 100, renderCell: (params) => {
@@ -277,11 +277,11 @@ export const RegistrationList = () => {
     const [initialData, setInitialData] = useState(null);
     const [bookingData, setBookingData] = useState(null);
     const [codeList, setCodeList] = useState(null);
-    const [fetchingCodeList, setFetchingCodeList] = useState(false);
     const [codeEventTitle, setCodeEventTitle] = useState(null);
     const [memberCount, setMemberCount] = useState(0);
     const [isParentModalOpen, setIsParentModalOpen] = useState(false);
     const dialogRef = useRef();
+    const snackbarRef = useRef();
     const [loading, setLoading] = useState(false);
     const [requestloading, setRequestLoading] = useState([]);
 
@@ -295,16 +295,18 @@ export const RegistrationList = () => {
                 credentials: "include"
             });
 
+            const respnse_data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to fetch');
+                
+                snackbarRef.current?.openSnackbar(respnse_data.message);
+                throw new Error(response.message);
             }
 
-            const values = await response.json();
 
-            if (values) {
+            if (respnse_data) {
 
-                setRegistrationList(values.rows);
-                setRowCount(values.rows.length)
+                setRegistrationList(respnse_data.rows);
+                setRowCount(respnse_data.rows.length)
             }
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -323,8 +325,11 @@ export const RegistrationList = () => {
                 credentials: "include"
             });
 
+            const respnse_data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to fetch registration data');
+                
+                snackbarRef.current?.openSnackbar(respnse_data.message);
+                throw new Error(response.message);
             }
 
             const values = await response.json();
@@ -358,11 +363,13 @@ export const RegistrationList = () => {
                 credentials: "include"
             });
 
+            const respnse_data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to fetch registration data');
+                
+                snackbarRef.current?.openSnackbar(respnse_data.message);
+                throw new Error(response.message);
             }
 
-            const configData = await response.json();
             await fetchData();
 
         } catch (err) {
@@ -377,15 +384,20 @@ export const RegistrationList = () => {
                 method: 'GET',
                 credentials: "include"
             });
-
+            
+            const respnse_data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to fetch registration data');
+                
+                snackbarRef.current?.openSnackbar(respnse_data.message);
+                throw new Error(response.message);
             }
 
+            snackbarRef.current?.openSnackbar(respnse_data.message, "success");
             await fetchData();
 
         } catch (err) {
             console.error('Error fetching data:', err);
+
         } finally {
             setRequestLoading((prev) => prev.filter((x) => x !== row.id));
         }
@@ -404,8 +416,11 @@ export const RegistrationList = () => {
                 credentials: "include"
             });
 
+            const respnse_data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to fetch registration data');
+                
+                snackbarRef.current?.openSnackbar(respnse_data.message);
+                throw new Error(response.message);
             }
 
             await fetchData();
@@ -425,8 +440,11 @@ export const RegistrationList = () => {
                 credentials: "include"
             });
 
+            const respnse_data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to fetch registration data');
+                
+                snackbarRef.current?.openSnackbar(respnse_data.message);
+                throw new Error(response.message);
             }
 
             await fetchData();
@@ -447,15 +465,17 @@ export const RegistrationList = () => {
                 body: JSON.stringify({ id: row.id }),
             });
 
+            const respnse_data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to fetch registration keys');
+                
+                snackbarRef.current?.openSnackbar(respnse_data.message);
+                throw new Error(response.message);
             }
 
-            const result = await response.json();
 
-            if (result.data) {
+            if (respnse_data.data) {
                 setCodeEventTitle(row.title);
-                setCodeList(result.data);
+                setCodeList(respnse_data.data);
                 setCodeModal(true);
             }
 
@@ -499,7 +519,6 @@ export const RegistrationList = () => {
 
                     const selectedRow = registrationList?.find((x) => x.id === row.id);
                     if (selectedRow) {
-
                         handleSwitchLock(selectedRow.id, 'true')
                     }
                 },
@@ -522,7 +541,7 @@ export const RegistrationList = () => {
 
         dialogRef.current.openDialog(
             <div>
-                Do you want to <strong>Auto Register base on the Google Sheet Geburtstagsparty</strong>
+                Do you want to <strong>Auto Register base on the Google Sheet Geburtstagsparty </strong>
                 Are you sure you want to proceed?
             </div>,
             'Confirm Action',
@@ -537,7 +556,6 @@ export const RegistrationList = () => {
                 if (selectedRow) {
                     setRequestLoading((prev) => [...prev, selectedRow.id]);
                     handleAutoRegister(selectedRow);
-
                 }
             },
             () => {
@@ -596,6 +614,7 @@ export const RegistrationList = () => {
     return (
         <Box sx={{ padding: 1 }}>
             <AlertDialog ref={dialogRef} />
+            <SimpleSnackbar ref={snackbarRef} />
             <div className="d-flex justify-content-start mb-1">
                 <div className="">
                     <Tooltip title="Add New Registration Page" componentsProps={config.tooltip_config}>
@@ -629,7 +648,6 @@ export const RegistrationList = () => {
                             , onDuplicate: handleDuplicateCreation
                             , onArchive: archiveAlert
                             , onAutoRgister: autoRegisterAlert
-                            , fetchingCodeList: fetchingCodeList
                             , requestloading: requestloading
                         })}
                         pageSize={5}

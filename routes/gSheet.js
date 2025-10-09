@@ -27,7 +27,7 @@ router.get('/api/google-auto-register', authorize_admin,async (req, res) => {
 
         return res.status(200).json({
             status: true,
-            message: `✅ ${totalComplete} email addresses were successfully registered, and ${totalFail} failed to process.`,
+            message: `✅ ${totalComplete} email addresses were successfully registered, and ❌ ${totalFail} failed to process.`,
         });
 
 

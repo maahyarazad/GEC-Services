@@ -262,9 +262,9 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
 
                     if(event_date){
                         
-                        // await generateApplePass(data);
-                        // const googleWalletLink = await generateGooglePass(data);
-                        // await event_confirm_registration_email({ ...data, selected_time_for_email, googleWalletLink, langKey });
+                        await generateApplePass(data);
+                        const googleWalletLink = await generateGooglePass(data);
+                        await event_confirm_registration_email({ ...data, selected_time_for_email, googleWalletLink, langKey });
                         
                     }else{
                         await email_request_received(data);

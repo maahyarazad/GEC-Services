@@ -165,7 +165,6 @@ const GSheetService = {
         } catch (err) {
             console.error(err);
             throw err;
-
         }
     },
 }
@@ -187,8 +186,8 @@ const sendBulkRegistration = async (register_list) => {
             formData.append('attachment_file', null);
 
             const response = await fetch(
-                // `${process.env.CLIENT_ORIGIN}/registration`, 
-                `http://localhost:5501/registration`,
+                 `${process.env.CLIENT_ORIGIN}/registration`, 
+                //`http://localhost:5501/registration`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "X-User-Lang": "english" },
