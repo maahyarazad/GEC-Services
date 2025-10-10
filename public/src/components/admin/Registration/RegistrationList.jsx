@@ -152,6 +152,9 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
             const code = params?.row?.registration_code;
             const use_member_card = params?.row?.use_member_card;
             const loginDisabled = params?.row?.loginRequired;
+             const isLoading = requestloading.some((item) => item.id === params?.row?.id && item.field === params.field);
+
+
             if (use_member_card === "true") {
                 return <Box>
                     <Tooltip
@@ -192,7 +195,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
                                     style={{ textTransform: 'none' }}
                                     onClick={() => onShowCode(params.row)}
                                 >
-                                    {requestloading.includes(params.row.id) ? (<CircularProgress size={20} color="white" />) : "Code List"}
+                                    {isLoading ? (<CircularProgress size={20} color="white" />) : "Code List"}
 
                                 </Button>
                             </Tooltip>
@@ -210,59 +213,63 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
         width: 200,
         sortable: false,
         filterable: false,
-        renderCell: (params) => (
-            <Box>
-
-                <IconButton
-                    title="Edit"
-                    onClick={() => onEdit(params.row)}
-                >
-                    <FaRegEdit color="dark" size={18} />
-                </IconButton>
-
-
-
-
-                <IconButton
-                    onClick={() => onDuplicate(params.row)}
-                    title="Create a duplicate registration from this configuration"
-                >
-                    <IoDuplicate color="primary" size={18} />
-                </IconButton>
-                <IconButton
-                    onClick={() => onArchive(params.row)}
-                    title="Archive registration page"
-                >
-                    <IoMdArchive color="primary" size={18} />
-                </IconButton>
-
-                <IconButton
-
-                    onClick={() => onAutoRgister(params.row)}
-                    title="Auto Register with G-Sheet"
-                >
-
-                    {requestloading.includes(params.row.id) ? <CircularProgress size={15} /> :
-
-                        <SiGooglesheets color="primary" size={18} />
-                    }
-                </IconButton>
-
-
-                <Switch size="samll"
-                    title="Switch Registration Lock"
-                    checked={params.row.lockRegistration === true || params.row.lockRegistration === "true"}
-                    onChange={() => onLock(params.row)}
-                    color="primary"
-                    sx={{
-                        transform: 'scale(0.9)', // make it 1.5x larger
-                        '& .MuiSwitch-switchBase': {
-                            padding: 1,
-                        },
-                    }}
-                />
-            </Box>
-        ),
+        renderCell: (params) => {
+            const isLoading = requestloading.some((item) => item.id === params?.row?.id && item.field === params.field);
+            return (
+                
+                <Box>
+    
+                    <IconButton
+                        title="Edit"
+                        onClick={() => onEdit(params.row)}
+                    >
+                        <FaRegEdit color="dark" size={18} />
+                    </IconButton>
+    
+    
+    
+    
+                    <IconButton
+                        onClick={() => onDuplicate(params.row)}
+                        title="Create a duplicate registration from this configuration"
+                    >
+                        <IoDuplicate color="primary" size={18} />
+                    </IconButton>
+                    <IconButton
+                        onClick={() => onArchive(params.row)}
+                        title="Archive registration page"
+                    >
+                        <IoMdArchive color="primary" size={18} />
+                    </IconButton>
+    
+                    <IconButton
+    
+                        onClick={() => onAutoRgister(params.row)}
+                        title="Auto Register with G-Sheet"
+                    >
+    
+                        {isLoading ? <CircularProgress size={15} /> :
+    
+                            <SiGooglesheets color="primary" size={18} />
+                        }
+                    </IconButton>
+    
+    
+                    <Switch size="samll"
+                        title="Switch Registration Lock"
+                        checked={params.row.lockRegistration === true || params.row.lockRegistration === "true"}
+                        onChange={() => onLock(params.row)}
+                        color="primary"
+                        sx={{
+                            transform: 'scale(0.9)', // make it 1.5x larger
+                            '& .MuiSwitch-switchBase': {
+                                padding: 1,
+                            },
+                        }}
+                    />
+                </Box>
+            )
+        }
     },
 ];
 
@@ -399,7 +406,7 @@ export const RegistrationList = () => {
             console.error('Error fetching data:', err);
 
         } finally {
-            setRequestLoading((prev) => prev.filter((x) => x !== row.id));
+            setRequestLoading((prev) => prev.filter((item) => !(item.id === row.id && item.field === field)));
         }
     };
 
@@ -456,8 +463,11 @@ export const RegistrationList = () => {
 
 
     const showCodeList = async (row) => {
+        const field = 'registration_code';
         try {
-            setRequestLoading((prev) => [...prev, row.id]);
+            
+            setRequestLoading((prev) => [...prev, {id:row.id, field}]);
+
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-keys`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -482,7 +492,7 @@ export const RegistrationList = () => {
         } catch (err) {
             console.error('Error fetching data:', err);
         } finally {
-            setRequestLoading((prev) => prev.filter((x) => x !== row.id));
+            setRequestLoading((prev) => prev.filter((item) => !(item.id === row.id && item.field === field)));
         }
     }
 
@@ -554,7 +564,7 @@ export const RegistrationList = () => {
                 const selectedRow = registrationList?.find((x) => x.id === row.id);
 
                 if (selectedRow) {
-                    setRequestLoading((prev) => [...prev, selectedRow.id]);
+                    setRequestLoading((prev) => [...prev, { id: selectedRow.id, field: "actions" }]);
                     handleAutoRegister(selectedRow);
                 }
             },
