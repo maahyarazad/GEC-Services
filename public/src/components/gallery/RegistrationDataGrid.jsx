@@ -5,7 +5,7 @@ import { BsFiletypeCsv } from "react-icons/bs";
 import { FaCircleCheck } from "react-icons/fa6";
 import MessageModalTrigger from '../utils/MessageModalTrigger';
 import {config} from '../../ui_config';
-
+import { FcFlashAuto } from "react-icons/fc";
 const PAGE_SIZE = 10;
 
 const columns = [
@@ -58,7 +58,21 @@ const columns = [
 
             }
         },
+    {
+        field: 'message',
+        headerName: 'Message',
+        width: 120,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        renderCell: (params) => {
+            const message = params?.row?.message;
+            if (!message) return null;
+            if (message === "AUTO_REGISTER") return <FcFlashAuto size={16} title='This record has been automatically registered from the Google Sheet.'/>;
 
+            return <MessageModalTrigger message={message} />;
+        }
+    },
     { field: 'event', headerName: 'Event', width: 130, filterable: true },
     { field: 'firstName', headerName: 'Firstname', width: 130, filterable: true },
     { field: 'lastName', headerName: 'Lastname', width: 130, filterable: true },
@@ -68,20 +82,7 @@ const columns = [
     { field: 'gender', headerName: 'Gender', width: 100, filterable: true },
     { field: 'birthday', headerName: 'Birthday', width: 100, filterable: true },
     { field: 'event_id', headerName: 'Event ID', width: 100, filterable: true },
-    {
-        field: 'message',
-        headerName: 'Message',
-        width: 120,
-        sortable: false,
-        filterable: false,
-        disableColumnMenu: true,
-        renderCell: (params) => {
-            const filename = params?.row?.message;
-            if (!filename) return null;
 
-            return <MessageModalTrigger message={filename} />;
-        }
-    },
 
     {
         field: 'attachment_file', headerName: 'Attachment', width: 100, renderCell: (params) => {

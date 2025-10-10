@@ -142,15 +142,6 @@ const GSheetService = {
                 title: title,
               });
             });
-
-
-
-            if (register_list.length > 0) {
-                register_list.forEach(x => console.log(x));
-                const result = await sendBulkRegistration(register_list);
-                return result;
-            }
-
             // register_list.push({
             //     firstName: "Maahyar Azad",
             //     lastName: "",
@@ -162,7 +153,28 @@ const GSheetService = {
             //     event_date: event_date,
             //     title: title,
 
-            // })
+            // });
+            // register_list.push({
+            //     firstName: "Maahyar Azad",
+            //     lastName: "",
+            //     email: "mahyar_inc@Yahoo.com",
+            //     phone: "",
+
+            //     message: "AUTO_REGISTER",
+            //     event: event,
+            //     event_date: event_date,
+            //     title: title,
+
+            // });
+
+
+
+            if (register_list.length > 0) {
+                register_list.forEach(x => console.log(x));
+                const result = await sendBulkRegistration(register_list);
+                return result;
+            }
+
 
         } catch (err) {
             console.error(err);
@@ -188,8 +200,8 @@ const sendBulkRegistration = async (register_list) => {
             formData.append('attachment_file', null);
 
             const response = await fetch(
-                 `${process.env.CLIENT_ORIGIN}/registration`, 
-                //`http://localhost:5501/registration`,
+                `${process.env.CLIENT_ORIGIN}/registration`, 
+                // `http://localhost:5501/registration`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "X-User-Lang": "english" },
@@ -197,10 +209,13 @@ const sendBulkRegistration = async (register_list) => {
                 });
 
 
-            if (!response.ok) {
+            if (response.ok) {
+                register_list[i].completed = true;
+            }else{
                 register_list[i].completed = false;
                 console.log("Register failed:", register_list[i].email);
             }
+            
             const data = await response.json();
             console.log("Registered:", form.email, data);
 

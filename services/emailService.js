@@ -395,8 +395,15 @@ async function event_confirm_registration_email(reqBody) {
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${emailTemplates[langKey].subject(title)}</title>
+    <style type="text/css">
+	@media only screen and (max-width:600px){
+.pass img{height:60px !important;}
+}
+
+    </style>
   </head>
   <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
@@ -445,11 +452,11 @@ async function event_confirm_registration_email(reqBody) {
                 </tr>
                 <tr>
                   <td height=30 align="center" style="padding:20px; font-size:16px; color:#333333;">
-                    <a href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
-                      <img 
+                    <a class="pass" href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
+                      <img height="60"
                         src="cid:applewalletimg" 
                         alt="${emailTemplates[langKey].appleWalletAlt}" 
-                        style="height:60px; border:0; border-radius:12px; display:block;"
+                        style="border:0; border-radius:12px; display:block;"
                       />
                     </a>
                   </td>
@@ -458,11 +465,11 @@ async function event_confirm_registration_email(reqBody) {
                   ${googleWalletLink ?
 
 				`  <tr> <td height=30 align="center" style="padding:20px; font-size:16px; color:#333333;">
-                    <a href="${googleWalletLink}" style="display:inline-block;">
-                      <img 
+                    <a class="pass" href="${googleWalletLink}" style="display:inline-block;">
+                    <img        height="54"
                         src="cid:googlewalletimg" 
                         alt="${emailTemplates[langKey].googleWalletAlt}" 
-                        style="height:54px; border:0; border-radius:12px; display:block;"
+                        style="border:0; border-radius:12px; display:block;"
                       />
                     </a>
                   </td>  </tr>` : ``
@@ -493,6 +500,7 @@ async function event_confirm_registration_email(reqBody) {
   </body>
 </html>
 `;
+
 
 		const bcc = ["development2@german-emirates-club.com", "office2@german-emirates-club.com"];
 		// ✅ Send email using your own SMTP function
