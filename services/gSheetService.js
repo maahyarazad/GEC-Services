@@ -47,8 +47,8 @@ const GSheetService = {
             oneMonthsAgo.setMonth(now.getMonth() - 1);
 
 
-            const filtered = results.filter(x => {
-                const d = new Date(x["Date Received"]);
+              const filtered = results.filter(x => {
+                const d = new Date(x["Date Printed"]);
                 const card_number = Number(x["Card Number"]);
 
                 // validate card number
@@ -60,7 +60,8 @@ const GSheetService = {
                 // date filtering (example: within last year, not older than a month ago)
                 const validDate = d >= oneYearAgo;
 
-                return validCard && !duplicate && validDate;
+
+                return validCard && !duplicate && validDate && !isNaN(d);
             });
 
             let newObject = [];
@@ -71,6 +72,7 @@ const GSheetService = {
                 const expiryDate = formatDateToMySQL(new Date(printedDate.setFullYear(printedDate.getFullYear() + 1)));
                 const paid = card_number && card_number[0] === '7' ? 0 : 1;
                 const type = card_number ? Number(card_number[0]) : null;
+                const normalized = x['Mobile Number'].replace(/[=+'"\s-]/g, '');
 
                 newObject.push({
                     card_number: Number(card_number),
@@ -80,7 +82,7 @@ const GSheetService = {
                     lastname: x['Last Name'],
                     card_expiry_date: expiryDate,
                     email: x['Email Address'],
-                    mobile_number: x['Mobile Number'],
+                    mobile_number: normalized,
                 })
             });
 

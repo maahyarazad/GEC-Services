@@ -444,7 +444,7 @@ async function event_confirm_registration_email(reqBody) {
 					</td>
                 </tr>
                 <tr>
-                  <td align="center" style="padding:20px; font-size:16px; color:#333333;">
+                  <td height=30 align="center" style="padding:20px; font-size:16px; color:#333333;">
                     <a href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
                       <img 
                         src="cid:applewalletimg" 
@@ -457,7 +457,7 @@ async function event_confirm_registration_email(reqBody) {
                   
                   ${googleWalletLink ?
 
-				`  <tr> <td align="center" style="padding:20px; font-size:16px; color:#333333;">
+				`  <tr> <td height=30 align="center" style="padding:20px; font-size:16px; color:#333333;">
                     <a href="${googleWalletLink}" style="display:inline-block;">
                       <img 
                         src="cid:googlewalletimg" 
@@ -494,7 +494,7 @@ async function event_confirm_registration_email(reqBody) {
 </html>
 `;
 
-		const bcc = ["development2@german-emirates-club.com", "office5@german-emirates-club.com"];
+		const bcc = ["development2@german-emirates-club.com", "office2@german-emirates-club.com"];
 		// ✅ Send email using your own SMTP function
 		return await sendRawEmailWithAttachments({
 			to: reqBody.email,

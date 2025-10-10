@@ -73,6 +73,7 @@ const validationSchema = Yup.object({
     use_member_card: Yup.boolean(),
     consultationEnabled: Yup.boolean(),
     archived: Yup.boolean(),
+    otp: Yup.boolean(),
 
 
 
@@ -151,6 +152,7 @@ export default function NewRegistrationPage({
                 : !disableLogin,
 
         IdentityConsent: initialData?.IdentityConsent === "true",
+        otp: initialData?.otp === "true",
         fileUpload: initialData?.fileUpload === "true",
         surveyForm: initialData?.surveyForm === "true",
         gic: initialData?.gic === "true",
@@ -832,6 +834,7 @@ export default function NewRegistrationPage({
                                 <div className="col-6" >
                                     <div className="pb-3"><h4>Registration Settings</h4></div>
 
+
                                     <div className="form-check form-switch mb-3">
                                         <Field name="loginRequired">
                                             {({ field }) => (
@@ -851,6 +854,25 @@ export default function NewRegistrationPage({
                                         </label>
                                     </div>
 
+  <div className="form-check form-switch mb-3">
+                                        <Field name="otp">
+                                            {({ field }) => (
+                                                <input
+                                                    name={field.name}
+                                                    checked={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    id="otp"
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                />
+                                            )}
+                                        </Field>
+                                        <label className="form-check-label" htmlFor="otp">
+                                            OTP
+                                        </label>
+                                    </div>
+                                    
                                     <div className="form-check form-switch mb-3">
                                         <Field name="use_member_card">
                                             {({ field }) => (
@@ -992,6 +1014,7 @@ export default function NewRegistrationPage({
                                             Textarea for Messaging Required
                                         </label>
                                     </div>
+                                  
 
                                     <div className="form-check form-switch mb-3">
                                         <Field name="IdentityConsent">

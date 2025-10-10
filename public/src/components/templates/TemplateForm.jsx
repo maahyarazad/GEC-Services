@@ -82,6 +82,7 @@ export const TemplateForm = () => {
     const [initialTargetFee, setInitialTargetFee] = useState(null);
     const [rates, setRates] = useState(null);
     const [target, setTarget] = useState(null);
+    
     const [selectedLanguage, setSelectedLanguage] = useState("german");
     const navigate = useNavigate();
 
@@ -170,10 +171,12 @@ export const TemplateForm = () => {
 
                     if (x.loginRequired === "false") {
 
-                        // setPhoneRegistered(true);
-                        
                         setTarget(values.rows[0]);
                         setLoading(false);
+                        
+                        if(x.otp === "false"){
+                            setPhoneRegistered(true);
+                        }
                         
                     }
                     
@@ -183,7 +186,6 @@ export const TemplateForm = () => {
                         setInitialCurrency(values.rows[0].currency)
                         setChosenCurrency(values.rows[0].currency)
                         // await fetchCurrencyData(values.rows[0].currency);
-
                     }
 
                     if (x.surveyForm === "true") {
@@ -232,6 +234,8 @@ export const TemplateForm = () => {
     }, []);
     
     
+
+
 
     const handleSendOtp = async (values) => {
         try {
@@ -572,6 +576,7 @@ export const TemplateForm = () => {
     };
 
     useEffect(() => {
+        
         return () => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
@@ -596,7 +601,7 @@ export const TemplateForm = () => {
             return (
                 <>
                     <SimpleSnackbar ref={snackbarRef} />
-        
+
                     <div
                         className="template-form"
                     >
@@ -760,7 +765,32 @@ export const TemplateForm = () => {
                                                                 <div className="w-100">
         
                                                                     <div className="input-group">
-                                                                        <Field
+                                                                        {phoneRegistered ? (
+ <Field
+                                                                        
+                                                                            as={TextField}
+                                                                            type="email"
+                                                                            name="email"
+                                                                            
+                                                                            size="small"
+                                                                            fullWidth
+                                                                            label="E-mail"
+                                                                            helperText={<ErrorMessage name="email" />}
+                                                                            className="pb-2"
+                                                                            error={touched.email && Boolean(errors.email)}
+                                                                            InputProps={{
+                                                                                startAdornment: (
+                                                                                    <InputAdornment position="start">
+                                                                                        {target.fieldIcon === "true" && (
+        
+                                                                                            <MdEmail />
+                                                                                        )}
+                                                                                    </InputAdornment>
+                                                                                ),
+                                                                            }}
+                                                                        />
+                                                                        ) : (
+ <Field
                                                                         
                                                                             as={TextField}
                                                                             type="email"
@@ -783,6 +813,8 @@ export const TemplateForm = () => {
                                                                                 ),
                                                                             }}
                                                                         />
+                                                                        )}
+                                                                       
                                                                     </div>
                                                                 </div>
         
@@ -1280,7 +1312,7 @@ export const TemplateForm = () => {
                             </div>
                         </div>
                     </div>
-        
+                            
                 </>
             );
         }
