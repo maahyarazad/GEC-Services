@@ -24,8 +24,11 @@ import { IoDuplicate } from "react-icons/io5";
 import { FaRegEdit } from "react-icons/fa";
 import { IoMdArchive } from "react-icons/io";
 import { SiGooglesheets } from "react-icons/si";
+import { useWebSocket } from "../WebSocketContext"
+import { PercentageBar } from "../PercentageBar";
+import { StatData } from "../StatData";
 
-const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate, onArchive, onAutoRgister, requestloading }) => [
+const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate, onArchive, onAutoRgister, requestloading, localData }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     {
         field: 'lockRegistration', headerName: 'Active Page', width: 100, renderCell: (params) => {
@@ -152,7 +155,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
             const code = params?.row?.registration_code;
             const use_member_card = params?.row?.use_member_card;
             const loginDisabled = params?.row?.loginRequired;
-             const isLoading = requestloading.some((item) => item.id === params?.row?.id && item.field === params.field);
+            const isLoading = requestloading.some((item) => item.id === params?.row?.id && item.field === params.field);
 
 
             if (use_member_card === "true") {
@@ -208,6 +211,61 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
 
 
     {
+        field: 'Progress',
+        headerName: 'Progress',
+        width: 100,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+            if (localData?.registration_stat?.length > 0) {
+                return (
+                   <Box
+                        className="d-flex justify-content-center align-items-center w-100"
+                        style={{ height: '100%' }}
+                        >
+                        {localData.registration_stat.map((x, index) =>
+                            params.row.page === x.event ? (
+                            <PercentageBar key={index} value={x} />
+                            ) : null
+                        )}
+                        </Box>
+
+
+                );
+            } else {
+                return <></>;
+            }
+        },
+    },
+    {
+        field: 'Stat',
+        headerName: 'Stat',
+        width: 100,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+            if (localData?.registration_stat?.length > 0) {
+                return (
+                    <Box
+                        className="d-flex justify-content-center align-items-center w-100"
+                        style={{ height: '100%' }}
+                        >
+                        {localData.registration_stat.map((x, index) =>
+                            params.row.page === x.event ? (
+                                <div key={index}>
+                                    <StatData value={x}/>
+                                </div>
+                            ) : null
+                        )}
+                    </Box>
+
+                );
+            } else {
+                return <></>;
+            }
+        },
+    },
+    {
         field: 'actions',
         headerName: 'Actions',
         width: 200,
@@ -216,19 +274,19 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
         renderCell: (params) => {
             const isLoading = requestloading.some((item) => item.id === params?.row?.id && item.field === params.field);
             return (
-                
+
                 <Box>
-    
+
                     <IconButton
                         title="Edit"
                         onClick={() => onEdit(params.row)}
                     >
                         <FaRegEdit color="dark" size={18} />
                     </IconButton>
-    
-    
-    
-    
+
+
+
+
                     <IconButton
                         onClick={() => onDuplicate(params.row)}
                         title="Create a duplicate registration from this configuration"
@@ -241,20 +299,20 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
                     >
                         <IoMdArchive color="primary" size={18} />
                     </IconButton>
-    
+
                     <IconButton
-    
+
                         onClick={() => onAutoRgister(params.row)}
                         title="Auto Register with G-Sheet"
                     >
-    
+
                         {isLoading ? <CircularProgress size={15} /> :
-    
+
                             <SiGooglesheets color="primary" size={18} />
                         }
                     </IconButton>
-    
-    
+
+
                     <Switch size="samll"
                         title="Switch Registration Lock"
                         checked={params.row.lockRegistration === true || params.row.lockRegistration === "true"}
@@ -275,6 +333,17 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
 
 
 export const RegistrationList = () => {
+
+    const { data: _data } = useWebSocket(); 
+    const [localData, setLocalData] = useState(null);
+
+
+    useEffect(() => {
+        if (_data) {
+            
+            setLocalData(_data);
+        }
+    }, [_data]);
 
     const [registrationList, setRegistrationList] = useState(null);
     const [newReg, setNewReg] = useState(false);
@@ -304,7 +373,7 @@ export const RegistrationList = () => {
 
             const respnse_data = await response.json();
             if (!response.ok) {
-                
+
                 snackbarRef.current?.openSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
@@ -333,14 +402,15 @@ export const RegistrationList = () => {
             });
 
             const respnse_data = await response.json();
+
             if (!response.ok) {
-                
+
                 snackbarRef.current?.openSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
 
-            const values = await response.json();
-            setMemberCount(values.total.count)
+
+            setMemberCount(respnse_data.total.count)
 
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -372,7 +442,7 @@ export const RegistrationList = () => {
 
             const respnse_data = await response.json();
             if (!response.ok) {
-                
+
                 snackbarRef.current?.openSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
@@ -391,10 +461,10 @@ export const RegistrationList = () => {
                 method: 'GET',
                 credentials: "include"
             });
-            
+
             const respnse_data = await response.json();
             if (!response.ok) {
-                
+
                 snackbarRef.current?.openSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
@@ -425,7 +495,7 @@ export const RegistrationList = () => {
 
             const respnse_data = await response.json();
             if (!response.ok) {
-                
+
                 snackbarRef.current?.openSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
@@ -449,7 +519,7 @@ export const RegistrationList = () => {
 
             const respnse_data = await response.json();
             if (!response.ok) {
-                
+
                 snackbarRef.current?.openSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
@@ -465,8 +535,8 @@ export const RegistrationList = () => {
     const showCodeList = async (row) => {
         const field = 'registration_code';
         try {
-            
-            setRequestLoading((prev) => [...prev, {id:row.id, field}]);
+
+            setRequestLoading((prev) => [...prev, { id: row.id, field }]);
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-keys`, {
                 method: 'POST',
@@ -477,7 +547,7 @@ export const RegistrationList = () => {
 
             const respnse_data = await response.json();
             if (!response.ok) {
-                
+
                 snackbarRef.current?.openSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
@@ -621,6 +691,9 @@ export const RegistrationList = () => {
     };
 
 
+
+
+
     return (
         <Box sx={{ padding: 1 }}>
             <AlertDialog ref={dialogRef} />
@@ -659,6 +732,7 @@ export const RegistrationList = () => {
                             , onArchive: archiveAlert
                             , onAutoRgister: autoRegisterAlert
                             , requestloading: requestloading
+                            , localData: localData
                         })}
                         pageSize={5}
                         rowsPerPageOptions={[5]}

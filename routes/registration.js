@@ -263,7 +263,9 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                     if(event_date){
                         
                         await generateApplePass(data);
-                        const googleWalletLink = await generateGooglePass(data);
+                        
+                        
+                            const googleWalletLink = await generateGooglePass(data);
                         await event_confirm_registration_email({ ...data, selected_time_for_email, googleWalletLink, langKey });
                         
                     }else{
@@ -328,6 +330,15 @@ router.get('/api/registration-csv-data', authorize_admin, async (req, res) => {
 
         const data = await dbService.findAll("registration");
 
+        if(data){
+            data.forEach(x=>{
+                if(x.metadata_modifiedAt){
+                    x.completed = true;
+                }else{
+                    x.completed = false;
+                }
+            })
+        }
         const csv = await exportTableAsCSV(data); // Await CSV generation
 
         res.setHeader('Content-Type', 'text/csv');

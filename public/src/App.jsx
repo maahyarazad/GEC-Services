@@ -9,6 +9,7 @@ import NProgress from 'nprogress';
 import { useEffect, useRef } from "react";
 import {SuccessTemplatePage} from "./components/templates/SuccessTemplatePage";
 import NotFound from "./components/pages/NotFound";
+import { WebSocketProvider } from "./components/admin/WebSocketContext";
 
 const RouteLoader = () => {
   const location = useLocation();
@@ -40,7 +41,14 @@ function AppRoutes() {
         <Route path="/registration/:event" element={<TemplateForm />} />
         <Route path="/registration/:event/success" element={<SuccessTemplatePage />} />
         <Route path="/guest-registration/:eventSlug" element={<GuestRegistration />} />
-        <Route path="/admin" element={<Admin />} />
+         <Route
+          path="/admin"
+          element={
+            <WebSocketProvider>
+              <Admin />
+            </WebSocketProvider>
+          }
+        />
           <Route path="*" element={<NotFound />} />
       </Routes>
     </>

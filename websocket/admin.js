@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { Server } = require("socket.io");
+const dbService = require('../services/dbService');
 
 function createWebSocketServer(server, allowedOrigins = []) {
 
@@ -35,15 +36,19 @@ function createWebSocketServer(server, allowedOrigins = []) {
         next();
     });
 
-    io.on("connection", (socket) => {
-        // console.log(`✅ Client connected from ${socket.handshake.address}`);
-
+    io.on("connection", async (socket) => {
+    
+        
         const hasToken = socket.handshake.headers.cookie?.includes("a-usr=") ?? false;
-        socket.emit("auth", { Auth: !!hasToken });
+        socket.emit("auth", { Auth: !!hasToken, registration_stat: await dbService.registration_stat() });
 
-        const interval = setInterval(() => {
+        const interval = setInterval(async () => {
+            const registration_stat = await dbService.registration_stat();
             const liveToken = socket.handshake.headers.cookie?.includes("a-usr=") ?? false;
-            socket.emit("auth", { Auth: !!liveToken });
+            socket.emit("auth", { Auth: !!liveToken, registration_stat });
+
+
+            
         }, 10_000);
 
         socket.on("disconnect", (reason) => {

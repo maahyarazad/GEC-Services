@@ -6,6 +6,7 @@ import { FaCircleCheck } from "react-icons/fa6";
 import MessageModalTrigger from '../utils/MessageModalTrigger';
 import {config} from '../../ui_config';
 import { FcFlashAuto } from "react-icons/fc";
+
 const PAGE_SIZE = 10;
 
 const columns = [
@@ -73,7 +74,7 @@ const columns = [
             return <MessageModalTrigger message={message} />;
         }
     },
-    { field: 'event', headerName: 'Event', width: 130, filterable: true },
+    { field: 'event', headerName: 'Event', width: 130, filterable: true},
     { field: 'firstName', headerName: 'Firstname', width: 130, filterable: true },
     { field: 'lastName', headerName: 'Lastname', width: 130, filterable: true },
     { field: 'email', headerName: 'Email', width: 160, filterable: true },
@@ -132,13 +133,21 @@ export const RegistrationDataGrid = () => {
             const sortField = sort.field || '';
             const sortOrder = sort.sort || '';
 
-            // Parse filters from filterModel.items
-            const filterParams = Array.isArray(filterModel.items)
-                ? filterModel.items
-                    .filter(item => item?.field && item?.value) // Ensure valid filters
-                    .map(item => `filter_${item.field}=${encodeURIComponent(item.value)}`)
-                    .join('&')
-                : '';
+        // Parse filters from filterModel.items
+                const filterParams = Array.isArray(filterModel.items)
+                    ? filterModel.items
+                        .filter(item => item?.field && (item?.value || item?.operator)) // Include operators like isEmpty
+                        .map(item => {
+                            if (item.operator === 'isEmpty') {
+                                // handle empty / null
+                                return `filter_${item.field}=${item.operator}`;
+                            } else {
+                                return `filter_${item.field}=${encodeURIComponent(item.value)}`;
+                            }
+                        })
+                        .join('&')
+                    : '';
+
 
             const queryParams = [
                 `page=${paginationModel.page + 1}`,
@@ -147,7 +156,7 @@ export const RegistrationDataGrid = () => {
                 sortOrder ? `sortOrder=${sortOrder}` : '',
                 filterParams
             ].filter(Boolean).join('&');
-
+            
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration?${queryParams}`, { credentials: "include" });
             const response_data = await response.json();
 

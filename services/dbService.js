@@ -273,14 +273,31 @@ const dbService = {
     },
 
     getTotalCount: (table, filters = {}) => {
-        return new Promise((resolve, reject) => {
-            const keys = Object.keys(filters);
-            const whereClause = keys.length
-                ? "WHERE " + keys.map(key => `${key} LIKE ?`).join(" AND ")
-                : "";
-            const params = keys.map(key => `%${filters[key]}%`);
+                    const filterKeys = Object.keys(filters);
+    const whereParts = [];
+    const params = [];
 
-            const sql = `SELECT COUNT(*) AS count FROM ${table} ${whereClause}`;
+        // Build WHERE clause dynamically for filters with LIKE
+    filterKeys.forEach(key => {
+            const filterValue = filters[key];
+
+            if (filterValue === 'isEmpty') {
+                // handle NULL or empty string
+                whereParts.push(`${key} IS NULL`);
+           
+            } else {
+                whereParts.push(`${key} LIKE ?`);
+                params.push(`%${filterValue}%`);
+                
+            }
+        });
+
+
+        const whereClause = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : "";
+        const sql = `SELECT COUNT(*) AS count FROM ${table} ${whereClause}`;
+        return new Promise((resolve, reject) => {
+          
+
 
             db.get(sql, params, (err, row) => {
                 if (err) return reject(err);
@@ -302,13 +319,31 @@ const dbService = {
     ) => {
         const offset = page * pageSize;
 
-        // Build WHERE clause dynamically for filters with LIKE
-        const filterKeys = Object.keys(filters);
-        const whereClause = filterKeys.length
-            ? "WHERE " + filterKeys.map(key => `${key} LIKE ?`).join(" AND ")
-            : "";
+            const filterKeys = Object.keys(filters);
+    const whereParts = [];
+    const params = [];
 
-        const params = filterKeys.map(key => `%${filters[key]}%`);
+        // Build WHERE clause dynamically for filters with LIKE
+    filterKeys.forEach(key => {
+            const filterValue = filters[key];
+
+            if (filterValue === 'isEmpty') {
+                // handle NULL or empty string
+                whereParts.push(`${key} IS NULL`);
+           
+            } else {
+                whereParts.push(`${key} LIKE ?`);
+                params.push(`%${filterValue}%`);
+                
+            }
+        });
+        // const whereClause = filterKeys.length
+        //     ? "WHERE " + filterKeys.map(key => `${key} LIKE ?`).join(" AND ")
+        //     : "";
+
+        // const params = filterKeys.map(key => `%${filters[key]}%`);
+
+        const whereClause = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : "";
 
         // Validate sortField and sortOrder to avoid SQL injection
         const orderClause =
@@ -477,6 +512,29 @@ const dbService = {
         });
     },
 
+
+    registration_stat: () => {
+        const query = `
+    SELECT 
+    event,
+    COUNT(*) AS total_count,
+    SUM(CASE WHEN metadata_modifiedAt IS NOT NULL THEN 1 ELSE 0 END) AS modified_count,
+    SUM(CASE WHEN metadata_modifiedAt IS NULL THEN 1 ELSE 0 END) AS null_count
+    FROM registration
+    GROUP BY event;
+
+        `;
+
+        return new Promise((resolve, reject) => {
+            db.all(query, [], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+    },
+
+
+
     countExactWithConditions: (table, conditions) => {
         const keys = Object.keys(conditions);
 
@@ -489,6 +547,8 @@ const dbService = {
 
         for (const [key, condition] of Object.entries(conditions)) {
             if (typeof condition === "object" && condition.op) {
+
+                    
                 if (condition.op.toUpperCase() === "BETWEEN") {
                     if (!Array.isArray(condition.value) || condition.value.length !== 2) {
                         throw new Error(`BETWEEN requires an array with 2 values for ${key}`);

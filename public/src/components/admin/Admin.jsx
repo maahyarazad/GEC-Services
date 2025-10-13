@@ -28,19 +28,19 @@ import { GrCatalog } from "react-icons/gr";
 import { GrCatalogOption } from "react-icons/gr";
 import { MdPictureAsPdf } from "react-icons/md";
 import { FaWhatsapp } from "react-icons/fa";
-import { io } from 'socket.io-client';
+
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
 });
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MemberCardDataGrid } from "../gallery/MemberCardDataGrid";
 import PDFGenerator from "./PDFGenerator/PDFGenerator";
-
+import { useWebSocket } from "./WebSocketContext";
 
 export const Admin = ({ data }) => {
 
 
-
+    const { _data } = useWebSocket();
     const initialValues = {
         login_code: '',
     };
@@ -89,44 +89,8 @@ export const Admin = ({ data }) => {
     }, [checkAuth]);
 
 
-
-    useEffect(() => {
-        // Create Socket.IO client
-        const socket = io(`${import.meta.env.VITE_SERVERURL}`, {
-            path: "/socket.io",
-            transports: ["websocket"], // force websocket,
-            withCredentials: true,
-        });
-
-        // Connection established
-        socket.on("connect", () => {
-            console.log("🟢 Socket.IO connected, id:", socket.id);
-        });
-
-        // Auth messages from server
-        socket.on("auth", (data) => {
-            console.log("Auth update:", data);
-            if (!data.Auth) {
-                setAdminUser(null);
-            }
-        });
-
-        // Handle disconnects
-        socket.on("disconnect", (reason) => {
-            console.log("🔴 Socket.IO disconnected:", reason);
-        });
-
-        // Handle errors
-        socket.on("connect_error", (err) => {
-            console.error("⚠️ Socket.IO connection error:", err);
-        });
-
-        // Cleanup on unmount
-        return () => {
-            console.log("🛑 Closing Socket.IO connection");
-            socket.disconnect();
-        };
-    }, []);
+    
+   
 
 
     const handleLoginSubmit = async (values, { setSubmitting, resetForm }) => {
@@ -302,6 +266,12 @@ export const Admin = ({ data }) => {
         window.addEventListener("popstate", onPopState);
         return () => window.removeEventListener("popstate", onPopState);
     }, []);
+
+    useEffect(()=>{
+        if (_data && !_data.Auth) {
+                           setAdminUser(null);
+                       }
+    }, [])
 
 
     let content;
