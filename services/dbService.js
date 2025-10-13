@@ -52,9 +52,9 @@ filterKeys.forEach(key => {
         break;
 
     default:
-        
-        whereParts.push(`${key} = ?`);
-        params.push(filterValue);
+whereParts.push(`${key} LIKE ?`);
+      params.push(`%${filterValue}%`);
+      break;
     }
 });
 
