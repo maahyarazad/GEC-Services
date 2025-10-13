@@ -8,6 +8,7 @@ import Modal from "../../components/Modal";
 import debounce from 'lodash/debounce';
 import { MdAddCircleOutline } from "react-icons/md";
 import { config } from '../../ui_config';
+import FilterParams from '../admin/FilterParams';
 
 const columns = ({ onEdit, onSwitchActive }) => [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -75,12 +76,7 @@ export const MemberDataGrid = () => {
                 const sortOrder = sort.sort || '';
 
                 // Parse filters from filterModel.items
-                const filterParams = Array.isArray(filterModel.items)
-                    ? filterModel.items
-                        .filter(item => item?.field && item?.value) // Ensure valid filters
-                        .map(item => `filter_${item.field}=${encodeURIComponent(item.value)}`)
-                        .join('&')
-                    : '';
+                const filterParams = FilterParams(filterModel);
 
                 const queryParams = [
                     `page=${paginationModel.page + 1}`,

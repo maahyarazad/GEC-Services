@@ -30,7 +30,37 @@ const safeWrite = async (query, params = []) => {
 };
 
 
+const paramBuilder = (filters) =>  {
+            const filterKeys = Object.keys(filters);
+        const whereParts = [];
+        const params = [];
 
+
+filterKeys.forEach(key => {
+
+    const filterValue = filters[key];
+
+    switch (filterValue) {
+    case 'isEmpty':
+        
+        whereParts.push(`(${key} = '' OR ${key} IS NULL)`);
+        break;
+
+    case 'isNotEmpty':
+        
+        whereParts.push(`(${key} <> '' AND ${key} IS NOT NULL)`);
+        break;
+
+    default:
+        
+        whereParts.push(`${key} = ?`);
+        params.push(filterValue);
+    }
+});
+
+        return [whereParts, params]
+    }
+    
 
 const dbService = {
 
@@ -205,7 +235,7 @@ const dbService = {
                 return `${col} = ?`;
             }
         }).join(" AND ");
-        
+
         const sql = `SELECT * FROM ${table} WHERE ${whereClause}`;
 
         return new Promise((resolve, reject) => {
@@ -273,30 +303,13 @@ const dbService = {
     },
 
     getTotalCount: (table, filters = {}) => {
-                    const filterKeys = Object.keys(filters);
-    const whereParts = [];
-    const params = [];
-
-        // Build WHERE clause dynamically for filters with LIKE
-    filterKeys.forEach(key => {
-            const filterValue = filters[key];
-
-            if (filterValue === 'isEmpty') {
-                // handle NULL or empty string
-                whereParts.push(`${key} IS NULL`);
-           
-            } else {
-                whereParts.push(`${key} LIKE ?`);
-                params.push(`%${filterValue}%`);
-                
-            }
-        });
-
+        
+        const [whereParts, params ]=  paramBuilder(filters);
 
         const whereClause = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : "";
         const sql = `SELECT COUNT(*) AS count FROM ${table} ${whereClause}`;
         return new Promise((resolve, reject) => {
-          
+
 
 
             db.get(sql, params, (err, row) => {
@@ -319,29 +332,8 @@ const dbService = {
     ) => {
         const offset = page * pageSize;
 
-            const filterKeys = Object.keys(filters);
-    const whereParts = [];
-    const params = [];
+        const [whereParts, params ]=  paramBuilder(filters);
 
-        // Build WHERE clause dynamically for filters with LIKE
-    filterKeys.forEach(key => {
-            const filterValue = filters[key];
-
-            if (filterValue === 'isEmpty') {
-                // handle NULL or empty string
-                whereParts.push(`${key} IS NULL`);
-           
-            } else {
-                whereParts.push(`${key} LIKE ?`);
-                params.push(`%${filterValue}%`);
-                
-            }
-        });
-        // const whereClause = filterKeys.length
-        //     ? "WHERE " + filterKeys.map(key => `${key} LIKE ?`).join(" AND ")
-        //     : "";
-
-        // const params = filterKeys.map(key => `%${filters[key]}%`);
 
         const whereClause = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : "";
 
@@ -397,10 +389,10 @@ const dbService = {
             let field = key.replace("filter_", "");
             if (value === undefined || value === "") return;
 
-            if(Object.keys(leftJoin).length !== 0){
-                const alias = table_name[table_name.length -1];
+            if (Object.keys(leftJoin).length !== 0) {
+                const alias = table_name[table_name.length - 1];
                 filters[`${alias}.${field}`] = value;
-            }else{
+            } else {
 
                 filters[field] = value;
             }
@@ -548,7 +540,7 @@ const dbService = {
         for (const [key, condition] of Object.entries(conditions)) {
             if (typeof condition === "object" && condition.op) {
 
-                    
+
                 if (condition.op.toUpperCase() === "BETWEEN") {
                     if (!Array.isArray(condition.value) || condition.value.length !== 2) {
                         throw new Error(`BETWEEN requires an array with 2 values for ${key}`);

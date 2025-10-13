@@ -3,6 +3,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import { Box, CircularProgress, Button, Tooltip } from '@mui/material';
 import { BsFiletypeCsv } from "react-icons/bs";
 import {config} from '../../ui_config';
+import FilterParams from '../admin/FilterParams';
 
 const PAGE_SIZE = 10;
 
@@ -80,12 +81,7 @@ export const SurveyDataGrid = () => {
             const sortOrder = sort.sort || '';
 
             // Parse filters from filterModel.items
-            const filterParams = Array.isArray(filterModel.items)
-                ? filterModel.items
-                    .filter(item => item?.field && item?.value) // Ensure valid filters
-                    .map(item => `filter_${item.field}=${encodeURIComponent(item.value)}`)
-                    .join('&')
-                : '';
+            const filterParams = FilterParams(filterModel);
 
             const queryParams = [
                 `page=${paginationModel.page + 1}`,

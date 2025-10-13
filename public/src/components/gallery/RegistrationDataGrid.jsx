@@ -6,6 +6,7 @@ import { FaCircleCheck } from "react-icons/fa6";
 import MessageModalTrigger from '../utils/MessageModalTrigger';
 import {config} from '../../ui_config';
 import { FcFlashAuto } from "react-icons/fc";
+import FilterParams from "../admin/FilterParams";
 
 const PAGE_SIZE = 10;
 
@@ -64,8 +65,8 @@ const columns = [
         headerName: 'Message',
         width: 120,
         sortable: false,
-        filterable: false,
-        disableColumnMenu: true,
+        filterable: true,
+        // disableColumnMenu: true,
         renderCell: (params) => {
             const message = params?.row?.message;
             if (!message) return null;
@@ -133,20 +134,8 @@ export const RegistrationDataGrid = () => {
             const sortField = sort.field || '';
             const sortOrder = sort.sort || '';
 
-        // Parse filters from filterModel.items
-                const filterParams = Array.isArray(filterModel.items)
-                    ? filterModel.items
-                        .filter(item => item?.field && (item?.value || item?.operator)) // Include operators like isEmpty
-                        .map(item => {
-                            if (item.operator === 'isEmpty') {
-                                // handle empty / null
-                                return `filter_${item.field}=${item.operator}`;
-                            } else {
-                                return `filter_${item.field}=${encodeURIComponent(item.value)}`;
-                            }
-                        })
-                        .join('&')
-                    : '';
+            // Parse filters from filterModel.items
+            const filterParams = FilterParams(filterModel);
 
 
             const queryParams = [

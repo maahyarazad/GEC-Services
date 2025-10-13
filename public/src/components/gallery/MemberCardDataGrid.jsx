@@ -4,6 +4,7 @@ import { Box, CircularProgress, Button, Tooltip } from '@mui/material';
 import DashboardCards from '../admin/Dashboard/DashboardCards';
 import { MdWorkspacePremium } from "react-icons/md";
 import { BsFiletypeCsv } from "react-icons/bs";
+import FilterParams from '../admin/FilterParams';
 const paidBlue = '#0f0faf';
 const nonpaidBlue = '#55729e';
 const red = '#cc0000';;
@@ -85,12 +86,7 @@ export const MemberCardDataGrid = () => {
                 const sortOrder = sort.sort || '';
 
                 // Parse filters from filterModel.items
-                const filterParams = Array.isArray(filterModel.items)
-                    ? filterModel.items
-                        .filter(item => item?.field && item?.value) // Ensure valid filters
-                        .map(item => `filter_${item.field}=${encodeURIComponent(item.value)}`)
-                        .join('&')
-                    : '';
+                const filterParams = FilterParams(filterModel);
 
                 const queryParams = [
                     `page=${paginationModel.page + 1}`,
