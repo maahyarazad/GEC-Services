@@ -7,6 +7,7 @@ import MessageModalTrigger from '../utils/MessageModalTrigger';
 import {config} from '../../ui_config';
 import { FcFlashAuto } from "react-icons/fc";
 import FilterParams from "../admin/FilterParams";
+import { TfiWrite } from "react-icons/tfi";
 
 const PAGE_SIZE = 10;
 
@@ -71,6 +72,7 @@ const columns = [
             const message = params?.row?.message;
             if (!message) return null;
             if (message === "AUTO_REGISTER") return <FcFlashAuto size={16} title='This record has been automatically registered from the Google Sheet.'/>;
+            if (message === "MANUAL_REGISTER") return <TfiWrite size={16} title="This person has been manually registered for the event."/>;
 
             return <MessageModalTrigger message={message} />;
         }

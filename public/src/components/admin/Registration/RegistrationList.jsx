@@ -28,6 +28,7 @@ import { useWebSocket } from "../WebSocketContext"
 import { PercentageBar } from "../PercentageBar";
 import { StatData } from "../StatData";
 
+
 const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate, onArchive, onAutoRgister, requestloading, localData }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     {
@@ -455,8 +456,8 @@ export const RegistrationList = () => {
     };
 
     const handleAutoRegister = async (row) => {
+        const field = 'actions';
         try {
-
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/google-auto-register?event=${row.page}`, {
                 method: 'GET',
                 credentials: "include"
