@@ -1,13 +1,14 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { Box, CircularProgress, Tooltip, Button, Typography } from '@mui/material';
 import { BsFiletypeCsv } from "react-icons/bs";
 import { FaCircleCheck } from "react-icons/fa6";
 import MessageModalTrigger from '../utils/MessageModalTrigger';
-import {config} from '../../ui_config';
+import { config } from '../../ui_config';
 import { FcFlashAuto } from "react-icons/fc";
 import FilterParams from "../admin/FilterParams";
 import { TfiWrite } from "react-icons/tfi";
+import RegistrationConfigSearch from './RegistrationConfigSearch';
 
 const PAGE_SIZE = 10;
 
@@ -24,7 +25,7 @@ const columns = [
             const modified = params?.row?.metadata_modifiedAt;
             return modified ? (
                 <Tooltip componentsProps={config.tooltip_config}
-                title={`Completed at ${modified}`}>
+                    title={`Completed at ${modified}`}>
                     <FaCircleCheck size={16} color="#28a745" /> {/* Bootstrap green */}
                 </Tooltip>
             ) : null;
@@ -41,26 +42,26 @@ const columns = [
 
             return params?.row?.status ? (
                 <Tooltip componentsProps={config.tooltip_config}
-                title={`Payment Id ${params?.row?.id}`}>
+                    title={`Payment Id ${params?.row?.id}`}>
                     <FaCircleCheck size={16} color="#28a745" /> {/* Bootstrap green */}
                 </Tooltip>
             ) : null;
         }
     },
     {
-            field: 'metadata_json',
-            headerName: 'Schedule Time',
-            width: 130,
-            filterable: false,
-            renderCell: (params) => {
-                const raw = params?.row?.metadata_json;
-                return raw ? (<>{new Date(JSON.parse(raw).selected_time).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit"
+        field: 'metadata_json',
+        headerName: 'Schedule Time',
+        width: 130,
+        filterable: false,
+        renderCell: (params) => {
+            const raw = params?.row?.metadata_json;
+            return raw ? (<>{new Date(JSON.parse(raw).selected_time).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit"
             })}</>) : (<></>)
 
-            }
-        },
+        }
+    },
     {
         field: 'message',
         headerName: 'Message',
@@ -71,13 +72,13 @@ const columns = [
         renderCell: (params) => {
             const message = params?.row?.message;
             if (!message) return null;
-            if (message === "AUTO_REGISTER") return <FcFlashAuto size={16} title='This record has been automatically registered from the Google Sheet.'/>;
-            if (message === "MANUAL_REGISTER") return <TfiWrite size={16} title="This person has been manually registered for the event."/>;
+            if (message === "AUTO_REGISTER") return <FcFlashAuto size={16} title='This record has been automatically registered from the Google Sheet.' />;
+            if (message === "MANUAL_REGISTER") return <TfiWrite size={16} title="This person has been manually registered for the event." />;
 
             return <MessageModalTrigger message={message} />;
         }
     },
-    { field: 'event', headerName: 'Event', width: 130, filterable: true},
+    { field: 'event', headerName: 'Event', width: 130, filterable: true },
     { field: 'firstName', headerName: 'Firstname', width: 130, filterable: true },
     { field: 'lastName', headerName: 'Lastname', width: 130, filterable: true },
     { field: 'email', headerName: 'Email', width: 160, filterable: true },
@@ -115,6 +116,8 @@ export const RegistrationDataGrid = () => {
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];
 
     const [registrationList, setRegistrationList] = useState([]);
+    const [selectedEvent, setSelectedEvent] = useState(null);
+
     const [loading, setLoading] = useState(false);
     const [isDownloading, setIsDownloadings] = useState(false);
     const [filterModel, setFilterModel] = useState({
@@ -128,17 +131,17 @@ export const RegistrationDataGrid = () => {
         pageSize: 25,
     });
 
-    const fetchData = useCallback(async (paginationModel, sortModel = [], filterModel = {}) => {
+    const fetchData = useCallback(async (_selectedEvent, paginationModel, sortModel = [], filterModel = {}) => {
         setLoading(true);
         try {
-
+            
             const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
             const sortField = sort.field || '';
             const sortOrder = sort.sort || '';
 
             // Parse filters from filterModel.items
             const filterParams = FilterParams(filterModel);
-
+            
 
             const queryParams = [
                 `page=${paginationModel.page + 1}`,
@@ -148,7 +151,7 @@ export const RegistrationDataGrid = () => {
                 filterParams
             ].filter(Boolean).join('&');
             
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration?${queryParams}`, { credentials: "include" });
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration?${queryParams}&filter_event=${_selectedEvent}`, { credentials: "include" });
             const response_data = await response.json();
 
             setRegistrationList(response_data.data || []);
@@ -161,28 +164,32 @@ export const RegistrationDataGrid = () => {
         }
     }, [])
 
+    const handleCheck = (e) => {
+        console.log(e);
+        setSelectedEvent(e);
+    };
+
     useEffect(() => {
-        fetchData(paginationModel, sortModel, filterModel);
-    }, [paginationModel, sortModel, applyFilterTrigger]);
+        if (selectedEvent) fetchData(selectedEvent, paginationModel, sortModel, filterModel);
 
-
+    }, [paginationModel, sortModel, applyFilterTrigger, selectedEvent]);
 
 
     const handleExport = async () => {
         try {
             setIsDownloadings(true);
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-csv-data`,{credentials:"include"});
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-csv-data`, { credentials: "include" });
 
             if (!response.ok) {
                 throw new Error('Failed to fetch CSV file');
             }
 
-                        const contentDisposition = response.headers.get("Content-Disposition");
+            const contentDisposition = response.headers.get("Content-Disposition");
 
             let fileName = "download.csv"; // fallback
             if (contentDisposition) {
-            const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                const match = contentDisposition.match(/filename="?([^"]+)"?/);
                 if (match) {
                     fileName = match[1];
                 }
@@ -214,12 +221,12 @@ export const RegistrationDataGrid = () => {
 
         <Box sx={{ padding: 1 }}>
 
-                <div className='row mb-1'>
-                    <div className='col-lg-12 d-lg-flex justify-content-between'>
-                        <div className="">
-                            <Tooltip title="Download CSV data" componentsProps={config.tooltip_config}>
-                            </Tooltip>
-                            <Button
+            <div className='row mb-1'>
+                <div className='col-lg-12 d-lg-flex justify-content-between'>
+                    <div className="">
+                        <Tooltip title="Download CSV data" componentsProps={config.tooltip_config}>
+                        </Tooltip>
+                        <Button
 
                             variant="outlined"
                             startIcon={<BsFiletypeCsv size={20} />}
@@ -234,67 +241,76 @@ export const RegistrationDataGrid = () => {
 
                         </Button>
 
-                        </div>
-                        <div className="">
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
-                                sx={{ fontSize: 13, textTransform: 'none' }}
-                            >
-                                Apply Filters
-                            </Button>
-                        </div>
-
                     </div>
-                </div>
-            {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                    <CircularProgress />
-                </Box>
-            ) : (
-
-                <div style={{ width: '100%', height: '82dvh' }}>
-                    <DataGrid
-                        rows={registrationList}
-                        columns={columns}
-                        getRowHeight={(params) => {
-                            const companyData = params?.row?.company_data;
-
-                            if (companyData) {
-                                return 200;
-                            }
-                            return 52;
-                        }}
-                        // getRowClassName={(params) =>
-                        //     params.row.company_data ? "companyRow" : ""
-                        // }
-                        rowsPerPageOptions={[25, 50, 100]}
-                        paginationMode="server"
-                        sortingMode="server"
-                        filterMode="server"
-                        rowCount={rowCount}
-                        paginationModel={paginationModel}
-                        onPaginationModelChange={(newModel) => {
-                            setPaginationModel(newModel);
-                        }}
-                        onSortModelChange={(newModel) => {
-
-                            setSortModel(newModel)
-                        }}
-                        filterModel={filterModel}
-                        onFilterModelChange={(newModel) => {
-                            setFilterModel(newModel); // use the raw model now
-                        }}
-                        sortModel={sortModel}
-                        disableRowSelectionOnClick
-                        disableSelectionOnClick
-                        showToolbar
-                        pagination
-                    />
+                    <div className="">
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
+                            sx={{ fontSize: 13, textTransform: 'none' }}
+                        >
+                            Apply Filters
+                        </Button>
+                    </div>
 
                 </div>
-            )}
+            </div>
+
+            <div className='row'>
+                <div className='col-2'>
+                    <RegistrationConfigSearch onSelect={handleCheck} />
+                </div>
+                <div className='col-10'>
+
+                    {loading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : (
+                        <div style={{ width: '100%', height: '82dvh' }}>
+
+                            <DataGrid
+                                rows={registrationList}
+                                columns={columns}
+                                getRowHeight={(params) => {
+                                    const companyData = params?.row?.company_data;
+
+                                    if (companyData) {
+                                        return 200;
+                                    }
+                                    return 52;
+                                }}
+                                // getRowClassName={(params) =>
+                                //     params.row.company_data ? "companyRow" : ""
+                                // }
+                                rowsPerPageOptions={[25, 50, 100]}
+                                paginationMode="server"
+                                sortingMode="server"
+                                filterMode="server"
+                                rowCount={rowCount}
+                                paginationModel={paginationModel}
+                                onPaginationModelChange={(newModel) => {
+                                    setPaginationModel(newModel);
+                                }}
+                                onSortModelChange={(newModel) => {
+
+                                    setSortModel(newModel)
+                                }}
+                                filterModel={filterModel}
+                                onFilterModelChange={(newModel) => {
+                                    setFilterModel(newModel); // use the raw model now
+                                }}
+                                sortModel={sortModel}
+                                disableRowSelectionOnClick
+                                disableSelectionOnClick
+                                showToolbar
+                                pagination
+                            />
+
+                        </div>
+                    )}
+                </div>
+            </div>
         </Box>
     );
 };

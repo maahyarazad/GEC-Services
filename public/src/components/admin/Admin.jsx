@@ -36,6 +36,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { MemberCardDataGrid } from "../gallery/MemberCardDataGrid";
 import PDFGenerator from "./PDFGenerator/PDFGenerator";
 import { useWebSocket } from "./WebSocketContext";
+import { RxDoubleArrowLeft } from "react-icons/rx";
 
 export const Admin = ({ data }) => {
 
@@ -313,8 +314,10 @@ export const Admin = ({ data }) => {
             <div className="admin">
                 <div className={burgerActive ? "show" : ""}>
                     <Box
+
                         sx={{ flexGrow: 1, bgcolor: 'background.paper', display: 'flex' }}
                     >
+                        
                         <Tabs
                             orientation="vertical"
                             variant="scrollable"

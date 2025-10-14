@@ -300,8 +300,8 @@ router.get('/api/registration', authorize_admin, async (req, res) => {
             ]);
 
 
-            // remove the alias from query 
-            const _filters = {};
+        // remove the alias from query 
+        const _filters = {};
         if(filters){
             for (const key in filters) {
                 var newKey = key.replace("r.", "");

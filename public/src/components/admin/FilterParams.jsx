@@ -16,6 +16,8 @@ const FilterParams = (filterModel) => {
       switch (item.operator) {
         case 'isEmpty':
           return `filter_${item.field}=isEmpty`;
+        case 'isEqual':
+          return `filter_${item.field}=isEqual`;
         case 'isNotEmpty':
           return `filter_${item.field}=isNotEmpty`;
         default:

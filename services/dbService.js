@@ -36,27 +36,46 @@ const paramBuilder = (filters) =>  {
         const params = [];
 
 
-filterKeys.forEach(key => {
+        filterKeys.forEach(key => {
+            const filterValue = filters[key];
 
-    const filterValue = filters[key];
+            // Check if the value is numeric
+            const isNumeric =
+                filterValue !== null &&
+                filterValue !== '' &&
+                !isNaN(filterValue) &&
+                !isNaN(parseFloat(filterValue));
 
-    switch (filterValue) {
-    case 'isEmpty':
-        
-        whereParts.push(`(${key} = '' OR ${key} IS NULL)`);
-        break;
+                switch (true) {
+                    case key === 'r.event':
+                        whereParts.push(`${key} = ?`);
+                        params.push(`${filterValue}`);
+                        break;
+                    case filterValue === 'isEmpty':
+                    whereParts.push(`(${key} = '' OR ${key} IS NULL)`);
+                    break;
 
-    case 'isNotEmpty':
-        
-        whereParts.push(`(${key} <> '' AND ${key} IS NOT NULL)`);
-        break;
+                case filterValue === 'isNotEmpty':
+                    whereParts.push(`(${key} <> '' AND ${key} IS NOT NULL)`);
+                    break;
 
-    default:
-whereParts.push(`${key} LIKE ?`);
-      params.push(`%${filterValue}%`);
-      break;
-    }
-});
+                case isNumeric:
+                    whereParts.push(`${key} = ?`);
+                    params.push(Number(filterValue));
+                    break;
+
+                case filterValue != null && filterValue !== '':
+                    whereParts.push(`${key} LIKE ?`);
+                    params.push(`%${filterValue}%`);
+                    break;
+
+
+                default:
+                    // no filter condition
+                    break;
+            }
+        });
+
 
         return [whereParts, params]
     }
@@ -524,6 +543,18 @@ const dbService = {
             });
         });
     },
+
+    registration_config_list: () => {
+        const query = `SELECT page, title FROM registration_config where archived = 0`;
+
+        return new Promise((resolve, reject) => {
+            db.all(query, [], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+    },
+
 
 
 

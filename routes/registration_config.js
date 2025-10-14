@@ -453,4 +453,22 @@ router.post(
   }
 );
 
+
+router.get('/api/registration-config-list',  async (req, res) => {
+  try {
+
+      const rows = await dbService.registration_config_list();
+
+      return res.status(200).json({
+        status: true,
+        message: "Data fetched successfully",
+        rows,
+      });
+    
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
 module.exports = router;

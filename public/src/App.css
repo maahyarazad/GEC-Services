@@ -849,3 +849,9 @@ tr.eventhide {
     height: auto;         /* keeps aspect ratio */
   }
 }
+
+.hover-li:hover {
+  background-color: #e5e4e4;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
