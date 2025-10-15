@@ -27,12 +27,12 @@ import { SiGooglesheets } from "react-icons/si";
 import { useWebSocket } from "../WebSocketContext"
 import { PercentageBar } from "../PercentageBar";
 import { StatData } from "../StatData";
+import { MdCleaningServices } from "react-icons/md";
 
-
-const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate, onArchive, onAutoRgister, requestloading, localData }) => [
+const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate, onArchive, onAutoRgister, onCleanUp, requestloading, localData }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     {
-        field: 'lockRegistration', headerName: 'Active Page', width: 100, renderCell: (params) => {
+        field: 'lockRegistration', headerName: 'Active', width: 70, renderCell: (params) => {
             const value = params?.row?.lockRegistration === "true";
 
             return (
@@ -65,7 +65,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
         }
     },
     {
-        field: 'metadata_json', headerName: 'Booking', width: 130, renderCell: (params) => {
+        field: 'metadata_json', headerName: 'Booking', width: 80, renderCell: (params) => {
             const itHasBooking = params?.row?.consultationEnabled === "true";
             if (itHasBooking) {
                 const _data = JSON.parse(params?.row?.metadata_json);
@@ -94,8 +94,8 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
     },
     {
         field: 'paymentRequired',
-        headerName: 'Payment Required',
-        width: 135,
+        headerName: 'Payment',
+        width: 80,
         renderCell: (params) => {
             return (params.value === "true" ? <FaCheckCircle color="green" size={18} /> : <></>)
         },
@@ -156,7 +156,8 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
             const code = params?.row?.registration_code;
             const use_member_card = params?.row?.use_member_card;
             const loginDisabled = params?.row?.loginRequired;
-            const isLoading = requestloading.some((item) => item.id === params?.row?.id && item.field === params.field);
+            const isLoading = requestloading.some((item) => item.id === params?.row?.id && item.field === `${params.field}`);
+            
 
 
             if (use_member_card === "true") {
@@ -220,16 +221,16 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
         renderCell: (params) => {
             if (localData?.registration_stat?.length > 0) {
                 return (
-                   <Box
+                    <Box
                         className="d-flex justify-content-center align-items-center w-100"
                         style={{ height: '100%' }}
-                        >
+                    >
                         {localData.registration_stat.map((x, index) =>
                             params.row.page === x.event ? (
-                            <PercentageBar key={index} value={x} />
+                                <PercentageBar key={index} value={x} />
                             ) : null
                         )}
-                        </Box>
+                    </Box>
 
 
                 );
@@ -250,11 +251,11 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
                     <Box
                         className="d-flex justify-content-center align-items-center w-100"
                         style={{ height: '100%' }}
-                        >
+                    >
                         {localData.registration_stat.map((x, index) =>
                             params.row.page === x.event ? (
                                 <div key={index}>
-                                    <StatData value={x}/>
+                                    <StatData value={x} />
                                 </div>
                             ) : null
                         )}
@@ -269,11 +270,13 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
     {
         field: 'actions',
         headerName: 'Actions',
-        width: 200,
+        width: 250,
         sortable: false,
         filterable: false,
         renderCell: (params) => {
-            const isLoading = requestloading.some((item) => item.id === params?.row?.id && item.field === params.field);
+            
+            const isLoadingAuto = requestloading.some((item) => item.id === params?.row?.id && item.field === `${params.field}-auto`);
+            const isLoadingClean = requestloading.some((item) => item.id === params?.row?.id && item.field === `${params.field}-clean`);
             return (
 
                 <Box>
@@ -307,9 +310,21 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
                         title="Auto Register with G-Sheet"
                     >
 
-                        {isLoading ? <CircularProgress size={15} /> :
+                        {isLoadingAuto ? <CircularProgress size={15} /> :
 
                             <SiGooglesheets color="primary" size={18} />
+                        }
+                    </IconButton>
+
+                    <IconButton
+
+                        onClick={() => onCleanUp(params.row)}
+                        title="Delete PKPass and QRCode files from server"
+                    >
+
+                        {isLoadingClean ? <CircularProgress size={15} /> :
+
+                            <MdCleaningServices color="primary" size={18} />
                         }
                     </IconButton>
 
@@ -335,13 +350,13 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
 
 export const RegistrationList = () => {
 
-    const { data: _data } = useWebSocket(); 
+    const { data: _data } = useWebSocket();
     const [localData, setLocalData] = useState(null);
 
 
     useEffect(() => {
         if (_data) {
-            
+
             setLocalData(_data);
         }
     }, [_data]);
@@ -456,9 +471,34 @@ export const RegistrationList = () => {
     };
 
     const handleAutoRegister = async (row) => {
-        const field = 'actions';
+        const field = 'actions-auto';
         try {
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/google-auto-register?event=${row.page}`, {
+                method: 'GET',
+                credentials: "include"
+            });
+
+            const respnse_data = await response.json();
+            if (!response.ok) {
+
+                snackbarRef.current?.openSnackbar(respnse_data.message);
+                throw new Error(response.message);
+            }
+
+            snackbarRef.current?.openSnackbar(respnse_data.message, "success");
+            await fetchData();
+
+        } catch (err) {
+            console.error('Error fetching data:', err);
+
+        } finally {
+            setRequestLoading((prev) => prev.filter((item) => !(item.id === row.id && item.field === field)));
+        }
+    };
+    const handleEventCleanUp = async (row) => {
+        const field = 'actions-clean';
+        try {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/event-clean-up?page=${row.page}`, {
                 method: 'GET',
                 credentials: "include"
             });
@@ -635,7 +675,7 @@ export const RegistrationList = () => {
                 const selectedRow = registrationList?.find((x) => x.id === row.id);
 
                 if (selectedRow) {
-                    setRequestLoading((prev) => [...prev, { id: selectedRow.id, field: "actions" }]);
+                    setRequestLoading((prev) => [...prev, { id: selectedRow.id, field: "actions-auto" }]);
                     handleAutoRegister(selectedRow);
                 }
             },
@@ -645,6 +685,36 @@ export const RegistrationList = () => {
         );
 
     };
+
+
+    const eventCleanUpAlert = (row) => {
+
+        dialogRef.current.openDialog(
+            <div>
+                Do you want to <strong>delete PKPass and QRCode files from the server</strong>?
+                Are you sure you want to proceed?
+            </div>,
+            'Confirm Action',
+            {
+                text: 'Confirm',
+                color: 'error'
+            },
+            () => {
+
+                const selectedRow = registrationList?.find((x) => x.id === row.id);
+
+                if (selectedRow) {
+                    setRequestLoading((prev) => [...prev, { id: selectedRow.id, field: "actions-clean" }]);
+                    handleEventCleanUp(selectedRow);
+                }
+            },
+            () => {
+
+            },
+        );
+
+    };
+
 
 
     const archiveAlert = (row) => {
@@ -732,6 +802,7 @@ export const RegistrationList = () => {
                             , onDuplicate: handleDuplicateCreation
                             , onArchive: archiveAlert
                             , onAutoRgister: autoRegisterAlert
+                            , onCleanUp: eventCleanUpAlert
                             , requestloading: requestloading
                             , localData: localData
                         })}

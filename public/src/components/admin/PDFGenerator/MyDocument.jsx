@@ -89,6 +89,11 @@ const MyDocument = ({ formData, logo }) => {
                     {/* Header */}
                     <View style={{ flexDirection: 'row' }}>
                         <Text style={styles.tableColDescriptionHeader}>Description</Text>
+                        {formData.items_price ? (
+                            <Text style={styles.tableColHeader}>PRICE</Text>
+                        ) : (
+                            <Text style={[styles.tableColHeader, { color: 'transparent' }]}>PRICE</Text>
+                        )}
                         <Text style={styles.tableColHeader}>QTY</Text>
                         <Text style={styles.tableColHeader}>DISC</Text>
                         <Text style={styles.tableColHeader}>VAT%</Text>
@@ -100,8 +105,14 @@ const MyDocument = ({ formData, logo }) => {
                     {formData.items.map((item, i) => (
 
                         <View key={`item-${i}`}>
-                            <View style={styles.tableRow} key={`item-${i}`}>
+                            <View style={styles.tableRow}>
                                 <Text style={styles.tableColDescription}>{item.title || "No Title"}</Text>
+                                {/* {formData.items_price ? ( <Text style={styles.tableCol}>{item.price || "-"}</Text>) : <></>}  */}
+                                {formData.items_price ? (
+                                    <Text style={styles.tableCol}>{item.price || "-"}</Text>
+                                ) : (
+                                    <Text style={[styles.tableCol, , { color: 'transparent' }]}>{item.price || "-"}</Text>
+                                )}
                                 <Text style={styles.tableCol}>{item.qty || "-"}</Text>
                                 <Text style={styles.tableCol}>{item.disc || "0%"}</Text>
                                 <Text style={styles.tableCol}>{item.vat_p || "0"}</Text>
@@ -116,7 +127,7 @@ const MyDocument = ({ formData, logo }) => {
                                             switch (key) {
                                                 case "body":
                                                     return value.split("\n").map((line, j) => (
-                                                        <Text key={j}>
+                                                        <Text key={`body-${i}-${j}`}>
                                                             {line}
                                                             {"\n"}
                                                         </Text>

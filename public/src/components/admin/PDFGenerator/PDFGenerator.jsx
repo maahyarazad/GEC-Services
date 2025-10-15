@@ -10,7 +10,7 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Button from '@mui/material/Button';
-import { IoIosSwap } from "react-icons/io";
+import { Field } from "formik";
 
 
 import './PDFGenerator.css';
@@ -72,9 +72,9 @@ const PDFGenerator = () => {
             signature_bottom_right_title: "",
             signature_bottom_right_company: "",
         },
-
+        items_price: true,
         items: [
-            { title: "Item Title", qty: "1", disc: "0.00", vat: "0.00", vat_p: "0", amount: "", body: "is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." },
+            { title: "Item Title",price:"100 AED",qty: "1", disc: "0.00", vat: "0.00", vat_p: "0", amount: "", body: "is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." },
         ]
     });
 
@@ -82,7 +82,7 @@ const PDFGenerator = () => {
     const addItem = () => {
         setFormData((prev) => ({
             ...prev,
-            items: [...prev.items, { title: "Item Title", qty: "1", disc: "0.00", vat: "0.00", vat_p: "0", amount: "", body: "" }],
+            items: [...prev.items, { title: "Item Title",price:"" ,qty: "1", disc: "0.00", vat: "0.00", vat_p: "0", amount: "", body: "" }],
         }));
     };
 
@@ -274,10 +274,31 @@ const PDFGenerator = () => {
                                 id="panel2-header"
                                 sx={tabstyle}
                             >
-                                <Typography component="span">Descriptions</Typography>
+                                <Typography component="span">Descriptions
+                                  
+                                </Typography>
                             </AccordionSummary>
                             <AccordionDetails>
                                 <Box sx={{ width: "100%" }}>
+
+                                
+                                 <div className="d-flex" style={{ marginBottom: 10, borderBottom: "1px solid #ccc", paddingBottom: 8 }}>
+                                    <small style={{fontSize: 14, paddingRight: 10}}>Enable (Dummy String) Price Column</small>
+                                      <input
+                                        name="items_price"
+                                        id="items_price"
+                                        type="checkbox"
+                                        className="form-check-input"
+                                        checked={formData.items_price}
+                                        onChange={(e) =>
+                                            setFormData({
+                                            ...formData,
+                                            items_price: e.target.checked,
+                                            })
+                                        }
+                                        />
+                                            </div>
+
                                     <div className="form-control">
 
                                         {formData.items.map((item, index) => (
@@ -302,7 +323,17 @@ const PDFGenerator = () => {
                                                                     <label>{key.replace(/_/g, " ")}</label>
                                                                 </div>
                                                             );
-
+                                                            case "price":
+                                                            return ( formData.items_price ?
+                                                                <div className="input-group" key={key}>
+                                                                    <input
+                                                                        name={`items.${index}.${key}`}
+                                                                        value={item[key]}
+                                                                        onChange={handleChange}
+                                                                        placeholder={key.replace(/_/g, " ")}
+                                                                    />
+                                                                    <label>{key.replace(/_/g, " ")}</label>
+                                                                </div> : <></> )
                                                         default:
                                                             return (
                                                                 <div className="input-group" key={key}>

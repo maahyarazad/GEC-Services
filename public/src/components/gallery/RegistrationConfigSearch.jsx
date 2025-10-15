@@ -60,7 +60,7 @@ const RegistrationConfigSearch = ({onSelect}) => {
         />
 
         {/* List */}
-        <div style={{overflow: 'scroll', height: '76vh'}}>
+        <div style={{overflow: 'scroll', height: '75.5vh'}}>
 
         <ul className="list-unstyled p-0 m-0 list-group" >
           {filteredList.length > 0 ? (
