@@ -104,7 +104,9 @@ const styles = StyleSheet.create({
 
 
     },
-
+    body_row:{
+         whiteSpace: 'pre-line'
+    },
 
     tableColDescriptionHeader: {
         flex: 5,

@@ -2,14 +2,17 @@ import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/render
 import styles from './Styles';
 
 import gec_logo from "../../../assets/media/bp-logo.png";
-import { useEffect } from 'react';
 
-const MyDocument = ({ formData, logo }) => {
+
+
+const MyDocument = ({ formData, objectChanged }) => {
+
     const subtotal = formData.items.reduce(
         (total, item) => total + (parseFloat(item.amount) || 0),
         0
     );
 
+    
 
     const { positiveTotal, negativeTotal } = formData.items.reduce(
         (totals, item) => {
@@ -23,7 +26,6 @@ const MyDocument = ({ formData, logo }) => {
         },
         { positiveTotal: 0, negativeTotal: 0 }
     );
-
 
 
     return (
@@ -119,26 +121,18 @@ const MyDocument = ({ formData, logo }) => {
                                 <Text style={styles.tableCol}>{item.vat || "-"}</Text>
                                 <Text style={styles.tableColAmount}>AED {item.amount || "0"}</Text>
                             </View>
-                            {item.body !== null && (
-                                <View style={styles.tableBodyRow}>
-                                    <Text style={styles.tableBodyText} flex={6}>
-                                        {Object.entries(item).map(([key, value]) => {
 
-                                            switch (key) {
-                                                case "body":
-                                                    return value.split("\n").map((line, j) => (
-                                                        <Text key={`body-${i}-${j}`}>
-                                                            {line}
-                                                            {"\n"}
-                                                        </Text>
-                                                    ));
-                                                default:
-                                                    return null;
-                                            }
-                                        })}
+                            {item.body !== "" &&
+                                <View style={styles.tableBodyRow} key={`body-${i}`}>
+                                    <Text style={styles.tableBodyText} flex={6}>
+                                        <Text style={styles.body_row}>
+                                            {item.body}
+                                        </Text>
                                     </Text>
                                 </View>
-                            )}
+                            }
+
+
 
 
 

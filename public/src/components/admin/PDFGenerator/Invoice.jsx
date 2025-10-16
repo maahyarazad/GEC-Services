@@ -1,11 +1,23 @@
 import { PDFDownloadLink, PDFViewer } from '@react-pdf/renderer';
 import MyDocument from './MyDocument';
+import PDFErrorBoundary from './PDFErrorBoundary';
+import { useEffect, useState, useRef } from "react";
 
-const Invoice = ({ formData }) => {
+const Invoice = ({ formData , objectChanged}) => {
 
   
+    //   const [renderKey, setRenderKey] = useState(0);
+    // const [changed, setChanged] = useState(null);
+    // useEffect(()=>{
+    //  setChanged((objectChanged));
+    //  setRenderKey(prev => prev + 1);
+    
+    // }, [objectChanged])
+
+
   return (
-    <div>
+    
+    <PDFErrorBoundary>
       {/* Download PDF button */}
       <PDFDownloadLink
         document={<MyDocument formData={formData} />}
@@ -16,9 +28,9 @@ const Invoice = ({ formData }) => {
 
       {/* Optional inline PDF preview */}
       <PDFViewer  width="100%" height="770">
-        <MyDocument formData={formData} />
+        <MyDocument formData={formData}/>
       </PDFViewer>
-    </div>
+    </PDFErrorBoundary>
   );
 };
 

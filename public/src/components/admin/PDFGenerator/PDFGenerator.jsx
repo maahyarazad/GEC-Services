@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -11,13 +11,52 @@ import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Button from '@mui/material/Button';
 import { Field } from "formik";
-
+import isEqual from "lodash.isequal"; 
 
 import './PDFGenerator.css';
 
 import Invoice from "./Invoice";
 
 const PDFGenerator = () => {
+
+
+
+
+
+const handleKeyDown = (e) => {
+  if (e.key === "Backspace") {
+    const textarea = e.target;
+    const { selectionStart, selectionEnd, value } = textarea;
+
+    // Split value into lines
+    const lines = value.split(/\r?\n/);
+
+    // Determine current line index based on caret position
+    const beforeCaret = value.slice(0, selectionStart);
+    const currentLineIndex = beforeCaret.split(/\r?\n/).length - 1;
+    const currentLine = lines[currentLineIndex];
+
+    // CASE 1: Prevent line merge or deletion at line start
+    // if (selectionStart === selectionEnd && currentLine.trim() === "" && selectionStart > 0) {
+    //   e.preventDefault(); // stop default backspace
+    //   console.log("Prevented deleting empty line");
+    //   return;
+    // }
+
+    // // CASE 2: Prevent line merge when caret at beginning of line
+    // const lineStartPosition = beforeCaret.lastIndexOf("\n") + 1;
+    // if (selectionStart === lineStartPosition) {
+    //   e.preventDefault();
+    //   console.log("Prevented merging lines");
+    //   return;
+    // }
+
+    // Otherwise, let Backspace work normally
+  }
+};
+
+
+
     const printRef = useRef();
     const now = new Date();
     const this_month = `${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -27,8 +66,7 @@ const PDFGenerator = () => {
 
     const formattedDate = `${year}${month}${day}`;
 
-    // Form state
-    const [formData, setFormData] = useState({
+    const _initial_formData = {
         project: {
             project_name: "Website Transtlation 2025",
             project_name_ll2: "OFFER/ANGEBOT",
@@ -76,7 +114,20 @@ const PDFGenerator = () => {
         items: [
             { title: "Item Title",price:"100 AED",qty: "1", disc: "0.00", vat: "0.00", vat_p: "0", amount: "", body: "is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." },
         ]
-    });
+    }
+    const [formData, setFormData] = useState(_initial_formData);
+    const [objectChanged, setObjectChanged] = useState(false);
+
+    
+
+    useEffect(() => {
+    
+        setObjectChanged(!isEqual(_initial_formData, formData));
+        // console.log(`parent => ${objectChanged}`)
+    }, [formData]);
+
+
+    const _objectChanged = () => { return objectChanged};
 
     // Add a new empty item
     const addItem = () => {
@@ -176,7 +227,7 @@ const PDFGenerator = () => {
                 <div className="col-lg-6 col-12 left-panel">
 
                     <form style={{ display: 'block' }}>
-                        <Accordion defaultExpanded>
+                        <Accordion>
                             <AccordionSummary
                                 expandIcon={<ExpandMoreIcon />}
                                 aria-controls="panel2-content"
@@ -313,7 +364,7 @@ const PDFGenerator = () => {
                                                             return (
                                                                 <div className="input-group" key={key}>
                                                                     <textarea
-
+    onKeyDown={handleKeyDown}
                                                                         rows={3}
                                                                         name={`items.${index}.${key}`}
                                                                         value={item[key]}
@@ -453,7 +504,7 @@ const PDFGenerator = () => {
 
                 <div className="col-lg-6 col-12">
 
-                    <Invoice formData={formData}/>
+                    <Invoice formData={formData} objectChanged={_objectChanged}/>
                 </div>
             </div>
         </Box>
