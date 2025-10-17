@@ -1,14 +1,19 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../WebSocketContext';
-import { IoTrashOutline } from "react-icons/io5";
-import { IconButton } from '@mui/material';
+import { IoTrashOutline, IoDownloadOutline } from "react-icons/io5";
+import MyDocument from './MyDocument';
 import AlertDialog from '../../utils/AlertDialog';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import { IoSave } from "react-icons/io5";
+import { Button, IconButton } from '@mui/material';
+import { VscNewFile } from "react-icons/vsc";
+import SimpleSnackbar from '../../utils/Snackbar'
+const FileList = ({ onSelect, formData, initialFormData }) => {
 
-const FileList = ({ onSelect }) => {
-
-
+    const iconSize = 24;
     const { onEvent } = useWebSocket();
     const dialogRef = useRef();
+    const snackbarRef = useRef();
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedItem, setSelectedItem] = useState('');
@@ -20,6 +25,40 @@ const FileList = ({ onSelect }) => {
 
     );
 
+    const { sendRequest } = useWebSocket();
+
+
+    const Save = async () => {
+        try {
+
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/invoice-save`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ data: formData }),
+            });
+
+            const respnse_data = await response.json();
+            if (!response.ok) {
+
+                snackbarRef.current?.openSnackbar(respnse_data.message);
+                throw new Error(response.message);
+            }
+
+
+            if (respnse_data) {
+                snackbarRef.current?.openSnackbar(respnse_data.message, 'success');
+                sendRequest("invoice");
+
+            }
+        } catch (err) {
+            console.error('Error fetching data:', err);
+        } finally {
+
+        }
+    };
 
 
     const handleSelect = (k) => {
@@ -42,7 +81,9 @@ const FileList = ({ onSelect }) => {
                 return;
             }
 
+            const respnse_data = await res.json();
             if (res.ok) {
+                snackbarRef.current?.openSnackbar(respnse_data.message);
                 fetchData();
             }
 
@@ -62,7 +103,7 @@ const FileList = ({ onSelect }) => {
         dialogRef.current.openDialog(
             <div>
                 Deleting this file will <strong>permanently remove it and its data. </strong>
-                 Are you sure you want to proceed?
+                Are you sure you want to proceed?
 
             </div>,
             'Delete', {
@@ -131,7 +172,45 @@ const FileList = ({ onSelect }) => {
 
     return (
         <div style={{ height: '82dvh' }}>
+            <SimpleSnackbar ref={snackbarRef} />
             <AlertDialog ref={dialogRef} />
+            <div className='d-flex justify-content-between align-items-center'>
+
+                <div>
+
+                    <IconButton
+                        title="Save"
+                        onClick={Save}
+                    >
+                        <IoSave color="dark" size={iconSize} />
+                    </IconButton>
+                    <IconButton
+                        title="New Document"
+                        onClick={() => { onSelect(initialFormData) }}
+                    >
+                        <VscNewFile color="dark" size={iconSize} />
+                    </IconButton>
+                </div>
+
+
+                <PDFDownloadLink
+                    document={<MyDocument formData={formData} />}
+                    fileName="invoice.pdf"
+                    style={{ textDecoration: 'none' }}
+                >
+                    {({ loading }) => (
+                        loading ? (
+                            "Loading document..."
+                        ) : (
+                            <IconButton title="Download PDF file">
+                                <IoDownloadOutline color="dark" size={iconSize} />
+                            </IconButton>
+                        )
+                    )}
+                </PDFDownloadLink>
+
+            </div>
+
             <div className='rounded border p-2'>
                 {/* Search box */}
                 <input

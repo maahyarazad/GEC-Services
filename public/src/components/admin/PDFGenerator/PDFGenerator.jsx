@@ -226,7 +226,7 @@ const PDFGenerator = () => {
 
            <div className="col-2">
            
-           <FileList onSelect={UpdateForm}/>
+           <FileList onSelect={UpdateForm} formData={formData} initialFormData={_initial_formData}/>
 
            </div>
            <div className="col-10">
@@ -514,7 +514,7 @@ const PDFGenerator = () => {
 
                 <div className="col-lg-6 col-12">
 
-                    <Invoice formData={formData}/>
+                    <Invoice formData={formData} />
                 </div>
             </div>
             </div>

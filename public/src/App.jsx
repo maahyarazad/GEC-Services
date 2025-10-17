@@ -10,6 +10,8 @@ import { useEffect, useRef } from "react";
 import {SuccessTemplatePage} from "./components/templates/SuccessTemplatePage";
 import NotFound from "./components/pages/NotFound";
 import { WebSocketProvider } from "./components/admin/WebSocketContext";
+import { Buffer } from 'buffer';
+window.Buffer = Buffer;
 
 const RouteLoader = () => {
   const location = useLocation();
