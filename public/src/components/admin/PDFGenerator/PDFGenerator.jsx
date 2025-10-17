@@ -115,7 +115,10 @@ const PDFGenerator = () => {
     }
     const [formData, setFormData] = useState(_initial_formData);
     const [objectChanged, setObjectChanged] = useState(false);
-
+    const UpdateForm = (data) => {
+        
+         setFormData(data);
+    }
     
 
     useEffect(() => {
@@ -223,7 +226,7 @@ const PDFGenerator = () => {
 
            <div className="col-2">
            
-           <FileList/>
+           <FileList onSelect={UpdateForm}/>
 
            </div>
            <div className="col-10">

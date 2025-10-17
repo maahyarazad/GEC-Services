@@ -33,7 +33,7 @@ const MyDocument = ({ formData, objectChanged }) => {
             <Page size="A4" style={styles.page}>
                 {/* Header */}
                 <View style={styles.header}>
-                    {/* <Image src={gec_logo} style={styles.logo} /> */}
+                    <Image src={gec_logo} style={styles.logo} />
                     <View style={styles.projectInfo}>
                         <Text style={styles.projectLine1}>{formData.project.project_name}</Text>
                         <Text style={styles.projectLine2}>{formData.project.project_name_ll2}</Text>
@@ -122,15 +122,14 @@ const MyDocument = ({ formData, objectChanged }) => {
                                 <Text style={styles.tableColAmount}>AED {item.amount || "0"}</Text>
                             </View>
 
-                            {item.body !== "" &&
-                                <View style={styles.tableBodyRow} key={`body-${i}`}>
-                                    <Text style={styles.tableBodyText} flex={6}>
-                                        <Text style={styles.body_row}>
-                                            {item.body}
-                                        </Text>
+                        
+                            <View style={styles.tableBodyRow} key={`body-${i}`}>
+                                <Text style={styles.tableBodyText} flex={6}>
+                                    <Text style={styles.body_row}>
+                                        {item?.body || " "}
                                     </Text>
-                                </View>
-                            }
+                                </Text>
+                            </View>
 
 
 

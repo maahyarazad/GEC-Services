@@ -20,13 +20,11 @@ const FileList = ({ onSelect }) => {
 
     );
 
-    useEffect(() => {
-        console.log()
-    }, []);
+
 
     const handleSelect = (k) => {
-        setSelectedItem(k.page);
-        onSelect(k.page);
+        setSelectedItem(k.project.project_name);
+        onSelect(k);
     }
 
 
@@ -150,7 +148,7 @@ const FileList = ({ onSelect }) => {
                 />
 
                 {/* List */}
-                <div style={{ overflow: 'scroll', height: '75.5vh' }}>
+                <div style={{ overflow: 'scroll', height: '78vh' }}>
 
                     <ul className="list-unstyled p-0 m-0 list-group" >
                         {filteredList.length > 0 ? (
