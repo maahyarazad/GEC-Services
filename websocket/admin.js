@@ -51,6 +51,23 @@ function createWebSocketServer(server, allowedOrigins = []) {
             
         }, 10_000);
 
+        socket.on("invoice", (data) => {
+            // console.log("📩 Received invoice event:", data);
+
+            // Send back to all connected clients
+            io.emit("invoice:ack", {
+                status: "ok",
+                received: data,
+                timestamp: new Date().toISOString(),
+            });
+
+              socket.emit("invoice:update", {
+                message: "Invoice list should refresh",
+                invoiceId: data.id,
+            });
+
+        });
+
         socket.on("disconnect", (reason) => {
             // console.log(`❌ Client disconnected (${reason})`);
             clearInterval(interval);

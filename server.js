@@ -21,6 +21,7 @@ const email_storage = require('./routes/email_storage.js');
 const GSheetService = require('./services/gSheetService.js');
 const g_sheet = require('./routes/gSheet.js');
 const email_sender = require('./routes/email_sender.js');
+const invoice = require('./routes/invoice.js');
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
 const { createWebSocketServer } = require("./websocket/admin.js");
@@ -115,6 +116,7 @@ app.use('/', member_card);
 app.use('/', email_storage);
 app.use('/', email_sender);
 app.use('/', g_sheet);
+app.use('/', invoice);
 
 app.use('/api/', authorize);
 

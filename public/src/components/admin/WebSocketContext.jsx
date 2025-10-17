@@ -5,6 +5,7 @@ const WebSocketContext = createContext(null);
 
 export const WebSocketProvider = ({ children }) => {
   const [data, setData] = useState(null);
+  const [update, setUpdate] = useState(null);
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -25,6 +26,13 @@ export const WebSocketProvider = ({ children }) => {
       
       setData(data);
     });
+    
+  socket.on("invoice", (data) => {
+      console.log("Received invoice:", data);
+      
+      // ✅ emit event back to client(s)
+      socket.emit("invoice", { status: "ok", data });
+    });
 
     socket.on("disconnect", (reason) => {
       console.log("🔴 Socket.IO disconnected:", reason);
@@ -40,8 +48,25 @@ export const WebSocketProvider = ({ children }) => {
     };
   }, []);
 
+
+  const sendRequest = (event, payload, callback) => {
+    
+    if (!socketRef.current) return;
+    socketRef.current.emit(event, { id: 123, total: 99 });
+  };
+
+  const onEvent = (event, callback) => {
+    if (!socketRef.current) return;
+    socketRef.current.on(event, callback);
+
+    // Cleanup function for useEffect
+    return () => socketRef.current.off(event, callback);
+  };
+
+
+
   return (
-    <WebSocketContext.Provider value={{ data }}>
+    <WebSocketContext.Provider value={{ data,update, sendRequest, onEvent }}>
       {children}
     </WebSocketContext.Provider>
   );

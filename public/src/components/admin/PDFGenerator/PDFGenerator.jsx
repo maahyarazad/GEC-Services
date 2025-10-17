@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -16,44 +16,42 @@ import isEqual from "lodash.isequal";
 import './PDFGenerator.css';
 
 import Invoice from "./Invoice";
+import FileList from "./FileList";
 
 const PDFGenerator = () => {
 
 
+    const handleKeyDown = (e) => {
+    if (e.key === "Backspace") {
+        const textarea = e.target;
+        const { selectionStart, selectionEnd, value } = textarea;
 
+        // Split value into lines
+        const lines = value.split(/\r?\n/);
 
+        // Determine current line index based on caret position
+        const beforeCaret = value.slice(0, selectionStart);
+        const currentLineIndex = beforeCaret.split(/\r?\n/).length - 1;
+        const currentLine = lines[currentLineIndex];
 
-const handleKeyDown = (e) => {
-  if (e.key === "Backspace") {
-    const textarea = e.target;
-    const { selectionStart, selectionEnd, value } = textarea;
+        // CASE 1: Prevent line merge or deletion at line start
+        // if (selectionStart === selectionEnd && currentLine.trim() === "" && selectionStart > 0) {
+        //   e.preventDefault(); // stop default backspace
+        //   console.log("Prevented deleting empty line");
+        //   return;
+        // }
 
-    // Split value into lines
-    const lines = value.split(/\r?\n/);
+        // // CASE 2: Prevent line merge when caret at beginning of line
+        // const lineStartPosition = beforeCaret.lastIndexOf("\n") + 1;
+        // if (selectionStart === lineStartPosition) {
+        //   e.preventDefault();
+        //   console.log("Prevented merging lines");
+        //   return;
+        // }
 
-    // Determine current line index based on caret position
-    const beforeCaret = value.slice(0, selectionStart);
-    const currentLineIndex = beforeCaret.split(/\r?\n/).length - 1;
-    const currentLine = lines[currentLineIndex];
-
-    // CASE 1: Prevent line merge or deletion at line start
-    // if (selectionStart === selectionEnd && currentLine.trim() === "" && selectionStart > 0) {
-    //   e.preventDefault(); // stop default backspace
-    //   console.log("Prevented deleting empty line");
-    //   return;
-    // }
-
-    // // CASE 2: Prevent line merge when caret at beginning of line
-    // const lineStartPosition = beforeCaret.lastIndexOf("\n") + 1;
-    // if (selectionStart === lineStartPosition) {
-    //   e.preventDefault();
-    //   console.log("Prevented merging lines");
-    //   return;
-    // }
-
-    // Otherwise, let Backspace work normally
-  }
-};
+        // Otherwise, let Backspace work normally
+    }
+    };
 
 
 
@@ -221,8 +219,17 @@ const handleKeyDown = (e) => {
     }
     return (
         <Box sx={{ padding: 1 }}>
+            <div className="row">
+
+           <div className="col-2">
            
+           <FileList/>
+
+           </div>
+           <div className="col-10">
+
             <div className="row" style={{ height: '85vh', overflow: 'scroll' }}>
+                
                 {/* Form to update PDF content */}
                 <div className="col-lg-6 col-12 left-panel">
 
@@ -504,9 +511,11 @@ const handleKeyDown = (e) => {
 
                 <div className="col-lg-6 col-12">
 
-                    <Invoice formData={formData} objectChanged={_objectChanged}/>
+                    <Invoice formData={formData}/>
                 </div>
             </div>
+            </div>
+           </div>
         </Box>
     );
 };
