@@ -10,7 +10,7 @@ import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import CircularProgress from '@mui/material/CircularProgress';
 import { GoShieldLock } from "react-icons/go";
 import { Button } from "@mui/material";
-import SimpleSnackbar from "../utils/Snackbar";
+import { useSnackbar } from "../Providers/Snackbar";
 import { Box, Paper, Typography, Container } from '@mui/material';
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
@@ -18,7 +18,7 @@ const validationSchema = Yup.object({
 
 export const GuestRegistration = () => {
     const eventSlug = useParams();
-    const snackbarRef = useRef();
+    const {showSnackbar} = useSnackbar();
 
     const passkey = 1234;
     const initialValues = {
@@ -108,16 +108,16 @@ export const GuestRegistration = () => {
             
             if (response.status === 200) {
                 
-                snackbarRef.current?.openSnackbar(response_data.message, 'success');
+                showSnackbar(response_data.message, 'success');
                 return;
             }
 
-            snackbarRef.current?.openSnackbar(response_data.message);
+            showSnackbar(response_data.message);
 
 
         } catch (err) {
             
-            snackbarRef.current?.openSnackbar(err.message);
+            showSnackbar(err.message);
             setError("Failed to fetch registration.");
         } finally {
             setLoading(false);
@@ -207,8 +207,7 @@ export const GuestRegistration = () => {
     }else{
         return(
 <>
-    <SimpleSnackbar ref={snackbarRef} />
-
+    
     {guestUser ? (
         loading ? (
             <div

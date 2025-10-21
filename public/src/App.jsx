@@ -7,11 +7,16 @@ import { GuestRegistration } from "./components/guestRegistration/GuestRegistrat
 import 'nprogress/nprogress.css';
 import NProgress from 'nprogress';
 import { useEffect, useRef } from "react";
-import {SuccessTemplatePage} from "./components/templates/SuccessTemplatePage";
+import { SuccessTemplatePage } from "./components/templates/SuccessTemplatePage";
 import NotFound from "./components/pages/NotFound";
 import { WebSocketProvider } from "./components/admin/WebSocketContext";
 import { Buffer } from 'buffer';
 window.Buffer = Buffer;
+import { SnackbarProvider } from "./components/Providers/Snackbar";
+import { AlertDialogProvider } from "./components/Providers/AlertProvider";
+import { SlideModalProvider } from "./components/Providers/SlideModalProvider";
+
+
 
 const RouteLoader = () => {
   const location = useLocation();
@@ -21,14 +26,14 @@ const RouteLoader = () => {
     if (location.pathname !== prevPathRef.current) {
       NProgress.start();
     }
-    
+
     // Let the DOM update before stopping
     requestAnimationFrame(() => {
       NProgress.done();
       prevPathRef.current = location.pathname;
     });
   }, [location]);
-  
+
   return null;
 };
 
@@ -43,7 +48,7 @@ function AppRoutes() {
         <Route path="/registration/:event" element={<TemplateForm />} />
         <Route path="/registration/:event/success" element={<SuccessTemplatePage />} />
         <Route path="/guest-registration/:eventSlug" element={<GuestRegistration />} />
-         <Route
+        <Route
           path="/admin"
           element={
             <WebSocketProvider>
@@ -51,7 +56,7 @@ function AppRoutes() {
             </WebSocketProvider>
           }
         />
-          <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );
@@ -63,21 +68,28 @@ function App() {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty("--vh", `${vh}px`);
     };
-  
+
     // Run at start
     setVhVar();
-  
+
     // Update on resize / orientation change
     window.addEventListener("resize", setVhVar);
-  
+
     return () => {
       window.removeEventListener("resize", setVhVar);
     };
-    
+
   }, []);
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <SnackbarProvider>
+        <AlertDialogProvider>
+          <SlideModalProvider>
+
+            <AppRoutes />
+          </SlideModalProvider>
+        </AlertDialogProvider>
+      </SnackbarProvider>
     </BrowserRouter>
   );
 }

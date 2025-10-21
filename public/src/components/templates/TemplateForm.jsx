@@ -22,7 +22,7 @@ import {
     getEncryptedLocalStorage,
     removeEncryptedLocalStorage,
 } from "../utils/cookieUtils";
-import SimpleSnackbar from "../utils/Snackbar";
+import { useSnackbar } from "../Providers/Snackbar";
 import OtpTimer from "../utils/OtpTimer";
 import OtpInput from "../utils/OtpInput";
 import CountDownComponent from "../utils/TenDayCountdown";
@@ -61,6 +61,7 @@ import languageData from "../../assets/language";
 export const TemplateForm = () => {
     //OTP
     const { event } = useParams();
+    const {showSnackbar} = useSnackbar();
     const location = useLocation();
     const [showOtpInput, setShowOtpInput] = useState(false);
     const otpRef = useRef();
@@ -330,7 +331,7 @@ export const TemplateForm = () => {
                 registrationHeader.current?.scrollIntoView({behavior:'smooth'});
                 otpRef?.current?.blurAll();
                 registrationHeader.current?.focus();
-                snackbarRef.current?.openSnackbar(otp_response_data.message, "success");
+                showSnackbar(otp_response_data.message, "success");
             } else {
                 statusRef.current.textContent = otp_response_data.message;
                 statusRef.current.classList.add("text-danger");
@@ -352,7 +353,7 @@ export const TemplateForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [source, setIsSource] = useState(null);
 
-    const snackbarRef = useRef();
+    
     const fileInputRef = useRef();
     const identityConsentRef = useRef();
 
@@ -505,7 +506,7 @@ export const TemplateForm = () => {
                 } else {
                     registrationHeader.current?.scrollIntoView({behavior:'smooth'});
                     registrationHeader.current?.focus();
-                    snackbarRef.current?.openSnackbar(
+                    showSnackbar(
                         payment_response.error.message,
                         ""
                     );
@@ -529,7 +530,7 @@ export const TemplateForm = () => {
                 if (registration_response_data.status) {
                     registrationHeader.current?.scrollIntoView({behavior:'smooth'});
                     registrationHeader.current?.focus();
-                    snackbarRef.current?.openSnackbar(
+                    showSnackbar(
                         registration_response_data.message,
                         "success"
                     );
@@ -560,7 +561,7 @@ export const TemplateForm = () => {
                     setSelectedDate("");
                 } else {
                     
-                    snackbarRef.current?.openSnackbar(
+                    showSnackbar(
                         registration_response_data.message,
                         ""
                     );
@@ -569,7 +570,7 @@ export const TemplateForm = () => {
 
         } catch (e) {
             
-            snackbarRef.current?.openSnackbar(e.message);
+            showSnackbar(e.message);
         } finally {
             setIsSubmitting(false);
         }
@@ -600,7 +601,7 @@ export const TemplateForm = () => {
 
             return (
                 <>
-                    <SimpleSnackbar ref={snackbarRef} />
+                    
 
                     <div
                         className="template-form"
@@ -1184,7 +1185,7 @@ export const TemplateForm = () => {
                                                     )}
         
                                                     {target.surveyForm === "true" && (
-                                                        <SurveyTemplateForm errors={errors} touched={touched} target={target} />
+                                                        <SurveyTemplateForm errors={errors} touched={touched} target={target} values={values}/>
                                                     )}
                                                 </>
                                             )}

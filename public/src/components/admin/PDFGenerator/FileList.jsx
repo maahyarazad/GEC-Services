@@ -2,18 +2,22 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../WebSocketContext';
 import { IoTrashOutline, IoDownloadOutline } from "react-icons/io5";
 import MyDocument from './MyDocument';
-import AlertDialog from '../../utils/AlertDialog';
+
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { IoSave } from "react-icons/io5";
 import { Button, IconButton } from '@mui/material';
 import { VscNewFile } from "react-icons/vsc";
-import SimpleSnackbar from '../../utils/Snackbar'
+import { useSnackbar } from '../../Providers/Snackbar';
+import { useAlertDialog } from '../../Providers/AlertProvider';
+
 const FileList = ({ onSelect, formData, initialFormData }) => {
 
+    const { showSnackbar } = useSnackbar();
+    const { openDialog } = useAlertDialog();
     const iconSize = 24;
     const { onEvent } = useWebSocket();
     const dialogRef = useRef();
-    const snackbarRef = useRef();
+    
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedItem, setSelectedItem] = useState('');
@@ -43,13 +47,13 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
             const respnse_data = await response.json();
             if (!response.ok) {
 
-                snackbarRef.current?.openSnackbar(respnse_data.message);
+                showSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
 
 
             if (respnse_data) {
-                snackbarRef.current?.openSnackbar(respnse_data.message, 'success');
+                showSnackbar(respnse_data.message, 'success');
                 sendRequest("invoice");
 
             }
@@ -83,7 +87,7 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
 
             const respnse_data = await res.json();
             if (res.ok) {
-                snackbarRef.current?.openSnackbar(respnse_data.message);
+                showSnackbar(respnse_data.message);
                 fetchData();
             }
 
@@ -99,8 +103,7 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
 
     const confirmDelete = (projectName) => {
 
-
-        dialogRef.current.openDialog(
+        openDialog(
             <div>
                 Deleting this file will <strong>permanently remove it and its data. </strong>
                 Are you sure you want to proceed?
@@ -172,8 +175,7 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
 
     return (
         <div style={{ height: '82dvh' }}>
-            <SimpleSnackbar ref={snackbarRef} />
-            <AlertDialog ref={dialogRef} />
+            
             <div className='d-flex justify-content-between align-items-center'>
 
                 <div>

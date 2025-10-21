@@ -4,8 +4,8 @@ import RegistrationRequestForm from "../RegistrationRequestForm";
 import { DataGrid } from '@mui/x-data-grid';
 import { Switch, Button, Box, Tooltip, FormControlLabel, IconButton } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-import SimpleSnackbar from "../../utils/Snackbar";
-import AlertDialog from '../../utils/AlertDialog';
+import { useSnackbar } from "../../Providers/Snackbar";
+import { useAlertDialog } from '../../Providers/AlertProvider';
 import lockRegistrationImage from '../../../assets/media/lock_registration.webp';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
@@ -373,7 +373,8 @@ export const RegistrationList = () => {
     const [memberCount, setMemberCount] = useState(0);
     const [isParentModalOpen, setIsParentModalOpen] = useState(false);
     const dialogRef = useRef();
-    const snackbarRef = useRef();
+    const {showSnackbar} = useSnackbar();
+    const {openDialog} = useAlertDialog();
     const [loading, setLoading] = useState(false);
     const [requestloading, setRequestLoading] = useState([]);
 
@@ -390,7 +391,7 @@ export const RegistrationList = () => {
             const respnse_data = await response.json();
             if (!response.ok) {
 
-                snackbarRef.current?.openSnackbar(respnse_data.message);
+                showSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
 
@@ -421,7 +422,7 @@ export const RegistrationList = () => {
 
             if (!response.ok) {
 
-                snackbarRef.current?.openSnackbar(respnse_data.message);
+                showSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
 
@@ -459,7 +460,7 @@ export const RegistrationList = () => {
             const respnse_data = await response.json();
             if (!response.ok) {
 
-                snackbarRef.current?.openSnackbar(respnse_data.message);
+                showSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
 
@@ -481,11 +482,11 @@ export const RegistrationList = () => {
             const respnse_data = await response.json();
             if (!response.ok) {
 
-                snackbarRef.current?.openSnackbar(respnse_data.message);
+                showSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
 
-            snackbarRef.current?.openSnackbar(respnse_data.message, "success");
+            showSnackbar(respnse_data.message, "success");
             await fetchData();
 
         } catch (err) {
@@ -506,11 +507,11 @@ export const RegistrationList = () => {
             const respnse_data = await response.json();
             if (!response.ok) {
 
-                snackbarRef.current?.openSnackbar(respnse_data.message);
+                showSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
 
-            snackbarRef.current?.openSnackbar(respnse_data.message, "success");
+            showSnackbar(respnse_data.message, "success");
             await fetchData();
 
         } catch (err) {
@@ -537,7 +538,7 @@ export const RegistrationList = () => {
             const respnse_data = await response.json();
             if (!response.ok) {
 
-                snackbarRef.current?.openSnackbar(respnse_data.message);
+                showSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
 
@@ -561,7 +562,7 @@ export const RegistrationList = () => {
             const respnse_data = await response.json();
             if (!response.ok) {
 
-                snackbarRef.current?.openSnackbar(respnse_data.message);
+                showSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
 
@@ -589,7 +590,7 @@ export const RegistrationList = () => {
             const respnse_data = await response.json();
             if (!response.ok) {
 
-                snackbarRef.current?.openSnackbar(respnse_data.message);
+                showSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
 
@@ -626,7 +627,7 @@ export const RegistrationList = () => {
     const switchLock = (row) => {
         if (row.lockRegistration === "false") {
 
-            dialogRef.current.openDialog(
+            openDialog(
                 <div>
                     <div>Enabling this option will <strong>lock the registration page and prevent further submissions.</strong> Are you sure you want to proceed?</div>
                     <img src={lockRegistrationImage} alt="Lock" width={400} className="mt-1 rounded-1" />
@@ -660,7 +661,7 @@ export const RegistrationList = () => {
     const autoRegisterAlert = (row) => {
 
 
-        dialogRef.current.openDialog(
+        openDialog(
             <div>
                 Do you want to <strong>Auto Register base on the Google Sheet Geburtstagsparty </strong>
                 Are you sure you want to proceed?
@@ -689,7 +690,7 @@ export const RegistrationList = () => {
 
     const eventCleanUpAlert = (row) => {
 
-        dialogRef.current.openDialog(
+        openDialog(
             <div>
                 Do you want to <strong>delete PKPass and QRCode files from the server</strong>?
                 Are you sure you want to proceed?
@@ -718,7 +719,7 @@ export const RegistrationList = () => {
 
 
     const archiveAlert = (row) => {
-        dialogRef.current.openDialog(
+        openDialog(
             <div>
                 Do you want to <strong>archive the registration record and hide it from active listings. </strong>
                 Are you sure you want to proceed?
@@ -767,8 +768,8 @@ export const RegistrationList = () => {
 
     return (
         <Box sx={{ padding: 1 }}>
-            <AlertDialog ref={dialogRef} />
-            <SimpleSnackbar ref={snackbarRef} />
+            
+            
             <div className="d-flex justify-content-start mb-1">
                 <div className="">
                     <Tooltip title="Add New Registration Page" componentsProps={config.tooltip_config}>
