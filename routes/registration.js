@@ -12,7 +12,7 @@ const path = require("path");
 const fs = require("fs");
 require('dotenv').config();
 const jwt = require("jsonwebtoken");
-const authorize_admin = require("../middleware/auth");
+const authorization_middleware = require("../middleware/auth");
 const rateLimit = require("express-rate-limit");
 const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc'); 
@@ -286,7 +286,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
     }
 });
 
-router.get('/api/registration', authorize_admin, async (req, res) => {
+router.get('/api/registration',  async (req, res) => {
     try {
 
         const { filters, data } = await dbService.QuerySqlConverter(req.query, "registration AS r", {
@@ -325,7 +325,7 @@ router.get('/api/registration', authorize_admin, async (req, res) => {
     }
 });
 
-router.get('/api/registration-csv-data', authorize_admin, async (req, res) => {
+router.get('/api/registration-csv-data',  async (req, res) => {
     try {
 
         const data = await dbService.findAll("registration");

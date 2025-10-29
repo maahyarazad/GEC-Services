@@ -1,25 +1,48 @@
 require('dotenv').config();
 const jwt = require("jsonwebtoken");
 
-function authorize_admin(req, res, next) {
-    try {
-        const token = req?.cookies["a-usr"];
-        if (!token) {
-            return res.status(401).json({ authenticated: false, message: "Unauthorized" });
-        }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+const authorization_middleware = {
 
-        if (decoded.role === "admin") {
-            req.user = decoded;
-            return next();
-        }
-
-        return res.status(403).json({ authenticated: false, message: "Forbidden" });
-
-    } catch (err) {
-        return res.status(401).json({ authenticated: false, message: "Invalid token" });
-    } 
+    authorize_admin: (req, res, next) => {
+       try {
+           const token = req?.cookies["a-usr"];
+           if (!token) {
+               return res.status(401).json({ authenticated: false, message: "Unauthorized" });
+           }
+   
+           const decoded = jwt.verify(token, process.env.JWT_SECRET);
+   
+           if (decoded.role === "admin") {
+               req.user = decoded;
+               return next();
+           }
+   
+           return res.status(403).json({ authenticated: false, message: "Forbidden" });
+   
+       } catch (err) {
+           return res.status(401).json({ authenticated: false, message: "Invalid token" });
+       } 
+   },
+    authorize_member :(req, res, next) =>{
+       try {
+           const token = req?.cookies["member-usr"];
+           if (!token) {
+               return res.status(401).json({ authenticated: false, message: "Unauthorized" });
+           }
+   
+           const decoded = jwt.verify(token, process.env.JWT_SECRET);
+   
+           if (decoded) {
+               return next();
+           }
+   
+           return res.status(403).json({ authenticated: false, message: "Forbidden" });
+   
+       } catch (err) {
+           return res.status(401).json({ authenticated: false, message: "Invalid token" });
+       } 
+}
 }
 
-module.exports = authorize_admin;
+module.exports = authorization_middleware;

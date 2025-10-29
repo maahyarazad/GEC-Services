@@ -145,7 +145,23 @@ export const SurveyDataGrid = () => {
             ].filter(Boolean).join('&');
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/survey?${queryParams}`, { credentials: "include" });
+
+
+
             const response_data = await response.json();
+
+
+        // if (sortField) {
+        //     response_data.data.sort((a, b) => {
+        //         debugger;
+        //         const aValue = a[sortField]?.toLowerCase() || "";
+        //         const bValue = b[sortField]?.toLowerCase() || "";
+        //         debugger;
+        //         return aValue.localeCompare(bValue, 'en', { sensitivity: 'base' });
+        //     });
+        // }
+
+
 
             setSurveyList(response_data.data || []);
             setRowCount(response_data.total || 0);

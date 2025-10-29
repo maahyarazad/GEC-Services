@@ -100,44 +100,7 @@ const sendOtpToEmail = async (data, req, res) => {
 };
 
 
-const sendOtpToPhone = async (data, req, res) => {
-    if (!data.phone) {
-        return { status: false, code: 400, message: 'Mobile number required' };
-    }
 
-    if (req.session.otp) {
-        delete req.session.otp;
-        delete req.session.otpExpires;
-    }
-
-    const otp = generateOTP();
-    req.session.otp = otp;
-    req.session.otpExpires = Date.now() + 1 * 59 * 1000; // expires in 1 mins
-
-    try {
-        // await twilioClient.messages.create({
-        //     body: `Your OTP code is: ${otp}`,
-        //     from: process.env.TWILIO_PHONE  ,
-        //     to: `whatsapp:${mobile_number}`,
-        // });
-
-        var payload = {
-            origin: 'RegistrationApp',
-            message: `{*${otp}*} is your verification code.`,
-            destination: `${data.phone}`
-        };
-
-            // {*code*} placeholder is mandatory and will be replaced by an auto generated numeric code.
-
-            const response = await smsglobal.otp.send(payload);
-
-
-        return { status: true, code: 200, message: 'OTP sent successfully' };
-    } catch (error) {
-        console.error("Failed to send OTP:", error.message);
-        return { status: false, code: 500, message: 'Failed to send OTP' };
-    }
-};
 
 router.post("/send-otp",otpLimiter, upload.none() ,async (req, res) => {
     try {
@@ -169,6 +132,51 @@ router.post("/send-otp",otpLimiter, upload.none() ,async (req, res) => {
     }
 });
 
+router.post("/send-otp-mobile",otpLimiter, upload.none() ,async (req, res) =>  {
+ try {
+        const data = req.body;
+    
+        const { mobile_number, origin } = req.body;
+
+        if (!mobile_number) {
+        return res.status(400).json({ status: false, message: "Mobile number is required" });
+        }
+
+        if (!origin) {
+        return res.status(400).json({ status: false, message: "Origin is required" });
+        }
+        // await twilioClient.messages.create({
+        //     body: `Your OTP code is: ${otp}`,
+        //     from: process.env.TWILIO_PHONE  ,
+        //     to: `whatsapp:${mobile_number}`,
+        // });
+        
+        var payload = {
+            origin: 'B P',
+            // {*code*} placeholder is mandatory and will be replaced by an auto generated numeric code.
+            message: `{*code*} is your verification code for ${data.origin}.`,
+            destination: `+${data.mobile_number.replace(/\D/g, '')}`,
+            length: 5,
+            codeExpiry: 300,
+   
+            
+        };
+            
+        const response = await smsglobal.otp.send(payload);
+
+
+       res.status(200).json({
+            status: true,
+            message: "OTP sent successfully",
+            data: response,
+            });
+    } catch (error) {
+        console.error("Failed to send OTP:", error.message);
+        res.status(500).json({ status: false, message: "Failed to send OTP" });
+    }
+});
+
+
 router.post("/otp-check",upload.none(), async (req, res) => {
     try {
         const data = req.body;
@@ -196,6 +204,36 @@ router.post("/otp-check",upload.none(), async (req, res) => {
             data: page_data
         });
 
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ status: false, message: "Server error" });
+    }
+});
+
+router.post("/otp-check-mobile",upload.none(), async (req, res) => {
+    try {
+        const data = req.body;
+        
+        smsglobal.otp.verifyByRequestId(data.otp_data.data.requestId, data.otp, function(error, response) {
+            if (response) {
+                console.log(response);
+                res.status(200).json({
+                    status: true,
+                    message: "Verification successful",
+                    data: page_data
+                });
+            }
+            if (error) {
+                res.status(401).json({
+                    status: true,
+                    message: error,
+                    
+
+                });
+                
+            }
+        });
 
     } catch (error) {
         console.error(error);

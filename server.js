@@ -93,11 +93,8 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use((req, res, next) => {
-  console.log('Received request for: ${req.url}');
-  next();
-});
 
+app.use('/api/', authorize.authorize_admin);
 app.use('/uploads', express.static(path.join(__dirname, 'file_storage')));
 app.use('/apple_pass', express.static(path.join(__dirname, 'pass_storage')));
 app.use('/maps', express.static(path.join(__dirname, 'maps')));
@@ -118,7 +115,7 @@ app.use('/', email_sender);
 app.use('/', g_sheet);
 app.use('/', invoice);
 
-app.use('/api/', authorize);
+
 
 
 

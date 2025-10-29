@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const dbService = require("../services/dbService");
-const authorize_admin = require("../middleware/auth")
+
 const { exportTableAsCSV } = require("../services/csvParser");
 
-router.get('/api/survey', authorize_admin, async (req, res) => {
+router.get('/api/survey',  async (req, res) => {
   try {
   
     const { filters, data } = await dbService.QuerySqlConverter(req.query, "Company");
@@ -24,7 +24,7 @@ router.get('/api/survey', authorize_admin, async (req, res) => {
 });
 
 
-router.post('/api/update-survey', authorize_admin, async (req, res) => {
+router.post('/api/update-survey',  async (req, res) => {
   try {
     const { data } = req.body;
 
@@ -62,7 +62,7 @@ router.post('/api/update-survey', authorize_admin, async (req, res) => {
 
 
 
-router.get('/api/delete-survey', authorize_admin, async (req, res) => {
+router.get('/api/delete-survey',  async (req, res) => {
   try {
     const { id } = req.query;
 
@@ -99,7 +99,7 @@ router.get('/api/delete-survey', authorize_admin, async (req, res) => {
 });
 
 
-router.get('/api/survey-csv-data', authorize_admin, async (req, res) => {
+router.get('/api/survey-csv-data',  async (req, res) => {
     try {
 
         const data = await dbService.findAll("company");

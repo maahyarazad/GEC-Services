@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import "./login.css";
 import { useNavigate } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
@@ -12,6 +12,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { GoShieldLock } from "react-icons/go";
 import GECCard_Back from '../../assets/media/card_back.webp';
 import WhatsAppButton from '../utils/WhatsAppButton';
+import { useEffect } from "react";
 export const Login = ({ emailRequired, event }) => {
     const validationSchema = Yup.object({
         // email: emailRequired ? Yup.string().email("Enter a valid email").required("Email is required!") : Yup.string().nullable(), 
@@ -26,6 +27,7 @@ export const Login = ({ emailRequired, event }) => {
     const [mobile_number, setMobile_number] = useState(null);
     const [registration_code, setRegistration_code] = useState(true);
     const [isLogging, setIsLogging] = useState(false);
+    const [viewPurchase, setViewPurchase] = useState({useMemberCard: false, showWizard: false});
     
 
     // const phoneRef = useRef();
@@ -46,6 +48,54 @@ export const Login = ({ emailRequired, event }) => {
     //         navigate(`/registration/${gecuser.page}`);
     //     }
     // }, []);
+
+
+        const getRegistrationConfig = useCallback(async () => {
+            try {
+                
+                // const value = location.pathname;
+                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/optional-login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        "page": event
+                    })
+                });
+    
+                if (!response.ok) {
+                    throw new Error('Failed to fetch');
+                }
+    
+                const values = await response.json();
+                
+                if (values) {
+                    
+                
+                    // Maahyar CM: Only one record return from server
+                    values.rows.map(async (x) => {
+                        
+                       
+                        if(x.use_member_card === "true"){
+                            setViewPurchase(prev => ({...prev, useMemberCard: true}));
+                        }
+    
+                       
+    
+                    });
+    
+                }
+            } catch (err) {
+                console.error('Error fetching data:', err);
+            } finally {
+                
+            }
+        },[]);
+
+        useEffect(()=> {
+            getRegistrationConfig();
+        }, [getRegistrationConfig])
 
     const handleLoginSubmit = async (values, { setSubmitting, resetForm }) => {
         try {
@@ -80,17 +130,23 @@ export const Login = ({ emailRequired, event }) => {
             }
             
             if (loginResponse.status === 401) {
+                
               const errorData = await loginResponse.json();
               statusRef.current.textContent = errorData.message || "Unauthorized.";
               setCurrentResponseStatus(false);      // ==> set className
               setIsLogging(false);
+
+                if(viewPurchase.useMemberCard){
+                    setViewPurchase(prev => ({...prev, showWizard: true}));
+                }
+
               return;
             }
             
             
             
             if (loginResponse.status === 200) {
-                
+                    
                 setCurrentResponseStatus(loginResponse.ok);
                 
                 const response_data = await loginResponse.json();
@@ -220,14 +276,14 @@ export const Login = ({ emailRequired, event }) => {
                                 <Button
                                     className="mt-1"
                                     type="submit"
-                                    variant="contained"
+                                    variant={`${viewPurchase.showWizard ? "outlined" : "contained"}`}
                                     disabled={isSubmitting}
                                     style={{ textTransform: "none", width: "100%" }}
                                     startIcon={
                                         isLogging ? (
                                             <CircularProgress size={20} color="inherit" />
                                         ) : (
-                                            <GoShieldLock size={20} color="white" />
+                                            <GoShieldLock size={20} color={`${viewPurchase.showWizard ? "" : "white"}`} />
                                         )
                                     }
                                 >
@@ -237,12 +293,26 @@ export const Login = ({ emailRequired, event }) => {
                         </Form>
                     )}
                 </Formik>
-                {/* <CustomDateTimePicker/> */}
+                    
+                
                 <p
+                    
                     ref={statusRef}
-                    className={`mt-1 ${currentResponseStatus ? "" : "text-danger"} fw-normal`}
+                    className={`mt-1 ${currentResponseStatus ? "" : "text-danger"} fw-normal fade-in ${currentResponseStatus ? "" : "visible"}`}
                     dangerouslySetInnerHTML={{ __html: statusRef.current?.textContent || "" }}
                     ></p>
+
+                    <div className={`fade-in ${viewPurchase.showWizard ? "visible" : ""}`} style={{height: `${viewPurchase.showWizard ? "auto" : 0}`}}>
+                            <Button
+                                        className="mt-1 "
+                                onClick={()=> navigate("/purchase-membership")}
+                                variant="contained"
+                                style={{ textTransform: "none", width: "100%" }}
+                            >
+                                Purchase
+                            </Button>
+                            </div>
+
             </div>
             <WhatsAppButton/>
         </div>

@@ -4,13 +4,13 @@ const router = express.Router();
 
 const fs = require("fs");
 const path = require("path");
-const authorize_admin = require("../middleware/auth");
+
 
 const _path = path.join(__dirname, "..", "invoice_json_storage");
     const slugify = (text) =>
         text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
 
-router.post('/api/invoice-save', authorize_admin, async (req, res) => {
+router.post('/api/invoice-save',  async (req, res) => {
     try {
         
         if (!fs.existsSync(_path)) {
@@ -41,7 +41,7 @@ router.post('/api/invoice-save', authorize_admin, async (req, res) => {
     }
 });
 
-router.get('/api/invoice-list', authorize_admin, (req, res) => {
+router.get('/api/invoice-list',  (req, res) => {
   try {
     if (!fs.existsSync(_path)) {
       return res.json({ status: true, data: [] }); // folder doesn't exist yet
@@ -70,7 +70,7 @@ router.get('/api/invoice-list', authorize_admin, (req, res) => {
 });
 
 
-router.get('/api/invoice-list-delete', authorize_admin, (req, res) => {
+router.get('/api/invoice-list-delete',  (req, res) => {
   try {
     const { projectName } = req.query;
 

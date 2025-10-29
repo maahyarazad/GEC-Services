@@ -723,11 +723,11 @@ Teilnahme.</p>
 
 
 async function email_otp(reqBody) {
-	const { email, event, otp } = reqBody;
+	const { email, event, otp, message } = reqBody;
 	try {
 		const currentYear = new Date().getFullYear();
 		const event_name = slugToTitle(event);
-
+    const sectionMessage = message || `To complete your registration for`;
 		const htmlBody = `
 <!DOCTYPE html>
 <html>
@@ -757,7 +757,7 @@ async function email_otp(reqBody) {
               <tr>
                 <td style="color: #333333; font-size: 16px; line-height: 1.6; padding: 0 20px;">
                   <p style="color: #333333;">
-                    To complete your registration for <strong>${event_name}</strong>, please use the following One-Time Password (OTP):
+                    ${sectionMessage} <strong>${event_name}</strong>, please use the following One-Time Password (OTP):
                   </p>
                   <p style="text-align: center; margin: 30px 0; color: #333333;">
                     <span style="font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #D9B144;">${otp}</span>

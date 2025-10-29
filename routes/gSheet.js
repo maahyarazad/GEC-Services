@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const dbService = require("../services/dbService");
 const GSheetService = require("../services/gSheetService");
-const authorize_admin = require("../middleware/auth");
 
-router.get('/api/google-auto-register', authorize_admin,async (req, res) => {
+
+router.get('/api/google-auto-register', async (req, res) => {
     try {
 
         if(!req.query){

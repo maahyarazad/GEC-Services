@@ -35,7 +35,7 @@ const storage = multer.diskStorage({
   },
 });
 const { generateMapImage } = require("../services/mapService");
-const authorize_admin = require("../middleware/auth");
+const authorization_middleware = require("../middleware/auth");
 const { query } = require("express");
 const upload = multer({ storage: storage });
 
@@ -52,7 +52,7 @@ const loginLimiter = rateLimit({
 
 router.post(
   "/api/registration-config",
-  authorize_admin,
+  
   upload.single("image"),
   async (req, res) => {
     try {
@@ -215,7 +215,7 @@ router.post(
   }
 );
 
-router.patch("/api/registration-config-switch", authorize_admin, async (req, res) => {
+router.patch("/api/registration-config-switch",  async (req, res) => {
   try {
     const idParam = req.query?.id;
 
@@ -242,7 +242,7 @@ router.patch("/api/registration-config-switch", authorize_admin, async (req, res
   }
 });
 
-router.get("/api/registration-config", authorize_admin, async (req, res) => {
+router.get("/api/registration-config",  async (req, res) => {
   try {
     const table_name = "registration_config";
     const rows = await dbService.findAllQueryFilter(table_name);
@@ -255,7 +255,7 @@ router.get("/api/registration-config", authorize_admin, async (req, res) => {
 });
 
 
-router.patch("/api/registration-config-archive", authorize_admin, async (req, res) => {
+router.patch("/api/registration-config-archive",  async (req, res) => {
   try {
     const id = Number(req.query?.id);
 
@@ -413,7 +413,7 @@ router.post("/registration-config-access", upload.none(), loginLimiter, async (r
 
 router.post(
   "/api/registration-config/duplicate-record",
-  authorize_admin,
+  
   upload.single("none"),
   async (req, res) => {
     try {
@@ -456,7 +456,7 @@ router.post(
 );
 
 
-router.get('/api/registration-config-list', authorize_admin, async (req, res) => {
+router.get('/api/registration-config-list',  async (req, res) => {
   try {
 
     const rows = await dbService.registration_config_list();
@@ -473,7 +473,7 @@ router.get('/api/registration-config-list', authorize_admin, async (req, res) =>
   }
 });
 
-router.get('/api/event-clean-up', authorize_admin, async (req, res) => {
+router.get('/api/event-clean-up',  async (req, res) => {
   try {
 
     const page = req.query?.page;

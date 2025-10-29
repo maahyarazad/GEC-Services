@@ -1,0 +1,294 @@
+import * as React from 'react';
+import Box from '@mui/material/Box';
+import Stepper from '@mui/material/Stepper';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import { useTheme, useMediaQuery, Slide, Divider } from '@mui/material';
+import { useRef } from "react";
+import GECLogo from '../../assets/media/HGEC.png'
+import MemberLogin from './PurchaseComponent/MemberLogin';
+import MemberUpdate from './PurchaseComponent/MemberUpdate';
+import { useEffect } from 'react';
+import applePass from '../../../../file_storage/apple-wallet.png';
+import googlePass from '../../../../file_storage/enUS_add_to_google_wallet_add-wallet-badge.png';
+
+
+const steps = ['Check Your Current Status', 'Update Your Profile', 'Get Your Membership Pass'];
+
+export function PurchaseMemberShip() {
+    const [activeStep, setActiveStep] = React.useState(0);
+    const [skipped, setSkipped] = React.useState(new Set());
+    const [slideDirection, setSlideDirection] = React.useState('left');
+
+
+
+    const [wizardState, setWizardState] = React.useState({ member: null, authenticate: false, pkpassPath: null, otpState: null });
+
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const memberComponent = React.useRef();
+    const isStepOptional = (step) => step === 1;
+    const isStepSkipped = (step) => skipped.has(step);
+
+
+    const handleNext = () => {
+        setSlideDirection('left');
+
+
+
+
+
+        setActiveStep((prev) => prev + 1);
+
+        if (isStepSkipped(activeStep)) {
+            const newSkipped = new Set(skipped.values());
+            newSkipped.delete(activeStep);
+            setSkipped(newSkipped);
+        }
+    };
+
+
+    useEffect(() => {
+
+    }, [wizardState]);
+
+    const handleBack = () => {
+        setSlideDirection('right');
+        setActiveStep((prev) => prev - 1);
+    };
+
+    const handleSkip = () => {
+        if (!isStepOptional(activeStep)) {
+            throw new Error("You can't skip a step that isn't optional.");
+        }
+        setSlideDirection('left');
+        setActiveStep((prev) => prev + 1);
+        setSkipped((prevSkipped) => {
+            const newSkipped = new Set(prevSkipped.values());
+            newSkipped.add(activeStep);
+            return newSkipped;
+        });
+    };
+
+    const handleReset = () => setActiveStep(0);
+
+
+    const boxStyle = {
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        justifyContent: 'space-between',
+        alignItems: isMobile ? 'stretch' : 'center',
+        gap: isMobile ? 1.5 : 0,
+        maxWidth: isMobile ? '500px' : '100vw',
+        mt: 3,
+    };
+
+
+
+
+
+    return (
+        <div
+            className="d-flex justify-content-center align-items-start"
+            style={{
+                backgroundColor: ' var(--light)',
+                padding: isMobile ? '1rem' : '2rem',
+                width: '100dvw',
+                maxWidth: '100dvw',
+                minHeight: '100dvh',
+                boxSizing: 'border-box',
+            }}
+        >
+            <Box
+                sx={{
+                    backgroundColor: 'white',
+                    borderRadius: 5,
+                    padding: isMobile ? '1rem' : '2rem',
+                    width: '100%',
+                    maxWidth: '1000px',
+                    height: 'auto',
+                }}
+            >
+                <img src={GECLogo} height={60} />
+                {/* Stepper Header */}
+                <Stepper
+                    activeStep={activeStep}
+                    orientation={isMobile ? 'vertical' : 'horizontal'}
+                    sx={{
+                        '& .MuiStepLabel-label': {
+                            fontSize: isMobile ? '0.85rem' : '1rem',
+                        },
+                        mb: 3,
+                    }}
+                >
+                    {steps.map((label, index) => {
+                        const stepProps = {};
+                        const labelProps = {};
+                        if (isStepOptional(index)) {
+                            labelProps.optional = (
+                                <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
+                                    Optional
+                                </Typography>
+                            );
+                        }
+                        if (isStepSkipped(index)) stepProps.completed = false;
+
+                        return (
+                            <Step key={label} {...stepProps}>
+                                <StepLabel {...labelProps}>{label}</StepLabel>
+                            </Step>
+                        );
+                    })}
+                </Stepper>
+
+                <Divider sx={{ borderBottomWidth: 1, borderColor: '#000', my: 2 }} />
+
+
+                {/* Step Content with Slide Animation */}
+                <Box
+                    sx={{
+                        position: 'relative',
+                        overflow: 'scroll',
+                        width: '100%',
+                        height: 'auto',
+                        minHeight: isMobile ? '50dvh' : '65vh',
+                    }}
+                >
+                    <Slide
+                        key={activeStep}
+                        direction={slideDirection}
+                        in
+                        mountOnEnter
+                        unmountOnExit
+                        timeout={400}
+                    >
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                width: '100%',
+                                top: 0,
+                                left: 0,
+                                overflow: 'scroll',
+                                textAlign: isMobile ? 'center' : 'left',
+                            }}
+                        >
+                            {activeStep === steps.length ? (
+                                <>
+                                    <Typography sx={{ mb: 2 }}>
+                                        All steps completed — you're finished!
+                                    </Typography>
+                                    <Button onClick={handleReset} variant="outlined">
+                                        Reset
+                                    </Button>
+                                </>
+                            ) : (
+
+                                <div style={{ height: `${isMobile ? "50dvh" : "60dvh"}`, overflow: 'scroll' }} className='d-flex align-items-center justify-content-center'>
+                                    <div className="p-2 d-flex">
+
+
+                                        {/* Put JS logic outside JSX */}
+                                        {(() => {
+                                            switch (activeStep) {
+                                                case 0:
+                                                    return <MemberLogin wizardState={wizardState} setWizardState={setWizardState} />
+
+                                                case 1:
+                                                    return <MemberUpdate wizardState={wizardState} setWizardState={setWizardState} />
+
+
+                                                case 2:
+                                                    const passStyle = { border: 0, borderRadius: 12, display: "block" };
+                                                    return (
+                                                        <div className="w-100 d-flex justify-content-center align-items-center flex-column" style={{ width: "100%", maxWidth: 400 }}>
+                                                            <span className='py-1'>Your digital membership pass is ready — click on either the <strong>Google Wallet</strong> or <strong>Apple Wallet</strong> button below to add it to your wallet. </span>
+                                                            <div className='py-2'>
+                                                                <a className="" href={`${import.meta.env.VITE_SERVERURL}/${wizardState.passPath}`}>
+                                                                    <img width="300" src={applePass} alt="Google Pass" style={passStyle} />
+                                                                </a>
+                                                            </div>
+                                                            <div className='py-2'>
+
+                                                                <a className="" href={`${import.meta.env.VITE_SERVERURL}/${wizardState.passPath}`}>
+                                                                    <img width="300" src={googlePass} alt="Google Pass" style={passStyle} />
+                                                                </a>
+
+                                                            </div>
+                                                        </div>
+                                                    );
+
+                                                    break;
+
+                                                default:
+                                                    break;
+                                            }
+                                            return null;
+                                        })()}
+
+
+
+
+                                    </div>
+                                </div>
+                            )}
+                        </Box>
+                    </Slide>
+                </Box>
+
+                {/* ✅ Static Navigation Buttons (outside the Slide) */}
+                <Divider sx={{ borderBottomWidth: 1, borderColor: '#000', my: 2 }} />
+{activeStep < steps.length && (
+    <Box sx={boxStyle}>
+        <Button
+            color="inherit"
+            disabled={activeStep === 0}
+            onClick={handleBack}
+            fullWidth={isMobile}
+            sx={{ textTransform: 'none' }}
+        >
+            Back
+        </Button>
+
+        {(() => {
+            switch (activeStep) {
+                case 0:
+                    return (
+                        <Button
+                            onClick={handleNext}
+                            variant="contained"
+                            fullWidth={isMobile}
+                            disabled={!wizardState.authenticate}
+                            sx={{ textTransform: 'none' }}
+                        >
+                            Next
+                        </Button>
+                    );
+
+                case 1:
+                    return (
+                        <Button
+                            onClick={handleNext}
+                            variant="contained"
+                            fullWidth={isMobile}
+                            disabled={!wizardState.pkpassPath}
+                            sx={{ textTransform: 'none' }}
+                        >
+                            Get Your Pass
+                        </Button>
+                    );
+
+                default:
+                    return null;
+            }
+        })()}
+    </Box>
+)}
+
+            </Box>
+        </div>
+    );
+
+
+}

@@ -15,6 +15,7 @@ window.Buffer = Buffer;
 import { SnackbarProvider } from "./components/Providers/Snackbar";
 import { AlertDialogProvider } from "./components/Providers/AlertProvider";
 import { SlideModalProvider } from "./components/Providers/SlideModalProvider";
+import { PurchaseMemberShip } from "./components/pages/PurchaseMemberShip";
 
 
 
@@ -48,6 +49,7 @@ function AppRoutes() {
         <Route path="/registration/:event" element={<TemplateForm />} />
         <Route path="/registration/:event/success" element={<SuccessTemplatePage />} />
         <Route path="/guest-registration/:eventSlug" element={<GuestRegistration />} />
+        <Route path="/purchase-membership" element={<PurchaseMemberShip />} />
         <Route
           path="/admin"
           element={
