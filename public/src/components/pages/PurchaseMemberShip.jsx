@@ -24,7 +24,7 @@ export function PurchaseMemberShip() {
 
 
 
-    const [wizardState, setWizardState] = React.useState({ member: null, authenticate: false, pkpassPath: null, otpState: null });
+    const [wizardState, setWizardState] = React.useState({ member: null, authenticate: false, passData: null, otpState: null });
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -205,13 +205,13 @@ export function PurchaseMemberShip() {
                                                         <div className="w-100 d-flex justify-content-center align-items-center flex-column" style={{ width: "100%", maxWidth: 400 }}>
                                                             <span className='py-1'>Your digital membership pass is ready — click on either the <strong>Google Wallet</strong> or <strong>Apple Wallet</strong> button below to add it to your wallet. </span>
                                                             <div className='py-2'>
-                                                                <a className="" href={`${import.meta.env.VITE_SERVERURL}/${wizardState.passPath}`}>
+                                                                <a className="" href={`${import.meta.env.VITE_SERVERURL}/${wizardState.passData?.applePassPath}`}>
                                                                     <img width="300" src={applePass} alt="Google Pass" style={passStyle} />
                                                                 </a>
                                                             </div>
                                                             <div className='py-2'>
 
-                                                                <a className="" href={`${import.meta.env.VITE_SERVERURL}/${wizardState.passPath}`}>
+                                                                <a className="" href={`${import.meta.env.VITE_SERVERURL}/${wizardState.passData}`}>
                                                                     <img width="300" src={googlePass} alt="Google Pass" style={passStyle} />
                                                                 </a>
 
@@ -239,52 +239,52 @@ export function PurchaseMemberShip() {
 
                 {/* ✅ Static Navigation Buttons (outside the Slide) */}
                 <Divider sx={{ borderBottomWidth: 1, borderColor: '#000', my: 2 }} />
-{activeStep < steps.length && (
-    <Box sx={boxStyle}>
-        <Button
-            color="inherit"
-            disabled={activeStep === 0}
-            onClick={handleBack}
-            fullWidth={isMobile}
-            sx={{ textTransform: 'none' }}
-        >
-            Back
-        </Button>
-
-        {(() => {
-            switch (activeStep) {
-                case 0:
-                    return (
+                {activeStep < steps.length && (
+                    <Box sx={boxStyle}>
                         <Button
-                            onClick={handleNext}
-                            variant="contained"
+                            color="inherit"
+                            disabled={activeStep === 0}
+                            onClick={handleBack}
                             fullWidth={isMobile}
-                            disabled={!wizardState.authenticate}
                             sx={{ textTransform: 'none' }}
                         >
-                            Next
+                            Back
                         </Button>
-                    );
 
-                case 1:
-                    return (
-                        <Button
-                            onClick={handleNext}
-                            variant="contained"
-                            fullWidth={isMobile}
-                            disabled={!wizardState.pkpassPath}
-                            sx={{ textTransform: 'none' }}
-                        >
-                            Get Your Pass
-                        </Button>
-                    );
+                        {(() => {
+                            switch (activeStep) {
+                                case 0:
+                                    return (
+                                        <Button
+                                            onClick={handleNext}
+                                            variant="contained"
+                                            fullWidth={isMobile}
+                                            disabled={!wizardState.authenticate}
+                                            sx={{ textTransform: 'none' }}
+                                        >
+                                            Next
+                                        </Button>
+                                    );
 
-                default:
-                    return null;
-            }
-        })()}
-    </Box>
-)}
+                                case 1:
+                                    return (
+                                        <Button
+                                            onClick={handleNext}
+                                            variant="contained"
+                                            fullWidth={isMobile}
+                                            disabled={!wizardState?.otpState?.getMemberPass}
+                                            sx={{ textTransform: 'none' }}
+                                        >
+                                            Get Your Pass
+                                        </Button>
+                                    );
+
+                                default:
+                                    return null;
+                            }
+                        })()}
+                    </Box>
+                )}
 
             </Box>
         </div>

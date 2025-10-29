@@ -5,7 +5,7 @@ const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const { generateRecordId, generateOTP } = require("../services/generatorService");
 const dbService = require("../services/dbService");
-const {email_otp} = require("../services/emailService");
+const { email_otp } = require("../services/emailService");
 const twilioClient = require('twilio')(process.env.TWILIO_ACOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const smsglobal = require('smsglobal')(process.env.SMSGLOBAL_KEY, process.env.SMSGLOBAL_SECRET);
 
@@ -45,28 +45,28 @@ const upload = multer({ storage: storage });
 
 const otpRequestMap = new Map();
 const otpLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 1,
-  standardHeaders: true,
-  legacyHeaders: false,
+    windowMs: 60 * 1000, // 1 minute
+    max: 1,
+    standardHeaders: true,
+    legacyHeaders: false,
 
-  handler: (req, res, next, options) => {
-    const key = req.ip; // or use req.body.phone/email for per-user tracking
-    const now = Date.now();
-    const lastRequestTime = otpRequestMap.get(key) || 0;
-    const elapsed = now - lastRequestTime;
+    handler: (req, res, next, options) => {
+        const key = req.ip; // or use req.body.phone/email for per-user tracking
+        const now = Date.now();
+        const lastRequestTime = otpRequestMap.get(key) || 0;
+        const elapsed = now - lastRequestTime;
 
-    if (elapsed < 60000) {
-      return res.status(429).json({
-        status: 429,
-        error: `You can only request one OTP per minute. Please wait ${Math.floor((60000-elapsed)/1000)} seconds before trying again.`
-      });
+        if (elapsed < 60000) {
+            return res.status(429).json({
+                status: 429,
+                error: `You can only request one OTP per minute. Please wait ${Math.floor((60000 - elapsed) / 1000)} seconds before trying again.`
+            });
+        }
+
+
+        // Update last request timestamp and allow the request
+        next(); // continue to your route
     }
-
-    
-    // Update last request timestamp and allow the request
-    next(); // continue to your route
-  }
 });
 
 
@@ -102,28 +102,28 @@ const sendOtpToEmail = async (data, req, res) => {
 
 
 
-router.post("/send-otp",otpLimiter, upload.none() ,async (req, res) => {
+router.post("/send-otp", otpLimiter, upload.none(), async (req, res) => {
     try {
         const data = req.body;
         const key = req.ip; // or use req.body.phone/email for per-user tracking
         const now = Date.now();
         otpRequestMap.set(key, now);
-    //    const response = await sendOtpToPhone(data.whatsapp, req, res);
-       const response = await sendOtpToEmail(data, req, res);
-       
-       if(response.status){
-           return res.status(200).json({
-               status: true,
-               message: "Login Success",
-               // data: data.page_data,
-               session: req.session,
-           });
-       }else{
-        return res.status(response.code).json({
-               status: false,
-               message: response.message,
-           });
-       }
+        //    const response = await sendOtpToPhone(data.whatsapp, req, res);
+        const response = await sendOtpToEmail(data, req, res);
+
+        if (response.status) {
+            return res.status(200).json({
+                status: true,
+                message: "Login Success",
+                // data: data.page_data,
+                session: req.session,
+            });
+        } else {
+            return res.status(response.code).json({
+                status: false,
+                message: response.message,
+            });
+        }
 
 
     } catch (error) {
@@ -132,44 +132,49 @@ router.post("/send-otp",otpLimiter, upload.none() ,async (req, res) => {
     }
 });
 
-router.post("/send-otp-mobile",otpLimiter, upload.none() ,async (req, res) =>  {
- try {
+router.post("/send-otp-mobile", otpLimiter, upload.none(), async (req, res) => {
+    try {
+
         const data = req.body;
-    
+        const key = req.ip;
+        const now = Date.now();
+        otpRequestMap.set(key, now);
+        
+
         const { mobile_number, origin } = req.body;
 
         if (!mobile_number) {
-        return res.status(400).json({ status: false, message: "Mobile number is required" });
+            return res.status(400).json({ status: false, message: "Mobile number is required" });
         }
 
         if (!origin) {
-        return res.status(400).json({ status: false, message: "Origin is required" });
+            return res.status(400).json({ status: false, message: "Origin is required" });
         }
         // await twilioClient.messages.create({
         //     body: `Your OTP code is: ${otp}`,
         //     from: process.env.TWILIO_PHONE  ,
         //     to: `whatsapp:${mobile_number}`,
         // });
-        
+
         var payload = {
             origin: 'B P',
             // {*code*} placeholder is mandatory and will be replaced by an auto generated numeric code.
-            message: `{*code*} is your verification code for ${data.origin}.`,
+            message: `{*code*} is your ${data.origin} verification code. For your own security, please don't share it with others.`,
             destination: `+${data.mobile_number.replace(/\D/g, '')}`,
             length: 5,
             codeExpiry: 300,
-   
-            
+
+
         };
-            
+
         const response = await smsglobal.otp.send(payload);
 
 
-       res.status(200).json({
+        res.status(200).json({
             status: true,
             message: "OTP sent successfully",
             data: response,
-            });
+        });
     } catch (error) {
         console.error("Failed to send OTP:", error.message);
         res.status(500).json({ status: false, message: "Failed to send OTP" });
@@ -177,11 +182,11 @@ router.post("/send-otp-mobile",otpLimiter, upload.none() ,async (req, res) =>  {
 });
 
 
-router.post("/otp-check",upload.none(), async (req, res) => {
+router.post("/otp-check", upload.none(), async (req, res) => {
     try {
         const data = req.body;
         const otp = req.session.otp;
-        
+
         if (Date.now() > req.session.otpExpires) {
             return res.status(401).json({ status: false, message: 'OTP has expired please try again' });
         }
@@ -211,35 +216,52 @@ router.post("/otp-check",upload.none(), async (req, res) => {
     }
 });
 
-router.post("/otp-check-mobile",upload.none(), async (req, res) => {
+router.post("/otp-check-mobile", upload.none(), async (req, res) => {
     try {
         const data = req.body;
-        
-        smsglobal.otp.verifyByRequestId(data.otp_data.data.requestId, data.otp, function(error, response) {
-            if (response) {
-                console.log(response);
-                res.status(200).json({
-                    status: true,
-                    message: "Verification successful",
-                    data: page_data
-                });
-            }
-            if (error) {
-                res.status(401).json({
-                    status: true,
-                    message: error,
-                    
 
-                });
-                
-            }
+        const verifyOtp = () =>
+            new Promise((resolve, reject) => {
+                smsglobal.otp.verifyByRequestId(
+                    data.otp_data.data.requestId,
+                    data.otp,
+                    (error, response) => {
+                        // Some providers return both error + valid response
+                        if (response && response.statusCode === 200) {
+                            return resolve(response);
+                        }
+
+                        if (error) {
+                            console.error("OTP verification error:", error);
+                            return reject(error);
+                        }
+
+                        // Handle non-200 responses as failure
+                        return reject(
+                            new Error(response?.status || "Unknown error")
+                        );
+                    }
+                );
+            });
+
+        const response = await verifyOtp();
+
+        // ✅ success
+        return res.status(200).json({
+            status: true,
+            message: "Verification successful",
         });
 
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ status: false, message: "Server error" });
+    } catch (err) {
+        console.error("OTP verification failed:", err);
+
+        return res.status(401).json({
+            status: false,
+            message: err?.data || "OTP verification failed",
+        });
     }
 });
+
 
 
 module.exports = router;

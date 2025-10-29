@@ -41,6 +41,7 @@ const generateMemberPass = async (data) => {
         _date.getSeconds()
     );
 
+    
     // Load pass template
     const pass = await PKPass.from({
         model: path.join(process.cwd(), "models/membership.pass"),
@@ -78,6 +79,7 @@ const generateMemberPass = async (data) => {
     }
 
     fs.writeFileSync(`${passPath}/${memberId}.pkpass`, _buffer);
+    return `${passPath}/${memberId}.pkpass`;
 };
 
 const generateApplePass = async (data) => {

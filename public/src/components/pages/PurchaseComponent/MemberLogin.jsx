@@ -10,7 +10,7 @@ import OtpTimer from "../../utils/OtpTimer";
 import OtpInput from "../../utils/OtpInput";
 import { useSnackbar } from "../../Providers/Snackbar";
 import { useAlertDialog } from '../../Providers/AlertProvider';
-
+import { GrLogout } from "react-icons/gr";
 
 const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegistration_code, setWizardState, wizardState, clear }, ref) => {
     // OTP vars
@@ -35,14 +35,14 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
         // card_number: Yup.string().required("Card number is required!"),
     });
 
-    
-    
+
+
     const initialValues = {
         email: wizardState?.member?.email || "",
         card_number: "",
     };
-    
-   
+
+
 
     const showMessage = (msg, val) => {
         setResponseMessage(msg);
@@ -86,7 +86,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
 
             const result = await response.json();
             if (result.data) {
-                
+
                 showMessage("Found a corresponding email for your account. Please confirm your email to proceed.", 60000);
                 setWizardState((prev) => ({ ...prev, member: result.data }));
                 setShowOtpInput(true);
@@ -103,7 +103,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
     };
 
     const getToken = async () => {
-        
+
         try {
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-login`, {
                 method: 'POST',
@@ -112,22 +112,22 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 },
                 credentials: 'include',
                 body: JSON.stringify({
-                   ...wizardState.member,
-                    
+                    ...wizardState.member,
+
                 })
             });
 
 
             if (!response.ok) {
                 throw new Error('Failed to fetch');
-                 console.error('Response Error');
+                console.error('Response Error');
             }
 
         } catch (err) {
-           
+
             console.error('Error fetching data:', err);
         } finally {
-            
+
         }
     };
     const autoLogin = useCallback(async () => {
@@ -147,12 +147,12 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
 
             // Optionally handle response data
             const data = await response.json();
-            
-            if(data){
-                initialValues.email= data.member.email;
-                 setWizardState((prev) => ({ ...prev, member: data.member,  authenticate: true }));
+
+            if (data) {
+                initialValues.email = data.member.email;
+                setWizardState((prev) => ({ ...prev, member: data.member, authenticate: true }));
             }
-            
+
 
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -161,13 +161,13 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
 
 
 
- useEffect(() => {
-    if(!wizardState.authenticate){
+    useEffect(() => {
+        if (!wizardState.authenticate) {
 
-        autoLogin();
-    }
+            autoLogin();
+        }
 
-    }, [autoLogin,wizardState]);
+    }, [autoLogin, wizardState]);
 
 
 
@@ -198,7 +198,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
 
         // Mask domain part
         const domainParts = domain.split(".");
-        
+
         const maskedDomain = domainParts
             .map((part) => {
                 if (part.length <= 2) return part;
@@ -320,28 +320,28 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
     };
 
 
-        const logoutMember = async () => {
-            try {
-                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-logout`, {
+    const logoutMember = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-logout`, {
                 method: 'POST',
                 credentials: 'include', // important: includes cookies in request
-                });
-    
-                if (!response.ok) {
+            });
+
+            if (!response.ok) {
                 throw new Error('Failed to log out');
-                }
-    
-                const data = await response.json();
-                console.log(data.message); // "Member has been logged out successfully."
-                
-                // Optionally, clear any local state or redirect
-                // setWizardState({ member: null, authenticate: false });
-                // navigate("/login");
-    
-            } catch (err) {
-                console.error('Error during logout:', err);
             }
-            };
+
+            const data = await response.json();
+            console.log(data.message); // "Member has been logged out successfully."
+
+            // Optionally, clear any local state or redirect
+            // setWizardState({ member: null, authenticate: false });
+            // navigate("/login");
+
+        } catch (err) {
+            console.error('Error during logout:', err);
+        }
+    };
 
 
     const Unauthorized = async () => {
@@ -408,7 +408,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                 helperText={<ErrorMessage name="email" />}
                                 error={touched.email && Boolean(errors.email)}
                                 InputProps={{
-                                    endAdornment: !wizardState.member ? (<></>) : (
+                                    endAdornment: !wizardState.authenticate ? (<></>) : (
                                         <InputAdornment position="end">
                                             <IconButton
                                                 onClick={confirmClear}
@@ -448,7 +448,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                 className="mt-1"
                                 type="submit"
                                 variant="contained"
-                                disabled={isSubmitting}
+                                disabled={wizardState.authenticate}
                                 style={{ textTransform: "none", width: "100%" }}
 
                             >
@@ -511,17 +511,32 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
 
                             return (
                                 <>
-                                    {/* Header */}
-                                    <Typography variant="h6" gutterBottom>
-                                        {maskText(
-                                            wizardState.member.title
-                                                ? `${wizardState.member.title} ${wizardState.member.firstname} ${wizardState.member.lastname}`
-                                                : `${wizardState.member.firstname} ${wizardState.member.lastname}`
+                                    <div className="d-flex justify-content-between align-items-top">
+                                        {/* Header */}
+                                        <Typography variant="h6" gutterBottom>
+                                            {wizardState.authenticate
+                                                ? (wizardState.member.title
+                                                    ? `${wizardState.member.title} ${wizardState.member.firstname} ${wizardState.member.lastname}`
+                                                    : `${wizardState.member.firstname} ${wizardState.member.lastname}`)
+                                                : maskText(
+                                                    wizardState.member.title
+                                                        ? `${wizardState.member.title} ${wizardState.member.firstname} ${wizardState.member.lastname}`
+                                                        : `${wizardState.member.firstname} ${wizardState.member.lastname}`
+                                                )}
+                                        </Typography>
+
+                                        {wizardState.authenticate && (
+                                            <IconButton onClick={confirmClear}>
+                                                <GrLogout />
+                                            </IconButton>
                                         )}
-                                    </Typography>
+                                    </div>
 
                                     <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-                                        Member ID: {maskText(wizardState.member.memberId.toString())}
+                                        Member ID:{" "}
+                                        {wizardState.authenticate
+                                            ? wizardState.member.memberId
+                                            : maskText(wizardState.member.memberId?.toString())}
                                     </Typography>
 
                                     <Box sx={{ mt: 2 }}>
@@ -531,15 +546,20 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                                     Card Number
                                                 </Typography>
                                                 <Typography variant="body1">
-                                                    {maskText(wizardState.member.card_number.toString())}
+                                                    {wizardState.authenticate
+                                                        ? wizardState.member.card_number
+                                                        : maskText(wizardState.member.card_number?.toString())}
                                                 </Typography>
                                             </Grid>
+
                                             <Grid item xs={6}>
                                                 <Typography variant="body2" color="textSecondary">
                                                     Expiry Date
                                                 </Typography>
                                                 <Typography variant="body1">
-                                                    {maskText(wizardState.member.card_expiry_date.split(' ')[0])}
+                                                    {wizardState.authenticate
+                                                        ? wizardState.member.card_expiry_date.split(" ")[0]
+                                                        : maskText(wizardState.member.card_expiry_date?.split(" ")[0])}
                                                 </Typography>
                                             </Grid>
                                         </Grid>
@@ -549,16 +569,17 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                                 Email
                                             </Typography>
                                             <Typography variant="body1">
-                                                {maskEmail(wizardState.member.email)}
+                                                {wizardState.authenticate
+                                                    ? wizardState.member.email
+                                                    : maskEmail(wizardState.member.email)}
                                             </Typography>
                                         </Box>
                                     </Box>
 
-                                    <Divider sx={{ borderBottomWidth: 1, borderColor: '#000', my: 2 }} />
-                                    <>
+                                    <Divider sx={{ borderBottomWidth: 1, borderColor: "#000", my: 2 }} />
 
+                                    <>
                                         <Button
-                                            className=""
                                             variant="contained"
                                             color="primary"
                                             disabled={wizardState.authenticate === true}
@@ -571,9 +592,13 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                                 textTransform: "none",
                                             }}
                                         >
-
-                                            <p>{wizardState.authenticate === true ?  "Authenticated": "Authenticate With Your Email"}</p>
+                                            <p>
+                                                {wizardState.authenticate === true
+                                                    ? "Authenticated"
+                                                    : "Authenticate With Your Email"}
+                                            </p>
                                         </Button>
+
                                         <div className={`otp-slide ${showOtpInput ? "show" : ""} mt-3`}>
                                             <div ref={statusRef}></div>
 
@@ -595,9 +620,9 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                                 </>
                                             )}
                                         </div>
-
                                     </>
                                 </>
+
                             )
 
                         })()}

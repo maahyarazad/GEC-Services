@@ -9,6 +9,7 @@ const { exportTableAsCSV } = require('../services/csvParser');
 const {generateMemberPass} = require("../services/applePassService");
 
 
+
 const upload = multer({
     storage: multer.memoryStorage()
     , limits: { fileSize: 5 * 1024 * 1024 }
@@ -74,11 +75,22 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
             });
         }
 
-        res.json({status: true, message: 'Authentication Success',});
-        const memberObject = jwt.verify(memberToken, process.env.JWT_SECRET);
-        memberObject.title = "German Emirates Club Membership"
-        await generateMemberPass({...req.body, ...memberObject})
+        const {member} = jwt.verify(memberToken, process.env.JWT_SECRET);
 
+        const memberId = member?.memberId;
+        const result = await dbService.updateWhere(
+            "member_card",
+            { mobile_number: member.mobile_number, metadata_modifiedAt: new Date().toISOString(), firstname:member.firstname, lastname:member.lastname, email:member.email },
+            {memberId}
+        );
+
+        member.title = "German Emirates Club Membership";
+
+        const path = await generateMemberPass({...req.body, ...member});
+
+        return  res.status(200).json({ status: true, data:{
+            applePassPath: path
+        } });
 
     } catch (error) {
         res.status(500).json({ status: false, message: 'Server error' });
@@ -103,7 +115,6 @@ router.post('/member-auto-login', authorization_middleware.authorize_member, asy
        
         res.status(200).json({status: true, member: tokenObject.member});
         
-
 
     } catch (error) {
         res.status(500).json({ status: false, message: 'Server error' });

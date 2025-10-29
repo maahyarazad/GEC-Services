@@ -14,169 +14,7 @@ import OtpInput from "../../utils/OtpInput";
 
 
 const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegistration_code, onMemberChange, wizardState, setWizardState }, ref) => {
-
-const [seconds, setSeconds] = useState(300); // 5 minutes
-
-  const tick = useCallback(() => {
-    setSeconds(prev => (prev > 0 ? prev - 1 : 0));
-  }, []);
-
-  useEffect(() => {
-    if (seconds <= 0) return;
-
-    const interval = setInterval(tick, 1000);
-
-    return () => clearInterval(interval);
-  }, [seconds, tick]);
-  
-    
-    const statusRef = useRef();
-    const otpRef = useRef();
-    const { showSnackbar } = useSnackbar();
-    const { openDialog } = useAlertDialog();
-    const [secondsLeft, setSecondsLeft] = useState(300);
-
-    useEffect(()=>{
-        debugger;
-        if(wizardState.otpState?.currentResponseMessage !== undefined){
-
-            statusRef.current.innerText = wizardState.otpState?.currentResponseMessage;
-            if(wizardState.otpState?.currentResponseStatus===false)  statusRef.current.classList.add("text-danger") ;
-        }
-        
-    }, [wizardState.otpState])
-
-
-    const handleSendOtp = async (values) => {
-        try {
-            
-            setWizardState((prev) => ({ ...prev, otpState:{showOtpInput: true, currentResponseStatus: null} }));
-            const formData = new FormData();
-
-
-            formData.append("origin", "Membership Authentication");
-            formData.append("mobile_number", values.mobile_number);
-
-            const otp_response = await fetch(
-                `${import.meta.env.VITE_SERVERURL}/send-otp-mobile`,
-                {
-                    method: "POST",
-                    body: formData,
-                    credentials: "include",
-                }
-            );
-
-                            
-            setWizardState((prev) => ({ ...prev, otpState:{...prev.otpState, showOtpInput: true} }));
-            if (otp_response.status === 429) {
-
-                const response_data = await otp_response.json();
-                
-                setWizardState((prev) => ({ ...prev, 
-                    otpState:{...prev.otpState, 
-                        currentResponseStatus: false, validOtp: true, currentResponseMessage: response_data.error
-                        
-                    } }));
-                    
-                    
-                return;
-
-            }
-
-            if (otp_response.ok) {
-                otpRef?.current?.clear();
-                statusRef.current.classList.remove("text-danger");
-
-                const response_data = await otp_response.json();
-
-
- 
-                setWizardState((prev) => ({ ...prev, 
-                    otpState:{...prev.otpState, 
-                        currentResponseStatus: true, validOtp: true, currentResponseMessage: response_data.message, otp_data: response_data.data,
-                        initialSeconds: 300
-                    } }));
-               
-                statusRef.current.innerText = "OTP sent to " + wizardState?.member.mobile_number;
-
-            }else{
-                
-
-                setWizardState((prev) => ({ ...prev, otpState:{...prev.otpState, currentResponseStatus: false, currentResponseMessage: otp_response.statusText} }));
-            }
-
-
-        } catch (e) {
-            
-            
-            statusRef.current.innerText = e.message;
-        }
-    };
-
-    const handleExpiredChange = (val) => {
-        setValidOtp(false);
-    };
-
-    const handlePostOTP = async (value) => {
-        try {
-
-
-            const data = {
-                otp: value,
-                otp_data: {...wizardState.otpState.otp_data}
-            };
-            
-
-
-            const otpResponse = await fetch(
-                `${import.meta.env.VITE_SERVERURL}/otp-check-mobile`,
-                {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                     body: JSON.stringify(data),
-                    credentials: "include",
-                }
-            );
-
-            if (otpResponse.status === 400 || otpResponse.status === 500) {
-                throw new Error(`Server responded with ${otpResponse.status}`);
-            }
-
-
-            
-            const otp_response_data = await otpResponse.json();
-            
-            debugger;
-            if (otpResponse.status === 401) {
-                
-                setWizardState((prev) => ({ ...prev, 
-                    otpState:{...prev.otpState, 
-                        post_otp_response: `Verification failed: ${otp_response_data?.message?.data?.error}`
-                    } }));
-                    
-                    statusRef.current.textContent = `Verification failed: ${otp_response_data?.message?.data?.error}`;
-                    statusRef.current.classList.add("text-danger");
-            }
-            if (otpResponse.status === 200) {
-                debugger;
-                showSnackbar(otp_response_data.message, "success");
-            }
-            
-
-
-
-        } catch (err) {
-
-            if (statusRef.current) {
-
-                statusRef.current.textContent = `Verification failed: ${err.message}`;
-                statusRef.current.classList.add("text-danger");
-            }
-        }
-    };
-
-
-    const formikRef = useRef();
+ const formikRef = useRef();
 
     const timer = useRef(null);
     const [isSearching, setIsSearching] = useState(false);
@@ -199,14 +37,15 @@ const [seconds, setSeconds] = useState(300); // 5 minutes
             .max(50, "Last name can't exceed 50 characters")
             .required("Last name is required!"),
 
-        mobile_number: Yup.string()
+       mobile_number: Yup.string()
             .matches(
-                /^[0-9+\-() ]+$/,
-                "Mobile number can only contain numbers and symbols like +, -, (, )"
-            )
-            .min(7, "Mobile number is too short")
+        /^\+?\d{1,3}[0-9\-() ]+$/,
+        "Mobile number must start with a country code (e.g., 971 or +971) and can contain numbers and symbols like -, (, )"
+    )
+            .min(10, "Mobile number is too short. It should be at least 10 characters including country code.")
             .max(15, "Mobile number is too long")
             .required("Mobile number is required!"),
+
     });
 
 
@@ -251,7 +90,178 @@ const [seconds, setSeconds] = useState(300); // 5 minutes
         };
     }, []);
 
-    const getMemberPass = async (values) => {
+
+    const tick = useCallback(() => {
+        setWizardState((prev) => ({
+            ...prev,
+            otpState: {
+            ...prev.otpState,
+            initialSeconds: prev.otpState.initialSeconds - 1,
+            },
+        }));
+    }, []);
+
+
+  useEffect(() => {
+    console.log(wizardState.member)
+    if (!wizardState.otpState) return;
+    if (wizardState.otpState?.initialSeconds <= 0) return;
+    
+    const interval = setInterval(tick, 1000);
+
+    return () => clearInterval(interval);
+  }, [wizardState.otpState, tick]);
+  
+    
+    const statusRef = useRef();
+    const otpRef = useRef();
+    const { showSnackbar } = useSnackbar();
+    const { openDialog } = useAlertDialog();
+    const [secondsLeft, setSecondsLeft] = useState(300);
+
+    useEffect(()=>{
+        
+        if(wizardState.otpState?.currentResponseMessage !== undefined){
+
+            statusRef.current.innerText = wizardState.otpState?.currentResponseMessage;
+            if(wizardState.otpState?.responseMessageStyle===false)  statusRef.current.classList.add("text-danger") ;
+            if(wizardState.otpState?.responseMessageStyle===true)  statusRef.current.classList.remove("text-danger") ;
+        }
+        
+    }, [wizardState.otpState])
+
+
+    const handleSendOtp = async (values) => {
+        try {
+            
+
+            const formData = new FormData();
+
+
+            formData.append("origin", "German Emirates Club Membership");
+            formData.append("mobile_number", values.mobile_number);
+
+            const otp_response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/send-otp-mobile`,
+                {
+                    method: "POST",
+                    body: formData,
+                    credentials: "include",
+                }
+            );
+
+                      
+            setWizardState((prev) => ({ ...prev, otpState:{...prev.otpState, showOtpInput: true} }));
+            if (otp_response.status === 429) {
+
+                const response_data = await otp_response.json();
+                showSnackbar(response_data.error, "");
+                return;
+
+            }
+
+            if (otp_response.ok) {
+
+                otpRef?.current?.clear();
+                statusRef.current.classList.remove("text-danger");
+
+                const response_data = await otp_response.json();
+
+
+ 
+                setWizardState((prev) => ({ ...prev, 
+                    otpState:{...prev.otpState, 
+                        currentResponseStatus: true, validOtp: true, currentResponseMessage: `OTP sent to  ${wizardState?.member.mobile_number}`, otp_data: response_data.data,
+                        initialSeconds: 300, responseMessageStyle: true
+                    } }));
+               
+
+            }else{
+                
+
+                setWizardState((prev) => ({ ...prev, otpState:{...prev.otpState, currentResponseMessage: otp_response.statusText, responseMessageStyle: false} }));
+            }
+
+
+        } catch (e) {
+            
+            setWizardState((prev) => ({ ...prev, otpState:{...prev.otpState, currentResponseMessage: e.message, responseMessageStyle: false} }));
+            
+        }
+    };
+
+    const handleExpiredChange = (val) => {
+        setValidOtp(false);
+    };
+
+    const handlePostOTP = async (value) => {
+        try {
+
+
+            const data = {
+                otp: value,
+                otp_data: {...wizardState.otpState.otp_data}
+            };
+            
+
+
+            const otpResponse = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/otp-check-mobile`,
+                {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                     body: JSON.stringify(data),
+                    credentials: "include",
+                }
+            );
+
+            if (otpResponse.status === 400 || otpResponse.status === 500) {
+                throw new Error(`Server responded with ${otpResponse.status}`);
+            }
+
+
+            
+            const otp_response_data = await otpResponse.json();
+            
+            
+            if (!otp_response_data.status) {
+                
+                setWizardState((prev) => ({ ...prev, 
+                    otpState:{...prev.otpState, 
+                        currentResponseMessage: `Verification failed: ${otp_response_data?.message?.error}`, responseMessageStyle: false
+                    } }));
+                return;
+
+            }
+
+            showSnackbar("Verification Successful");
+
+             setWizardState((prev) => ({ ...prev, 
+                    otpState:{...prev.otpState, 
+                       currentResponseMessage: "Your mobile number has been verified",
+                        getMemberPass: true,
+                        currentResponseStatus: false,
+                        responseMessageStyle: true
+                    } }));
+
+            await getMemberPass();
+
+
+
+        } catch (err) {
+
+            if (statusRef.current) {
+
+                statusRef.current.textContent = `Verification failed: ${err.message}`;
+                statusRef.current.classList.add("text-danger");
+            }
+        }
+    };
+
+
+   
+
+    const getMemberPass = async () => {
 
         try {
 
@@ -263,7 +273,7 @@ const [seconds, setSeconds] = useState(300); // 5 minutes
                 },
                 credentials: "include",
                 body: JSON.stringify({
-                    ...values
+                    ...wizardState.member
                 })
             });
 
@@ -273,9 +283,9 @@ const [seconds, setSeconds] = useState(300); // 5 minutes
             }
 
             const result = await response.json();
-
+            
             if (result.status) {
-                setWizardState((prev) => ({ ...prev, pkpassPath: 'asdjvghjahs' }));
+                setWizardState((prev) => ({ ...prev, passData: result.data }));
             }
 
             else {
@@ -381,6 +391,7 @@ const [seconds, setSeconds] = useState(300); // 5 minutes
                                 helperText={<ErrorMessage name="mobile_number" />}
                                 onChange={(e) => {
                                     formikRef.current?.setFieldValue("mobile_number", e.target.value);
+                                    
                                     setWizardState((prev)=> ({...prev, member: {...prev.member, mobile_number: e.target.value}}));
                                 }}
                                 error={touched.mobile_number && Boolean(errors.mobile_number)}
@@ -393,7 +404,7 @@ const [seconds, setSeconds] = useState(300); // 5 minutes
                                 className="mt-1"
                                 type="submit"
                                 variant="contained"
-                                disabled={isSubmitting}
+                                 disabled={wizardState?.otpState?.getMemberPass}
                                 style={{ textTransform: "none", width: "100%" }}
 
                             >
