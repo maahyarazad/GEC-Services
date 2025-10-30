@@ -33,7 +33,7 @@ const generateMemberPass = async (data) => {
 
     const _date = new Date(card_expiry_date);
     const expirationDate = new Date(
-        _date.getFullYear() + 1,
+        _date.getFullYear(),
         _date.getMonth(),
         _date.getDate(),
         _date.getHours(),

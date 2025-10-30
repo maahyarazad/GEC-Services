@@ -162,12 +162,17 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
 
 
     useEffect(() => {
-        if (!wizardState.authenticate) {
+        
+
+        if(!wizardState.isMounted){
 
             autoLogin();
+            setWizardState((prev)=> ({...prev, isMounted: true}))
         }
 
-    }, [autoLogin, wizardState]);
+        
+    }, [wizardState.isMounted]);
+
 
 
 
@@ -212,31 +217,28 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
     const handleSendOtp = async (values) => {
         try {
             setShowOtpInput(true);
-            const formData = new FormData();
-            formData.append("email", wizardState?.member.email);
-            formData.append("message", "To verify your email and complete your account authentication for");
 
-
-
-            formData.append("event", "Membership Authentication");
 
             const otp_response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/send-otp`,
                 {
                     method: "POST",
-                    body: formData,
-                    credentials: "include",
+                    headers: {
+      "Content-Type": "application/json" 
+    },
+                    body: JSON.stringify({ email: wizardState?.member.email, event: "Membership Authentication" , message:"To verify your email and complete your account authentication for"  }),
+                    
                 }
             );
 
-            if (otp_response.status === 429) {
+             if (otp_response.status === 429) {
 
                 const response_data = await otp_response.json();
-                statusRef.current.innerText = response_data.error;
-                setCurrentResponseMessage(false);
-                statusRef.current.classList.add("text-danger");
+                showSnackbar(response_data.error, "");
                 return;
+
             }
+
 
             if (otp_response.ok) {
                 otpRef?.current?.clear();
@@ -332,7 +334,8 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
             }
 
             const data = await response.json();
-            console.log(data.message); // "Member has been logged out successfully."
+            console.log(data);
+            
 
             // Optionally, clear any local state or redirect
             // setWizardState({ member: null, authenticate: false });
@@ -347,10 +350,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
     const Unauthorized = async () => {
 
         await logoutMember();
-        setWizardState(({
-            authenticate: false,
-            member: null,
-        }));
+        setWizardState((prev)=> ({...prev, member:null, authenticate: false, otpState: null}));
         showMessage("");
         setValidOtp(false);
         setCurrentResponseStatus(null);
@@ -360,10 +360,10 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
     const confirmClear = () => {
 
         openDialog(
-            <div>
+            <>
                 Your account has been <strong>successfully authenticated. </strong>
                 Do you want to search for other emails?
-            </div>,
+            </>,
 
             'Clear', {
             text: 'Clear',
@@ -447,7 +447,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                             <Button
                                 className="mt-1"
                                 type="submit"
-                                variant="contained"
+                                variant={wizardState.member === null ? "contained" : "outlined"}
                                 disabled={wizardState.authenticate}
                                 style={{ textTransform: "none", width: "100%" }}
 
@@ -599,7 +599,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                             </p>
                                         </Button>
 
-                                        <div className={`otp-slide ${showOtpInput ? "show" : ""} mt-3`}>
+                                        <div className={`otp-slide ${showOtpInput ? "show" : ""} mt-2`}>
                                             <div ref={statusRef}></div>
 
                                             {currentResponseStatus && (

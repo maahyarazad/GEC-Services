@@ -9,41 +9,20 @@ const { email_otp } = require("../services/emailService");
 const twilioClient = require('twilio')(process.env.TWILIO_ACOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const smsglobal = require('smsglobal')(process.env.SMSGLOBAL_KEY, process.env.SMSGLOBAL_SECRET);
 
-const path = require("path");
-const multer = require("multer");
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, "file_storage/");
-    },
-    filename: async (req, file, cb) => {
-        const originalName = path.parse(file.originalname).name;
-        const extension = path.extname(file.originalname);
-        let newFileName = originalName;
-        let counter = 1;
-        // Check if the file already exists
-        let filePath = path.join("file_storage", file.originalname);
-        try {
-            while (true) {
-                try {
-                    await fs.access(filePath);
-                    newFileName = `${originalName} (${counter})`;
-                    filePath = path.join("file_storage", `${newFileName}${extension}`);
-                    counter++;
-                } catch (err) {
-                    break;
-                }
-            }
-            cb(null, `${newFileName}${extension}`);
-        } catch (error) {
-            cb(error);
-        }
-    },
-});
-const upload = multer({ storage: storage });
+const otpRequestMap = new Map();       // For email OTPs
+const otpMobileRequestMap = new Map(); // For mobile OTPs
 
+  function set_limiter_map(req) {
+    const now = Date.now();
+    const isMobile = !!req.body.mobile_number; // check if it's a mobile OTP
+    const key = isMobile ? req.body.mobile_number : req.body.email || req.ip;
 
-const otpRequestMap = new Map();
+    // Pick correct map
+    const map = isMobile ? otpMobileRequestMap : otpRequestMap;
+    map.set(key, now);
+}
+
 const otpLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
     max: 1,
@@ -51,9 +30,13 @@ const otpLimiter = rateLimit({
     legacyHeaders: false,
 
     handler: (req, res, next, options) => {
-        const key = req.ip; // or use req.body.phone/email for per-user tracking
         const now = Date.now();
-        const lastRequestTime = otpRequestMap.get(key) || 0;
+        const isMobile = !!req.body.mobile_number; // check if it's a mobile OTP
+        const key = isMobile ? req.body.mobile_number : req.body.email || req.ip;
+
+        // Pick correct map
+        const map = isMobile ? otpMobileRequestMap : otpRequestMap;
+        const lastRequestTime = map.get(key) || 0;
         const elapsed = now - lastRequestTime;
 
         if (elapsed < 60000) {
@@ -63,12 +46,16 @@ const otpLimiter = rateLimit({
             });
         }
 
+    
 
-        // Update last request timestamp and allow the request
-        next(); // continue to your route
+        // Automatically remove key after 60 seconds to prevent memory buildup
+        setTimeout(() => {
+            map.delete(key);
+        }, 60 * 1000);
+
+        next();
     }
 });
-
 
 
 
@@ -102,12 +89,16 @@ const sendOtpToEmail = async (data, req, res) => {
 
 
 
-router.post("/send-otp", otpLimiter, upload.none(), async (req, res) => {
+router.post("/send-otp",
+
+     otpLimiter,async (req, res) => {
     try {
+        
+        set_limiter_map(req);
+
+
+
         const data = req.body;
-        const key = req.ip; // or use req.body.phone/email for per-user tracking
-        const now = Date.now();
-        otpRequestMap.set(key, now);
         //    const response = await sendOtpToPhone(data.whatsapp, req, res);
         const response = await sendOtpToEmail(data, req, res);
 
@@ -130,19 +121,17 @@ router.post("/send-otp", otpLimiter, upload.none(), async (req, res) => {
         console.error(error);
         return res.status(500).json({ status: false, message: error.message });
     }
+
+       
 });
 
-router.post("/send-otp-mobile", otpLimiter, upload.none(), async (req, res) => {
+router.post("/send-otp-mobile", otpLimiter,async (req, res) => {
     try {
-
+        set_limiter_map(req);
         const data = req.body;
-        const key = req.ip;
-        const now = Date.now();
-        otpRequestMap.set(key, now);
-        
-
+    
         const { mobile_number, origin } = req.body;
-
+        
         if (!mobile_number) {
             return res.status(400).json({ status: false, message: "Mobile number is required" });
         }
@@ -182,7 +171,7 @@ router.post("/send-otp-mobile", otpLimiter, upload.none(), async (req, res) => {
 });
 
 
-router.post("/otp-check", upload.none(), async (req, res) => {
+router.post("/otp-check", async (req, res) => {
     try {
         const data = req.body;
         const otp = req.session.otp;
@@ -201,7 +190,7 @@ router.post("/otp-check", upload.none(), async (req, res) => {
         const page_data = await dbService.findByColumn("registration_config", "registration_code", data.registration_code);
 
         delete data.otp;
-        await dbService.create("registration_client_access", data);
+        if(Object.keys(data).length > 0) await dbService.create("registration_client_access", data);
 
         res.status(200).json({
             status: true,
@@ -216,7 +205,7 @@ router.post("/otp-check", upload.none(), async (req, res) => {
     }
 });
 
-router.post("/otp-check-mobile", upload.none(), async (req, res) => {
+router.post("/otp-check-mobile",  async (req, res) => {
     try {
         const data = req.body;
 

@@ -75,7 +75,8 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
             });
         }
 
-        const {member} = jwt.verify(memberToken, process.env.JWT_SECRET);
+        
+        const {member} = req.body;
 
         const memberId = member?.memberId;
         const result = await dbService.updateWhere(

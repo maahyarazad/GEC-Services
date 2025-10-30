@@ -241,20 +241,15 @@ export const TemplateForm = () => {
     const handleSendOtp = async (values) => {
         try {
             setShowOtpInput(true);
-            const formData = new FormData();
 
-            for (const key in values) {
-                if (key === "email") formData.append(key, values[key]);
-            }
-
-            formData.append("event", target.title);
 
             const otp_response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/send-otp`,
                 {
+                     headers: { "Content-Type": "application/json" },
                     method: "POST",
-                    body: formData,
-                    credentials: "include",
+                     body: JSON.stringify({ email: values.email, event: target.title  }),
+                    
                 }
             );
 
@@ -266,8 +261,9 @@ export const TemplateForm = () => {
                 statusRef.current.classList.add("text-danger");
                 return;
             }
-            
+            debugger;
             if (otp_response.ok) {
+
                 otpRef?.current?.clear();
                 statusRef.current.classList.remove("text-danger");
                 setGlobalWhatsapp(values["email"]);

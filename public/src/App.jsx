@@ -49,7 +49,7 @@ function AppRoutes() {
         <Route path="/registration/:event" element={<TemplateForm />} />
         <Route path="/registration/:event/success" element={<SuccessTemplatePage />} />
         <Route path="/guest-registration/:eventSlug" element={<GuestRegistration />} />
-        <Route path="/purchase-membership" element={<PurchaseMemberShip />} />
+        <Route path="/membership" element={<PurchaseMemberShip />} />
         <Route
           path="/admin"
           element={

@@ -24,7 +24,7 @@ export function PurchaseMemberShip() {
 
 
 
-    const [wizardState, setWizardState] = React.useState({ member: null, authenticate: false, passData: null, otpState: null });
+    const [wizardState, setWizardState] = React.useState({ member: null, authenticate: false, passData: null, otpState: null, isMounted : false });
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -50,11 +50,8 @@ export function PurchaseMemberShip() {
     };
 
 
-    useEffect(() => {
-
-    }, [wizardState]);
-
     const handleBack = () => {
+        
         setSlideDirection('right');
         setActiveStep((prev) => prev - 1);
     };
@@ -95,9 +92,8 @@ export function PurchaseMemberShip() {
             style={{
                 backgroundColor: ' var(--light)',
                 padding: isMobile ? '1rem' : '2rem',
-                width: '100dvw',
-                maxWidth: '100dvw',
-                minHeight: '100dvh',
+                height:'100vh',
+                                    width: '100vw',
                 boxSizing: 'border-box',
             }}
         >
@@ -106,7 +102,7 @@ export function PurchaseMemberShip() {
                     backgroundColor: 'white',
                     borderRadius: 5,
                     padding: isMobile ? '1rem' : '2rem',
-                    width: '100%',
+                    width: '100vw',
                     maxWidth: '1000px',
                     height: 'auto',
                 }}
@@ -151,9 +147,10 @@ export function PurchaseMemberShip() {
                     sx={{
                         position: 'relative',
                         overflow: 'scroll',
-                        width: '100%',
-                        height: 'auto',
-                        minHeight: isMobile ? '50dvh' : '65vh',
+                    //    display:'inline-block',
+
+                        // height: '65vh',
+                        minHeight: isMobile ? '50vh' : '65vh',
                     }}
                 >
                     <Slide
@@ -166,9 +163,13 @@ export function PurchaseMemberShip() {
                     >
                         <Box
                             sx={{
+                                display: 'flex',
+    justifyContent: 'center', // horizontal centering
+    alignItems: 'center',     // vertical centering
                                 position: 'absolute',
                                 width: '100%',
-                                top: 0,
+                                minHeight: isMobile ? '50vh' : '65vh',
+                                padding: isMobile ? '1rem' : '2rem',
                                 left: 0,
                                 overflow: 'scroll',
                                 textAlign: isMobile ? 'center' : 'left',
@@ -185,8 +186,8 @@ export function PurchaseMemberShip() {
                                 </>
                             ) : (
 
-                                <div style={{ height: `${isMobile ? "50dvh" : "60dvh"}`, overflow: 'scroll' }} className='d-flex align-items-center justify-content-center'>
-                                    <div className="p-2 d-flex">
+                                <>
+                                    
 
 
                                         {/* Put JS logic outside JSX */}
@@ -205,13 +206,13 @@ export function PurchaseMemberShip() {
                                                         <div className="w-100 d-flex justify-content-center align-items-center flex-column" style={{ width: "100%", maxWidth: 400 }}>
                                                             <span className='py-1'>Your digital membership pass is ready — click on either the <strong>Google Wallet</strong> or <strong>Apple Wallet</strong> button below to add it to your wallet. </span>
                                                             <div className='py-2'>
-                                                                <a className="" href={`${import.meta.env.VITE_SERVERURL}/${wizardState.passData?.applePassPath}`}>
+                                                                <a className="" href={`https://${wizardState.passData?.applePassPath}`}>
                                                                     <img width="300" src={applePass} alt="Google Pass" style={passStyle} />
                                                                 </a>
                                                             </div>
                                                             <div className='py-2'>
 
-                                                                <a className="" href={`${import.meta.env.VITE_SERVERURL}/${wizardState.passData}`}>
+                                                                <a className="" href={`${wizardState.passData.googlePassPath}`}>
                                                                     <img width="300" src={googlePass} alt="Google Pass" style={passStyle} />
                                                                 </a>
 
@@ -230,8 +231,8 @@ export function PurchaseMemberShip() {
 
 
 
-                                    </div>
-                                </div>
+                                    
+                                </>
                             )}
                         </Box>
                     </Slide>
