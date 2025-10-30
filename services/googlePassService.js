@@ -3,7 +3,7 @@ const fs = require("fs");
 const { GoogleAuth } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const googleConfig = JSON.parse(fs.readFileSync(process.env.GOOGLE_CONFIG, "utf8"));
-
+const dbService = require('../services/dbService');
 
 const issuerId = '3388000000022971699';
 
@@ -34,21 +34,21 @@ async function generateMemberGooglePass(data) {
     
     const title = slugToTitle(data.title);
     const event_page = titleToSlug(data.title);
-    const { firstName, lastName, event_id, event_date } = data;
+    const { firstname, lastname, memberId, card_expiry_date, serialNumber } = data;
     
    
-    const qrValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event_page}?guest-code=${event_id}`;
+    const qrValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event_page}?guest-code=${memberId}`;
      const objectId = `${issuerId}.member_${Date.now()}`;
     
     
-        const now = Math.floor(Date.now() / 1000);
-        const _now = new Date(event_date);
+        const now = Math.floor(Date.now(card_expiry_date) / 1000);
+        const _now = new Date();
     
         // Create a new date 12 months from now
         const expirationDate = new Date(
             _now.getFullYear(),
-            _now.getMonth(), // add 12 months
-            _now.getDate() + 1,
+            _now.getMonth(),
+            _now.getDate(),
             _now.getHours(),
             _now.getMinutes(),
             _now.getSeconds()
@@ -57,45 +57,62 @@ async function generateMemberGooglePass(data) {
         const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
         const formattedDate = expirationDate.toLocaleDateString('en-GB', options).replace(/\//g, '-');
     
-        const genericClass = {
-            id: classId,
-            issuerName: "German Emirates Club",
-            title: "German Emirates Club",
-            programName: "German Emirates Club",
-            reviewStatus: "underReview",
-            hexBackgroundColor: "#D9B144",
-            textModulesData: [
+const genericClass = {
+    id: classId,
+    issuerName: "German Emirates Club",
+    title: "German Emirates Club",
+    programName: "German Emirates Club",
+    reviewStatus: "underReview",
+    hexBackgroundColor: "#D9B144",
+    textModulesData: [
+        {
+            id: "game_overview",
+            header: "Welcome",
+            body: title
+        }
+    ],
+    classTemplateInfo: {
+        cardTemplateOverride: {
+            cardRowTemplateInfos: [
                 {
-                    id: "game_overview",
-                    header: "Welcome",
-                    body: title
-                }
-            ],
-            classTemplateInfo: {
-                cardTemplateOverride: {
-                    cardRowTemplateInfos: [
-                        {
-                            twoItems: {
-                                startItem: {
-                                    firstValue: {
-                                        fields: [
-                                            { fieldPath: 'object.textModulesData["cardnumber"].body' }
-                                        ]
-                                    }
-                                },
-                                endItem: {
-                                    firstValue: {
-                                        fields: [
-                                            { fieldPath: 'object.textModulesData["expiry"].body' }
-                                        ]
-                                    }
-                                }
+                    twoItems: {
+                        startItem: {
+                            firstValue: {
+                                fields: [
+                                    { fieldPath: 'object.textModulesData["cardnumber"].body' }
+                                ]
+                            }
+                        },
+                        endItem: {
+                            firstValue: {
+                                fields: [
+                                    { fieldPath: 'object.textModulesData["serialNumber"].body' }
+                                ]
                             }
                         }
-                    ]
+                    }
+                },
+                {
+                    twoItems: {
+                        startItem: {
+                            firstValue: {
+                                fields: [
+                                    { fieldPath: 'object.textModulesData["expiry"].body' }
+                                ]
+                            }
+                        },
+                        endItem: {
+                            firstValue: {
+                                fields: [] // optionally leave empty or add another field
+                            }
+                        }
+                    }
                 }
-            }
-        };
+            ]
+        }
+    }
+};
+
     
         const genericObject = {
             id: objectId,
@@ -105,19 +122,19 @@ async function generateMemberGooglePass(data) {
             cardTitle: {
                 defaultValue: {
                     language: "en-US",
-                    value: "German Emirates Club"
+                    value: `${title}`
                 }
             },
             header: {
                 defaultValue: {
                     language: "en-US",
-                    value: `${firstName} ${lastName}`
+                    value: `${firstname} ${lastname}`
                 }
             },
             subheader: {
                 defaultValue: {
                     language: "en-US",
-                    value: `Event: ${title}`
+                    value: `${title}`
                 }
             },
             heroImage: {
@@ -143,9 +160,10 @@ async function generateMemberGooglePass(data) {
             textModulesData: [
                 {
                     id: "cardnumber",
-                    header: "Pass Id",
-                    body: `${event_id}`
+                    header: "Member Id",
+                    body: `${memberId}`
                 },
+                { id: "serialNumber", header: "Serial Number", body: `${serialNumber}`},
                 {
                     id: "expiry",
                     header: "Expiry Date",
@@ -185,7 +203,7 @@ async function generateMemberGooglePass(data) {
         };
     
         const token = jwt.sign(jwtPayload, googleConfig.private_key, { algorithm: 'RS256' });
-        const saveUrl = `https://pay.google.com/gp/v/save/${token}`;
+        const saveUrl = `${process.env.GOOGLE_PASS_BASE_PATH}${token}`;
 
     return saveUrl;
     
@@ -346,7 +364,7 @@ async function generateGooglePass(data) {
         };
     
         const token = jwt.sign(jwtPayload, googleConfig.private_key, { algorithm: 'RS256' });
-        const saveUrl = `https://pay.google.com/gp/v/save/${token}`;
+        const saveUrl = `${process.env.GOOGLE_PASS_BASE_PATH}${token}`;
 
     return saveUrl;
     

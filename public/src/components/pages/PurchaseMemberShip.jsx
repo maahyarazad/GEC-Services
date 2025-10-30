@@ -36,10 +36,6 @@ export function PurchaseMemberShip() {
     const handleNext = () => {
         setSlideDirection('left');
 
-
-
-
-
         setActiveStep((prev) => prev + 1);
 
         if (isStepSkipped(activeStep)) {
@@ -197,7 +193,7 @@ export function PurchaseMemberShip() {
                                                     return <MemberLogin wizardState={wizardState} setWizardState={setWizardState} />
 
                                                 case 1:
-                                                    return <MemberUpdate wizardState={wizardState} setWizardState={setWizardState} />
+                                                    return <MemberUpdate wizardState={wizardState} setWizardState={setWizardState} setActiveStep={setActiveStep}/>
 
 
                                                 case 2:
@@ -206,13 +202,13 @@ export function PurchaseMemberShip() {
                                                         <div className="w-100 d-flex justify-content-center align-items-center flex-column" style={{ width: "100%", maxWidth: 400 }}>
                                                             <span className='py-1'>Your digital membership pass is ready — click on either the <strong>Google Wallet</strong> or <strong>Apple Wallet</strong> button below to add it to your wallet. </span>
                                                             <div className='py-2'>
-                                                                <a className="" href={`https://${wizardState.passData?.applePassPath}`}>
+                                                                <a className="" target='_blank' href={`https://${wizardState.passData?.applePassPath}`}>
                                                                     <img width="300" src={applePass} alt="Google Pass" style={passStyle} />
                                                                 </a>
                                                             </div>
                                                             <div className='py-2'>
 
-                                                                <a className="" href={`${wizardState.passData.googlePassPath}`}>
+                                                                 <a className="" target='_blank' href={`${wizardState.passData?.googlePassPath}`}>
                                                                     <img width="300" src={googlePass} alt="Google Pass" style={passStyle} />
                                                                 </a>
 

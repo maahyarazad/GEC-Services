@@ -7,7 +7,9 @@ const multer = require("multer");
 const authorization_middleware = require("../middleware/auth");
 const { exportTableAsCSV } = require('../services/csvParser');
 const {generateMemberPass} = require("../services/applePassService");
-
+const {generateMemberGooglePass} = require("../services/googlePassService");
+const uniqid = require('uniqid'); 
+const path = require('path');
 
 
 const upload = multer({
@@ -17,6 +19,14 @@ const upload = multer({
 
 const fs = require("fs").promises;
 // keep only DB table columns
+
+function titleToSlug(title) {
+  return title
+    .toLowerCase()            // convert to lowercase
+    .replace(/\s+/g, '-')     // replace spaces (or multiple spaces) with dashes
+    .replace(/[^\w-]+/g, ''); // remove any non-alphanumeric characters except dash
+}
+
 
 
 router.post('/member-card', upload.none(), async (req, res) => {
@@ -70,27 +80,47 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
         if (!memberToken) {
             return res.status(401).json({
                 status: false,
-                message: 'No authentication token found. Please login.',
+                message: 'No authentication token found. Please authenticate.',
                 user: null
             });
         }
 
-        
         const {member} = req.body;
-
         const memberId = member?.memberId;
+        member.title = "German Emirates Club Membership";
+
+        const _member = await dbService.findByColumn("member_card", "email", member.email);
+
+        
+        let applePKpassPath; 
+        let googlePassToken;
+        
+        if(!_member.serial_number){
+            
+            member.serialNumber = `GEC-${uniqid().toUpperCase()}`; 
+            applePKpassPath = await generateMemberPass({...req.body, ...member});
+            googlePassToken = await generateMemberGooglePass({...req.body, ...member});
+            
+        }else{
+            member.serialNumber = _member.serial_number;
+            const passPath =  path.join(__dirname, "..", "pass_storage", `${titleToSlug(member.title)}`);
+            applePKpassPath = `${passPath}/${member.serialNumber}.pkpass`;
+            googlePassToken = `${_member.google_pass_token}`;
+            
+        }
+        
         const result = await dbService.updateWhere(
             "member_card",
-            { mobile_number: member.mobile_number, metadata_modifiedAt: new Date().toISOString(), firstname:member.firstname, lastname:member.lastname, email:member.email },
+            { mobile_number: member.mobile_number, metadata_modifiedAt: new Date().toISOString(), firstname:member.firstname, lastname:member.lastname, email:member.email, serial_number: member.serialNumber, google_pass_token: googlePassToken  },
             {memberId}
         );
 
-        member.title = "German Emirates Club Membership";
 
-        const path = await generateMemberPass({...req.body, ...member});
 
         return  res.status(200).json({ status: true, data:{
-            applePassPath: path
+            applePassPath: applePKpassPath,
+            googlePassPath: googlePassToken
+
         } });
 
     } catch (error) {

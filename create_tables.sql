@@ -218,7 +218,10 @@ CREATE TABLE IF NOT EXISTS member_card (
     card_expiry_date DATETIME,
     last_login DATETIME,
     metadata_createdAt DATETIME,
-    metadata_modifiedAt DATETIME
+    metadata_modifiedAt DATETIME,
+     google_pass_token TEXT ,
+     serial_number TEXT
+
 );
 
 

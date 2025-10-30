@@ -13,17 +13,16 @@ import OtpInput from "../../utils/OtpInput";
 
 
 
-const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegistration_code, onMemberChange, wizardState, setWizardState }, ref) => {
+const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegistration_code, onMemberChange, wizardState, setWizardState, setActiveStep }, ref) => {
     const formikRef = useRef();
 
     const timer = useRef(null);
     const [isSearching, setIsSearching] = useState(false);
+    const [fetchingPasses, setFetchingPasses] = useState(false);
     const [responseMessage, setResponseMessage] = useState("");
     const [authorized, setAuthorized] = useState(false);
 
-    // useEffect(() => {
-    //     console.log(wizardState);
-    // }, [wizardState])
+
 
     const validationSchema = Yup.object({
         email: Yup.string()
@@ -89,7 +88,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
     useEffect(() => {
         if (!wizardState.otpState) return;
         if (wizardState.otpState.initialSeconds <= 0) return;
-        console.log(wizardState.otpState.initialSeconds);
+        
         const interval = setInterval(() => tick(), 1000);
         return () => clearInterval(interval);
 
@@ -240,8 +239,10 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                 }
             }));
 
-            await getMemberPass();
 
+            setFetchingPasses(true);
+            await getMemberPass();
+            
 
 
         } catch (err) {
@@ -251,6 +252,9 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                 statusRef.current.textContent = `Verification failed: ${err.message}`;
                 statusRef.current.classList.add("text-danger");
             }
+        }finally{
+
+            setActiveStep((prev) => prev + 1);
         }
     };
 
@@ -282,6 +286,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
 
             if (result.status) {
                 setWizardState((prev) => ({ ...prev, passData: result.data }));
+                setFetchingPasses(false);
             }
 
             else {
@@ -294,6 +299,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
             console.error('Error fetching data:', err);
         } finally {
             setIsSearching(false);
+            setFetchingPasses(false);
         }
     };
 
@@ -313,6 +319,20 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
 
 
 
+    // Loader
+     const [dots, setDots] = useState("");
+
+  useEffect(() => {
+    if (!fetchingPasses) return;
+
+    const interval = setInterval(() => {
+      setDots((prev) => (prev.length === 4 ? "" : prev + "."));
+    }, 300); // change speed if you like
+
+    return () => clearInterval(interval);
+  }, [fetchingPasses]);
+
+  
 
     return (
         <div className="w-100 d-flex justify-content-center align-items-center flex-column" >
@@ -341,6 +361,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                 fullWidth
                                 label="E-mail"
                                 value={values.email}
+                                disabled={wizardState?.otpState?.getMemberPass}
                                 helperText={<ErrorMessage name="email" />}
                                 onChange={(e) => {
                                     const value = e.target.value;
@@ -361,6 +382,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                 fullWidth
                                 label="First Name"
                                 value={values.firstname}
+                                disabled={wizardState?.otpState?.getMemberPass}
                                 helperText={<ErrorMessage name="firstname" />}
                                 onChange={(e) => {
                                     const value = e.target.value;
@@ -381,6 +403,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                 fullWidth
                                 label="Last Name"
                                 value={values.lastname}
+                                disabled={wizardState?.otpState?.getMemberPass}
                                 helperText={<ErrorMessage name="lastname" />}
                                 onChange={(e) => {
                                     const value = e.target.value;
@@ -400,6 +423,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                 name="mobile_number"
                                 fullWidth
                                 label="Mobile Number"
+                                disabled={wizardState?.otpState?.getMemberPass}
                                 value={values.mobile_number}
                                 helperText={<ErrorMessage name="mobile_number" />}
                                 onChange={(e) => {
@@ -437,6 +461,17 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                 className={`otp-slide ${wizardState.otpState?.showOtpInput ? "show" : ""
                                     } mt-2 d-flex flex-column align-items-start justify-content-start text-start`}
                             >
+                                {
+                                    fetchingPasses && (
+                                        <div className="d-flex align-items-center gap-2">
+                                        <span style={{ fontSize: 12, whiteSpace: "pre" }}>
+                                            Generating your pass{dots}
+                                        </span>
+                                            
+                                        </div>
+                                          
+                                    )
+                                }
                                 <div ref={statusRef}></div>
 
                                 {wizardState.otpState?.currentResponseStatus && (

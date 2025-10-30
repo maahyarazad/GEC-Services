@@ -156,13 +156,18 @@ router.post("/send-otp-mobile", otpLimiter,async (req, res) => {
 
         };
 
-        const response = await smsglobal.otp.send(payload);
+        // const response = await smsglobal.otp.send(payload);
+        // res.status(200).json({
+        //     status: true,
+        //     message: "OTP sent successfully",
+        //     data: response,
+        // });
 
 
         res.status(200).json({
             status: true,
             message: "OTP sent successfully",
-            data: response,
+            
         });
     } catch (error) {
         console.error("Failed to send OTP:", error.message);
@@ -233,7 +238,7 @@ router.post("/otp-check-mobile",  async (req, res) => {
                 );
             });
 
-        const response = await verifyOtp();
+        // const response = await verifyOtp();
 
         // ✅ success
         return res.status(200).json({

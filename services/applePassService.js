@@ -1,5 +1,4 @@
 const express = require("express");
-
 const path = require("path");
 
 require('dotenv').config();
@@ -24,7 +23,7 @@ const generateMemberPass = async (data) => {
 
     const title = slugToTitle(data.title);
     const event_page = titleToSlug(data.title);
-    const { firstName, lastName, event_id, card_expiry_date, memberId } = data;
+    const { firstName, lastName, event_id, card_expiry_date, memberId, serialNumber } = data;
     const wwdrPath = path.join(__dirname, "../certs/AppleWWDRCAG4.pem");
     const signerCertPath = path.join(__dirname, "../certs/signerCert.pem");
     const signerKeyPath = path.join(__dirname, "../certs/signerKey.pem");
@@ -52,7 +51,7 @@ const generateMemberPass = async (data) => {
             signerKeyPassphrase: process.env.APPLE_PASS_SIGNER_KEY_PASSPHRASE || "germany"
         }
     }, {
-        serialNumber: `${memberId}`,
+        serialNumber: `${serialNumber}`,
         description: `${title}`,   // 👈 overrides pass.json
         logoText: `${title}`, // 👈 overrides pass.json
     });
@@ -64,7 +63,7 @@ const generateMemberPass = async (data) => {
     pass.auxiliaryFields.push({ key: "fullname", label: "Member ID", "value": `${memberId}`, textAlignment: "PKTextAlignmentLeft" });
     // pass.auxiliaryFields.push({ key: "passid", label: "Pass ID", value: `${event_id}`, textAlignment: "PKTextAlignmentLeft" });
     // Add QR code at the bottom of the pass
-    const qeValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event_page}?guest-code=${memberId}`;
+    const qeValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event_page}?guest-code=${serialNumber}`;
 
     pass.setBarcodes(qeValue);
 
@@ -78,8 +77,8 @@ const generateMemberPass = async (data) => {
         fs.mkdirSync(passPath, { recursive: true });
     }
 
-    fs.writeFileSync(`${passPath}/${memberId}.pkpass`, _buffer);
-    return `${passPath}/${memberId}.pkpass`;
+    fs.writeFileSync(`${passPath}/${serialNumber}.pkpass`, _buffer);
+    return `${passPath}/${serialNumber}.pkpass`;
 };
 
 const generateApplePass = async (data) => {
