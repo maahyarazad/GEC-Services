@@ -34,7 +34,7 @@ async function generateMemberGooglePass(data) {
     
     const title = slugToTitle(data.title);
     const event_page = titleToSlug(data.title);
-    const { firstname, lastname, memberId, card_expiry_date, serialNumber } = data;
+    const { firstname, lastname, memberId, card_expiry_date, serial_number } = data;
     
    
     const qrValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event_page}?guest-code=${memberId}`;
@@ -64,6 +64,17 @@ const genericClass = {
     programName: "German Emirates Club",
     reviewStatus: "underReview",
     hexBackgroundColor: "#D9B144",
+    logo: {
+    sourceUri: {
+      uri: "https://services.german-emirates-club.com/uploads/logo@2x.png"
+    },
+    contentDescription: {
+      defaultValue: {
+        language: "en-US",
+        value: "German Emirates Club Logo"
+      }
+    }
+  },
     textModulesData: [
         {
             id: "game_overview",
@@ -163,7 +174,7 @@ const genericClass = {
                     header: "Member Id",
                     body: `${memberId}`
                 },
-                { id: "serialNumber", header: "Serial Number", body: `${serialNumber}`},
+                { id: "serialNumber", header: "Serial Number", body: `${serial_number}`},
                 {
                     id: "expiry",
                     header: "Expiry Date",

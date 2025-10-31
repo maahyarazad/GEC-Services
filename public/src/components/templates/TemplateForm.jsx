@@ -248,6 +248,7 @@ export const TemplateForm = () => {
                 {
                      headers: { "Content-Type": "application/json" },
                     method: "POST",
+                    credentials: "include", // ✅ important for sessions
                      body: JSON.stringify({ email: values.email, event: target.title  }),
                     
                 }
@@ -261,7 +262,7 @@ export const TemplateForm = () => {
                 statusRef.current.classList.add("text-danger");
                 return;
             }
-            debugger;
+            
             if (otp_response.ok) {
 
                 otpRef?.current?.clear();
@@ -298,21 +299,20 @@ export const TemplateForm = () => {
                 language: navigator.language,
                 registration_code: target.registration_code,
                 mobile_number: global_whatsapp,
-            };
+                };
 
-            const formData = new FormData();
-            for (const key in data) {
-                formData.append(key, data[key]);
-            }
-
-            const otpResponse = await fetch(
+                const otpResponse = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/otp-check`,
                 {
                     method: "POST",
-                    body: formData,
-                    credentials: "include",
+                    headers: {
+                    "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                    credentials: "include", 
                 }
-            );
+                );
+
 
             if (otpResponse.status === 400 || otpResponse.status === 500) {
                 throw new Error(`Server responded with ${otpResponse.status}`);

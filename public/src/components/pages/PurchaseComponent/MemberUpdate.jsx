@@ -124,6 +124,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                 {
                     headers: { "Content-Type": "application/json" },
                     method: "POST",
+                     credentials: "include", // ✅ important for sessions
                     body: JSON.stringify({ origin: "German Emirates Club Membership", mobile_number: values.mobile_number }),
 
                 }
@@ -199,11 +200,11 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(data),
-
+                    credentials: 'include'
                 }
             );
 
-            debugger;
+            
             if (otpResponse.status === 400 || otpResponse.status === 500) {
                 throw new Error(`Server responded with ${otpResponse.status}`);
             }
@@ -267,7 +268,6 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-pass`, {
                 method: 'POST',
-
                 headers: {
                     'Content-Type': 'application/json',
                 },

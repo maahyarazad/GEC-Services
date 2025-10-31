@@ -95,23 +95,25 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
         let applePKpassPath; 
         let googlePassToken;
         
+
         if(!_member.serial_number){
             
-            member.serialNumber = `GEC-${uniqid().toUpperCase()}`; 
-            applePKpassPath = await generateMemberPass({...req.body, ...member});
+            member.serial_number = `GEC-${uniqid().toUpperCase()}`; 
+            await generateMemberPass({...req.body, ...member});
             googlePassToken = await generateMemberGooglePass({...req.body, ...member});
-            
+        
         }else{
-            member.serialNumber = _member.serial_number;
-            const passPath =  path.join(__dirname, "..", "pass_storage", `${titleToSlug(member.title)}`);
-            applePKpassPath = `${passPath}/${member.serialNumber}.pkpass`;
+            member.serial_number = _member.serial_number;    
             googlePassToken = `${_member.google_pass_token}`;
-            
         }
+   
+        const applePath = `${process.env.CLIENT_ORIGIN}/apple_pass/${titleToSlug(member.title)}`;
+
+        applePKpassPath = `${applePath}/${member.serial_number}.pkpass`;
         
         const result = await dbService.updateWhere(
             "member_card",
-            { mobile_number: member.mobile_number, metadata_modifiedAt: new Date().toISOString(), firstname:member.firstname, lastname:member.lastname, email:member.email, serial_number: member.serialNumber, google_pass_token: googlePassToken  },
+            { mobile_number: member.mobile_number, metadata_modifiedAt: new Date().toISOString(), firstname:member.firstname, lastname:member.lastname, email:member.email, serial_number: member.serial_number, google_pass_token: googlePassToken  },
             {memberId}
         );
 
@@ -129,7 +131,7 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
 });
 
 
-router.post('/member-auto-login', authorization_middleware.authorize_member, async (req, res) => {
+router.post('/member-auto-login', upload.none(), authorization_middleware.authorize_member, async (req, res) => {
     try {
 
         // const { email, firstname, lastname, mobile_number } = req.body;
@@ -153,7 +155,7 @@ router.post('/member-auto-login', authorization_middleware.authorize_member, asy
 });
 
 
-router.post('/member-login', async (req, res) => {
+router.post('/member-login', upload.none(), async (req, res) => {
     const member = req.body; // get the entire object
     try {
         // Sign the entire member object
@@ -166,7 +168,7 @@ router.post('/member-login', async (req, res) => {
             maxAge: 60 * 60 * 1000 // 1 hour
         });
 
-        res.json({
+        return res.json({
             status: true,
             message: 'Authentication Success'
         });

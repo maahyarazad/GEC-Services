@@ -105,16 +105,17 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
     const getToken = async () => {
 
         try {
+            const { google_pass_token, ...memberDataWithoutToken } = wizardState.member;
+
+
+
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 credentials: 'include',
-                body: JSON.stringify({
-                    ...wizardState.member,
-
-                })
+                body: JSON.stringify(memberDataWithoutToken)
             });
 
 
@@ -162,15 +163,15 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
 
 
     useEffect(() => {
-        
 
-        if(!wizardState.isMounted){
+
+        if (!wizardState.isMounted) {
 
             autoLogin();
-            setWizardState((prev)=> ({...prev, isMounted: true}))
+            setWizardState((prev) => ({ ...prev, isMounted: true }))
         }
 
-        
+
     }, [wizardState.isMounted]);
 
 
@@ -224,14 +225,15 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 {
                     method: "POST",
                     headers: {
-      "Content-Type": "application/json" 
-    },
-                    body: JSON.stringify({ email: wizardState?.member.email, event: "Membership Authentication" , message:"To verify your email and complete your account authentication for"  }),
-                    
+                        "Content-Type": "application/json"
+                    },
+                    credentials: "include", // ✅ important for sessions
+                    body: JSON.stringify({ email: wizardState?.member.email, event: "Membership Authentication", message: "To verify your email and complete your account authentication for" }),
+
                 }
             );
 
-             if (otp_response.status === 429) {
+            if (otp_response.status === 429) {
 
                 const response_data = await otp_response.json();
                 showSnackbar(response_data.error, "");
@@ -277,19 +279,16 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 mobile_number: "",
             };
 
-            const formData = new FormData();
-            for (const key in data) {
-                formData.append(key, data[key]);
-            }
-
             const otpResponse = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/otp-check`,
                 {
                     method: "POST",
-                    body: formData,
+                    headers: { "Content-Type": "application/json" },
                     credentials: "include",
+                    body: JSON.stringify(data),
                 }
             );
+
 
             if (otpResponse.status === 400 || otpResponse.status === 500) {
                 throw new Error(`Server responded with ${otpResponse.status}`);
@@ -335,7 +334,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
 
             const data = await response.json();
             console.log(data);
-            
+
 
             // Optionally, clear any local state or redirect
             // setWizardState({ member: null, authenticate: false });
@@ -350,7 +349,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
     const Unauthorized = async () => {
 
         await logoutMember();
-        setWizardState((prev)=> ({...prev, member:null, authenticate: false, otpState: null}));
+        setWizardState((prev) => ({ ...prev, member: null, authenticate: false, otpState: null }));
         showMessage("");
         setValidOtp(false);
         setCurrentResponseStatus(null);
@@ -514,18 +513,18 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                     <div className="d-flex justify-content-between align-items-top">
                                         {/* Header */}
                                         <Typography variant="h6" gutterBottom>
-                                            {wizardState.authenticate
-                                                ? (wizardState.member.title
-                                                    ? `${wizardState.member.title} ${wizardState.member.firstname} ${wizardState.member.lastname}`
-                                                    : `${wizardState.member.firstname} ${wizardState.member.lastname}`)
+                                            {wizardState?.authenticate
+                                                ? (wizardState?.member?.title
+                                                    ? `${wizardState?.member?.title} ${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`
+                                                    : `${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`)
                                                 : maskText(
-                                                    wizardState.member.title
-                                                        ? `${wizardState.member.title} ${wizardState.member.firstname} ${wizardState.member.lastname}`
-                                                        : `${wizardState.member.firstname} ${wizardState.member.lastname}`
+                                                    wizardState?.member?.title
+                                                        ? `${wizardState?.member?.title} ${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`
+                                                        : `${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`
                                                 )}
                                         </Typography>
 
-                                        {wizardState.authenticate && (
+                                        {wizardState?.authenticate && (
                                             <IconButton onClick={confirmClear}>
                                                 <GrLogout />
                                             </IconButton>
@@ -534,9 +533,9 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
 
                                     <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                                         Member ID:{" "}
-                                        {wizardState.authenticate
-                                            ? wizardState.member.memberId
-                                            : maskText(wizardState.member.memberId?.toString())}
+                                        {wizardState?.authenticate
+                                            ? wizardState?.member?.memberId
+                                            : maskText(wizardState?.member?.memberId?.toString())}
                                     </Typography>
 
                                     <Box sx={{ mt: 2 }}>
@@ -546,9 +545,9 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                                     Card Number
                                                 </Typography>
                                                 <Typography variant="body1">
-                                                    {wizardState.authenticate
-                                                        ? wizardState.member.card_number
-                                                        : maskText(wizardState.member.card_number?.toString())}
+                                                    {wizardState?.authenticate
+                                                        ? wizardState?.member?.card_number
+                                                        : maskText(wizardState?.member?.card_number?.toString())}
                                                 </Typography>
                                             </Grid>
 
@@ -557,9 +556,9 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                                     Expiry Date
                                                 </Typography>
                                                 <Typography variant="body1">
-                                                    {wizardState.authenticate
-                                                        ? wizardState.member.card_expiry_date.split(" ")[0]
-                                                        : maskText(wizardState.member.card_expiry_date?.split(" ")[0])}
+                                                    {wizardState?.authenticate
+                                                        ? wizardState?.member?.card_expiry_date?.split(" ")?.[0]
+                                                        : maskText(wizardState?.member?.card_expiry_date?.split(" ")?.[0])}
                                                 </Typography>
                                             </Grid>
                                         </Grid>
@@ -569,9 +568,9 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                                 Email
                                             </Typography>
                                             <Typography variant="body1">
-                                                {wizardState.authenticate
-                                                    ? wizardState.member.email
-                                                    : maskEmail(wizardState.member.email)}
+                                                {wizardState?.authenticate
+                                                    ? wizardState?.member?.email
+                                                    : maskEmail(wizardState?.member?.email)}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -582,7 +581,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                         <Button
                                             variant="contained"
                                             color="primary"
-                                            disabled={wizardState.authenticate === true}
+                                            disabled={wizardState?.authenticate === true}
                                             type="button"
                                             onClick={handleSendOtp}
                                             style={{
@@ -593,7 +592,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                             }}
                                         >
                                             <p>
-                                                {wizardState.authenticate === true
+                                                {wizardState?.authenticate === true
                                                     ? "Authenticated"
                                                     : "Authenticate With Your Email"}
                                             </p>

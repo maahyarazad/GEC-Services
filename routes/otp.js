@@ -21,7 +21,24 @@ const otpMobileRequestMap = new Map(); // For mobile OTPs
     // Pick correct map
     const map = isMobile ? otpMobileRequestMap : otpRequestMap;
     map.set(key, now);
+
 }
+
+
+// Run cleanup every 4 minutes
+setInterval(() => {
+    const now = Date.now();
+    const maps = [otpRequestMap, otpMobileRequestMap];
+
+    for (const map of maps) {
+        for (const [key, lastTime] of map.entries()) {
+            if (now - lastTime > 4 * 60 * 1000) {
+                map.delete(key);
+            }
+        }
+    }
+}, 4 * 60 * 1000);
+
 
 const otpLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
@@ -115,6 +132,7 @@ router.post("/send-otp",
                 message: response.message,
             });
         }
+        //02434
 
 
     } catch (error) {
@@ -156,19 +174,14 @@ router.post("/send-otp-mobile", otpLimiter,async (req, res) => {
 
         };
 
-        // const response = await smsglobal.otp.send(payload);
-        // res.status(200).json({
-        //     status: true,
-        //     message: "OTP sent successfully",
-        //     data: response,
-        // });
-
-
+        const response = await smsglobal.otp.send(payload);
         res.status(200).json({
             status: true,
             message: "OTP sent successfully",
-            
+            data: response,
         });
+
+       
     } catch (error) {
         console.error("Failed to send OTP:", error.message);
         res.status(500).json({ status: false, message: "Failed to send OTP" });

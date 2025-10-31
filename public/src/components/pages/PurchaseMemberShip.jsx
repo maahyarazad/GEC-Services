@@ -80,6 +80,23 @@ export function PurchaseMemberShip() {
 
 
 
+    async function downloadPass(url) {
+        const res = await fetch(url, { credentials: 'include' }); // include cookies if needed
+        
+        if (!res.ok) throw new Error('Failed to fetch pass');
+            const blob = await res.blob();
+            const a = document.createElement('a');
+            const objectUrl = URL.createObjectURL(blob);
+            a.href = objectUrl;
+            const filename = url.split('/').pop();
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(objectUrl);
+        }
+
+
 
 
     return (
@@ -202,13 +219,13 @@ export function PurchaseMemberShip() {
                                                         <div className="w-100 d-flex justify-content-center align-items-center flex-column" style={{ width: "100%", maxWidth: 400 }}>
                                                             <span className='py-1'>Your digital membership pass is ready — click on either the <strong>Google Wallet</strong> or <strong>Apple Wallet</strong> button below to add it to your wallet. </span>
                                                             <div className='py-2'>
-                                                                <a className="" target='_blank' href={`https://${wizardState.passData?.applePassPath}`}>
+                                                                <div className="" onClick={()=> downloadPass(wizardState.passData?.applePassPath)}download="German_Emirates_Club.pkpass">
                                                                     <img width="300" src={applePass} alt="Google Pass" style={passStyle} />
-                                                                </a>
+                                                                </div>
                                                             </div>
                                                             <div className='py-2'>
 
-                                                                 <a className="" target='_blank' href={`${wizardState.passData?.googlePassPath}`}>
+                                                                 <a className="" target='_blank' href={`${wizardState.passData?.googlePassPath}`} rel="noopener noreferrer">
                                                                     <img width="300" src={googlePass} alt="Google Pass" style={passStyle} />
                                                                 </a>
 
