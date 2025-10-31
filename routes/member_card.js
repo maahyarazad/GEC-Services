@@ -6,9 +6,9 @@ require('dotenv').config();
 const multer = require("multer");
 const authorization_middleware = require("../middleware/auth");
 const { exportTableAsCSV } = require('../services/csvParser');
-const {generateMemberPass} = require("../services/applePassService");
-const {generateMemberGooglePass} = require("../services/googlePassService");
-const uniqid = require('uniqid'); 
+const { generateMemberPass } = require("../services/applePassService");
+const { generateMemberGooglePass } = require("../services/googlePassService");
+const uniqid = require('uniqid');
 const path = require('path');
 
 
@@ -21,10 +21,10 @@ const fs = require("fs").promises;
 // keep only DB table columns
 
 function titleToSlug(title) {
-  return title
-    .toLowerCase()            // convert to lowercase
-    .replace(/\s+/g, '-')     // replace spaces (or multiple spaces) with dashes
-    .replace(/[^\w-]+/g, ''); // remove any non-alphanumeric characters except dash
+    return title
+        .toLowerCase()            // convert to lowercase
+        .replace(/\s+/g, '-')     // replace spaces (or multiple spaces) with dashes
+        .replace(/[^\w-]+/g, ''); // remove any non-alphanumeric characters except dash
 }
 
 
@@ -91,38 +91,63 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
         member.title = "German Emirates Club Membership";
 
         const _member = await dbService.findByColumn("member_card", "email", member.email);
-        let applePKpassPath; 
+        let applePKpassPath;
         let googlePassToken;
 
-        if (!_member.serial_number) {
+
+        const expirationDate = new Date(_member.card_expiry_date);
+
+        const now = new Date();
+        const timestamp = Date.now();
+
+        const sameMonthAndYear = expirationDate.getFullYear() === now.getFullYear() &&
+            expirationDate.getMonth() === now.getMonth();
+
+
+        let newSerialNumberRequired = false;
+
+        if (!sameMonthAndYear && expirationDate < now) {
+            const newExpiry = new Date(now);
+            newExpiry.setFullYear(newExpiry.getFullYear() + 1);
+            member.card_expiry_date = newExpiry;
+            newSerialNumberRequired = true;
+        }
+
+        if (newSerialNumberRequired || !_member.serial_number) {
             member.serial_number = `GEC-${uniqid().toUpperCase()}`;
-            
+
             await generateMemberPass({ ...req.body, ...member });
             googlePassToken = await generateMemberGooglePass({ ...req.body, ...member });
 
         } else {
-            member.serial_number = _member.serial_number;    
+            member.serial_number = _member.serial_number;
             googlePassToken = `${_member.google_pass_token}`;
         }
 
         const applePath = `${process.env.CLIENT_ORIGIN}/apple_pass/${titleToSlug(member.title)}`;
         applePKpassPath = `${applePath}/${member.serial_number}.pkpass`;
 
-        await dbService.updateWhere(
-            "member_card",
-            {
-                mobile_number: member.mobile_number,
-                metadata_modifiedAt: new Date().toISOString(),
-                firstname: member.firstname,
-                lastname: member.lastname,
-                email: member.email,
-                serial_number: member.serial_number,
-                google_pass_token: googlePassToken
-            },
-            { memberId }
-        );
+        const updateData = {
+            mobile_number: member.mobile_number,
+            metadata_modifiedAt: new Date().toISOString(),
+            firstname: member.firstname,
+            lastname: member.lastname,
+            email: member.email,
+            serial_number: member.serial_number,
+            google_pass_token: googlePassToken
+        };
 
-        await db.run('COMMIT');
+        // Add memberId only when it doesn’t exist yet
+        if (!memberId) {
+            updateData.memberId = timestamp;
+        }
+
+        // Build the condition dynamically
+        const whereCondition = memberId ? { memberId } : { email: member.email };
+
+        await dbService.updateWhere("member_card", updateData, whereCondition);
+
+        db.run('COMMIT');
 
         return res.status(200).json({
             status: true,
@@ -134,7 +159,7 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
 
     } catch (error) {
         if (db) {
-            await db.run('ROLLBACK');
+            db.run('ROLLBACK');
         }
         console.error("Transaction failed:", error);
         res.status(500).json({ status: false, message: 'Server error' });
@@ -157,9 +182,9 @@ router.post('/member-auto-login', upload.none(), authorization_middleware.author
         }
 
         const tokenObject = jwt.verify(memberToken, process.env.JWT_SECRET);
-       
-        res.status(200).json({status: true, member: tokenObject.member});
-        
+
+        res.status(200).json({ status: true, member: tokenObject.member });
+
 
     } catch (error) {
         res.status(500).json({ status: false, message: 'Server error' });

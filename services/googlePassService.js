@@ -37,7 +37,7 @@ async function generateMemberGooglePass(data) {
     const { firstname, lastname, memberId, card_expiry_date, serial_number } = data;
     
    
-    const qrValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event_page}?guest-code=${memberId}`;
+    const qrValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event_page}?guest-code=${serial_number}`;
      const objectId = `${issuerId}.member_${Date.now()}`;
     
         const now = Math.floor(Date.now() / 1000);
