@@ -219,7 +219,7 @@ export function PurchaseMemberShip() {
                                                         <div className="w-100 d-flex justify-content-center align-items-center flex-column" style={{ width: "100%", maxWidth: 400 }}>
                                                             <span className='py-1'>Your digital membership pass is ready — click on either the <strong>Google Wallet</strong> or <strong>Apple Wallet</strong> button below to add it to your wallet. </span>
                                                             <div className='py-2'>
-                                                                <div className="" onClick={()=> downloadPass(wizardState.passData?.applePassPath)}download="German_Emirates_Club.pkpass">
+                                                                <div className="" onClick={()=> downloadPass(wizardState.passData?.applePassPath)} download="German_Emirates_Club.pkpass" style={{cursor:'pointer'}}>
                                                                     <img width="300" src={applePass} alt="Google Pass" style={passStyle} />
                                                                 </div>
                                                             </div>

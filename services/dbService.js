@@ -83,6 +83,9 @@ const paramBuilder = (filters) =>  {
 
 const dbService = {
 
+    getDB : () => {
+        return db
+    },
     createBulk: (table, rows) => {
         if (!Array.isArray(rows) || rows.length === 0) {
             return Promise.resolve([]);

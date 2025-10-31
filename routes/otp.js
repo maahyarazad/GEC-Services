@@ -94,7 +94,10 @@ const sendOtpToEmail = async (data, req, res) => {
 
     try {
 
-        await email_otp(data)
+        if(process.env.ENVIRONMENT === 'PRODUCTION'){
+            await email_otp(data)
+        }
+
 
         return { status: true, code: 200, message: 'OTP sent successfully' };
     } catch (error) {
@@ -102,8 +105,6 @@ const sendOtpToEmail = async (data, req, res) => {
         return { status: false, code: 500, message: 'Failed to send OTP' };
     }
 };
-
-
 
 
 router.post("/send-otp",
@@ -143,6 +144,8 @@ router.post("/send-otp",
        
 });
 
+
+
 router.post("/send-otp-mobile", otpLimiter,async (req, res) => {
     try {
         set_limiter_map(req);
@@ -174,12 +177,20 @@ router.post("/send-otp-mobile", otpLimiter,async (req, res) => {
 
         };
 
-        const response = await smsglobal.otp.send(payload);
-        res.status(200).json({
-            status: true,
-            message: "OTP sent successfully",
-            data: response,
-        });
+        if(process.env.ENVIRONMENT === 'PRODUCTION'){
+            const response = await smsglobal.otp.send(payload);
+            res.status(200).json({
+                status: true,
+                message: "OTP sent successfully",
+                data: response,
+            });
+
+        }else{
+            res.status(200).json({
+                status: true,
+                message: "OTP sent successfully",
+            });
+        }
 
        
     } catch (error) {

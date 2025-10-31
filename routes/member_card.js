@@ -73,9 +73,10 @@ router.post('/member-card', upload.none(), async (req, res) => {
 });
 
 router.post('/member-pass', authorization_middleware.authorize_member, async (req, res) => {
+    const db = await dbService.getDB(); // get your DB connection object
     try {
+        await db.run('BEGIN TRANSACTION');
 
-        // const { email, firstname, lastname, mobile_number } = req.body;
         const memberToken = req.cookies['member-usr'];
         if (!memberToken) {
             return res.status(401).json({
@@ -85,50 +86,61 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
             });
         }
 
-        const {member} = req.body;
+        const { member } = req.body;
         const memberId = member?.memberId;
         member.title = "German Emirates Club Membership";
 
         const _member = await dbService.findByColumn("member_card", "email", member.email);
-
-        
         let applePKpassPath; 
         let googlePassToken;
-        
 
-        if(!_member.serial_number){
+        if (!_member.serial_number) {
+            member.serial_number = `GEC-${uniqid().toUpperCase()}`;
             
-            member.serial_number = `GEC-${uniqid().toUpperCase()}`; 
-            await generateMemberPass({...req.body, ...member});
-            googlePassToken = await generateMemberGooglePass({...req.body, ...member});
-        
-        }else{
+            await generateMemberPass({ ...req.body, ...member });
+            googlePassToken = await generateMemberGooglePass({ ...req.body, ...member });
+
+        } else {
             member.serial_number = _member.serial_number;    
             googlePassToken = `${_member.google_pass_token}`;
         }
-   
-        const applePath = `${process.env.CLIENT_ORIGIN}/apple_pass/${titleToSlug(member.title)}`;
 
+        const applePath = `${process.env.CLIENT_ORIGIN}/apple_pass/${titleToSlug(member.title)}`;
         applePKpassPath = `${applePath}/${member.serial_number}.pkpass`;
-        
-        const result = await dbService.updateWhere(
+
+        await dbService.updateWhere(
             "member_card",
-            { mobile_number: member.mobile_number, metadata_modifiedAt: new Date().toISOString(), firstname:member.firstname, lastname:member.lastname, email:member.email, serial_number: member.serial_number, google_pass_token: googlePassToken  },
-            {memberId}
+            {
+                mobile_number: member.mobile_number,
+                metadata_modifiedAt: new Date().toISOString(),
+                firstname: member.firstname,
+                lastname: member.lastname,
+                email: member.email,
+                serial_number: member.serial_number,
+                google_pass_token: googlePassToken
+            },
+            { memberId }
         );
 
+        await db.run('COMMIT');
 
-
-        return  res.status(200).json({ status: true, data:{
-            applePassPath: applePKpassPath,
-            googlePassPath: googlePassToken
-
-        } });
+        return res.status(200).json({
+            status: true,
+            data: {
+                applePassPath: applePKpassPath,
+                googlePassPath: googlePassToken
+            }
+        });
 
     } catch (error) {
+        if (db) {
+            await db.run('ROLLBACK');
+        }
+        console.error("Transaction failed:", error);
         res.status(500).json({ status: false, message: 'Server error' });
     }
 });
+
 
 
 router.post('/member-auto-login', upload.none(), authorization_middleware.authorize_member, async (req, res) => {

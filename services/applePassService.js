@@ -77,7 +77,7 @@ const generateMemberPass = async (data) => {
         fs.mkdirSync(passPath, { recursive: true });
     }
 
-    fs.writeFileSync(`${passPath}/${serialNumber}.pkpass`, _buffer);
+    fs.writeFileSync(`${passPath}/${serial_number}.pkpass`, _buffer);
     
 };
 

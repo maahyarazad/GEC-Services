@@ -96,6 +96,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
 
 
 
+
     const statusRef = useRef();
     const otpRef = useRef();
     const { showSnackbar } = useSnackbar();
@@ -112,6 +113,25 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
         }
 
     }, [wizardState.otpState])
+
+    useEffect(() => {
+        
+        if(wizardState?.passData !== null){
+            
+            setWizardState((prev) => ({
+                        ...prev,
+                        otpState: {
+                            ...prev.otpState,
+                            currentResponseMessage: "Your pass is now ready.",
+                            getMemberPass: true,
+                            currentResponseStatus: false,
+                            responseMessageStyle: true
+                        }
+                    }));
+                    
+        }
+
+    }, [wizardState?.passData])
 
 
     const handleSendOtp = async (values) => {
@@ -161,7 +181,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
 
             } else {
 
-
+         
                 setWizardState((prev) => ({ ...prev, otpState: { ...prev.otpState, currentResponseMessage: otp_response.statusText, responseMessageStyle: false } }));
             }
 
@@ -210,7 +230,6 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
             }
 
 
-
             const otp_response_data = await otpResponse.json();
 
 
@@ -228,26 +247,13 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
             }
 
             showSnackbar("Verification Successful");
-
-            setWizardState((prev) => ({
-                ...prev,
-                otpState: {
-                    ...prev.otpState,
-                    currentResponseMessage: "Your mobile number has been verified",
-                    getMemberPass: true,
-                    currentResponseStatus: false,
-                    responseMessageStyle: true
-                }
-            }));
-
-
             setFetchingPasses(true);
             await getMemberPass();
-            
+
 
 
         } catch (err) {
-
+            debugger;
             if (statusRef.current) {
 
                 statusRef.current.textContent = `Verification failed: ${err.message}`;
@@ -255,7 +261,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
             }
         }finally{
 
-            setActiveStep((prev) => prev + 1);
+           
         }
     };
 
@@ -277,16 +283,21 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                 })
             });
 
-
+            
             if (!response.ok) {
+                 
+                 showSnackbar("💬 Oops! Something went wrong. Please contact us.", "");
                 throw new Error('Failed to fetch');
             }
 
             const result = await response.json();
 
             if (result.status) {
+               
                 setWizardState((prev) => ({ ...prev, passData: result.data }));
                 setFetchingPasses(false);
+                setActiveStep((prev) => prev + 1);
+                showSnackbar("Your pass is now ready.", "success");
             }
 
             else {
@@ -295,6 +306,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
 
 
         } catch (err) {
+            
             showMessage(err);
             console.error('Error fetching data:', err);
         } finally {
@@ -452,7 +464,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                     {isSubmitting ? (
                                         <CircularProgress size={20} color="inherit" />
                                     ) : (
-                                        <>Verify Your Phone</>
+                                        <>Verify Your Phone and Get Your Pass</>
                                     )}
                                 </span>
                             </Button>

@@ -40,9 +40,8 @@ async function generateMemberGooglePass(data) {
     const qrValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event_page}?guest-code=${memberId}`;
      const objectId = `${issuerId}.member_${Date.now()}`;
     
-    
-        const now = Math.floor(Date.now(card_expiry_date) / 1000);
-        const _now = new Date();
+        const now = Math.floor(Date.now() / 1000);
+        const _now = new Date(card_expiry_date);
     
         // Create a new date 12 months from now
         const expirationDate = new Date(
@@ -157,7 +156,17 @@ const genericClass = {
                         language: "en-US",
                         value: "Hero Image Banner"
                     }
-                }
+                }, logo: {
+    sourceUri: {
+      uri: "https://services.german-emirates-club.com/uploads/logo@2x.png"
+    },
+    contentDescription: {
+      defaultValue: {
+        language: "en-US",
+        value: "German Emirates Club Logo"
+      }
+    }
+  }
             },
             linksModuleData: {
                 uris: [
