@@ -63,17 +63,7 @@ const genericClass = {
     programName: "German Emirates Club",
     reviewStatus: "underReview",
     hexBackgroundColor: "#D9B144",
-    logo: {
-    sourceUri: {
-      uri: "https://services.german-emirates-club.com/uploads/logo@2x.png"
-    },
-    contentDescription: {
-      defaultValue: {
-        language: "en-US",
-        value: "German Emirates Club Logo"
-      }
-    }
-  },
+    
     textModulesData: [
         {
             id: "game_overview",
@@ -129,6 +119,11 @@ const genericClass = {
             classId: classId,
             state: "active",
             hexBackgroundColor: "#0d1b2a",
+            logo: {
+    sourceUri: {
+      uri: "https://services.german-emirates-club.com/uploads/logo.jpg"
+    }
+  },
             cardTitle: {
                 defaultValue: {
                     language: "en-US",
@@ -144,7 +139,7 @@ const genericClass = {
             subheader: {
                 defaultValue: {
                     language: "en-US",
-                    value: `${title}`
+                    value: `CARD HOLDER NAME`
                 }
             },
             heroImage: {
@@ -193,6 +188,10 @@ const genericClass = {
             barcode: {
                 type: "QR_CODE",
                 value: qrValue
+            }, 
+            validTimeInterval: {
+                start: { date: new Date().toISOString() },
+                end: { date: expirationDate.toISOString() }
             }
         };
     
@@ -215,7 +214,7 @@ const genericClass = {
             aud: 'google',
             typ: 'savetowallet',
             iat: now,
-            exp: now + 60 * 60, // 1 hour
+            exp: Math.floor(new Date(card_expiry_date).getTime() / 1000),
             payload: {
                 genericClasses: [genericClass],
                 genericObjects: [genericObject]
@@ -263,6 +262,7 @@ async function generateGooglePass(data) {
             programName: "German Emirates Club",
             reviewStatus: "underReview",
             hexBackgroundColor: "#D9B144",
+
             textModulesData: [
                 {
                     id: "game_overview",
@@ -301,6 +301,11 @@ async function generateGooglePass(data) {
             classId: classId,
             state: "active",
             hexBackgroundColor: "#0d1b2a",
+                         logo: {
+    sourceUri: {
+      uri: "https://services.german-emirates-club.com/uploads/logo.jpg"
+    }
+  },
             cardTitle: {
                 defaultValue: {
                     language: "en-US",
@@ -354,6 +359,9 @@ async function generateGooglePass(data) {
             barcode: {
                 type: "QR_CODE",
                 value: qrValue
+            }, validTimeInterval: {
+                start: { date: new Date().toISOString() },
+                end: { date: expirationDate.toISOString() }
             }
         };
     

@@ -105,7 +105,12 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
 
 
         let newSerialNumberRequired = false;
+        if (!memberId) {
+            member.memberId = timestamp;
+        }
 
+
+        
         if (!sameMonthAndYear && expirationDate < now) {
             const newExpiry = new Date(now);
             newExpiry.setFullYear(newExpiry.getFullYear() + 1);
@@ -118,12 +123,12 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
 
             await generateMemberPass({ ...req.body, ...member });
             googlePassToken = await generateMemberGooglePass({ ...req.body, ...member });
-
+            
         } else {
             member.serial_number = _member.serial_number;
-            googlePassToken = `${_member.google_pass_token}`;
+            googlePassToken = _member.google_pass_token;
         }
-
+        
         const applePath = `${process.env.CLIENT_ORIGIN}/apple_pass/${titleToSlug(member.title)}`;
         applePKpassPath = `${applePath}/${member.serial_number}.pkpass`;
 

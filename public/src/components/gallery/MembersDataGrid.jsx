@@ -10,6 +10,7 @@ import { MdAddCircleOutline } from "react-icons/md";
 import { config } from '../../ui_config';
 import FilterParams from '../admin/FilterParams';
 
+
 const columns = ({ onEdit, onSwitchActive }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'firstName', headerName: 'First Name', width: 130, filterable: true },

@@ -5,6 +5,7 @@ import DashboardCards from '../admin/Dashboard/DashboardCards';
 import { MdWorkspacePremium } from "react-icons/md";
 import { BsFiletypeCsv } from "react-icons/bs";
 import FilterParams from '../admin/FilterParams';
+import { GrVirtualMachine } from "react-icons/gr";
 const paidBlue = '#0f0faf';
 const nonpaidBlue = '#55729e';
 const red = '#cc0000';;
@@ -12,19 +13,54 @@ const red = '#cc0000';;
 
 const columns = ({ onResendPasswordReset, loadingRowId }) => [
     { field: 'id', headerName: 'ID', width: 70 },
-    {
-        field: 'type', headerName: 'Type', width: 70, filterable: true,
-        renderCell: (params) => {
-            switch (params.row.type) {
-                case 7:
-                    return <MdWorkspacePremium color={red} size={22} />;
-                case 5:
-                        return <><MdWorkspacePremium color={nonpaidBlue} size={22} /></>;
-                default:
-                    return <><MdWorkspacePremium color={paidBlue} size={22} /></>
-            }
-        },
-    },
+ {
+  field: 'type',
+  headerName: 'Type',
+  width: 100,
+  filterable: true,
+  renderCell: (params) => {
+    const virtualCard = params.row.serial_number 
+      ?
+      <Tooltip title={`Virtual Pass Serial Number: ${params.row.serial_number }` }><GrVirtualMachine size={20} style={{ marginRight: 6 }} /> </Tooltip> 
+      : <div style={{ width: 20, height: 20, marginRight: 6 }} />;
+
+    const containerStyle = {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      width: '100%',
+      height: '100%',
+    };
+
+    switch (params.row.type) {
+      case 7:
+        return (
+          <div style={containerStyle}>
+            {virtualCard}
+            <MdWorkspacePremium color={red} size={22} />
+          </div>
+        );
+
+      case 5:
+        return (
+          <div style={containerStyle}>
+            {virtualCard}
+            <MdWorkspacePremium color={nonpaidBlue} size={22} />
+          </div>
+        );
+
+      default:
+        return (
+          <div style={containerStyle}>
+            {virtualCard}
+            <MdWorkspacePremium color={paidBlue} size={22} />
+          </div>
+        );
+    }
+  },
+},
+
+
     { field: 'card_number', headerName: 'Card Number', width: 150, filterable: true },
     { field: 'firstname', headerName: 'First Name', width: 150, filterable: true },
     { field: 'lastname', headerName: 'Last Name', width: 150, filterable: true },
