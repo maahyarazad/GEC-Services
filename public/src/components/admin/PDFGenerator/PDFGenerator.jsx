@@ -358,7 +358,7 @@ const PDFGenerator = () => {
                                                         title="Enable (Dummy String) Price Column"
                                                         onChange={(e) => {
                                                             const checked = e.target.checked;
-                                                             setFormData((prev) => ({
+                                                            setFormData((prev) => ({
                                                                 ...prev,
                                                                 items_price: checked
                                                             }));
@@ -416,67 +416,80 @@ const PDFGenerator = () => {
 
                                             <div className="form-control">
 
-                                                {formData.items.map((item, index) => (
-                                                    <div
-                                                       key={item.id || index} 
-                                                        className="d-flex flex-column"
-                                                        style={{ marginBottom: 10, borderBottom: "1px solid #ccc", paddingBottom: 8 }}
-                                                    >
-                                                        {Object.keys(item).map((key) => {
-                                                            switch (key) {
-                                                                case "body":
-                                                                    return (
-                                                                        <div className="input-group" key={key}>
-                                                                            <textarea
-                                                                                onKeyDown={handleKeyDown}
-                                                                                rows={3}
-                                                                                name={`items.${index}.${key}`}
-                                                                                value={item[key]}
-                                                                                onChange={handleChange}
-                                                                                placeholder={key.replace(/_/g, " ")}
-                                                                            />
-                                                                            <label>{key.replace(/_/g, " ")}</label>
-                                                                        </div>
-                                                                    );
-                                                                case "price":
-                                                                    return (formData.items_price ?
-                                                                        <div className="input-group" key={key}>
-                                                                            <input
-                                                                                name={`items.${index}.${key}`}
-                                                                                value={item[key]}
-                                                                                onChange={handleChange}
-                                                                                placeholder={key.replace(/_/g, " ")}
-                                                                            />
-                                                                            <label>{key.replace(/_/g, " ")}</label>
-                                                                        </div> : <></>)
-                                                                default:
-                                                                    return (
-                                                                        <div className="input-group" key={key}>
-                                                                            <input
-                                                                                name={`items.${index}.${key}`}
-                                                                                value={item[key]}
-                                                                                onChange={handleChange}
-                                                                                placeholder={key.replace(/_/g, " ")}
-                                                                            />
-                                                                            <label>{key.replace(/_/g, " ")}</label>
-                                                                        </div>
-                                                                    );
-                                                            }
-                                                        })}
+                                                {formData.items.map((item, index) => {
+                                                    const uniqueId = Math.round(Math.random() * 10000000);
 
-                                                        <Button
-                                                            variant="contained"
-                                                            sx={{ textTransform: 'none' }}
-                                                            size="small"
-                                                            type="button"
-                                                            color="error"
-                                                            onClick={() => removeItem(index)}
-                                                            style={{ marginTop: 4 }}
+
+                                                    return ( // ✅ Added return here
+                                                        <div
+                                                            key={uniqueId}
+                                                            className="d-flex flex-column"
+                                                            style={{
+                                                                marginBottom: 10,
+                                                                borderBottom: "1px solid #ccc",
+                                                                paddingBottom: 8,
+                                                            }}
                                                         >
-                                                            Remove
-                                                        </Button>
-                                                    </div>
-                                                ))}
+                                                            {Object.keys(item).map((key) => {
+                                                                switch (key) {
+                                                                    case "body":
+                                                                        return (
+                                                                            <div className="input-group" key={`${index}-${key}`}>
+                                                                                <textarea
+                                                                                    onKeyDown={handleKeyDown}
+                                                                                    rows={3}
+                                                                                    name={`items.${index}.${key}`}
+                                                                                    value={item[key]}
+                                                                                    onChange={handleChange}
+                                                                                    placeholder={key.replace(/_/g, " ")}
+                                                                                />
+                                                                                <label>{key.replace(/_/g, " ")}</label>
+                                                                            </div>
+                                                                        );
+
+                                                                    case "price":
+                                                                        return formData.items_price ? (
+                                                                            <div className="input-group" key={`${index}-${key}`}>
+                                                                                <input
+                                                                                    name={`items.${index}.${key}`}
+                                                                                    value={item[key]}
+                                                                                    onChange={handleChange}
+                                                                                    placeholder={key.replace(/_/g, " ")}
+                                                                                />
+                                                                                <label>{key.replace(/_/g, " ")}</label>
+                                                                            </div>
+                                                                        ) : null;
+
+                                                                    default:
+                                                                        return (
+                                                                            <div className="input-group" key={`${index}-${key}`}>
+                                                                                <input
+                                                                                    name={`items.${index}.${key}`}
+                                                                                    value={item[key]}
+                                                                                    onChange={handleChange}
+                                                                                    placeholder={key.replace(/_/g, " ")}
+                                                                                />
+                                                                                <label>{key.replace(/_/g, " ")}</label>
+                                                                            </div>
+                                                                        );
+                                                                }
+                                                            })}
+
+                                                            <Button
+                                                                variant="contained"
+                                                                sx={{ textTransform: "none" }}
+                                                                size="small"
+                                                                type="button"
+                                                                color="error"
+                                                                onClick={() => removeItem(index)}
+                                                                style={{ marginTop: 4 }}
+                                                            >
+                                                                Remove
+                                                            </Button>
+                                                        </div>
+                                                    );
+                                                })}
+
 
                                                 <Button type="button"
                                                     variant="outlined"

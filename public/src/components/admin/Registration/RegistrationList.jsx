@@ -56,7 +56,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
             if (url) {
                 const _url = `/registration/${url}`;
                 return (
-                    <a href={_url} style={{ textDecoration: 'none' }} target='_black'>
+                    <a href={_url} style={{ textDecoration: 'none' }} target='_blank'>
                         {url}
                     </a>
                 )
