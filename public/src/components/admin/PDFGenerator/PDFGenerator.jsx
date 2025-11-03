@@ -10,47 +10,49 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Button from '@mui/material/Button';
+import Switch from '@mui/material/Switch';
 import { Field } from "formik";
-import isEqual from "lodash.isequal"; 
+import isEqual from "lodash.isequal";
 
 import './PDFGenerator.css';
 
 import Invoice from "./Invoice";
 import FileList from "./FileList";
+import { GrCurrency } from "react-icons/gr";
 
 const PDFGenerator = () => {
 
 
     const handleKeyDown = (e) => {
-    if (e.key === "Backspace") {
-        const textarea = e.target;
-        const { selectionStart, selectionEnd, value } = textarea;
+        if (e.key === "Backspace") {
+            const textarea = e.target;
+            const { selectionStart, selectionEnd, value } = textarea;
 
-        // Split value into lines
-        const lines = value.split(/\r?\n/);
+            // Split value into lines
+            const lines = value.split(/\r?\n/);
 
-        // Determine current line index based on caret position
-        const beforeCaret = value.slice(0, selectionStart);
-        const currentLineIndex = beforeCaret.split(/\r?\n/).length - 1;
-        const currentLine = lines[currentLineIndex];
+            // Determine current line index based on caret position
+            const beforeCaret = value.slice(0, selectionStart);
+            const currentLineIndex = beforeCaret.split(/\r?\n/).length - 1;
+            const currentLine = lines[currentLineIndex];
 
-        // CASE 1: Prevent line merge or deletion at line start
-        // if (selectionStart === selectionEnd && currentLine.trim() === "" && selectionStart > 0) {
-        //   e.preventDefault(); // stop default backspace
-        //   console.log("Prevented deleting empty line");
-        //   return;
-        // }
+            // CASE 1: Prevent line merge or deletion at line start
+            // if (selectionStart === selectionEnd && currentLine.trim() === "" && selectionStart > 0) {
+            //   e.preventDefault(); // stop default backspace
+            //   console.log("Prevented deleting empty line");
+            //   return;
+            // }
 
-        // // CASE 2: Prevent line merge when caret at beginning of line
-        // const lineStartPosition = beforeCaret.lastIndexOf("\n") + 1;
-        // if (selectionStart === lineStartPosition) {
-        //   e.preventDefault();
-        //   console.log("Prevented merging lines");
-        //   return;
-        // }
+            // // CASE 2: Prevent line merge when caret at beginning of line
+            // const lineStartPosition = beforeCaret.lastIndexOf("\n") + 1;
+            // if (selectionStart === lineStartPosition) {
+            //   e.preventDefault();
+            //   console.log("Prevented merging lines");
+            //   return;
+            // }
 
-        // Otherwise, let Backspace work normally
-    }
+            // Otherwise, let Backspace work normally
+        }
     };
 
 
@@ -108,33 +110,38 @@ const PDFGenerator = () => {
             signature_bottom_right_title: "",
             signature_bottom_right_company: "",
         },
-        items_price: true,
+        items_price: false,
         items: [
-            { title: "Item Title",price:"100 AED",qty: "1", disc: "0.00", vat: "0.00", vat_p: "0", amount: "", body: "is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." },
-        ]
+            { title: "Item Title", price: "100 AED", qty: "1", disc: "0.00", vat: "0.00", vat_p: "0", amount: "", body: "is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." },
+        ],
+        currency: {
+            currency_enable: false,
+            currency_symbol: "USD",
+            currency_rate: 3.67,
+        }
     }
     const [formData, setFormData] = useState(_initial_formData);
     const [objectChanged, setObjectChanged] = useState(false);
     const UpdateForm = (data) => {
-        
-         setFormData(data);
+
+        setFormData(data);
     }
-    
+
 
     useEffect(() => {
-    
+
         setObjectChanged(!isEqual(_initial_formData, formData));
         // console.log(`parent => ${objectChanged}`)
     }, [formData]);
 
 
-    const _objectChanged = () => { return objectChanged};
+    const _objectChanged = () => { return objectChanged };
 
     // Add a new empty item
     const addItem = () => {
         setFormData((prev) => ({
             ...prev,
-            items: [...prev.items, { title: "Item Title",price:"" ,qty: "1", disc: "0.00", vat: "0.00", vat_p: "0", amount: "", body: "" }],
+            items: [...prev.items, { title: "Item Title", price: "", qty: "1", disc: "0.00", vat: "0.00", vat_p: "0", amount: "", body: "" }],
         }));
     };
 
@@ -224,301 +231,348 @@ const PDFGenerator = () => {
         <Box sx={{ padding: 1 }}>
             <div className="row">
 
-           <div className="col-2">
-           
-           <FileList onSelect={UpdateForm} formData={formData} initialFormData={_initial_formData}/>
+                <div className="col-2">
 
-           </div>
-           <div className="col-10">
+                    <FileList onSelect={UpdateForm} formData={formData} initialFormData={_initial_formData} />
 
-            <div className="row" style={{ height: '85vh', overflow: 'scroll' }}>
-                
-                {/* Form to update PDF content */}
-                <div className="col-lg-6 col-12 left-panel">
+                </div>
+                <div className="col-10">
 
-                    <form style={{ display: 'block' }}>
-                        <Accordion>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                aria-controls="panel2-content"
-                                id="panel2-header"
-                                sx={tabstyle}
-                            >
-                                <Typography component="span">Project & Company Details</Typography>
-                            </AccordionSummary>
-                            <AccordionDetails>
-                                <Box sx={{ width: "100%" }}>
-                                    <div className="d-flex">
-                                        <div className="col form-control">
-                                            {Object.entries(formData.project).map(([key, value]) => (
-                                                <div key={key} className="input-group">
-                                                    <input
-                                                        name={`project.${key}`}
-                                                        value={value}
-                                                        onChange={handleChange} // use nested handler to update nested state
-                                                        placeholder={key.replace(/_/g, " ")}
-                                                        style={{ width: "100%", padding: 4 }}
-                                                    />
-                                                    <label>
-                                                        {key.replace(/_/g, " ")}
-                                                    </label>
+                    <div className="row" style={{ height: '85vh', overflow: 'scroll' }}>
+
+                        {/* Form to update PDF content */}
+                        <div className="col-lg-6 col-12 left-panel">
+
+                            <form style={{ display: 'block' }}>
+                                <Accordion>
+                                    <AccordionSummary
+                                        expandIcon={<ExpandMoreIcon />}
+                                        aria-controls="panel2-content"
+                                        id="panel2-header"
+                                        sx={tabstyle}
+                                    >
+                                        <Typography component="span">Project & Company Details</Typography>
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <Box sx={{ width: "100%" }}>
+                                            <div className="d-flex">
+                                                <div className="col form-control">
+                                                    {Object.entries(formData.project).map(([key, value]) => (
+                                                        <div key={key} className="input-group">
+                                                            <input
+                                                                name={`project.${key}`}
+                                                                value={value}
+                                                                onChange={handleChange} // use nested handler to update nested state
+                                                                placeholder={key.replace(/_/g, " ")}
+                                                                style={{ width: "100%", padding: 4 }}
+                                                            />
+                                                            <label>
+                                                                {key.replace(/_/g, " ")}
+                                                            </label>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
-                                        </div>
-                                        <div className="col form-control">
+                                                <div className="col form-control">
 
-                                            {Object.entries(formData.company).map(([key, value]) => (
-                                                <div key={key} className="input-group">
-                                                    <input
-                                                        name={`company.${key}`}
-                                                        value={value}
-                                                        onChange={handleChange} // use nested handler to update nested state
-                                                        placeholder={key.replace(/_/g, " ")}
-                                                        style={{ width: "100%", padding: 4 }}
-                                                    />
-                                                    <label>
-                                                        {key.replace(/_/g, " ")}
-                                                    </label>
+                                                    {Object.entries(formData.company).map(([key, value]) => (
+                                                        <div key={key} className="input-group">
+                                                            <input
+                                                                name={`company.${key}`}
+                                                                value={value}
+                                                                onChange={handleChange} // use nested handler to update nested state
+                                                                placeholder={key.replace(/_/g, " ")}
+                                                                style={{ width: "100%", padding: 4 }}
+                                                            />
+                                                            <label>
+                                                                {key.replace(/_/g, " ")}
+                                                            </label>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-
-
-                                </Box>
-
-                            </AccordionDetails>
-                        </Accordion>
-
-
-                        <Accordion >
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                aria-controls="panel3-content"
-                                id="panel3-header"
-                                sx={tabstyle}
-                            >
-                                <Typography component="span">Project Reference</Typography>
-                            </AccordionSummary>
-                            <AccordionDetails>
-                                <Box sx={{ width: "100%" }}>
-                                    <div className="form-control">
-
-                                        {Object.entries(formData.reference).map(([key, value]) => (
-                                            <div key={key} className="input-group">
-                                                <input
-                                                    name={`reference.${key}`}
-                                                    value={value}
-                                                    onChange={handleChange} // use nested handler to update nested state
-                                                    placeholder={key.replace(/_/g, " ")}
-                                                    style={{ width: "100%", padding: 4 }}
-                                                />
-                                                <label>
-                                                    {key.replace(/_/g, " ")}
-                                                </label>
-                                            </div>
-                                        ))}
-                                    </div>
-
-
-                                </Box>
-                            </AccordionDetails>
-
-                        </Accordion>
-
-
-                        <Accordion>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                aria-controls="panel2-content"
-                                id="panel2-header"
-                                sx={tabstyle}
-                            >
-                                <Typography component="span">Descriptions
-                                  
-                                </Typography>
-                            </AccordionSummary>
-                            <AccordionDetails>
-                                <Box sx={{ width: "100%" }}>
-
-                                
-                                 <div className="d-flex" style={{ marginBottom: 10, borderBottom: "1px solid #ccc", paddingBottom: 8 }}>
-                                    <small style={{fontSize: 14, paddingRight: 10}}>Enable (Dummy String) Price Column</small>
-                                      <input
-                                        name="items_price"
-                                        id="items_price"
-                                        type="checkbox"
-                                        className="form-check-input"
-                                        checked={formData.items_price}
-                                        onChange={(e) =>
-                                            setFormData({
-                                            ...formData,
-                                            items_price: e.target.checked,
-                                            })
-                                        }
-                                        />
                                             </div>
 
-                                    <div className="form-control">
 
-                                        {formData.items.map((item, index) => (
-                                            <div
-                                                key={index}
-                                                className="d-flex flex-column"
-                                                style={{ marginBottom: 10, borderBottom: "1px solid #ccc", paddingBottom: 8 }}
-                                            >
-                                                {Object.keys(item).map((key) => {
-                                                    switch (key) {
-                                                        case "body":
-                                                            return (
-                                                                <div className="input-group" key={key}>
-                                                                    <textarea
-    onKeyDown={handleKeyDown}
-                                                                        rows={3}
-                                                                        name={`items.${index}.${key}`}
-                                                                        value={item[key]}
-                                                                        onChange={handleChange}
-                                                                        placeholder={key.replace(/_/g, " ")}
-                                                                    />
-                                                                    <label>{key.replace(/_/g, " ")}</label>
-                                                                </div>
-                                                            );
-                                                            case "price":
-                                                            return ( formData.items_price ?
-                                                                <div className="input-group" key={key}>
-                                                                    <input
-                                                                        name={`items.${index}.${key}`}
-                                                                        value={item[key]}
-                                                                        onChange={handleChange}
-                                                                        placeholder={key.replace(/_/g, " ")}
-                                                                    />
-                                                                    <label>{key.replace(/_/g, " ")}</label>
-                                                                </div> : <></> )
-                                                        default:
-                                                            return (
-                                                                <div className="input-group" key={key}>
-                                                                    <input
-                                                                        name={`items.${index}.${key}`}
-                                                                        value={item[key]}
-                                                                        onChange={handleChange}
-                                                                        placeholder={key.replace(/_/g, " ")}
-                                                                    />
-                                                                    <label>{key.replace(/_/g, " ")}</label>
-                                                                </div>
-                                                            );
-                                                    }
-                                                })}
 
-                                                <Button
-                                                    variant="contained"
-                                                    sx={{ textTransform: 'none' }}
+                                        </Box>
+
+                                    </AccordionDetails>
+                                </Accordion>
+
+
+                                <Accordion >
+                                    <AccordionSummary
+                                        expandIcon={<ExpandMoreIcon />}
+                                        aria-controls="panel3-content"
+                                        id="panel3-header"
+                                        sx={tabstyle}
+                                    >
+                                        <Typography component="span">Project Reference</Typography>
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <Box sx={{ width: "100%" }}>
+                                            <div className="form-control">
+
+                                                {Object.entries(formData.reference).map(([key, value]) => (
+                                                    <div key={key} className="input-group">
+                                                        <input
+                                                            name={`reference.${key}`}
+                                                            value={value}
+                                                            onChange={handleChange} // use nested handler to update nested state
+                                                            placeholder={key.replace(/_/g, " ")}
+                                                            style={{ width: "100%", padding: 4 }}
+                                                        />
+                                                        <label>
+                                                            {key.replace(/_/g, " ")}
+                                                        </label>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+
+                                        </Box>
+                                    </AccordionDetails>
+
+                                </Accordion>
+
+
+                                <Accordion>
+                                    <AccordionSummary
+                                        expandIcon={<ExpandMoreIcon />}
+                                        aria-controls="panel2-content"
+                                        id="panel2-header"
+                                        sx={tabstyle}
+                                    >
+                                        <Typography component="span">Descriptions
+
+                                        </Typography>
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <Box sx={{ width: "100%" }}>
+
+
+                                            <div className="d-flex flex-column" style={{ marginBottom: 10, borderBottom: "1px solid #ccc", paddingBottom: 8 }}>
+                                                <div>
+
+
+                                                    <Switch size="small"
+                                                        title="Enable (Dummy String) Price Column"
+                                                        onChange={(e) => {
+                                                            const checked = e.target.checked;
+                                                             setFormData((prev) => ({
+                                                                ...prev,
+                                                                items_price: checked
+                                                            }));
+                                                        }}
+
+                                                        color="primary"
+
+                                                    />
+
+                                                    <small style={{ fontSize: 13, paddingRight: 10 }}>Enable (Dummy String) Price Column</small>
+                                                </div>
+                                                <div>
+
+                                                    <Switch
+                                                        size="small"
+                                                        title="Add Currency"
+                                                        color="primary"
+                                                        checked={formData.currency.currency_enable}
+                                                        onChange={(e) => {
+                                                            const checked = e.target.checked;
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                currency: {
+                                                                    ...prev.currency,
+                                                                    currency_enable: checked
+                                                                }
+                                                            }));
+
+
+                                                        }}
+                                                    />
+                                                    <small style={{ fontSize: 14, paddingRight: 10 }}>Enable Currency</small>
+                                                </div>
+
+                                                <div className={`${formData.currency.currency_enable ? "d-flex" : "d-none"} mt-3`}>
+                                                    {Object.entries(formData.currency).map(([key, value]) =>
+                                                        key !== 'currency_enable' &&
+                                                        (
+
+                                                            <div key={key} className="input-group">
+                                                                <input
+                                                                    name={`currency.${key}`}
+                                                                    value={value}
+                                                                    onChange={handleChange} // use nested handler to update nested state
+                                                                    placeholder={key.replace(/_/g, " ")}
+                                                                    style={{ width: "100%", padding: 4 }}
+                                                                />
+                                                                <label>
+                                                                    {key.replace(/_/g, " ")}
+                                                                </label>
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="form-control">
+
+                                                {formData.items.map((item, index) => (
+                                                    <div
+                                                       key={item.id || index} 
+                                                        className="d-flex flex-column"
+                                                        style={{ marginBottom: 10, borderBottom: "1px solid #ccc", paddingBottom: 8 }}
+                                                    >
+                                                        {Object.keys(item).map((key) => {
+                                                            switch (key) {
+                                                                case "body":
+                                                                    return (
+                                                                        <div className="input-group" key={key}>
+                                                                            <textarea
+                                                                                onKeyDown={handleKeyDown}
+                                                                                rows={3}
+                                                                                name={`items.${index}.${key}`}
+                                                                                value={item[key]}
+                                                                                onChange={handleChange}
+                                                                                placeholder={key.replace(/_/g, " ")}
+                                                                            />
+                                                                            <label>{key.replace(/_/g, " ")}</label>
+                                                                        </div>
+                                                                    );
+                                                                case "price":
+                                                                    return (formData.items_price ?
+                                                                        <div className="input-group" key={key}>
+                                                                            <input
+                                                                                name={`items.${index}.${key}`}
+                                                                                value={item[key]}
+                                                                                onChange={handleChange}
+                                                                                placeholder={key.replace(/_/g, " ")}
+                                                                            />
+                                                                            <label>{key.replace(/_/g, " ")}</label>
+                                                                        </div> : <></>)
+                                                                default:
+                                                                    return (
+                                                                        <div className="input-group" key={key}>
+                                                                            <input
+                                                                                name={`items.${index}.${key}`}
+                                                                                value={item[key]}
+                                                                                onChange={handleChange}
+                                                                                placeholder={key.replace(/_/g, " ")}
+                                                                            />
+                                                                            <label>{key.replace(/_/g, " ")}</label>
+                                                                        </div>
+                                                                    );
+                                                            }
+                                                        })}
+
+                                                        <Button
+                                                            variant="contained"
+                                                            sx={{ textTransform: 'none' }}
+                                                            size="small"
+                                                            type="button"
+                                                            color="error"
+                                                            onClick={() => removeItem(index)}
+                                                            style={{ marginTop: 4 }}
+                                                        >
+                                                            Remove
+                                                        </Button>
+                                                    </div>
+                                                ))}
+
+                                                <Button type="button"
+                                                    variant="outlined"
+                                                    color="info"
                                                     size="small"
-                                                    type="button"
-                                                    color="error"
-                                                    onClick={() => removeItem(index)}
-                                                    style={{ marginTop: 4 }}
-                                                >
-                                                    Remove
+                                                    sx={{ textTransform: 'none' }}
+                                                    onClick={addItem}>
+                                                    Add Item
                                                 </Button>
                                             </div>
-                                        ))}
-
-                                        <Button type="button"
-                                            variant="outlined"
-                                            color="info"
-                                            size="small"
-                                            sx={{ textTransform: 'none' }}
-                                            onClick={addItem}>
-                                            Add Item
-                                        </Button>
-                                    </div>
-                                </Box>
-                            </AccordionDetails>
-                        </Accordion>
+                                        </Box>
+                                    </AccordionDetails>
+                                </Accordion>
 
 
-                        <Accordion>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                aria-controls="panel2-content"
-                                id="panel2-header"
-                                sx={tabstyle}
-                            >
-                                <Typography component="span">Bank Details</Typography>
-                            </AccordionSummary>
-                            <AccordionDetails>
-                                <Box style={{ width: '100%' }}>
-                                    <div className="d-flex">
-                                        <div className="col form-control">
-                                            {Object.entries(formData.bank_detail).map(([key, value]) => (
-                                                <div key={key} className="input-group">
-                                                    <input
-                                                        name={`bank_detail.${key}`}
-                                                        value={value}
-                                                        onChange={handleChange} // use nested handler to update nested state
-                                                        placeholder={key.replace(/_/g, " ")}
-                                                        style={{ width: "100%", padding: 4 }}
-                                                    />
-                                                    <label>
-                                                        {key.replace(/_/g, " ")}
-                                                    </label>
+                                <Accordion>
+                                    <AccordionSummary
+                                        expandIcon={<ExpandMoreIcon />}
+                                        aria-controls="panel2-content"
+                                        id="panel2-header"
+                                        sx={tabstyle}
+                                    >
+                                        <Typography component="span">Bank Details</Typography>
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <Box style={{ width: '100%' }}>
+                                            <div className="d-flex">
+                                                <div className="col form-control">
+                                                    {Object.entries(formData.bank_detail).map(([key, value]) => (
+                                                        <div key={key} className="input-group">
+                                                            <input
+                                                                name={`bank_detail.${key}`}
+                                                                value={value}
+                                                                onChange={handleChange} // use nested handler to update nested state
+                                                                placeholder={key.replace(/_/g, " ")}
+                                                                style={{ width: "100%", padding: 4 }}
+                                                            />
+                                                            <label>
+                                                                {key.replace(/_/g, " ")}
+                                                            </label>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </Box>
+                                            </div>
+                                        </Box>
 
 
-                            </AccordionDetails>
-                        </Accordion>
+                                    </AccordionDetails>
+                                </Accordion>
 
 
-                        <Accordion>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                aria-controls="panel2-content"
-                                id="panel2-header"
-                                sx={tabstyle}
-                            >
-                                <Typography component="span">Payment Terms</Typography>
-                            </AccordionSummary>
-                            <AccordionDetails>
-                                <Box style={{ width: '100%' }}>
-                                    <div className="d-flex">
-                                        <div className="col form-control">
-                                            {Object.entries(formData.payment_terms).map(([key, value]) => (
-                                                <div key={key} className="input-group">
-                                                    <input
-                                                        name={`payment_terms.${key}`}
-                                                        value={value}
-                                                        onChange={handleChange} // use nested handler to update nested state
-                                                        placeholder={key.replace(/_/g, " ")}
-                                                        style={{ width: "100%", padding: 4 }}
-                                                    />
-                                                    <label>
-                                                        {key.replace(/_/g, " ")}
-                                                    </label>
+                                <Accordion>
+                                    <AccordionSummary
+                                        expandIcon={<ExpandMoreIcon />}
+                                        aria-controls="panel2-content"
+                                        id="panel2-header"
+                                        sx={tabstyle}
+                                    >
+                                        <Typography component="span">Payment Terms</Typography>
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <Box style={{ width: '100%' }}>
+                                            <div className="d-flex">
+                                                <div className="col form-control">
+                                                    {Object.entries(formData.payment_terms).map(([key, value]) => (
+                                                        <div key={key} className="input-group">
+                                                            <input
+                                                                name={`payment_terms.${key}`}
+                                                                value={value}
+                                                                onChange={handleChange} // use nested handler to update nested state
+                                                                placeholder={key.replace(/_/g, " ")}
+                                                                style={{ width: "100%", padding: 4 }}
+                                                            />
+                                                            <label>
+                                                                {key.replace(/_/g, " ")}
+                                                            </label>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </Box>
+                                            </div>
+                                        </Box>
 
 
-                            </AccordionDetails>
-                        </Accordion>
-                    </form>
+                                    </AccordionDetails>
+                                </Accordion>
+                            </form>
 
-                </div>
+                        </div>
 
-                <div className="col-lg-6 col-12">
+                        <div className="col-lg-6 col-12">
 
-                    <Invoice formData={formData} />
+                            <Invoice formData={formData} />
+                        </div>
+                    </div>
                 </div>
             </div>
-            </div>
-           </div>
         </Box>
     );
 };

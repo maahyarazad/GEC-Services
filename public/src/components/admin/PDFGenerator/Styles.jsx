@@ -2,6 +2,7 @@ import { StyleSheet } from '@react-pdf/renderer';
 
 const blueColor = '#037bfc';
 const orangeColor = '#d47e11';
+const grayColor = '#A9A9A9';
 
 const styles = StyleSheet.create({
     page: {
@@ -96,6 +97,12 @@ const styles = StyleSheet.create({
         borderTopColor: '#000',
         paddingBottom: 5,
     },
+    tableRowCurrency: {
+        flexDirection: 'row',
+        paddingBottom: 5,
+        fontSize: 4,
+        color: grayColor
+    },
 
     tableBodyRow: {
         flexDirection: 'row',
@@ -153,6 +160,19 @@ const styles = StyleSheet.create({
         fontSize: 9, // decreased from 13
         fontWeight: 500,
     },
+    tableColCurrency: {
+        textAlign: 'right',
+        flex: 1,
+        fontSize: 7, // decreased from 13
+        color: grayColor
+    },
+    tableAmountColCurrency: {
+        textAlign: 'right',
+        flex: 2,
+        fontSize: 7, // decreased from 13
+        fontWeight: 500,
+        color: grayColor
+    },
     tableBodyText: {
         flex: 1,
         fontSize: 8, // decreased from 11
@@ -208,6 +228,14 @@ const styles = StyleSheet.create({
     totalRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        marginBottom: 2,
+        color: blueColor,
+        textTransform: 'uppercase',
+        fontSize: 10,
+        fontWeight: 600,
+    },
+    totalColumn: {
+        flexDirection: 'column',
         marginBottom: 2,
         color: blueColor,
         textTransform: 'uppercase',

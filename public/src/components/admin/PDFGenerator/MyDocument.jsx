@@ -12,7 +12,7 @@ const MyDocument = ({ formData, objectChanged }) => {
         0
     );
 
-    
+
 
     const { positiveTotal, negativeTotal } = formData.items.reduce(
         (totals, item) => {
@@ -25,6 +25,21 @@ const MyDocument = ({ formData, objectChanged }) => {
             return totals;
         },
         { positiveTotal: 0, negativeTotal: 0 }
+    );
+
+    const { positiveTotalExchange, negativeTotalExchange } = formData.items.reduce(
+        (totals, item) => {
+            const amount = parseFloat(item.amount * formData.currency?.currency_rate) || 0;
+
+            if (amount >= 0) {
+                totals.positiveTotalExchange += amount;
+            } else {
+                totals.negativeTotalExchange += amount;
+            }
+
+            return totals;
+        },
+        { positiveTotalExchange: 0, negativeTotalExchange: 0 }
     );
 
 
@@ -107,22 +122,61 @@ const MyDocument = ({ formData, objectChanged }) => {
                     {formData.items.map((item, i) => (
 
                         <View key={`item-${i}`}>
+                            {/* Currency row (shown only if enabled) */}
+
+
+                            {/* Main item row */}
                             <View style={styles.tableRow}>
                                 <Text style={styles.tableColDescription}>{item.title || "No Title"}</Text>
-                                {/* {formData.items_price ? ( <Text style={styles.tableCol}>{item.price || "-"}</Text>) : <></>}  */}
+
                                 {formData.items_price ? (
                                     <Text style={styles.tableCol}>{item.price || "-"}</Text>
                                 ) : (
-                                    <Text style={[styles.tableCol, , { color: 'transparent' }]}>{item.price || "-"}</Text>
+                                    <Text style={[styles.tableCol, { color: "transparent" }]}>{item.price || "-"}</Text>
                                 )}
+
                                 <Text style={styles.tableCol}>{item.qty || "-"}</Text>
                                 <Text style={styles.tableCol}>{item.disc || "0%"}</Text>
                                 <Text style={styles.tableCol}>{item.vat_p || "0"}</Text>
                                 <Text style={styles.tableCol}>{item.vat || "-"}</Text>
-                                <Text style={styles.tableColAmount}>AED {item.amount || "0"}</Text>
+
+                                {/* Base amount (AED) */}
+
+                                {formData?.currency?.currency_enable ? (
+                                    <Text style={styles.tableColAmount}>
+                                        {formData?.currency?.currency_symbol} {item.amount || "0"}
+                                    </Text>
+                                ) : (
+                                    <Text style={styles.tableColAmount}>AED {item.amount || "0"}</Text>
+                                )}
+
+
                             </View>
 
-                        
+                         
+
+                                <View style={[styles.tableRowCurrency, !formData?.currency?.currency_enable && { display: 'none' }]}>
+  {/* Empty cells to align with columns */}
+  <Text style={styles.tableColDescription}></Text>
+  <Text style={styles.tableCol}></Text>
+  <Text style={styles.tableCol}></Text>
+  <Text style={styles.tableCol}></Text>
+  <Text style={styles.tableCol}></Text>
+  <Text style={styles.tableCol}>({item.vat || "-"})</Text>
+
+  {/* Currency amount */}
+  <Text style={styles.tableColAmount}>
+    {(item.amount && formData?.currency?.currency_rate)
+      ? `(AED ${(item.amount * formData.currency.currency_rate).toFixed(2)})`
+      : `(AED 0.00)`
+    }
+  </Text>
+</View>
+
+
+
+
+
                             <View style={styles.tableBodyRow} key={`body-${i}`}>
                                 <Text style={styles.tableBodyText} flex={6}>
                                     <Text style={styles.body_row}>
@@ -152,14 +206,38 @@ const MyDocument = ({ formData, objectChanged }) => {
                 {/* Totals */}
                 <View style={styles.total}>
                     <View style={styles.totalLeft}>
-                        <View style={styles.totalRowDefault}>
-                            <Text>Subtotal:</Text>
-                            <Text>AED {positiveTotal.toFixed(2)}</Text>
-                        </View>
-                        <View style={styles.totalRowDefault}>
-                            <Text style={styles.totalRow}>Total:</Text>
-                            <Text style={styles.totalRow}>AED {Number(positiveTotal.toFixed(2)) + Number(negativeTotal.toFixed(2))}</Text>
-                        </View>
+
+                   <View style={formData?.currency?.currency_enable ? styles.totalColumn : styles.totalRowDefault}>
+                    <Text>Subtotal:</Text>
+                    {formData?.currency?.currency_enable ? (
+                        <Text style={styles.totalRow}>
+                        {formData?.currency?.currency_symbol} {positiveTotal.toFixed(2)} (AED {Number(positiveTotalExchange || 0).toFixed(2)})
+                        </Text>
+                    ) : (
+                        <Text>
+                        AED {positiveTotal.toFixed(2)}
+                        </Text>
+                    )}
+                    </View>
+
+
+
+
+
+
+                <View style={formData?.currency?.currency_enable ? styles.totalColumn : styles.totalRowDefault}>
+                <Text style={styles.totalRow}>
+                    {formData?.currency?.currency_enable
+                    ? `${formData.currency.currency_symbol} ${(Number(positiveTotal) + Number(negativeTotal)).toFixed(2)} (AED ${((Number(positiveTotalExchange) || 0) - (Number(negativeTotalExchange) || 0)).toFixed(2)})`
+                    : `AED ${(Number(positiveTotal) + Number(negativeTotal)).toFixed(2)}`
+                    }
+                </Text>
+                </View>
+
+
+
+
+
                     </View>
 
                     <View style={styles.totalRight}>
