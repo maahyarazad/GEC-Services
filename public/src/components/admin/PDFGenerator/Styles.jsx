@@ -10,11 +10,14 @@ const styles = StyleSheet.create({
         fontSize: 9, // decreased from 12
         backgroundColor: '#fff',
     },
+    flexEnd:{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' },
+    flexStart:{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 40,
     },
+    currencyTotalStyle:{textAlign: 'right', color: grayColor, fontSize: 7},
     logo: {
         // width: 90,
         height: 50,
@@ -100,7 +103,7 @@ const styles = StyleSheet.create({
     tableRowCurrency: {
         flexDirection: 'row',
         paddingBottom: 5,
-        fontSize: 4,
+        fontSize: 6,
         color: grayColor
     },
 
@@ -297,6 +300,8 @@ const styles = StyleSheet.create({
         color: '#adacac',
         fontWeight: 200
     },
+
+
 });
 
 export default styles;
