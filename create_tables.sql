@@ -220,8 +220,8 @@ CREATE TABLE IF NOT EXISTS member_card (
     metadata_createdAt DATETIME,
     metadata_modifiedAt DATETIME,
      google_pass_token TEXT ,
-     serial_number TEXT
-
+     serial_number TEXT,
+     birthday datetime
 );
 
 

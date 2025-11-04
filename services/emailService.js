@@ -321,7 +321,7 @@ async function event_confirm_registration_email(reqBody) {
 	// const pkpassPath = path.join(__dirname, "..","pass_storage", `${slug}`, `${reqBody.event_id}.pkpass`);
 	const tempPath = path.join(__dirname, "..", "qr-files");
 	const mapRoot = path.join(__dirname, "..", "maps");
-	const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
+	const qrPath = path.join(tempPath,`${reqBody.event}` ,`${reqBody.event_id}.png`);
 	const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
 	const { langKey } = reqBody;
 	const { selected_time_for_email } = reqBody;
@@ -527,7 +527,7 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
 	const pkpassPath = `/apple_pass/${reqBody.event}/${reqBody.event_id}.pkpass`;
 	const tempPath = path.join(__dirname, "..", "qr-files");
 	const mapRoot = path.join(__dirname, "..", "maps");
-	const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
+	const qrPath = path.join(tempPath,`${reqBody.event}` ,`${reqBody.event_id}.png`);
 	const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
 	const invoicePath = path.join(__dirname, "..", "invoice_storage", `${reqBody.event}`, `${reqBody.invoice_filename}`);
 	const { selected_time_for_email } = reqBody;

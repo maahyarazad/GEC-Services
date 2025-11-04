@@ -83,6 +83,8 @@ export const TemplateForm = () => {
     const [initialTargetFee, setInitialTargetFee] = useState(null);
     const [rates, setRates] = useState(null);
     const [target, setTarget] = useState(null);
+    const [memberRecord, setMemberRecord] = useState(null);
+    
     
     const [selectedLanguage, setSelectedLanguage] = useState("german");
     const navigate = useNavigate();
@@ -207,6 +209,39 @@ export const TemplateForm = () => {
         }
     },[]);
 
+    const memberAPICall = useCallback(async () => {
+        try {
+            
+            // const value = location.pathname;
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-card-login?memberId=${login_memberId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+                
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch');
+                return;
+            }
+
+            const values = await response.json();
+            if(values?.memberRecord.length > 0){
+                
+                
+                setMemberRecord(values?.memberRecord[0]);
+                console.log(values?.memberRecord[0])
+                setPhoneRegistered(true);
+            }
+           
+        } catch (err) {
+            console.error('Error fetching data:', err);
+        } finally {
+            
+        }
+    },[]);
+
     
 
     useEffect(() => {
@@ -220,7 +255,7 @@ export const TemplateForm = () => {
             
             if (gecuser?.page === lastPart) {
                 
-                
+                await memberAPICall();
                 if(login_memberId && login_memberId[1] === "7"){
                    setSelectedLanguage("english");
                 }
@@ -694,7 +729,12 @@ export const TemplateForm = () => {
                                     enableReinitialize={true}
                                     initialValues={{
                                         ...initialValues,
-                                        // email: login_email, // set your dynamic value here
+                                        email: memberRecord?.email !== null ?memberRecord?.email : "", // set your dynamic value here
+                                        firstName: memberRecord?.firstname !== null? memberRecord?.firstname:"", // set your dynamic value here
+                                        lastName: memberRecord?.lastname !== null? memberRecord?.lastname:"", // set your dynamic value here
+                                        phone: memberRecord?.mobile_number !== null? memberRecord?.mobile_number:"", // set your dynamic value here
+                                        whatsapp: memberRecord?.mobile_number !== null? memberRecord?.mobile_number:"", // set your dynamic value here
+                                        birthday: memberRecord?.birthday !== null? memberRecord?.birthday:"", // set your dynamic value here
                                     }}
                                     validationSchema={getValidationSchema(target)}
                                     onSubmit={async (values, { resetForm, setFieldValue }) => {

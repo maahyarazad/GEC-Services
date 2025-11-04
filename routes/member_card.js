@@ -139,7 +139,8 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
             lastname: member.lastname,
             email: member.email,
             serial_number: member.serial_number,
-            google_pass_token: googlePassToken
+            google_pass_token: googlePassToken,
+            birthday: new Date(member.birthday) 
         };
 
         // Add memberId only when it doesn’t exist yet
@@ -172,7 +173,6 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
 });
 
 
-
 router.post('/member-auto-login', upload.none(), authorization_middleware.authorize_member, async (req, res) => {
     try {
 
@@ -196,6 +196,24 @@ router.post('/member-auto-login', upload.none(), authorization_middleware.author
     }
 });
 
+
+router.get('/member-card-login', upload.none(), async (req, res) => {
+    const {memberId} = req.query;
+    try {
+        const memberRecord = await dbService.findByConditions("member_card", {
+            card_number: memberId
+        });
+        return res.json({
+            status: true,
+            message: 'Success',
+            memberRecord
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: false, message: 'Server error' });
+    }
+});
 
 router.post('/member-login', upload.none(), async (req, res) => {
     const member = req.body; // get the entire object

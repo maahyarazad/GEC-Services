@@ -251,6 +251,14 @@ async function generateGooglePass(data) {
             _now.getMinutes(),
             _now.getSeconds()
         );
+        const JWTexpirationDate = new Date(
+            _now.getFullYear() ,
+            _now.getMonth() + 3, // add 12 months
+            _now.getDate(),
+            _now.getHours(),
+            _now.getMinutes(),
+            _now.getSeconds()
+        );
     
         const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
         const formattedDate = expirationDate.toLocaleDateString('en-GB', options).replace(/\//g, '-');
@@ -384,7 +392,7 @@ async function generateGooglePass(data) {
             aud: 'google',
             typ: 'savetowallet',
             iat: now,
-            exp: now + 60 * 60, // 1 hour
+            exp: Math.floor(new Date(JWTexpirationDate).getTime() / 1000),
             payload: {
                 genericClasses: [genericClass],
                 genericObjects: [genericObject]

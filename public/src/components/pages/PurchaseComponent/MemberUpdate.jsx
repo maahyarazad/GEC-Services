@@ -9,7 +9,7 @@ import { useSnackbar } from "../../Providers/Snackbar";
 import { useAlertDialog } from '../../Providers/AlertProvider';
 import OtpTimer from "../../utils/OtpTimer";
 import OtpInput from "../../utils/OtpInput";
-
+import BirthdayField from "../../utils/BirthdayField";
 
 
 
@@ -47,6 +47,9 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
             .min(10, "Mobile number is too short. It should be at least 10 characters including country code.")
             .max(15, "Mobile number is too long")
             .required("Mobile number is required!"),
+        birthday: Yup.date()
+        .max(new Date(), "Birthday cannot be in the future")
+        .required("Birthday is required!")    
 
     });
 
@@ -271,7 +274,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
     const getMemberPass = async () => {
 
         try {
-
+            debugger;
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-pass`, {
                 method: 'POST',
                 headers: {
@@ -360,11 +363,12 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                         mobile_number: wizardState.member?.mobile_number || "",
                         card_number: wizardState.member?.card_number || "",
                         card_expiry_date: wizardState.member?.card_expiry_date || "",
+                        birthday: wizardState.member?.birthday || ""
                     }}
                     validationSchema={validationSchema}
                     onSubmit={(values, formikHelpers) => handleSendOtp(wizardState.member)}
                 >
-                    {({ setFieldValue, errors, touched, isSubmitting, values }) => (
+                    {({ setFieldValue, errors, touched, isSubmitting, values, setFieldTouched }) => (
                         <Form>
                             {/* Email Field */}
                             <TextField
@@ -448,6 +452,13 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                 }}
                                 error={touched.mobile_number && Boolean(errors.mobile_number)}
                             />
+
+
+                            <div  className="mt-1">
+
+                                <BirthdayField errors={errors} setFieldValue={setFieldValue} size="medium" setWizardState={setWizardState}
+                                    values={values} touched={touched} setFieldTouched={setFieldTouched}/>
+                            </div>
 
                             {/* Submit Button */}
                             <Button
