@@ -8,9 +8,7 @@ import { useEffect } from "react";
 export default function BirthdayField({ values, setFieldValue, setFieldTouched, errors, touched, size='small' , setWizardState}) {
   const birthdayValue = values.birthday ? dayjs(values.birthday) : null;
 
-  useEffect(()=>{
-    console.log(values)
-  },[])
+
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>

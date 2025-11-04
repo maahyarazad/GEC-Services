@@ -196,7 +196,7 @@ export const SurveyDataGrid = () => {
                         ..._row
                     }}
 
-                    onSubmit={async (values) => {console.log(values); await editRow(values);}}
+                    onSubmit={async (values) => {await editRow(values);}}
                 >
                     {({
                         setFieldValue,

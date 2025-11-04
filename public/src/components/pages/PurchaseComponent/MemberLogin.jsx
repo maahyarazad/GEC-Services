@@ -333,7 +333,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
             }
 
             const data = await response.json();
-            console.log(data);
+            
 
 
             // Optionally, clear any local state or redirect

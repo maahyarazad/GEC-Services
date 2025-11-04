@@ -51,7 +51,7 @@ export const WhatsappBroadcast = () => {
 
 
     const handleSendWhatsapp = () => {
-        console.log("click");
+        
         const checkerror = document.querySelector("span.lists.error");
         if (checkerror) {
             checkerror.classList.remove("error");
@@ -65,7 +65,7 @@ export const WhatsappBroadcast = () => {
         }
         const template = exampleMessageRef.current.textContent;
         const filledTemplate = template.replaceAll("FIRSTNAME", "");
-        console.log(filledTemplate);
+        // console.log(filledTemplate);
     };
 
     return (

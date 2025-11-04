@@ -165,7 +165,7 @@ export const RegistrationDataGrid = () => {
     }, [])
 
     const handleCheck = (e) => {
-        console.log(e);
+        
         setSelectedEvent(e);
     };
 
