@@ -1,37 +1,80 @@
-
+require('dotenv').config();
 const { Server } = require("socket.io");
+const dbService = require('../services/dbService');
 
-function createWebSocketServer(server, allowedOrigins) {
+function createWebSocketServer(server, allowedOrigins = []) {
+
+
+    const localOrigins = [
+        `http://127.0.0.1:${process.env.PORT}`,
+        `http://localhost:${process.env.PORT}`,
+
+    ];
+
+    const mergedOrigins = [...new Set([...allowedOrigins, ...localOrigins])];
 
     const io = new Server(server, {
         path: "/socket.io",
         cors: {
-            origin: allowedOrigins,
+            origin: mergedOrigins,
+            methods: ["GET", "POST"],
             credentials: true,
         },
+        transports: ["websocket", "polling"], // ensure fallback to polling if websocket fails
+        allowEIO3: true, // support older Socket.IO clients if needed
     });
 
-    io.on("connection", (socket) => {
-        console.log("Client connected");
+    io.engine.on("connection_error", (err) => {
+        console.error("⚠️ Socket.IO Engine connection error:", err.code, err.message);
+        if (err.req) {
+            console.error("Request headers:", err.req.headers);
+        }
+    });
 
-        // Check auth once on connection
-        const token = socket.handshake.headers.cookie?.includes("a-usr=") ?? false;
-        socket.emit("auth", { Auth: !!token });
+    io.use((socket, next) => {
+        // console.log("Incoming connection headers:", socket.handshake.headers);
+        next();
+    });
 
-        // Set up interval for this client
-        const interval = setInterval(() => {
-            // Re-check token if you want live auth validation
+    io.on("connection", async (socket) => {
+    
+        
+        const hasToken = socket.handshake.headers.cookie?.includes("a-usr=") ?? false;
+        socket.emit("auth", { Auth: !!hasToken, registration_stat: await dbService.registration_stat() });
+
+        const interval = setInterval(async () => {
+            const registration_stat = await dbService.registration_stat();
             const liveToken = socket.handshake.headers.cookie?.includes("a-usr=") ?? false;
-            socket.emit("auth", { Auth: !!liveToken });
-        }, 10_000); // every 10 seconds
+            socket.emit("auth", { Auth: !!liveToken, registration_stat });
 
-        // Clean up when client disconnects
-        socket.on("disconnect", () => {
-            console.log("Client disconnected");
+
+            
+        }, 10_000);
+
+        socket.on("invoice", (data) => {
+            // console.log("📩 Received invoice event:", data);
+
+            // Send back to all connected clients
+            io.emit("invoice:ack", {
+                status: "ok",
+                received: data,
+                timestamp: new Date().toISOString(),
+            });
+
+              socket.emit("invoice:update", {
+                message: "Invoice list should refresh",
+                invoiceId: data.id,
+            });
+
+        });
+
+        socket.on("disconnect", (reason) => {
+            // console.log(`❌ Client disconnected (${reason})`);
             clearInterval(interval);
         });
     });
 
+    console.log("✅ WebSocket server initialized with path /socket.io");
     return io;
 }
 

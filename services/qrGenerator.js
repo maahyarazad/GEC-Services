@@ -10,7 +10,7 @@ const fs = require('fs');
  */
 async function generateQRWithText(event_page, code) {
 
-    const tempPath = path.join(__dirname, '..','qr-files');
+    const tempPath = path.join(__dirname, '..','qr-files', `${event_page}`);
 
     if (!fs.existsSync(tempPath)) {
         fs.mkdirSync(tempPath, { recursive: true });

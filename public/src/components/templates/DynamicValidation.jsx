@@ -75,6 +75,7 @@ const companyInfoSchema = Yup.object().shape({
     });
 
 export const getValidationSchema = (target) => {
+  
   let baseSchema = Yup.object().shape({
     email: Yup.string()
       .email("Please enter a valid email address.")

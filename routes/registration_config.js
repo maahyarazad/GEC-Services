@@ -35,7 +35,8 @@ const storage = multer.diskStorage({
   },
 });
 const { generateMapImage } = require("../services/mapService");
-const authorize_admin = require("../middleware/auth");
+const authorization_middleware = require("../middleware/auth");
+const { query } = require("express");
 const upload = multer({ storage: storage });
 
 const loginLimiter = rateLimit({
@@ -51,7 +52,7 @@ const loginLimiter = rateLimit({
 
 router.post(
   "/api/registration-config",
-  authorize_admin,
+  
   upload.single("image"),
   async (req, res) => {
     try {
@@ -70,7 +71,7 @@ router.post(
           registration_data.id
         );
         if (!existing) {
-          
+
           return res
             .status(404)
             .json({ status: false, message: "Record not found" });
@@ -83,7 +84,7 @@ router.post(
           registration_data.page
         );
         console.log("check duplicate record");
-        
+
         if (duplicate_record && duplicate_record.id !== existing.id) {
           return res.status(400).json({
             status: false,
@@ -156,7 +157,7 @@ router.post(
 
       // uniqeCodeAccess Logic goes here
 
-      if(data.loginRequired){
+      if (data.loginRequired) {
 
         const code_list = [];
         if (Number(data.uniqeCodeAccess) > 1) {
@@ -172,7 +173,7 @@ router.post(
             });
           }
         }
-  
+
         if (code_list.length > 0) {
           const insert_data = await dbService.insertWithKeys(
             "registration_config",
@@ -197,13 +198,13 @@ router.post(
             insert_data,
           });
         }
-      }else{
+      } else {
         const insert_data = dbService.create(table_name, registration_data);
-          res.json({
-            status: true,
-            message: "Data saved successfully",
-            insert_data,
-          });
+        res.json({
+          status: true,
+          message: "Data saved successfully",
+          insert_data,
+        });
       }
 
 
@@ -214,14 +215,15 @@ router.post(
   }
 );
 
-router.patch("/api/registration-config-switch", authorize_admin, async (req, res) => {
+router.patch("/api/registration-config-switch",  async (req, res) => {
   try {
-    const id = Number(req.query.id);
+    const idParam = req.query?.id;
 
-    if (!id) {
+    if (!idParam) {
       return res.status(400).json({ status: false, message: "Missing id parameter" });
     }
 
+    const id = Number(idParam);
     const val = req.query.switch;
     const result = await dbService.updateWhere(
       "registration_config",
@@ -240,7 +242,7 @@ router.patch("/api/registration-config-switch", authorize_admin, async (req, res
   }
 });
 
-router.get("/api/registration-config", authorize_admin ,async (req, res) => {
+router.get("/api/registration-config",  async (req, res) => {
   try {
     const table_name = "registration_config";
     const rows = await dbService.findAllQueryFilter(table_name);
@@ -253,9 +255,9 @@ router.get("/api/registration-config", authorize_admin ,async (req, res) => {
 });
 
 
-router.patch("/api/registration-config-archive", authorize_admin, async (req, res) => {
+router.patch("/api/registration-config-archive",  async (req, res) => {
   try {
-    const id = Number(req.query.id);
+    const id = Number(req.query?.id);
 
     if (!id) {
       return res.status(400).json({ status: false, message: "Missing id parameter" });
@@ -263,7 +265,7 @@ router.patch("/api/registration-config-archive", authorize_admin, async (req, re
 
     const result = await dbService.updateWhere(
       "registration_config",
-      { archived: 1 , modifiedAt: new Date().toISOString() },
+      { archived: 1, modifiedAt: new Date().toISOString() },
       { id }
     );
 
@@ -302,101 +304,101 @@ router.post("/registration-config/optional-login", async (req, res) => {
   }
 });
 
-router.post("/registration-config-access" , upload.none(), loginLimiter,async (req, res) => {
+router.post("/registration-config-access", upload.none(), loginLimiter, async (req, res) => {
   try {
     const data = req.body;
     const registration_code = data.registration_code
       .replace(/\s+/g, " ")
       .trim();
 
-      const member_key = await dbService.findExact(
-        "member_card",
-        "card_number", Number(registration_code.slice(1, registration_code.length)));
-      if(member_key.length === 1){
-          const expiryDate = new Date(member_key[0].card_expiry_date);
-          const check_ExpiryDate = new Date(expiryDate);
+    const member_key = await dbService.findExact(
+      "member_card",
+      "card_number", Number(registration_code.slice(1, registration_code.length)));
+    if (member_key.length === 1) {
+      const expiryDate = new Date(member_key[0].card_expiry_date);
+      const check_ExpiryDate = new Date(expiryDate);
 
-          // add 1 year
-          check_ExpiryDate.setFullYear(expiryDate.getFullYear() + 1);
-          const now = new Date();
+      // add 1 year
+      check_ExpiryDate.setFullYear(expiryDate.getFullYear() + 1);
+      const now = new Date();
 
 
-        if (
-          check_ExpiryDate.getFullYear() < now.getFullYear() || 
-          (check_ExpiryDate.getFullYear() === now.getFullYear() && check_ExpiryDate.getMonth() < now.getMonth())
-        )  {
+      if (
+        check_ExpiryDate.getFullYear() < now.getFullYear() ||
+        (check_ExpiryDate.getFullYear() === now.getFullYear() && check_ExpiryDate.getMonth() < now.getMonth())
+      ) {
 
-          const message = Number(member_key[0].card_number.toString().slice(0, 2)) === 70
+        const message = Number(member_key[0].card_number.toString().slice(0, 2)) === 70
           ? 'Your membership card has expired. Please contact the card issuer for assistance.'
-          :'Your membership card has expired. For assistance, please contact <h3><a href="mailto:office2@german-emirates-club.com">office2@german-emirates-club.com</a></h3>';
-          return res
-            .status(401)
-            .json({
-              status: false,
-              message: message
-            });
-}
-
-        const page_data = await dbService.findExact(
-          "registration_config",
-          "page",
-          data.event
-        );
-        
-        if (page_data) {
-          
-          return res.status(200).json({
-            status: true,
-            message: "Login Success",
-            data: page_data,
-            session: req.session,
-          });
-        }
-      }
-      
-      // Check duplicate
-      
-      const key = await dbService.findExact(
-        "registration_keys",
-        "key",
-        registration_code
-      );
-      
-      if (key && key.length > 0) {
-        const page_data = await dbService.findExact(
-          "registration_config",
-          "id",
-          key[0].registration_config_id
-        );
-        page_data[0].registration_code = registration_code;
-        
-        if (page_data) {
-          
-          return res.status(200).json({
-            status: true,
-            message: "Login Success",
-            data: page_data,
-            session: req.session,
-          });
-        }
-      }
-      
-      const page_data = await dbService.findExact(
-        "registration_config",
-        "registration_code",
-        registration_code
-      );
-      if (!page_data || page_data.length == 0) {
-          
+          : 'Your membership card has expired. For assistance, please contact <h3><a href="mailto:office2@german-emirates-club.com">office2@german-emirates-club.com</a></h3>';
         return res
           .status(401)
-          .json({ status: false, message: "Don’t have a valid MemberCard? Gosh darn—it’s time! Grab it now: 056 20 500 66, or click on the WhatsApp button to inquire." });
+          .json({
+            status: false,
+            message: message
+          });
       }
-      
+
+      const page_data = await dbService.findExact(
+        "registration_config",
+        "page",
+        data.event
+      );
+
+      if (page_data) {
+
+        return res.status(200).json({
+          status: true,
+          message: "Login Success",
+          data: page_data,
+          session: req.session,
+        });
+      }
+    }
+
+    // Check duplicate
+
+    const key = await dbService.findExact(
+      "registration_keys",
+      "key",
+      registration_code
+    );
+
+    if (key && key.length > 0) {
+      const page_data = await dbService.findExact(
+        "registration_config",
+        "id",
+        key[0].registration_config_id
+      );
+      page_data[0].registration_code = registration_code;
+
+      if (page_data) {
+
+        return res.status(200).json({
+          status: true,
+          message: "Login Success",
+          data: page_data,
+          session: req.session,
+        });
+      }
+    }
+
+    const page_data = await dbService.findExact(
+      "registration_config",
+      "registration_code",
+      registration_code
+    );
+    if (!page_data || page_data.length == 0) {
+
+      return res
+        .status(401)
+        .json({ status: false, message: "Don’t have a valid MemberCard? Gosh darn—it’s time! Grab it now: 056 20 500 66, or click on the WhatsApp button to inquire." });
+    }
+
 
     // await sendOtpToPhone(data.mobile_number, req, res, client);
     // await dbService.create("registration_client_access", data);
-    
+
     return res.status(200).json({
       status: true,
       message: "Login Success",
@@ -411,7 +413,7 @@ router.post("/registration-config-access" , upload.none(), loginLimiter,async (r
 
 router.post(
   "/api/registration-config/duplicate-record",
-  authorize_admin,
+  
   upload.single("none"),
   async (req, res) => {
     try {
@@ -428,29 +430,87 @@ router.post(
           .json({ status: false, message: "Record not found" });
       }
 
-          // 2. Modify record (append " copy" to title)
-    const newRecord = {
-      ...existing,
-      title: `${existing.title}-copy`,
-      page: `${existing.page}-copy`,
-    };
-    delete newRecord.createdAt;
-    delete newRecord.modifiedAt;
-    delete newRecord.id;
+      // 2. Modify record (append " copy" to title)
+      const newRecord = {
+        ...existing,
+        title: `${existing.title}-copy`,
+        page: `${existing.page}-copy`,
+      };
+      delete newRecord.createdAt;
+      delete newRecord.modifiedAt;
+      delete newRecord.id;
 
-    
-    const insert_data = dbService.create(table_name, newRecord);
-          res.json({
-            status: true,
-            message: "Data saved successfully",
-          });
 
-      
+      const insert_data = dbService.create(table_name, newRecord);
+      res.json({
+        status: true,
+        message: "Data saved successfully",
+      });
+
+
     } catch (error) {
       console.error("Edit error:", error);
       res.status(500).json({ status: false, message: "Server error" });
     }
   }
 );
+
+
+router.get('/api/registration-config-list',  async (req, res) => {
+  try {
+
+    const rows = await dbService.registration_config_list();
+
+    return res.status(200).json({
+      status: true,
+      message: "Data fetched successfully",
+      rows,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
+router.get('/api/event-clean-up',  async (req, res) => {
+  try {
+
+    const page = req.query?.page;
+
+    if (!page) {
+      return res.status(400).json({ status: false, message: "Missing page parameter" });
+    }
+
+    const passPath = path.join(__dirname, "..", "pass_storage", `${page}`);
+    const qrPath = path.join(__dirname, "..", "qr-files", `${page}`);
+
+    try {
+      await fs.access(passPath); // throws if not exists
+      await fs.rm(passPath, { recursive: true, force: true });
+    } catch (error) {
+      console.error(error);
+    }
+
+
+    try {
+      await fs.access(qrPath); // throws if not exists
+      await fs.rm(qrPath, { recursive: true, force: true });
+    } catch (error) {
+      console.error(error);
+    }
+
+
+    return res.status(200).json({
+      status: true,
+      message: "PKPass and QR code files have been successfully deleted.",
+    });
+
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
 
 module.exports = router;

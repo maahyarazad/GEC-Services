@@ -849,3 +849,21 @@ tr.eventhide {
     height: auto;         /* keeps aspect ratio */
   }
 }
+
+.hover-li:hover {
+  background-color: #e5e4e4;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+
+.fade-in {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  pointer-events: none; /* optional: prevents interaction when hidden */
+}
+
+.fade-in.visible {
+  opacity: 1;
+  pointer-events: auto;
+}

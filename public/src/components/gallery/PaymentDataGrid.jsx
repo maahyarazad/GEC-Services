@@ -5,6 +5,8 @@ import { MdLockReset } from "react-icons/md";
 import { IoShieldCheckmarkSharp } from "react-icons/io5";
 import { FaExclamation } from "react-icons/fa";
 import {config} from '../../ui_config';
+import FilterParams from '../admin/FilterParams';
+import { filter } from 'lodash';
 
 const columns = ({ onResendPasswordReset, loadingRowId }) => [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -123,12 +125,7 @@ export const PaymentDataGrid = () => {
                 const sortOrder = sort.sort || '';
 
                 // Parse filters from filterModel.items
-                const filterParams = Array.isArray(filterModel.items)
-                    ? filterModel.items
-                        .filter(item => item?.field && item?.value) // Ensure valid filters
-                        .map(item => `filter_${item.field}=${encodeURIComponent(item.value)}`)
-                        .join('&')
-                    : '';
+                const filterParams = FilterParams(filterModel);
 
                 const queryParams = [
                     `page=${paginationModel.page + 1}`,

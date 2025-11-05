@@ -30,10 +30,62 @@ const safeWrite = async (query, params = []) => {
 };
 
 
+const paramBuilder = (filters) =>  {
+            const filterKeys = Object.keys(filters);
+        const whereParts = [];
+        const params = [];
 
+
+        filterKeys.forEach(key => {
+            const filterValue = filters[key];
+
+            // Check if the value is numeric
+            const isNumeric =
+                filterValue !== null &&
+                filterValue !== '' &&
+                !isNaN(filterValue) &&
+                !isNaN(parseFloat(filterValue));
+
+                switch (true) {
+                    case key === 'r.event':
+                        whereParts.push(`${key} = ?`);
+                        params.push(`${filterValue}`);
+                        break;
+                    case filterValue === 'isEmpty':
+                    whereParts.push(`(${key} = '' OR ${key} IS NULL)`);
+                    break;
+
+                case filterValue === 'isNotEmpty':
+                    whereParts.push(`(${key} <> '' AND ${key} IS NOT NULL)`);
+                    break;
+
+                case isNumeric:
+                    whereParts.push(`${key} = ?`);
+                    params.push(Number(filterValue));
+                    break;
+
+                case filterValue != null && filterValue !== '':
+                    whereParts.push(`${key} LIKE ?`);
+                    params.push(`%${filterValue}%`);
+                    break;
+
+
+                default:
+                    // no filter condition
+                    break;
+            }
+        });
+
+
+        return [whereParts, params]
+    }
+    
 
 const dbService = {
 
+    getDB : () => {
+        return db
+    },
     createBulk: (table, rows) => {
         if (!Array.isArray(rows) || rows.length === 0) {
             return Promise.resolve([]);
@@ -205,7 +257,7 @@ const dbService = {
                 return `${col} = ?`;
             }
         }).join(" AND ");
-        
+
         const sql = `SELECT * FROM ${table} WHERE ${whereClause}`;
 
         return new Promise((resolve, reject) => {
@@ -273,14 +325,14 @@ const dbService = {
     },
 
     getTotalCount: (table, filters = {}) => {
-        return new Promise((resolve, reject) => {
-            const keys = Object.keys(filters);
-            const whereClause = keys.length
-                ? "WHERE " + keys.map(key => `${key} LIKE ?`).join(" AND ")
-                : "";
-            const params = keys.map(key => `%${filters[key]}%`);
+        
+        const [whereParts, params ]=  paramBuilder(filters);
 
-            const sql = `SELECT COUNT(*) AS count FROM ${table} ${whereClause}`;
+        const whereClause = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : "";
+        const sql = `SELECT COUNT(*) AS count FROM ${table} ${whereClause}`;
+        return new Promise((resolve, reject) => {
+
+
 
             db.get(sql, params, (err, row) => {
                 if (err) return reject(err);
@@ -302,13 +354,10 @@ const dbService = {
     ) => {
         const offset = page * pageSize;
 
-        // Build WHERE clause dynamically for filters with LIKE
-        const filterKeys = Object.keys(filters);
-        const whereClause = filterKeys.length
-            ? "WHERE " + filterKeys.map(key => `${key} LIKE ?`).join(" AND ")
-            : "";
+        const [whereParts, params ]=  paramBuilder(filters);
 
-        const params = filterKeys.map(key => `%${filters[key]}%`);
+
+        const whereClause = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : "";
 
         // Validate sortField and sortOrder to avoid SQL injection
         const orderClause =
@@ -357,12 +406,19 @@ const dbService = {
         // Extract filters sent as filter_<field>=value
         const filters = {};
         Object.entries(queryFilters).forEach(([key, value]) => {
-            if (key.startsWith('filter_')) {
-                const field = key.replace('filter_', '');
-                if (value !== undefined && value !== "") {
-                    filters[field] = value;
-                }
+            if (!key.startsWith("filter_")) return;
+
+            let field = key.replace("filter_", "");
+            if (value === undefined || value === "") return;
+
+            if (Object.keys(leftJoin).length !== 0) {
+                const alias = table_name[table_name.length - 1];
+                filters[`${alias}.${field}`] = value;
+            } else {
+
+                filters[field] = value;
             }
+
         });
 
         const data = await dbService.getPaginatedFilteredData(
@@ -375,6 +431,7 @@ const dbService = {
             leftJoin,
             columns
         );
+
         return { filters, data };
     },
 
@@ -469,6 +526,52 @@ const dbService = {
         });
     },
 
+
+    registration_stat: () => {
+        const query = `
+    SELECT 
+    event,
+    COUNT(*) AS total_count,
+    SUM(CASE WHEN metadata_modifiedAt IS NOT NULL THEN 1 ELSE 0 END) AS modified_count,
+    SUM(CASE WHEN metadata_modifiedAt IS NULL THEN 1 ELSE 0 END) AS null_count
+    FROM registration
+    GROUP BY event;
+
+        `;
+
+        return new Promise((resolve, reject) => {
+            db.all(query, [], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+    },
+
+    registration_config_list: () => {
+        const query = `SELECT page, title FROM registration_config where archived = 0`;
+
+        return new Promise((resolve, reject) => {
+            db.all(query, [], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+    },
+
+    registration_config_auto_register: () => {
+        const query = `select * from registration_config where event_date is not null and event_date = date('now');`;
+
+        return new Promise((resolve, reject) => {
+            db.all(query, [], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+    },
+
+
+
+
     countExactWithConditions: (table, conditions) => {
         const keys = Object.keys(conditions);
 
@@ -481,6 +584,8 @@ const dbService = {
 
         for (const [key, condition] of Object.entries(conditions)) {
             if (typeof condition === "object" && condition.op) {
+
+
                 if (condition.op.toUpperCase() === "BETWEEN") {
                     if (!Array.isArray(condition.value) || condition.value.length !== 2) {
                         throw new Error(`BETWEEN requires an array with 2 values for ${key}`);

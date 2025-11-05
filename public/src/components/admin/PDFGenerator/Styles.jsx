@@ -2,6 +2,7 @@ import { StyleSheet } from '@react-pdf/renderer';
 
 const blueColor = '#037bfc';
 const orangeColor = '#d47e11';
+const grayColor = '#A9A9A9';
 
 const styles = StyleSheet.create({
     page: {
@@ -9,11 +10,14 @@ const styles = StyleSheet.create({
         fontSize: 9, // decreased from 12
         backgroundColor: '#fff',
     },
+    flexEnd:{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' },
+    flexStart:{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 20,
+        marginBottom: 40,
     },
+    currencyTotalStyle:{textAlign: 'right', color: grayColor, fontSize: 7},
     logo: {
         // width: 90,
         height: 50,
@@ -24,6 +28,7 @@ const styles = StyleSheet.create({
         fontSize: 8,
     },
     projectLine1: {
+        
         fontSize: 8, // decreased from 13
         fontWeight: 600,
         textTransform: 'uppercase',
@@ -45,6 +50,7 @@ const styles = StyleSheet.create({
         textAlign: 'right',
     },
     companyInfo: {
+        
         flexDirection: 'row',
         justifyContent: 'flex-start',
         marginBottom: 20,
@@ -53,6 +59,7 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
     },
     companyName: {
+        
         fontSize: 11, // decreased from 14
         fontWeight: 700,
         textTransform: 'uppercase',
@@ -65,6 +72,7 @@ const styles = StyleSheet.create({
         color: '#000',
     },
     referencesContainer: {
+        marginBottom: 40,
         marginTop: 30,
         width: '100%'
     },
@@ -92,6 +100,12 @@ const styles = StyleSheet.create({
         borderTopColor: '#000',
         paddingBottom: 5,
     },
+    tableRowCurrency: {
+        flexDirection: 'row',
+        paddingBottom: 5,
+        fontSize: 6,
+        color: grayColor
+    },
 
     tableBodyRow: {
         flexDirection: 'row',
@@ -100,7 +114,9 @@ const styles = StyleSheet.create({
 
 
     },
-
+    body_row:{
+         whiteSpace: 'pre-line'
+    },
 
     tableColDescriptionHeader: {
         flex: 5,
@@ -146,6 +162,19 @@ const styles = StyleSheet.create({
         flex: 2,
         fontSize: 9, // decreased from 13
         fontWeight: 500,
+    },
+    tableColCurrency: {
+        textAlign: 'right',
+        flex: 1,
+        fontSize: 7, // decreased from 13
+        color: grayColor
+    },
+    tableAmountColCurrency: {
+        textAlign: 'right',
+        flex: 2,
+        fontSize: 7, // decreased from 13
+        fontWeight: 500,
+        color: grayColor
     },
     tableBodyText: {
         flex: 1,
@@ -208,6 +237,14 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: 600,
     },
+    totalColumn: {
+        flexDirection: 'column',
+        marginBottom: 2,
+        color: blueColor,
+        textTransform: 'uppercase',
+        fontSize: 10,
+        fontWeight: 600,
+    },
     paymentTerms: {
         marginTop: 30,
     },
@@ -251,8 +288,6 @@ const styles = StyleSheet.create({
         left: 30,
         right: 30,
         width: '90%',   // ensures it spans properly
-        flexDirection: 'row',
-        justifyContent: 'space-between',
     },
 
     footerTitle: {
@@ -265,6 +300,8 @@ const styles = StyleSheet.create({
         color: '#adacac',
         fontWeight: 200
     },
+
+
 });
 
 export default styles;

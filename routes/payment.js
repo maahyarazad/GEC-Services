@@ -259,7 +259,7 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
             registration_config.event_id = performa_invoice_data.userId;
 
 
-            const qrPath = path.join(__dirname, ".." ,"qr-files", `${registration_config.event_id}.png`);
+            const qrPath = path.join(__dirname, ".." ,"qr-files", `${registration_config.page}`, `${registration_config.event_id}.png`);
 
             // skip creating qrcode on refresh page
             try {

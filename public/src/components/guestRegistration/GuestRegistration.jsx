@@ -10,7 +10,7 @@ import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import CircularProgress from '@mui/material/CircularProgress';
 import { GoShieldLock } from "react-icons/go";
 import { Button } from "@mui/material";
-import SimpleSnackbar from "../utils/Snackbar";
+import { useSnackbar } from "../Providers/Snackbar";
 import { Box, Paper, Typography, Container } from '@mui/material';
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
@@ -18,7 +18,7 @@ const validationSchema = Yup.object({
 
 export const GuestRegistration = () => {
     const eventSlug = useParams();
-    const snackbarRef = useRef();
+    const {showSnackbar} = useSnackbar();
 
     const passkey = 1234;
     const initialValues = {
@@ -74,9 +74,12 @@ export const GuestRegistration = () => {
     const hostessKey = 12345;
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [pageMessage, setPageMessage] = useState(null);
+    const [statusCode, setStatusCode] = useState(null);
 
 
     const fetchRegistration = useCallback(async () => {
+        setLoading(true);
         if (!query) {
             setError("No guest-code provided in URL.");
             setLoading(false);
@@ -86,7 +89,6 @@ export const GuestRegistration = () => {
         if (!guestUser) return;
 
         try {
-            setLoading(true);
 
             const formData = new FormData();
             formData.append("event_id", query);
@@ -97,21 +99,26 @@ export const GuestRegistration = () => {
             });
 
 
-            if (!response.ok) {
-                snackbarRef.current?.openSnackbar(response_data.error);
-            }
-
-
+            
             const response_data = await response.json();
-            if (response_data.status) {
+            setRegistrant(response_data.record);
+            setPageMessage(response_data.message);
+            setStatusCode(response.status);
+
+            
+            
+            if (response.status === 200) {
                 
-                setRegistrant(response_data.record)
-                snackbarRef.current?.openSnackbar(response_data.message, 'success');
+                showSnackbar(response_data.message, 'success');
+                return;
             }
+
+            showSnackbar(response_data.message, "");
+
 
         } catch (err) {
             
-            snackbarRef.current?.openSnackbar(err.message);
+            showSnackbar(err.message, "");
             setError("Failed to fetch registration.");
         } finally {
             setLoading(false);
@@ -198,51 +205,61 @@ export const GuestRegistration = () => {
                 </div>
             </div>
         );
-    }
-
-    if (guestUser) {
-        return (
-
-            <div>
-                <SimpleSnackbar ref={snackbarRef} />
-                <div>
-                    <Container maxWidth="sm" sx={{ height: '100vh' }}>
-                        <SimpleSnackbar ref={snackbarRef} />
-                        <Box
-                            sx={{
-                                height: '100%',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                            }}
-                        >
-                            <Paper elevation={10} sx={{ p: 4, textAlign: 'center', width: '100%' }}>
-                                {registrant ? (
-                                    <>
-                                        <Typography variant="h4" gutterBottom>
-                                            Registration Successful!
-                                        </Typography>
-                                        <Typography variant="body1" sx={{ mt: 2 }}>
-                                            <strong>Registrant:</strong> {registrant.firstName} {registrant.lastName}
-                                        </Typography>
-                                        {/* <Typography variant="body1" sx={{ mt: 2 }}>
-                                            <strong>Phone Number:</strong> {registrant.phone}
-                                        </Typography>    */}
-                                        
-                                    </>
-                                ) : (
-                                    <Typography variant="h6" color="text.secondary">
-                                        No registration data to display.
-                                    </Typography>
-                                )}
-                            </Paper>
-                        </Box>
-                    </Container>
-
-                </div>
+    }else{
+        return(
+<>
+    
+    {guestUser ? (
+        loading ? (
+            <div
+                className="w-100 d-flex align-items-center justify-content-center"
+                style={{ height: '100dvh' }}
+            >
+                <CircularProgress />
             </div>
-        );
+        ) : (
+            <div>
+                <Container maxWidth="sm" sx={{ height: '100vh' }}>
+                    <Box
+                        sx={{
+                            height: '100%',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                        }}
+                    >
+                        <Paper elevation={10} sx={{ p: 4, textAlign: 'center', width: '100%' , background: `${statusCode === 200 ? "#d5f7d0": "#f7d0d0" }`}}>
+                            {registrant ? (
+                                <>
+                                    <Typography variant="h4" gutterBottom>
+                                        {pageMessage}
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 2 }}>
+                                        <strong>Registrant:</strong> {registrant.firstName} {registrant.lastName}
+                                    </Typography>
+                                    {/* 
+                                    <Typography variant="body1" sx={{ mt: 2 }}>
+                                        <strong>Phone Number:</strong> {registrant.phone}
+                                    </Typography>
+                                    */}
+                                </>
+                            ) : (
+                                <Typography variant="h6" color="text.secondary">
+                                    No registration data to display.
+                                </Typography>
+                            )}
+                        </Paper>
+                    </Box>
+                </Container>
+            </div>
+        )
+    ) : null}
+</>
+        )
     }
+
+
+
 };
 
 

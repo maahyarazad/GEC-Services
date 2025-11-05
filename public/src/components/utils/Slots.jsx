@@ -20,7 +20,7 @@ const lineStyle = {
                     {Object.keys(data.slots).map((hour) => {
                         const slot = data.slots[hour];
                         const isTaken = slot && slot.registerant_info;
-                        console.log(slot);
+                        
                         return (
                             <div key={hour} className="col-12 col-md-4 py-1">
                                 <Card

@@ -18,9 +18,10 @@ const survey = require('./routes/survey.js');
 const gic_user = require('./routes/gic_user.js');
 const payment = require('./routes/payment.js');
 const email_storage = require('./routes/email_storage.js');
-const {GSheetParser} = require('./services/g_sheet_parser.js');
-const whatsapp_sender = require('./routes/whatsapp_sender.js');
+const GSheetService = require('./services/gSheetService.js');
+const g_sheet = require('./routes/gSheet.js');
 const email_sender = require('./routes/email_sender.js');
+const invoice = require('./routes/invoice.js');
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
 const { createWebSocketServer } = require("./websocket/admin.js");
@@ -83,20 +84,17 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
-// app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
     console.log(`Received request for: ${req.url}`);
     next();
 });
 
-app.use((req, res, next) => {
-  console.log('Received request for: ${req.url}');
-  next();
-});
 
+app.use('/api/', authorize.authorize_admin);
 app.use('/uploads', express.static(path.join(__dirname, 'file_storage')));
 app.use('/apple_pass', express.static(path.join(__dirname, 'pass_storage')));
 app.use('/maps', express.static(path.join(__dirname, 'maps')));
@@ -114,8 +112,10 @@ app.use('/', payment);
 app.use('/', member_card);
 app.use('/', email_storage);
 app.use('/', email_sender);
+app.use('/', g_sheet);
+app.use('/', invoice);
 
-app.use('/api/', authorize);
+
 
 
 
@@ -135,7 +135,7 @@ createWebSocketServer(server, allowedOrigins);
 cron.schedule("0 */6 * * *", async () => {
   try {
     console.log("Running background job every 6 hours:", new Date());
-    await GSheetParser();
+    await GSheetService.GSheetParser();
     console.log("Background job finished at:", new Date());
   } catch (err) {
     console.error("Background job failed:", err);
@@ -153,3 +153,4 @@ cron.schedule("0 */6 * * *", async () => {
 server.listen(PORT, () => {
   console.log(`🚀 Server + WS listening on http://localhost:${PORT}`);
 });
+

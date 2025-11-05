@@ -2,28 +2,45 @@ import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/render
 import styles from './Styles';
 
 import gec_logo from "../../../assets/media/bp-logo.png";
-import { useEffect } from 'react';
 
-const MyDocument = ({ formData, logo }) => {
+
+
+const MyDocument = ({ formData, objectChanged }) => {
+
     const subtotal = formData.items.reduce(
         (total, item) => total + (parseFloat(item.amount) || 0),
         0
     );
 
 
+
     const { positiveTotal, negativeTotal } = formData.items.reduce(
-    (totals, item) => {
-        const amount = parseFloat(item.amount) || 0;
-        if (amount >= 0) {
-        totals.positiveTotal += amount;
-        } else {
-        totals.negativeTotal += amount;
-        }
-        return totals;
-    },
-    { positiveTotal: 0, negativeTotal: 0 }
+        (totals, item) => {
+            const amount = parseFloat(item.amount) || 0;
+            if (amount >= 0) {
+                totals.positiveTotal += amount;
+            } else {
+                totals.negativeTotal += amount;
+            }
+            return totals;
+        },
+        { positiveTotal: 0, negativeTotal: 0 }
     );
 
+    const { positiveTotalExchange, negativeTotalExchange } = formData.items.reduce(
+        (totals, item) => {
+            const amount = parseFloat(item.amount * formData.currency?.currency_rate) || 0;
+
+            if (amount >= 0) {
+                totals.positiveTotalExchange += amount;
+            } else {
+                totals.negativeTotalExchange += amount;
+            }
+
+            return totals;
+        },
+        { positiveTotalExchange: 0, negativeTotalExchange: 0 }
+    );
 
 
     return (
@@ -89,6 +106,11 @@ const MyDocument = ({ formData, logo }) => {
                     {/* Header */}
                     <View style={{ flexDirection: 'row' }}>
                         <Text style={styles.tableColDescriptionHeader}>Description</Text>
+                        {formData.items_price ? (
+                            <Text style={styles.tableColHeader}>PRICE</Text>
+                        ) : (
+                            <Text style={[styles.tableColHeader, { color: 'transparent' }]}>PRICE</Text>
+                        )}
                         <Text style={styles.tableColHeader}>QTY</Text>
                         <Text style={styles.tableColHeader}>DISC</Text>
                         <Text style={styles.tableColHeader}>VAT%</Text>
@@ -98,36 +120,72 @@ const MyDocument = ({ formData, logo }) => {
 
                     {/* Items */}
                     {formData.items.map((item, i) => (
-                        
+
                         <View key={`item-${i}`}>
-                            <View style={styles.tableRow} key={`item-${i}`}>
+                            {/* Currency row (shown only if enabled) */}
+
+
+                            {/* Main item row */}
+                            <View style={styles.tableRow}>
                                 <Text style={styles.tableColDescription}>{item.title || "No Title"}</Text>
+
+                                {formData.items_price ? (
+                                    <Text style={styles.tableCol}>{item.price || "-"}</Text>
+                                ) : (
+                                    <Text style={[styles.tableCol, { color: "transparent" }]}>{item.price || "-"}</Text>
+                                )}
+
                                 <Text style={styles.tableCol}>{item.qty || "-"}</Text>
                                 <Text style={styles.tableCol}>{item.disc || "0%"}</Text>
                                 <Text style={styles.tableCol}>{item.vat_p || "0"}</Text>
                                 <Text style={styles.tableCol}>{item.vat || "-"}</Text>
-                                <Text style={styles.tableColAmount}>AED {item.amount || "0"}</Text>
-                            </View>
-                            {item.body !== null && (
-                                <View style={styles.tableBodyRow}>
-                                    <Text style={styles.tableBodyText} flex={6}>
-                                        {Object.entries(item).map(([key, value]) => {
 
-                                            switch (key) {
-                                                case "body":
-                                                    return value.split("\n").map((line, j) => (
-                                                        <Text key={j}>
-                                                            {line}
-                                                            {"\n"}
-                                                        </Text>
-                                                    ));
-                                                default:
-                                                    return null;
-                                            }
-                                        })}
+                                {/* Base amount (AED) */}
+
+                                {formData?.currency?.currency_enable ? (
+                                    <Text style={styles.tableColAmount}>
+                                        {formData?.currency?.currency_symbol} {item.amount || "0"}
                                     </Text>
-                                </View>
-                            )}
+                                ) : (
+                                    <Text style={styles.tableColAmount}>AED {item.amount || "0"}</Text>
+                                )}
+
+
+                            </View>
+
+
+
+                            <View style={[styles.tableRowCurrency, !formData?.currency?.currency_enable && { height: 0, opacity: 0  }]}>
+                                {/* Empty cells to align with columns */}
+                                <Text style={styles.tableColDescription}></Text>
+                                <Text style={styles.tableCol}></Text>
+                                <Text style={styles.tableCol}></Text>
+                                <Text style={styles.tableCol}></Text>
+                                <Text style={styles.tableCol}></Text>
+                                <Text style={[styles.tableCol, styles.currencyTotalStyle]}>({item.vat || "-"})</Text>
+
+                                {/* Currency amount */}
+                                <Text style={[styles.tableColAmount,styles.currencyTotalStyle]}>
+                                    {(item.amount && formData?.currency?.currency_rate)
+                                        ? `(AED ${(item.amount * formData.currency.currency_rate).toFixed(2)})`
+                                        : `(AED 0.00)`
+                                    }
+                                </Text>
+                            </View>
+
+
+
+
+
+                            <View style={styles.tableBodyRow} key={`body-${i}`}>
+                                <Text style={styles.tableBodyText} flex={6}>
+                                    <Text style={styles.body_row}>
+                                        {item?.body || " "}
+                                    </Text>
+                                </Text>
+                            </View>
+
+
 
 
 
@@ -143,24 +201,103 @@ const MyDocument = ({ formData, logo }) => {
                             <Text style={styles.bankValue}>{value}</Text>
                         </View>
                     ))}
+                    <View  style={[styles.bankRow, formData?.currency?.currency_enable && {marginTop: 10}]}>
+
+                        {formData?.currency?.currency_enable ? (
+                                    <>
+                                        
+                                        <Text style={styles.bankKey}>
+
+                                            Exchange Rate
+                                        </Text>
+                                         <Text style={styles.bankValue}>
+                                            
+                                            AED {formData?.currency?.currency_rate} = 1.00 {formData?.currency?.currency_symbol} 
+                                        </Text>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Text style={{textAlign: 'right'}}>
+                                           
+                                        </Text>
+                                        <Text>
+                                            
+                                        </Text>
+                                     </>
+                                )}
+                    </View>
+
                 </View>
 
                 {/* Totals */}
                 <View style={styles.total}>
                     <View style={styles.totalLeft}>
+
                         <View style={styles.totalRowDefault}>
                             <Text>Subtotal:</Text>
-                            <Text>AED {positiveTotal.toFixed(2)}</Text>
+                             <View style={styles.flexEnd}>
+
+                                {formData?.currency?.currency_enable ? (
+                                    <>
+                                        
+                                        <Text style={{textAlign: 'right'}}>
+                                            {formData?.currency?.currency_symbol} {positiveTotal.toFixed(2)} 
+                                            
+                                        </Text>
+                                        <Text style={styles.currencyTotalStyle}>
+                                            
+                                            (AED {Number(positiveTotalExchange || 0).toFixed(2)})
+                                        </Text>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Text style={{textAlign: 'right'}}>
+                                            AED {positiveTotal.toFixed(2)}
+                                        </Text>
+                                        <Text>
+                                            
+                                        </Text>
+                                     </>
+                                )}
+                            </View>
                         </View>
+
+
+
+
+
+
                         <View style={styles.totalRowDefault}>
-                            <Text style={styles.totalRow}>Total:</Text>
-                            <Text style={styles.totalRow}>AED {Number(positiveTotal.toFixed(2)) + Number(negativeTotal.toFixed(2))}</Text>
+                            <Text>Total:</Text>
+                                <View style={styles.totalRow}>
+                             <View style={styles.flexEnd}>
+
+                                    {formData?.currency?.currency_enable
+                                        ? 
+                                        <>
+                                            <Text style={{textAlign: 'right'}}>{`${formData.currency.currency_symbol} ${(Number(positiveTotal) + Number(negativeTotal)).toFixed(2)}`}</Text>
+                                            <Text style={styles.currencyTotalStyle}>{`(AED ${((Number(positiveTotalExchange) || 0) - (Number(negativeTotalExchange) || 0)).toFixed(2)})`}</Text>
+                                        </>
+                                        
+                                        :
+                                        <>
+                                            <Text></Text>
+                                            <Text style={{textAlign: 'right'}}>AED {`${(Number(positiveTotal) + Number(negativeTotal)).toFixed(2)}`}</Text>
+                                        </>
+                                    }
+                                </View>
+                            </View>
                         </View>
+
+
+
+
+
                     </View>
 
                     <View style={styles.totalRight}>
                         <Text>Reference:</Text>
-                        <Text style={{ paddingLeft: 10 }}>please mention
+                        <Text style={{ paddingLeft: 10 }}>
                             <Text style={{ fontWeight: 600 }}>{formData.reference.reference_number}</Text>
                         </Text>
                     </View>
@@ -225,8 +362,8 @@ const MyDocument = ({ formData, logo }) => {
                                     </View>
                                 );
                             }
-                        }}/>
-                        
+                        }} />
+
 
                     </View>
                 </View>
@@ -259,31 +396,37 @@ const MyDocument = ({ formData, logo }) => {
                     </View>
 
                     {/* Bottom-right signature */}
-                     <View style={{ flex: 1, paddingLeft: 10, marginBottom: 20 }} render={({ pageNumber, totalPages }) => {
-                            if (formData.payment_terms.signature_bottom_right_name !== "") {
+                    <View style={{ flex: 1, paddingLeft: 10, marginBottom: 20 }} render={({ pageNumber, totalPages }) => {
+                        if (formData.payment_terms.signature_bottom_right_name !== "") {
 
-                                return (
-                                    <View>
+                            return (
+                                <View>
 
-                                        <View style={styles.signatureLine} />
-                                        <Text style={styles.signatureText}>
-                                            {formData.payment_terms.signature_bottom_right_name}
-                                        </Text>
-                                        <Text style={styles.signatureText}>
-                                            {formData.payment_terms.signature_bottom_right_title}
-                                            {formData.payment_terms.signature_bottom_right_company}
-                                        </Text>
-                                    </View>
-                                );
-                            }
-                        }}/>
+                                    <View style={styles.signatureLine} />
+                                    <Text style={styles.signatureText}>
+                                        {formData.payment_terms.signature_bottom_right_name}
+                                    </Text>
+                                    <Text style={styles.signatureText}>
+                                        {formData.payment_terms.signature_bottom_right_title}
+                                        {formData.payment_terms.signature_bottom_right_company}
+                                    </Text>
+                                </View>
+                            );
+                        }
+                    }} />
 
                 </View>
 
-                <View style={styles.footer} fixed
-                    render={({ pageNumber, totalPages }) => {
-                        if (pageNumber === totalPages) {
-                            return (
+                <View
+                    style={styles.footer}
+                    fixed
+                    render={({ pageNumber, totalPages }) => (
+                        <View>
+
+
+
+                            {/* Only render full footer on last page */}
+                            {pageNumber === totalPages && (
                                 <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
                                     {/* Column 1 */}
                                     <View style={{ flex: 1, paddingRight: 10 }}>
@@ -308,11 +451,17 @@ const MyDocument = ({ formData, logo }) => {
                                         <Text style={styles.footerLine}>IBAN: AE 02 0030 0120 0563 2920 001</Text>
                                     </View>
                                 </View>
-                            );
-                        }
-                    }}
+                            )}
 
+                            {/* Always show page number */}
+                            <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                                <Text>{`Page ${pageNumber} of ${totalPages}`}</Text>
+                            </View>
+
+                        </View>
+                    )}
                 />
+
 
 
             </Page>

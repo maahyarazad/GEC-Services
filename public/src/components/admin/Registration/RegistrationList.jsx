@@ -4,8 +4,8 @@ import RegistrationRequestForm from "../RegistrationRequestForm";
 import { DataGrid } from '@mui/x-data-grid';
 import { Switch, Button, Box, Tooltip, FormControlLabel, IconButton } from '@mui/material';
 import CircularProgress from '@mui/material/CircularProgress';
-
-import AlertDialog from '../../utils/AlertDialog';
+import { useSnackbar } from "../../Providers/Snackbar";
+import { useAlertDialog } from '../../Providers/AlertProvider';
 import lockRegistrationImage from '../../../assets/media/lock_registration.webp';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
@@ -19,26 +19,30 @@ import StarsField from "../../../assets/media/stars-field.webm";
 import Slots from "../../utils/Slots";
 import { MdAddCircleOutline } from "react-icons/md";
 import { GrSchedules } from "react-icons/gr";
-import {config} from '../../../ui_config';
+import { config } from '../../../ui_config';
 import { IoDuplicate } from "react-icons/io5";
 import { FaRegEdit } from "react-icons/fa";
 import { IoMdArchive } from "react-icons/io";
+import { SiGooglesheets } from "react-icons/si";
+import { useWebSocket } from "../WebSocketContext"
+import { PercentageBar } from "../PercentageBar";
+import { StatData } from "../StatData";
+import { MdCleaningServices } from "react-icons/md";
 
-
-const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate, onArchive ,fetchingCodeList }) => [
+const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate, onArchive, onAutoRgister, onCleanUp, requestloading, localData }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     {
-        field: 'lockRegistration', headerName: 'Active Page', width: 100, renderCell: (params) => {
+        field: 'lockRegistration', headerName: 'Active', width: 70, renderCell: (params) => {
             const value = params?.row?.lockRegistration === "true";
 
             return (
                 <Box>
                     <span>{value ? <>
-                    <MdDisabledVisible color="red" size={18} />
-                    
-                    </> :  <>
-                    <FaCheckCircle color="green" size={18} />
-                    
+                        <MdDisabledVisible color="red" size={18} />
+
+                    </> : <>
+                        <FaCheckCircle color="green" size={18} />
+
                     </>}</span>
                 </Box>
             );
@@ -52,7 +56,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
             if (url) {
                 const _url = `/registration/${url}`;
                 return (
-                    <a href={_url} style={{ textDecoration: 'none' }} target='_black'>
+                    <a href={_url} style={{ textDecoration: 'none' }} target='_blank'>
                         {url}
                     </a>
                 )
@@ -60,40 +64,41 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
             }
         }
     },
-     {
-        field: 'metadata_json', headerName: 'Booking', width: 130, renderCell: (params) => {
+    {
+        field: 'metadata_json', headerName: 'Booking', width: 80, renderCell: (params) => {
             const itHasBooking = params?.row?.consultationEnabled === "true";
             if (itHasBooking) {
                 const _data = JSON.parse(params?.row?.metadata_json);
                 return (
-                   
-                   <Box>
-                    <Tooltip
-                        title="Show the reserved slots"
-                        componentsProps={config.tooltip_config}
-                    >
-                        <IconButton
-                        onClick={() => onShowBookingData(_data)}
-                        sx={{ textTransform: "none" }}
+
+                    <Box>
+                        <Tooltip
+                            title="Show the reserved slots"
+                            componentsProps={config.tooltip_config}
                         >
-                        <GrSchedules color="dark" size={18} />
-                        </IconButton>
-                    </Tooltip>
+                            <IconButton
+                                onClick={() => onShowBookingData(_data)}
+                                sx={{ textTransform: "none" }}
+                            >
+                                <GrSchedules color="dark" size={18} />
+                            </IconButton>
+                        </Tooltip>
                     </Box>
-                    
+
                 );
 
-            }else{
+            } else {
                 return <></>
             }
         }
     },
     {
         field: 'paymentRequired',
-        headerName: 'Payment Required',
-        width: 135,
+        headerName: 'Payment',
+        width: 80,
         renderCell: (params) => {
-            return (params.value === "true" ?  <FaCheckCircle color="green" size={18} /> : <></>)},
+            return (params.value === "true" ? <FaCheckCircle color="green" size={18} /> : <></>)
+        },
     },
     { field: 'title', headerName: 'Title', width: 130 },
     {
@@ -118,26 +123,26 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
                             playsInline
                             preload="metadata"
                             onError={(e) => {
-                                                            e.target.onerror = null; // prevent infinite loop
-                                                            e.target.src = StarsField;
-                                                        }}
+                                e.target.onerror = null; // prevent infinite loop
+                                e.target.src = StarsField;
+                            }}
                         />
                     </>
                 );
             } else {
                 return (
-                <img
-                onError={(e) => {
-                                                e.target.onerror = null; // prevent infinite loop
-                                                e.target.src = GECBackground;
-                                            }}
-                    src={fileUrl}
-                    alt="thumbnail"
-                    style={{ width: 50, height: 50, objectFit: 'contain', borderRadius: 4 }}
-                />
+                    <img
+                        onError={(e) => {
+                            e.target.onerror = null; // prevent infinite loop
+                            e.target.src = GECBackground;
+                        }}
+                        src={fileUrl}
+                        alt="thumbnail"
+                        style={{ width: 50, height: 50, objectFit: 'contain', borderRadius: 4 }}
+                    />
                 );
             }
-            },
+        },
 
         sortable: false,
         filterable: false,
@@ -151,35 +156,39 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
             const code = params?.row?.registration_code;
             const use_member_card = params?.row?.use_member_card;
             const loginDisabled = params?.row?.loginRequired;
-            if(use_member_card === "true"){
+            const isLoading = requestloading.some((item) => item.id === params?.row?.id && item.field === `${params.field}`);
+            
+
+
+            if (use_member_card === "true") {
                 return <Box>
-                             <Tooltip
-                                title="Users should use their Member Card ID to log in."
-                                componentsProps={config.tooltip_config}
-                            >
-                                
-                                <FaAddressCard color="orange" size={25}/>
-                            </Tooltip>
-                        </Box>
-            }else{
-                
+                    <Tooltip
+                        title="Users should use their Member Card ID to log in."
+                        componentsProps={config.tooltip_config}
+                    >
+
+                        <FaAddressCard color="orange" size={25} />
+                    </Tooltip>
+                </Box>
+            } else {
+
                 if (code) {
                     return loginDisabled === "false" ? (
                         <Box>
                             {/* You can optionally show a placeholder or a "No Code" message */}
                             <strong className="text-danger">Login Disabled</strong>
                         </Box>
-                    ): (
+                    ) : (
                         <Box>
                             {/* You can optionally show a placeholder or a "No Code" message */}
                             <span>{code}</span>
                         </Box>
                     );
-                    
+
                 } else {
                     return (
                         <Box>
-                           
+
                             <Tooltip
                                 title="Show the Registration Code"
                                 componentsProps={config.tooltip_config}
@@ -191,8 +200,8 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
                                     style={{ textTransform: 'none' }}
                                     onClick={() => onShowCode(params.row)}
                                 >
-                                    {fetchingCodeList ? ( <CircularProgress size={20} color="white"/>):"Code List" }
-                                    
+                                    {isLoading ? (<CircularProgress size={20} color="white" />) : "Code List"}
+
                                 </Button>
                             </Tooltip>
                         </Box>
@@ -204,50 +213,153 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
 
 
     {
-        field: 'actions',
-        headerName: 'Actions',
-        width: 180,
+        field: 'Progress',
+        headerName: 'Progress',
+        width: 100,
         sortable: false,
         filterable: false,
-        renderCell: (params) => (
-            <Box>
-                
-                <IconButton
-                       title="Edit"
-                       onClick={() => onEdit(params.row)}
+        renderCell: (params) => {
+            if (localData?.registration_stat?.length > 0) {
+                return (
+                    <Box
+                        className="d-flex justify-content-center align-items-center w-100"
+                        style={{ height: '100%' }}
                     >
-                            <FaRegEdit color="dark" size={18} />
+                        {localData.registration_stat.map((x, index) =>
+                            params.row.page === x.event ? (
+                                <PercentageBar key={index} value={x} />
+                            ) : null
+                        )}
+                    </Box>
+
+
+                );
+            } else {
+                return <></>;
+            }
+        },
+    },
+    {
+        field: 'Stat',
+        headerName: 'Stat',
+        width: 100,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+            if (localData?.registration_stat?.length > 0) {
+                return (
+                    <Box
+                        className="d-flex justify-content-center align-items-center w-100"
+                        style={{ height: '100%' }}
+                    >
+                        {localData.registration_stat.map((x, index) =>
+                            params.row.page === x.event ? (
+                                <div key={index}>
+                                    <StatData value={x} />
+                                </div>
+                            ) : null
+                        )}
+                    </Box>
+
+                );
+            } else {
+                return <></>;
+            }
+        },
+    },
+    {
+        field: 'actions',
+        headerName: 'Actions',
+        width: 250,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+            
+            const isLoadingAuto = requestloading.some((item) => item.id === params?.row?.id && item.field === `${params.field}-auto`);
+            const isLoadingClean = requestloading.some((item) => item.id === params?.row?.id && item.field === `${params.field}-clean`);
+            return (
+
+                <Box>
+
+                    <IconButton
+                        title="Edit"
+                        onClick={() => onEdit(params.row)}
+                    >
+                        <FaRegEdit color="dark" size={18} />
                     </IconButton>
-               
+
 
 
 
                     <IconButton
                         onClick={() => onDuplicate(params.row)}
-                       title="Create a duplicate registration from this configuration"
+                        title="Create a duplicate registration from this configuration"
                     >
-                            <IoDuplicate color="primary" size={18} />
+                        <IoDuplicate color="primary" size={18} />
                     </IconButton>
                     <IconButton
                         onClick={() => onArchive(params.row)}
-                       title="Archive registration page"
+                        title="Archive registration page"
                     >
-                            <IoMdArchive color="primary" size={18} />
+                        <IoMdArchive color="primary" size={18} />
                     </IconButton>
 
-                    <Switch
-                    title="Switch Registration Lock"
+                    <IconButton
+
+                        onClick={() => onAutoRgister(params.row)}
+                        title="Auto Register with G-Sheet"
+                    >
+
+                        {isLoadingAuto ? <CircularProgress size={15} /> :
+
+                            <SiGooglesheets color="primary" size={18} />
+                        }
+                    </IconButton>
+
+                    <IconButton
+
+                        onClick={() => onCleanUp(params.row)}
+                        title="Delete PKPass and QRCode files from server"
+                    >
+
+                        {isLoadingClean ? <CircularProgress size={15} /> :
+
+                            <MdCleaningServices color="primary" size={18} />
+                        }
+                    </IconButton>
+
+
+                    <Switch size="samll"
+                        title="Switch Registration Lock"
                         checked={params.row.lockRegistration === true || params.row.lockRegistration === "true"}
                         onChange={() => onLock(params.row)}
                         color="primary"
+                        sx={{
+                            transform: 'scale(0.9)', // make it 1.5x larger
+                            '& .MuiSwitch-switchBase': {
+                                padding: 1,
+                            },
+                        }}
                     />
-            </Box>
-        ),
+                </Box>
+            )
+        }
     },
 ];
 
 
 export const RegistrationList = () => {
+
+    const { data: _data } = useWebSocket();
+    const [localData, setLocalData] = useState(null);
+
+
+    useEffect(() => {
+        if (_data) {
+
+            setLocalData(_data);
+        }
+    }, [_data]);
 
     const [registrationList, setRegistrationList] = useState(null);
     const [newReg, setNewReg] = useState(false);
@@ -257,12 +369,15 @@ export const RegistrationList = () => {
     const [initialData, setInitialData] = useState(null);
     const [bookingData, setBookingData] = useState(null);
     const [codeList, setCodeList] = useState(null);
-    const [fetchingCodeList, setFetchingCodeList] = useState(false);
     const [codeEventTitle, setCodeEventTitle] = useState(null);
     const [memberCount, setMemberCount] = useState(0);
     const [isParentModalOpen, setIsParentModalOpen] = useState(false);
     const dialogRef = useRef();
+    const {showSnackbar} = useSnackbar();
+    const {openDialog} = useAlertDialog();
     const [loading, setLoading] = useState(false);
+    const [requestloading, setRequestLoading] = useState([]);
+
     const [rowCount, setRowCount] = useState(0);
 
     const fetchData = useCallback(async () => {
@@ -273,16 +388,18 @@ export const RegistrationList = () => {
                 credentials: "include"
             });
 
+            const respnse_data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to fetch');
+
+                showSnackbar(respnse_data.message);
+                throw new Error(response.message);
             }
 
-            const values = await response.json();
 
-            if (values) {
+            if (respnse_data) {
 
-                setRegistrationList(values.rows);
-                setRowCount(values.rows.length)
+                setRegistrationList(respnse_data.rows);
+                setRowCount(respnse_data.rows.length)
             }
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -291,7 +408,7 @@ export const RegistrationList = () => {
         }
     }, []);
 
-    
+
 
     const getMemberCount = useCallback(async () => {
         try {
@@ -300,13 +417,17 @@ export const RegistrationList = () => {
                 method: 'GET',
                 credentials: "include"
             });
-            
+
+            const respnse_data = await response.json();
+
             if (!response.ok) {
-                throw new Error('Failed to fetch registration data');
+
+                showSnackbar(respnse_data.message);
+                throw new Error(response.message);
             }
 
-            const values = await response.json();
-            setMemberCount(values.total.count)
+
+            setMemberCount(respnse_data.total.count)
 
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -318,56 +439,110 @@ export const RegistrationList = () => {
 
     useEffect(() => {
         fetchData();
-        
+
     }, [fetchData, setRowCount]);
     useEffect(() => {
-        
+
         getMemberCount();
     }, []);
 
 
 
     const handleArchive = async (id) => {
-         try {
-            
-            
+        try {
+
+
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-config-archive?id=${id}`, {
                 method: 'PATCH',
                 credentials: "include"
             });
 
+            const respnse_data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to fetch registration data');
+
+                showSnackbar(respnse_data.message);
+                throw new Error(response.message);
             }
 
-            const configData = await response.json();
-            fetchData();
+            await fetchData();
 
         } catch (err) {
             console.error('Error fetching data:', err);
         }
     };
 
+    const handleAutoRegister = async (row) => {
+        const field = 'actions-auto';
+        try {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/google-auto-register?event=${row.page}`, {
+                method: 'GET',
+                credentials: "include"
+            });
+
+            const respnse_data = await response.json();
+            if (!response.ok) {
+
+                showSnackbar(respnse_data.message);
+                throw new Error(response.message);
+            }
+
+            showSnackbar(respnse_data.message, "success");
+            await fetchData();
+
+        } catch (err) {
+            console.error('Error fetching data:', err);
+
+        } finally {
+            setRequestLoading((prev) => prev.filter((item) => !(item.id === row.id && item.field === field)));
+        }
+    };
+    const handleEventCleanUp = async (row) => {
+        const field = 'actions-clean';
+        try {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/event-clean-up?page=${row.page}`, {
+                method: 'GET',
+                credentials: "include"
+            });
+
+            const respnse_data = await response.json();
+            if (!response.ok) {
+
+                showSnackbar(respnse_data.message);
+                throw new Error(response.message);
+            }
+
+            showSnackbar(respnse_data.message, "success");
+            await fetchData();
+
+        } catch (err) {
+            console.error('Error fetching data:', err);
+
+        } finally {
+            setRequestLoading((prev) => prev.filter((item) => !(item.id === row.id && item.field === field)));
+        }
+    };
 
     const handleDuplicateCreation = async (selectedRow) => {
-         try {
+        try {
             const formData = new FormData();
             for (const key in selectedRow) {
                 formData.append(key, selectedRow[key]);
             }
-            
+
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-config/duplicate-record/`, {
                 method: 'POST',
                 body: formData,
                 credentials: "include"
             });
 
+            const respnse_data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to fetch registration data');
+
+                showSnackbar(respnse_data.message);
+                throw new Error(response.message);
             }
 
-            const configData = await response.json();
-            fetchData();
+            await fetchData();
 
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -376,20 +551,22 @@ export const RegistrationList = () => {
 
 
     const handleSwitchLock = async (id, val) => {
-       try {
-            
-            
+        try {
+
+
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-config-switch?id=${id}&switch=${val}`, {
                 method: 'PATCH',
                 credentials: "include"
             });
 
+            const respnse_data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to fetch registration data');
+
+                showSnackbar(respnse_data.message);
+                throw new Error(response.message);
             }
 
-            const configData = await response.json();
-            fetchData();
+            await fetchData();
 
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -398,31 +575,36 @@ export const RegistrationList = () => {
 
 
     const showCodeList = async (row) => {
+        const field = 'registration_code';
         try {
-            setFetchingCodeList(true);
+
+            setRequestLoading((prev) => [...prev, { id: row.id, field }]);
+
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-keys`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: "include",
                 body: JSON.stringify({ id: row.id }),
             });
-            
+
+            const respnse_data = await response.json();
             if (!response.ok) {
-                throw new Error('Failed to fetch registration keys');
+
+                showSnackbar(respnse_data.message);
+                throw new Error(response.message);
             }
 
-            const result = await response.json();
 
-            if (result.data) {
+            if (respnse_data.data) {
                 setCodeEventTitle(row.title);
-                setCodeList(result.data);
+                setCodeList(respnse_data.data);
                 setCodeModal(true);
             }
 
         } catch (err) {
             console.error('Error fetching data:', err);
-        }finally{
-            setFetchingCodeList(false)
+        } finally {
+            setRequestLoading((prev) => prev.filter((item) => !(item.id === row.id && item.field === field)));
         }
     }
 
@@ -430,7 +612,7 @@ export const RegistrationList = () => {
         setBookingData(_data);
         setBookingModal(true);
     };
-    
+
     const openEdit = (row) => {
         const selectedRow = registrationList?.find((x) => x.id === row.id);
 
@@ -443,12 +625,12 @@ export const RegistrationList = () => {
     };
 
     const switchLock = (row) => {
-        if(row.lockRegistration === "false"){
+        if (row.lockRegistration === "false") {
 
-            dialogRef.current.openDialog(
+            openDialog(
                 <div>
                     <div>Enabling this option will <strong>lock the registration page and prevent further submissions.</strong> Are you sure you want to proceed?</div>
-                    <img src={lockRegistrationImage} alt="Lock" width={400} className="mt-1 rounded-1"/>
+                    <img src={lockRegistrationImage} alt="Lock" width={400} className="mt-1 rounded-1" />
                 </div>,
                 'Confirm Action',
                 {
@@ -456,18 +638,17 @@ export const RegistrationList = () => {
                     color: 'error'
                 },
                 () => {
-                    
+
                     const selectedRow = registrationList?.find((x) => x.id === row.id);
                     if (selectedRow) {
-                        
                         handleSwitchLock(selectedRow.id, 'true')
                     }
                 },
                 () => {
-    
+
                 },
             );
-        }else{
+        } else {
             const selectedRow = registrationList?.find((x) => x.id === row.id);
             if (selectedRow) {
                 handleSwitchLock(selectedRow.id, 'false')
@@ -475,22 +656,84 @@ export const RegistrationList = () => {
         }
     };
 
-    const archiveAlert = (row) => {
-        dialogRef.current.openDialog(
+
+
+    const autoRegisterAlert = (row) => {
+
+
+        openDialog(
             <div>
-                Do you want to <strong>archive the registration record and hide it from active listings. </strong> 
+                Do you want to <strong>Auto Register base on the Google Sheet Geburtstagsparty </strong>
                 Are you sure you want to proceed?
-                </div>,
+            </div>,
+            'Confirm Action',
+            {
+                text: 'Confirm',
+                color: 'error'
+            },
+            () => {
+
+                const selectedRow = registrationList?.find((x) => x.id === row.id);
+
+                if (selectedRow) {
+                    setRequestLoading((prev) => [...prev, { id: selectedRow.id, field: "actions-auto" }]);
+                    handleAutoRegister(selectedRow);
+                }
+            },
+            () => {
+
+            },
+        );
+
+    };
+
+
+    const eventCleanUpAlert = (row) => {
+
+        openDialog(
+            <div>
+                Do you want to <strong>delete PKPass and QRCode files from the server</strong>?
+                Are you sure you want to proceed?
+            </div>,
+            'Confirm Action',
+            {
+                text: 'Confirm',
+                color: 'error'
+            },
+            () => {
+
+                const selectedRow = registrationList?.find((x) => x.id === row.id);
+
+                if (selectedRow) {
+                    setRequestLoading((prev) => [...prev, { id: selectedRow.id, field: "actions-clean" }]);
+                    handleEventCleanUp(selectedRow);
+                }
+            },
+            () => {
+
+            },
+        );
+
+    };
+
+
+
+    const archiveAlert = (row) => {
+        openDialog(
+            <div>
+                Do you want to <strong>archive the registration record and hide it from active listings. </strong>
+                Are you sure you want to proceed?
+            </div>,
             'Confirm Action',
             {
                 text: 'Archive',
                 color: 'error'
             },
             () => {
-                
+
                 const selectedRow = registrationList?.find((x) => x.id === row.id);
                 if (selectedRow) {
-                    
+
                     handleArchive(selectedRow.id)
                 }
             },
@@ -498,7 +741,7 @@ export const RegistrationList = () => {
 
             },
         );
-       
+
     };
 
     const [enableUniqueMemberCode, setEnableUniqueMemberCode] = useState(false);
@@ -520,9 +763,13 @@ export const RegistrationList = () => {
     };
 
 
+
+
+
     return (
         <Box sx={{ padding: 1 }}>
-            <AlertDialog ref={dialogRef} />
+            
+            
             <div className="d-flex justify-content-start mb-1">
                 <div className="">
                     <Tooltip title="Add New Registration Page" componentsProps={config.tooltip_config}>
@@ -549,12 +796,17 @@ export const RegistrationList = () => {
                     <DataGrid
                         rowCount={rowCount}
                         rows={registrationList}
-                        columns={getColumns({ onEdit: openEdit
+                        columns={getColumns({
+                            onEdit: openEdit
                             , onLock: switchLock, onShowCode: showCodeList
                             , onShowBookingData: ShowBookingData
                             , onDuplicate: handleDuplicateCreation
                             , onArchive: archiveAlert
-                            , fetchingCodeList: fetchingCodeList })}
+                            , onAutoRgister: autoRegisterAlert
+                            , onCleanUp: eventCleanUpAlert
+                            , requestloading: requestloading
+                            , localData: localData
+                        })}
                         pageSize={5}
                         rowsPerPageOptions={[5]}
                         disableSelectionOnClick
@@ -566,10 +818,12 @@ export const RegistrationList = () => {
 
 
 
-            <Modal isOpen={editReg} _style={{minWidth: '50vw',minHeight: '95vh' }}
-                onRequestClose={()=>{  setEditReg(false);
-        setIsParentModalOpen(false);}}
-                 onAfterClose={() => setInitialData(null)}
+            <Modal isOpen={editReg} _style={{ minWidth: '50vw', minHeight: '95vh' }}
+                onRequestClose={() => {
+                    setEditReg(false);
+                    setIsParentModalOpen(false);
+                }}
+                onAfterClose={() => setInitialData(null)}
                 title={`Modify ${initialData?.title}`}>
                 <RegistrationRequestForm initialData={initialData} isParentModalOpen={isParentModalOpen} modalSwitch={() => {
                     setEditReg(false);
@@ -581,7 +835,7 @@ export const RegistrationList = () => {
 
 
             <Modal isOpen={codeModal}
-                onRequestClose={() =>  setCodeModal(false) }
+                onRequestClose={() => setCodeModal(false)}
                 onAfterClose={() => setCodeList(null)}
                 title={`${codeEventTitle} Registration Keys`}>
                 <RegistrationKeyList data={codeList} />
@@ -591,19 +845,19 @@ export const RegistrationList = () => {
                 onRequestClose={() => setBookingModal(false)}
                 onAfterClose={() => setBookingData(null)}
                 title={`Booking Status`}>
-                <Slots data={bookingData}/>
+                <Slots data={bookingData} />
             </Modal>
 
-            <Modal 
-                _style={activeStep === 0? {}:{minWidth: '50vw',minHeight: '95vh' }}
-                isOpen={newReg} 
+            <Modal
+                _style={activeStep === 0 ? {} : { minWidth: '50vw', minHeight: '95vh' }}
+                isOpen={newReg}
                 onRequestClose={() => {
                     setNewReg(false);
                     setIsParentModalOpen(false);
 
                 }}
-                 onAfterClose={() =>  {fetchData();  setActiveStep(0);}}
-            title="New Registration Page">
+                onAfterClose={() => { fetchData(); setActiveStep(0); }}
+                title="New Registration Page">
                 <Stepper activeStep={activeStep} alternativeLabel>
                     {steps.map((label) => (
                         <Step key={label}>
@@ -625,34 +879,35 @@ export const RegistrationList = () => {
                                     Later, you can limit the number of registrations allowed per code.
                                 </p>
 
-<div className="d-flex flex-column">
+                                <div className="d-flex flex-column">
 
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={enableUniqueMemberCode}
-                                            onChange={(e) => setEnableUniqueMemberCode(e.target.checked)}
-                                            color="primary"
-                                        />
-                                    }
-                                    label="Enable unique event codes for members"
-                                />
+                                    <FormControlLabel
+                                        control={
+                                            <Switch
+                                                checked={enableUniqueMemberCode}
+                                                onChange={(e) => setEnableUniqueMemberCode(e.target.checked)}
+                                                color="primary"
+                                            />
+                                        }
+                                        label="Enable unique event codes for members"
+                                    />
 
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={disableLogin}
-                                            onChange={(e) => {
-                                                if(e.target.checked){
-                                                    setEnableUniqueMemberCode(false)
-                                                }
-                                                setDisableLogin(e.target.checked)}}
-                                            color="primary"
-                                        />
-                                    }
-                                    label="Disable Login"
-                                />
-</div>
+                                    <FormControlLabel
+                                        control={
+                                            <Switch
+                                                checked={disableLogin}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setEnableUniqueMemberCode(false)
+                                                    }
+                                                    setDisableLogin(e.target.checked)
+                                                }}
+                                                color="primary"
+                                            />
+                                        }
+                                        label="Disable Login"
+                                    />
+                                </div>
                             </div>
 
                             <div className="mt-4 text-end">

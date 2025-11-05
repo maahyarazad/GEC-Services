@@ -3,9 +3,12 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 import dayjs from "dayjs";
+import { useEffect } from "react";
 
-export default function BirthdayField({ values, setFieldValue, setFieldTouched, errors, touched }) {
+export default function BirthdayField({ values, setFieldValue, setFieldTouched, errors, touched, size='small' , setWizardState}) {
   const birthdayValue = values.birthday ? dayjs(values.birthday) : null;
+
+
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -15,16 +18,24 @@ export default function BirthdayField({ values, setFieldValue, setFieldTouched, 
         label="Birthday"
         value={values.birthday ? dayjs(values.birthday) : null}
         onChange={(newValue) => {
-    setFieldValue("birthday", newValue ? newValue.format("YYYY-MM-DD") : "");
-    // console.log(newValue);
-    // console.log(values.birthday);
+          const value = newValue;
+
+    setFieldValue("birthday", value ? value.format("YYYY-MM-DD") : "");
+                 if(setWizardState !== null){
+
+                   setWizardState((prev) => ({
+                       ...prev,
+                       member: { ...prev.member, birthday: value.format("YYYY-MM-DD") },
+                   }));
+                 }                 
+   
   }}
        
         
         slotProps={{
           textField: {
             name: "birthday",
-            size: "small",
+            size: size,
             fullWidth: true,
             error: touched.birthday && Boolean(errors.birthday),
             helperText: errors.birthday,

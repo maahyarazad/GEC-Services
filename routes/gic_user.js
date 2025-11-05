@@ -6,7 +6,7 @@ const {generatePassword, hashPassword} = require("../services/userService");
 const {gic__reset_password} = require("../services/emailService")
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
-const authorize_admin = require("../middleware/auth");
+
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -60,7 +60,7 @@ router.get('/gic-user',async (req, res) => {
 });
 
 
-router.post('/api/gic-user/send-reset-password', authorize_admin, async (req, res) => {
+router.post('/api/gic-user/send-reset-password',  async (req, res) => {
     try {
         const table_name = "GIC_Users";
         const userCheck = await dbService.countExact(table_name, 'email', req.body.email);

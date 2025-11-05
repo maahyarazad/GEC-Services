@@ -216,7 +216,12 @@ CREATE TABLE IF NOT EXISTS member_card (
     mobile_number VARCHAR(150),
     email VARCHAR(150),
     card_expiry_date DATETIME,
-    last_login DATETIME
+    last_login DATETIME,
+    metadata_createdAt DATETIME,
+    metadata_modifiedAt DATETIME,
+     google_pass_token TEXT ,
+     serial_number TEXT,
+     birthday datetime
 );
 
 

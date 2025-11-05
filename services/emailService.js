@@ -14,10 +14,10 @@ function slugToTitle(slug) {
 }
 
 function titleToSlug(title) {
-  return title
-    .toLowerCase()            // convert to lowercase
-    .replace(/\s+/g, '-')     // replace spaces (or multiple spaces) with dashes
-    .replace(/[^\w-]+/g, ''); // remove any non-alphanumeric characters except dash
+    return title
+        .toLowerCase()            // convert to lowercase
+        .replace(/\s+/g, '-')     // replace spaces (or multiple spaces) with dashes
+        .replace(/[^\w-]+/g, ''); // remove any non-alphanumeric characters except dash
 }
 
 const ses = new SESClient({
@@ -65,7 +65,7 @@ async function sendEmail({ to, subject, html, text }) {
 
 
 
-async function sendRawEmailWithAttachments({ to, subject, html, text = '', attachments = [] }) {
+async function sendRawEmailWithAttachments({ to, subject, html, text = '', attachments = [], bcc = [] }) {
     const transporter = nodemailer.createTransport({
         secure: false,
         host: process.env.SMTP_HOST,
@@ -82,7 +82,7 @@ async function sendRawEmailWithAttachments({ to, subject, html, text = '', attac
     const mailOptions = {
         from: process.env.SMTP_SENDER,
         to,
-        // bcc: ["development2@german-emirates-club.com", "office1@german-emirates-club.com"],
+        bcc: bcc,
         subject,
         text,
         html,
@@ -316,12 +316,12 @@ async function event_confirm_registration_email(reqBody) {
     const slug = titleToSlug(reqBody.title);
     const applefileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
     const googlefileStorage = path.join(__dirname, "..", "file_storage", "enUS_add_to_google_wallet_add-wallet-badge.png");
-    
+
     const pkpassPath = `/apple_pass/${slug}/${reqBody.event_id}.pkpass`;
     // const pkpassPath = path.join(__dirname, "..","pass_storage", `${slug}`, `${reqBody.event_id}.pkpass`);
     const tempPath = path.join(__dirname, "..", "qr-files");
     const mapRoot = path.join(__dirname, "..", "maps");
-    const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
+    const qrPath = path.join(tempPath, `${reqBody.event}`, `${reqBody.event_id}.png`);
     const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
     const { langKey } = reqBody;
     const { selected_time_for_email } = reqBody;
@@ -395,8 +395,15 @@ async function event_confirm_registration_email(reqBody) {
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${emailTemplates[langKey].subject(title)}</title>
+    <style type="text/css">
+	@media only screen and (max-width:600px){
+.pass img{height:60px !important;}
+}
+
+    </style>
   </head>
   <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
@@ -438,14 +445,18 @@ async function event_confirm_registration_email(reqBody) {
             
                 
                   
-                
                 <tr>
-                  <td align="center" style="padding:20px; font-size:16px; color:#333333;">
-                    <a href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
-                      <img 
+					<td align="center" font-size:16px; color:#333333;">
+						${emailTemplates[langKey].passMessage}
+					</td>
+                </tr>
+                <tr>
+                  <td height=30 align="center" style="padding:20px; font-size:16px; color:#333333;">
+                    <a class="pass" href="${process.env.CLIENT_ORIGIN}/${pkpassPath}" style="display:inline-block;">
+                      <img height="60"
                         src="cid:applewalletimg" 
                         alt="${emailTemplates[langKey].appleWalletAlt}" 
-                        style="height:60px; border:0; border-radius:12px; display:block;"
+                        style="border:0; border-radius:12px; display:block;"
                       />
                     </a>
                   </td>
@@ -453,12 +464,12 @@ async function event_confirm_registration_email(reqBody) {
                   
                   ${googleWalletLink ?
 
-                `  <tr> <td align="center" style="padding:20px; font-size:16px; color:#333333;">
-                    <a href="${googleWalletLink}" style="display:inline-block;">
-                      <img 
+                `  <tr> <td height=30 align="center" style="padding:20px; font-size:16px; color:#333333;">
+                    <a class="pass" href="${googleWalletLink}" style="display:inline-block;">
+                    <img        height="54"
                         src="cid:googlewalletimg" 
                         alt="${emailTemplates[langKey].googleWalletAlt}" 
-                        style="height:54px; border:0; border-radius:12px; display:block;"
+                        style="border:0; border-radius:12px; display:block;"
                       />
                     </a>
                   </td>  </tr>` : ``
@@ -490,13 +501,16 @@ async function event_confirm_registration_email(reqBody) {
 </html>
 `;
 
+
+        const bcc = ["development2@german-emirates-club.com", "office2@german-emirates-club.com"];
         // ✅ Send email using your own SMTP function
         return await sendRawEmailWithAttachments({
             to: reqBody.email,
             subject: `Registration Completed – ${title}`,
             html: htmlBody,
             text: 'Your registration is confirmed.',
-            attachments
+            attachments,
+            bcc
         });
 
     } catch (error) {
@@ -513,7 +527,7 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
     const pkpassPath = `/apple_pass/${reqBody.event}/${reqBody.event_id}.pkpass`;
     const tempPath = path.join(__dirname, "..", "qr-files");
     const mapRoot = path.join(__dirname, "..", "maps");
-    const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
+    const qrPath = path.join(tempPath, `${reqBody.event}`, `${reqBody.event_id}.png`);
     const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
     const invoicePath = path.join(__dirname, "..", "invoice_storage", `${reqBody.event}`, `${reqBody.invoice_filename}`);
     const { selected_time_for_email } = reqBody;
@@ -709,11 +723,11 @@ Teilnahme.</p>
 
 
 async function email_otp(reqBody) {
-    const { email, event, otp } = reqBody;
+    const { email, event, otp, message } = reqBody;
     try {
         const currentYear = new Date().getFullYear();
         const event_name = slugToTitle(event);
-
+        const sectionMessage = message || `To complete your registration for`;
         const htmlBody = `
 <!DOCTYPE html>
 <html>
@@ -743,7 +757,7 @@ async function email_otp(reqBody) {
               <tr>
                 <td style="color: #333333; font-size: 16px; line-height: 1.6; padding: 0 20px;">
                   <p style="color: #333333;">
-                    To complete your registration for <strong>${event_name}</strong>, please use the following One-Time Password (OTP):
+                    ${sectionMessage} <strong>${event_name}</strong>, please use the following One-Time Password (OTP):
                   </p>
                   <p style="text-align: center; margin: 30px 0; color: #333333;">
                     <span style="font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #D9B144;">${otp}</span>
@@ -1151,11 +1165,11 @@ async function emailMembershipCard(reqBody, pkpassBuffer) {
 }
 
 
-async function send_party_invitation  (data){
-    try{
-         const currentYear = new Date().getFullYear();
-        const {email} = data;
-const htmlBody = `
+async function send_party_invitation(data) {
+    try {
+        const currentYear = new Date().getFullYear();
+        const { email } = data;
+        const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -1215,7 +1229,7 @@ const htmlBody = `
                 </p>
 
                 <p>
-                  Entrance is free, but we would love to receive a small <strong>gift</strong> from you as a birthday present! 🎁
+                  Participation is free for all ClubPartners and their teams with a valid corporate card.  Instead of a registration fee, we would love to receive a small gift from you as a birthday present! 🎁
                 </p>
 
                 <p style="text-align: center; margin: 30px 0;">
@@ -1262,17 +1276,75 @@ const htmlBody = `
 </html>
 `;
 
- return await sendRawEmailWithAttachments({
+        return await sendRawEmailWithAttachments({
             to: email,
             subject: `🎉 You're Invited: German Emirates Club 20th Anniversary Celebration`,
             html: htmlBody,
             text: `🎉 You're Invited: German Emirates Club 20th Anniversary Celebration`,
         });
-    }catch (error){
- console.log(error);
+    } catch (error) {
+        console.log(error);
         throw error;
     }
-   
+
+}
+
+async function membership_courtacy_at_venue_message(data) {
+     
+        const { email , firstName, lastName, event} = data;
+    try{
+        const htmlBody = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title>Thank You for Visiting</title>
+      </head>
+      <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
+          <tr>
+            <td align="center">
+              <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1); margin:40px auto;">
+                <tr>
+                  <td bgcolor="#D9B144" style="color:#ffffff; text-align:center; padding:20px; font-size:22px; font-weight:bold; border-top-left-radius:8px; border-top-right-radius:8px;">
+                    Thank You for Visiting
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:30px; font-size:16px; color:#333333; line-height:1.6;">
+                    <p>Dear <strong>${firstName} ${lastName}</strong>,</p>
+                    <p>Thank you for using your virtual membership card to enter the <strong>${slugToTitle(event)}</strong> venue.</p>
+                    <p>We appreciate your participation and look forward to welcoming you again soon.</p>
+                    <p>If you have any questions or need assistance, please feel free to contact us at <a href="mailto:office5@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office5@german-emirates-club.com</a>.</p>
+                    <p>Warm regards,<br />The German Emirates Club Team</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
+                    &copy; ${new Date().getFullYear()} German Emirates Club. All rights reserved.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+    `;
+    
+return await sendRawEmailWithAttachments({
+    to: email,
+    subject: `Welcome! Thank You for Being Part of the German Emirates Club - ${slugToTitle(event)}`,
+    html: htmlBody,
+    text: `Welcome! Thank You for Being Part of the German Emirates Club - ${slugToTitle(event)}`,
+});
+
+
+
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
 }
 
 
@@ -1285,5 +1357,6 @@ module.exports = {
     email_otp, company_data_confirmation_email,
     gic__reset_password,
     email_request_received,
-    event_confirm_registration_email_with_invoice
+    event_confirm_registration_email_with_invoice,
+    membership_courtacy_at_venue_message,
 };

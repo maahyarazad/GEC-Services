@@ -22,7 +22,7 @@ import {
     getEncryptedLocalStorage,
     removeEncryptedLocalStorage,
 } from "../utils/cookieUtils";
-import SimpleSnackbar from "../utils/Snackbar";
+import { useSnackbar } from "../Providers/Snackbar";
 import OtpTimer from "../utils/OtpTimer";
 import OtpInput from "../utils/OtpInput";
 import CountDownComponent from "../utils/TenDayCountdown";
@@ -61,6 +61,7 @@ import languageData from "../../assets/language";
 export const TemplateForm = () => {
     //OTP
     const { event } = useParams();
+    const {showSnackbar} = useSnackbar();
     const location = useLocation();
     const [showOtpInput, setShowOtpInput] = useState(false);
     const otpRef = useRef();
@@ -82,6 +83,9 @@ export const TemplateForm = () => {
     const [initialTargetFee, setInitialTargetFee] = useState(null);
     const [rates, setRates] = useState(null);
     const [target, setTarget] = useState(null);
+    const [memberRecord, setMemberRecord] = useState(null);
+    
+    
     const [selectedLanguage, setSelectedLanguage] = useState("german");
     const navigate = useNavigate();
 
@@ -170,10 +174,12 @@ export const TemplateForm = () => {
 
                     if (x.loginRequired === "false") {
 
-                        // setPhoneRegistered(true);
-                        
                         setTarget(values.rows[0]);
                         setLoading(false);
+                        
+                        if(x.otp === "false"){
+                            setPhoneRegistered(true);
+                        }
                         
                     }
                     
@@ -183,7 +189,6 @@ export const TemplateForm = () => {
                         setInitialCurrency(values.rows[0].currency)
                         setChosenCurrency(values.rows[0].currency)
                         // await fetchCurrencyData(values.rows[0].currency);
-
                     }
 
                     if (x.surveyForm === "true") {
@@ -204,6 +209,39 @@ export const TemplateForm = () => {
         }
     },[]);
 
+    const memberAPICall = useCallback(async () => {
+        try {
+            
+            // const value = location.pathname;
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-card-login?memberId=${login_memberId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+                
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch');
+                return;
+            }
+
+            const values = await response.json();
+            if(values?.memberRecord.length > 0){
+                
+                
+                setMemberRecord(values?.memberRecord[0]);
+                console.log(values?.memberRecord[0])
+                setPhoneRegistered(true);
+            }
+           
+        } catch (err) {
+            console.error('Error fetching data:', err);
+        } finally {
+            
+        }
+    },[]);
+
     
 
     useEffect(() => {
@@ -217,7 +255,7 @@ export const TemplateForm = () => {
             
             if (gecuser?.page === lastPart) {
                 
-                
+                await memberAPICall();
                 if(login_memberId && login_memberId[1] === "7"){
                    setSelectedLanguage("english");
                 }
@@ -233,23 +271,21 @@ export const TemplateForm = () => {
     
     
 
+
+
     const handleSendOtp = async (values) => {
         try {
             setShowOtpInput(true);
-            const formData = new FormData();
 
-            for (const key in values) {
-                if (key === "email") formData.append(key, values[key]);
-            }
-
-            formData.append("event", target.title);
 
             const otp_response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/send-otp`,
                 {
+                     headers: { "Content-Type": "application/json" },
                     method: "POST",
-                    body: formData,
-                    credentials: "include",
+                    credentials: "include", // ✅ important for sessions
+                     body: JSON.stringify({ email: values.email, event: target.title  }),
+                    
                 }
             );
 
@@ -263,6 +299,7 @@ export const TemplateForm = () => {
             }
             
             if (otp_response.ok) {
+
                 otpRef?.current?.clear();
                 statusRef.current.classList.remove("text-danger");
                 setGlobalWhatsapp(values["email"]);
@@ -297,21 +334,20 @@ export const TemplateForm = () => {
                 language: navigator.language,
                 registration_code: target.registration_code,
                 mobile_number: global_whatsapp,
-            };
+                };
 
-            const formData = new FormData();
-            for (const key in data) {
-                formData.append(key, data[key]);
-            }
-
-            const otpResponse = await fetch(
+                const otpResponse = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/otp-check`,
                 {
                     method: "POST",
-                    body: formData,
-                    credentials: "include",
+                    headers: {
+                    "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                    credentials: "include", 
                 }
-            );
+                );
+
 
             if (otpResponse.status === 400 || otpResponse.status === 500) {
                 throw new Error(`Server responded with ${otpResponse.status}`);
@@ -326,7 +362,7 @@ export const TemplateForm = () => {
                 registrationHeader.current?.scrollIntoView({behavior:'smooth'});
                 otpRef?.current?.blurAll();
                 registrationHeader.current?.focus();
-                snackbarRef.current?.openSnackbar(otp_response_data.message, "success");
+                showSnackbar(otp_response_data.message, "success");
             } else {
                 statusRef.current.textContent = otp_response_data.message;
                 statusRef.current.classList.add("text-danger");
@@ -348,7 +384,7 @@ export const TemplateForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [source, setIsSource] = useState(null);
 
-    const snackbarRef = useRef();
+    
     const fileInputRef = useRef();
     const identityConsentRef = useRef();
 
@@ -501,7 +537,7 @@ export const TemplateForm = () => {
                 } else {
                     registrationHeader.current?.scrollIntoView({behavior:'smooth'});
                     registrationHeader.current?.focus();
-                    snackbarRef.current?.openSnackbar(
+                    showSnackbar(
                         payment_response.error.message,
                         ""
                     );
@@ -525,7 +561,7 @@ export const TemplateForm = () => {
                 if (registration_response_data.status) {
                     registrationHeader.current?.scrollIntoView({behavior:'smooth'});
                     registrationHeader.current?.focus();
-                    snackbarRef.current?.openSnackbar(
+                    showSnackbar(
                         registration_response_data.message,
                         "success"
                     );
@@ -556,7 +592,7 @@ export const TemplateForm = () => {
                     setSelectedDate("");
                 } else {
                     
-                    snackbarRef.current?.openSnackbar(
+                    showSnackbar(
                         registration_response_data.message,
                         ""
                     );
@@ -565,13 +601,14 @@ export const TemplateForm = () => {
 
         } catch (e) {
             
-            snackbarRef.current?.openSnackbar(e.message);
+            showSnackbar(e.message);
         } finally {
             setIsSubmitting(false);
         }
     };
 
     useEffect(() => {
+        
         return () => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
@@ -595,8 +632,8 @@ export const TemplateForm = () => {
 
             return (
                 <>
-                    <SimpleSnackbar ref={snackbarRef} />
-        
+                    
+
                     <div
                         className="template-form"
                     >
@@ -692,7 +729,12 @@ export const TemplateForm = () => {
                                     enableReinitialize={true}
                                     initialValues={{
                                         ...initialValues,
-                                        // email: login_email, // set your dynamic value here
+                                        email: memberRecord?.email !== null ?memberRecord?.email : "", // set your dynamic value here
+                                        firstName: memberRecord?.firstname !== null? memberRecord?.firstname:"", // set your dynamic value here
+                                        lastName: memberRecord?.lastname !== null? memberRecord?.lastname:"", // set your dynamic value here
+                                        phone: memberRecord?.mobile_number !== null? memberRecord?.mobile_number:"", // set your dynamic value here
+                                        whatsapp: memberRecord?.mobile_number !== null? memberRecord?.mobile_number:"", // set your dynamic value here
+                                        birthday: memberRecord?.birthday !== null? memberRecord?.birthday:"", // set your dynamic value here
                                     }}
                                     validationSchema={getValidationSchema(target)}
                                     onSubmit={async (values, { resetForm, setFieldValue }) => {
@@ -760,7 +802,32 @@ export const TemplateForm = () => {
                                                                 <div className="w-100">
         
                                                                     <div className="input-group">
-                                                                        <Field
+                                                                        {phoneRegistered ? (
+ <Field
+                                                                        
+                                                                            as={TextField}
+                                                                            type="email"
+                                                                            name="email"
+                                                                            
+                                                                            size="small"
+                                                                            fullWidth
+                                                                            label="E-mail"
+                                                                            helperText={<ErrorMessage name="email" />}
+                                                                            className="pb-2"
+                                                                            error={touched.email && Boolean(errors.email)}
+                                                                            InputProps={{
+                                                                                startAdornment: (
+                                                                                    <InputAdornment position="start">
+                                                                                        {target.fieldIcon === "true" && (
+        
+                                                                                            <MdEmail />
+                                                                                        )}
+                                                                                    </InputAdornment>
+                                                                                ),
+                                                                            }}
+                                                                        />
+                                                                        ) : (
+ <Field
                                                                         
                                                                             as={TextField}
                                                                             type="email"
@@ -783,6 +850,8 @@ export const TemplateForm = () => {
                                                                                 ),
                                                                             }}
                                                                         />
+                                                                        )}
+                                                                       
                                                                     </div>
                                                                 </div>
         
@@ -1064,7 +1133,7 @@ export const TemplateForm = () => {
                                                                     size="small"
                                                                     fullWidth
                                                                     label="Nachricht"
-                                                                    placeholder="Please register your guest here. For example: John Smith, +971 58 581234 or example@gmail.com"
+                                                                    
                                                                     helperText={<ErrorMessage name="textarea" />}
                                                                     className="pb-2"
                                                                     type="text"
@@ -1152,7 +1221,7 @@ export const TemplateForm = () => {
                                                     )}
         
                                                     {target.surveyForm === "true" && (
-                                                        <SurveyTemplateForm errors={errors} touched={touched} target={target} />
+                                                        <SurveyTemplateForm errors={errors} touched={touched} target={target} values={values}/>
                                                     )}
                                                 </>
                                             )}
@@ -1280,7 +1349,7 @@ export const TemplateForm = () => {
                             </div>
                         </div>
                     </div>
-        
+                            
                 </>
             );
         }
