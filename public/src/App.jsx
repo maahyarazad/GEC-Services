@@ -44,9 +44,9 @@ const location = useLocation();
   useEffect(() => {
     const segments = location.pathname.split("/").filter(Boolean); // remove empty strings
     const capitalizedSegments = segments.map(
-      (segment) => segment.charAt(0).toUpperCase() + segment.slice(1)
+      (segment) => segment.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase())
     );
-    const formattedPath = capitalizedSegments.join("/");
+    const formattedPath = capitalizedSegments.join(" | ");
 
     document.title = formattedPath
       ? `GEC - Services | ${formattedPath}`
