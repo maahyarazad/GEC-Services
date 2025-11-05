@@ -9,7 +9,7 @@ import { FcFlashAuto } from "react-icons/fc";
 import FilterParams from "../admin/FilterParams";
 import { TfiWrite } from "react-icons/tfi";
 import RegistrationConfigSearch from './RegistrationConfigSearch';
-
+import { GrVirtualMachine } from "react-icons/gr";
 const PAGE_SIZE = 10;
 
 const columns = [
@@ -74,6 +74,7 @@ const columns = [
             if (!message) return null;
             if (message === "AUTO_REGISTER") return <FcFlashAuto size={16} title='This record has been automatically registered from the Google Sheet.' />;
             if (message === "MANUAL_REGISTER") return <TfiWrite size={16} title="This person has been manually registered for the event." />;
+            if (message === "AUTO_MEMBERSHIP_REGISTER") return <GrVirtualMachine color="orange" size={16} title="This person used the virtual membership card at the venue." />;
 
             return <MessageModalTrigger message={message} />;
         }

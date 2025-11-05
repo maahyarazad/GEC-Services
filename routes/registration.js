@@ -5,7 +5,7 @@ const dbService = require("../services/dbService");
 const multer = require("multer");
 const { generateQRWithText } = require("../services/qrGenerator");
 const { validateFileMimeType } = require("../services/validateFileType");
-const { comfirm_message_email, event_confirm_registration_email, company_data_confirmation_email, gic__reset_password, email_request_received } = require("../services/emailService");
+const { comfirm_message_email, event_confirm_registration_email, company_data_confirmation_email, gic__reset_password, email_request_received, membership_courtacy_at_venue_message } = require("../services/emailService");
 const { generatePassword, hashPassword } = require("../services/userService");
 const { generateRecordId } = require("../services/generatorService");
 const path = require("path");
@@ -355,8 +355,8 @@ router.get('/api/registration-csv-data',  async (req, res) => {
     }
 });
 
+const pad = (n) => n.toString().padStart(2, '0');
 function formatDateToMySQL(date) {
-    const pad = (n) => n.toString().padStart(2, '0');
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
         `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
@@ -366,6 +366,7 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
         let table_name = "registration";
         const data = req.body;
         const result = await dbService.findExact(table_name, "event_id", data.event_id);
+        const membershipResult = await dbService.findExact("member_card", "serial_number", data.event_id);
 
         if (result && result.length > 0) {
             const record = result[0];
@@ -385,10 +386,77 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
                 message: "Guest registration completed successfully. Thank you for your submission.",
                 record
             });
-
         }
 
-        // If no result found
+
+
+        if (membershipResult && membershipResult.length > 0) {
+
+            // 1 - SEND QUERY TO DB AND GET A LIST OF REGISTRATION WHERE THE DATE NOW IS EQUAL TO EVENT DATE
+            // 2 - USE THE MEMBERSHIPRESULT AND REGISTRATION CONFIG AND CREATE A RECORD
+            // 3 - NOTIFY THEM WITH EMAIL LIKE WELCOME AND THANKS FOR USING OUR MEMBERSHIP
+            // 4 - CHECK IF ALREADY THE RECORD CREATED
+
+            const registration_config_query = await dbService.registration_config_auto_register();
+            if(registration_config_query.length === 0){
+        
+                return res.status(404).json({
+                    status: false,
+                    message: "There are no events at the current date and time"
+                });
+
+            }
+
+            const registration_config = registration_config_query[0];
+            const member = membershipResult[0];
+            
+
+            const alreadyCompleted = await dbService.findByConditions("registration", {
+                event: registration_config.page,
+                email : member.email,
+                message : "AUTO_MEMBERSHIP_REGISTER"
+            });
+
+
+           if (alreadyCompleted.length > 0) {
+                return res.status(200).json({
+                    status: false,
+                    message: "This guest registration has already been completed. I’m smart! 🤖",
+                    record: alreadyCompleted[0]
+                });
+            }
+
+
+            const birthday = new Date(member.birthday);
+            const registerant = {
+                event_id : generateRecordId(registration_config.page, false),
+                event : registration_config.page,
+                email : member.email,
+                message : "AUTO_MEMBERSHIP_REGISTER",
+                phone : member.mobile_number ,
+                whatsapp : member.mobile_number ,
+                firstName : member.firstname ,
+                lastName : member.lastname ,
+                birthday : `${birthday.getFullYear()}-${pad(birthday.getMonth() + 1)}-${pad(birthday.getDate())} ` ,
+                metadata_modifiedAt : formatDateToMySQL(new Date(Date.now()))
+            }
+
+        
+            
+            const create_result = await dbService.createSafe("registration", registerant);
+ 
+
+            if (create_result.status) {
+                await membership_courtacy_at_venue_message({ firstName : member.firstname ,lastName : member.lastname ,email : member.email, event: registration_config.page})
+                return res.json({
+                    status: true,
+                    message: "Guest registration completed successfully. Thank you for your submission.",
+                    record: registerant
+                });
+            }
+        }
+
+
         return res.status(404).json({
             status: false,
             message: "No registration record found for the provided event ID."

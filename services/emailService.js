@@ -8,120 +8,120 @@ const { SESClient, SendRawEmailCommand } = require("@aws-sdk/client-ses");
 const nodemailer = require("nodemailer");
 const { emailTemplates } = require('./templates/email_template');
 function slugToTitle(slug) {
-	return slug
-		.replace(/-/g, ' ')                // Replace dashes with spaces
-		.replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word
+    return slug
+        .replace(/-/g, ' ')                // Replace dashes with spaces
+        .replace(/\b\w/g, char => char.toUpperCase()); // Capitalize first letter of each word
 }
 
 function titleToSlug(title) {
-	return title
-		.toLowerCase()            // convert to lowercase
-		.replace(/\s+/g, '-')     // replace spaces (or multiple spaces) with dashes
-		.replace(/[^\w-]+/g, ''); // remove any non-alphanumeric characters except dash
+    return title
+        .toLowerCase()            // convert to lowercase
+        .replace(/\s+/g, '-')     // replace spaces (or multiple spaces) with dashes
+        .replace(/[^\w-]+/g, ''); // remove any non-alphanumeric characters except dash
 }
 
 const ses = new SESClient({
-	region: process.env.AWS_REGION, // e.g. "us-east-1"
-	credentials: {
-		accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-	},
+    region: process.env.AWS_REGION, // e.g. "us-east-1"
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
 });
 
 
 async function sendEmail({ to, subject, html, text }) {
-	const params = {
-		Source: process.env.SES_FROM_EMAIL, // Must be verified in SES
-		Destination: {
-			ToAddresses: [to],
-		},
-		Message: {
-			Subject: { Data: subject },
-			Body: {
-				Html: { Data: html },
-				Text: { Data: text || '' },
-			},
-		},
-	};
+    const params = {
+        Source: process.env.SES_FROM_EMAIL, // Must be verified in SES
+        Destination: {
+            ToAddresses: [to],
+        },
+        Message: {
+            Subject: { Data: subject },
+            Body: {
+                Html: { Data: html },
+                Text: { Data: text || '' },
+            },
+        },
+    };
 
-	try {
-		const response = await transporter.sendMail(mailOptions);
-		console.log('Email sent:', response.messageId);
-		return response;
-	} catch (error) {
-		console.error('SendGrid SMTP error:', error);
-		throw error;
-	}
-	// try {
-	//   const command = new SendEmailCommand(params);
-	//   const response = await ses.send(command);
-	//   console.log("Email sent:", response.MessageId);
-	//   return response;
-	// } catch (err) {
-	//   console.error("Email send error:", err);
-	//   throw err;
-	// }
+    try {
+        const response = await transporter.sendMail(mailOptions);
+        console.log('Email sent:', response.messageId);
+        return response;
+    } catch (error) {
+        console.error('SendGrid SMTP error:', error);
+        throw error;
+    }
+    // try {
+    //   const command = new SendEmailCommand(params);
+    //   const response = await ses.send(command);
+    //   console.log("Email sent:", response.MessageId);
+    //   return response;
+    // } catch (err) {
+    //   console.error("Email send error:", err);
+    //   throw err;
+    // }
 }
 
 
 
 async function sendRawEmailWithAttachments({ to, subject, html, text = '', attachments = [], bcc = [] }) {
-	const transporter = nodemailer.createTransport({
-		secure: false,
-		host: process.env.SMTP_HOST,
-		port: process.env.SMTP_PORT,
-		auth: {
-			user: process.env.SMTP_USER, // This MUST be the literal string 'apikey'
-			pass: process.env.SMTP_PASS, // Your actual SendGrid API Key
-		},
-		// Stupid configuration coming from ChatGPT and break the whole thing!!
-		// streamTransport: true,
-		// buffer: true,
-	});
+    const transporter = nodemailer.createTransport({
+        secure: false,
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        auth: {
+            user: process.env.SMTP_USER, // This MUST be the literal string 'apikey'
+            pass: process.env.SMTP_PASS, // Your actual SendGrid API Key
+        },
+        // Stupid configuration coming from ChatGPT and break the whole thing!!
+        // streamTransport: true,
+        // buffer: true,
+    });
 
-	const mailOptions = {
-		from: process.env.SMTP_SENDER,
-		to,
-		bcc: bcc,
-		subject,
-		text,
-		html,
-		attachments, // Example format below
-	};
+    const mailOptions = {
+        from: process.env.SMTP_SENDER,
+        to,
+        bcc: bcc,
+        subject,
+        text,
+        html,
+        attachments, // Example format below
+    };
 
-	try {
-		const response = await transporter.sendMail(mailOptions);
-		console.log('Email sent:', response.messageId);
-		return response;
-	} catch (error) {
-		console.error('SendGrid SMTP error:', error);
-		throw error;
-	}
+    try {
+        const response = await transporter.sendMail(mailOptions);
+        console.log('Email sent:', response.messageId);
+        return response;
+    } catch (error) {
+        console.error('SendGrid SMTP error:', error);
+        throw error;
+    }
 }
 
 
 async function event_confirm_registration_email_aws(reqBody) {
-	const tempPath = path.join(__dirname, "..", "qr-files");
-	const mapRoot = path.join(__dirname, "..", "maps");
-	const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
-	const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
+    const tempPath = path.join(__dirname, "..", "qr-files");
+    const mapRoot = path.join(__dirname, "..", "maps");
+    const qrPath = path.join(tempPath, `${reqBody.event_id}.png`);
+    const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
 
 
-	const [mapBuffer, qrBuffer] = await Promise.all([
-		fsPromise.readFile(mapPath),
-		fsPromise.readFile(qrPath)
-	]);
-	const currentYear = new Date().getFullYear();
-	const eventTimeSection = reqBody.event_time
-		? `<p><strong>Time:</strong> ${reqBody.event_time}</p>`
-		: '';
-	const eventLocationName = reqBody.event_location_name
-		? `<p><strong>Time:</strong> ${reqBody.event_location_name}</p>`
-		: '';
+    const [mapBuffer, qrBuffer] = await Promise.all([
+        fsPromise.readFile(mapPath),
+        fsPromise.readFile(qrPath)
+    ]);
+    const currentYear = new Date().getFullYear();
+    const eventTimeSection = reqBody.event_time
+        ? `<p><strong>Time:</strong> ${reqBody.event_time}</p>`
+        : '';
+    const eventLocationName = reqBody.event_location_name
+        ? `<p><strong>Time:</strong> ${reqBody.event_location_name}</p>`
+        : '';
 
-	const eventLocationSection =
-		reqBody.event && reqBody.event_location
-			? `
+    const eventLocationSection =
+        reqBody.event && reqBody.event_location
+            ? `
         <tr>
           <td align="center" style="padding:20px;">
             <p><strong>Event location — tap the map below for navigation:</strong></p>
@@ -130,9 +130,9 @@ async function event_confirm_registration_email_aws(reqBody) {
             </a>
           </td>
         </tr>`
-			: '';
+            : '';
 
-	const htmlBody = `
+    const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -196,37 +196,37 @@ async function event_confirm_registration_email_aws(reqBody) {
 </html>
 `;
 
-	await sendRawEmailWithAttachments({
-		to: reqBody.email,
-		subject: `Registration Completed – ${reqBody.title}`,
-		html: htmlBody, // your HTML with <img src="cid:event-location"> and <img src="cid:qr-code">
-		text: 'Your registration is confirmed.', // fallback text
-		attachments: [
-			{
-				filename: 'map.png',
-				content: mapBuffer,
-				contentType: 'image/png',
-				cid: 'event-location',
-			},
-			{
-				filename: 'qr.png',
-				content: qrBuffer,
-				contentType: 'image/png',
-				cid: 'qr-code',
-			}
-		]
-	});
+    await sendRawEmailWithAttachments({
+        to: reqBody.email,
+        subject: `Registration Completed – ${reqBody.title}`,
+        html: htmlBody, // your HTML with <img src="cid:event-location"> and <img src="cid:qr-code">
+        text: 'Your registration is confirmed.', // fallback text
+        attachments: [
+            {
+                filename: 'map.png',
+                content: mapBuffer,
+                contentType: 'image/png',
+                cid: 'event-location',
+            },
+            {
+                filename: 'qr.png',
+                content: qrBuffer,
+                contentType: 'image/png',
+                cid: 'qr-code',
+            }
+        ]
+    });
 }
 
 
 
 async function comfirm_message_email(reqBody) {
-	const { firstName, lastName, email, event } = reqBody;
-	try {
-		const currentYear = new Date().getFullYear();
-		const event_name = slugToTitle(event);
-		const fullname = `${firstName} ${lastName}`
-		const htmlBody = `
+    const { firstName, lastName, email, event } = reqBody;
+    try {
+        const currentYear = new Date().getFullYear();
+        const event_name = slugToTitle(event);
+        const fullname = `${firstName} ${lastName}`
+        const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -282,104 +282,104 @@ async function comfirm_message_email(reqBody) {
 </html>
 `;
 
-		// const msg = {
-		//     to: email,
-		//     from: process.env.EMAIL_SENDER,
-		//     subject: "Golden Eagle Award Registration",
-		//     html: htmlBody,
-		//     mailSettings: {
-		//         sandboxMode: {
-		//             enable: false // ❌ true = testing only, ✅ false = real email is sent
-		//         }
-		//     }
-		// };
+        // const msg = {
+        //     to: email,
+        //     from: process.env.EMAIL_SENDER,
+        //     subject: "Golden Eagle Award Registration",
+        //     html: htmlBody,
+        //     mailSettings: {
+        //         sandboxMode: {
+        //             enable: false // ❌ true = testing only, ✅ false = real email is sent
+        //         }
+        //     }
+        // };
 
-		return await sendRawEmailWithAttachments({
-			to: reqBody.email,
-			subject: `Application Submitted – ${event_name}`,
-			html: htmlBody,
-			text: 'Your application has been submitted.',
+        return await sendRawEmailWithAttachments({
+            to: reqBody.email,
+            subject: `Application Submitted – ${event_name}`,
+            html: htmlBody,
+            text: 'Your application has been submitted.',
 
-		});
+        });
 
-		// const response = await sgMail.send(msg);
-		// console.log(response);
-		// // return response;
-	} catch (error) {
-		console.log(error);
-		throw error;
-	}
+        // const response = await sgMail.send(msg);
+        // console.log(response);
+        // // return response;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
 }
 
 async function event_confirm_registration_email(reqBody) {
-	const title = slugToTitle(reqBody.title);
-	const slug = titleToSlug(reqBody.title);
-	const applefileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
-	const googlefileStorage = path.join(__dirname, "..", "file_storage", "enUS_add_to_google_wallet_add-wallet-badge.png");
+    const title = slugToTitle(reqBody.title);
+    const slug = titleToSlug(reqBody.title);
+    const applefileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
+    const googlefileStorage = path.join(__dirname, "..", "file_storage", "enUS_add_to_google_wallet_add-wallet-badge.png");
 
-	const pkpassPath = `/apple_pass/${slug}/${reqBody.event_id}.pkpass`;
-	// const pkpassPath = path.join(__dirname, "..","pass_storage", `${slug}`, `${reqBody.event_id}.pkpass`);
-	const tempPath = path.join(__dirname, "..", "qr-files");
-	const mapRoot = path.join(__dirname, "..", "maps");
-	const qrPath = path.join(tempPath,`${reqBody.event}` ,`${reqBody.event_id}.png`);
-	const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
-	const { langKey } = reqBody;
-	const { selected_time_for_email } = reqBody;
-	const { googleWalletLink } = reqBody;
-
-
-	try {
-		const qrBuffer = fs.readFileSync(qrPath);
-		const applefileStorageBuffer = fs.existsSync(applefileStorage) ? fs.readFileSync(applefileStorage) : null;
-		const googlefileStorageBuffer = fs.existsSync(googlefileStorage) ? fs.readFileSync(googlefileStorage) : null;
-		const mapBuffer = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : null;
+    const pkpassPath = `/apple_pass/${slug}/${reqBody.event_id}.pkpass`;
+    // const pkpassPath = path.join(__dirname, "..","pass_storage", `${slug}`, `${reqBody.event_id}.pkpass`);
+    const tempPath = path.join(__dirname, "..", "qr-files");
+    const mapRoot = path.join(__dirname, "..", "maps");
+    const qrPath = path.join(tempPath, `${reqBody.event}`, `${reqBody.event_id}.png`);
+    const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
+    const { langKey } = reqBody;
+    const { selected_time_for_email } = reqBody;
+    const { googleWalletLink } = reqBody;
 
 
-		const attachments = [];
-
-		if (qrBuffer) {
-			attachments.push({
-				filename: `${reqBody.timestamp}-qr.png`,
-				content: qrBuffer,
-				contentType: 'image/png',
-				cid: 'qr-code',
-			});
-		}
-
-		if (mapBuffer) {
-			attachments.push({
-				filename: `${reqBody.timestamp}-map.png`,
-				content: mapBuffer,
-				contentType: 'image/png',
-				cid: 'event-location',
-			});
-		}
-
-		if (applefileStorageBuffer) {
-			attachments.push({
-				filename: `apple-wallet.png`,
-				content: applefileStorageBuffer,
-				contentType: 'image/png',
-				cid: 'applewalletimg',
-			});
-		}
-
-		if (googlefileStorageBuffer && googleWalletLink) {
-			attachments.push({
-				filename: "enUS_add_to_google_wallet_add-wallet-badge.png",
-				content: googlefileStorageBuffer,
-				contentType: "image/png",
-				cid: "googlewalletimg",
-			});
-		}
-
-		const currentYear = new Date().getFullYear();
+    try {
+        const qrBuffer = fs.readFileSync(qrPath);
+        const applefileStorageBuffer = fs.existsSync(applefileStorage) ? fs.readFileSync(applefileStorage) : null;
+        const googlefileStorageBuffer = fs.existsSync(googlefileStorage) ? fs.readFileSync(googlefileStorage) : null;
+        const mapBuffer = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : null;
 
 
+        const attachments = [];
 
-		const eventLocationSection =
-			reqBody.event && reqBody.event_location_name && reqBody.event_location
-				? `
+        if (qrBuffer) {
+            attachments.push({
+                filename: `${reqBody.timestamp}-qr.png`,
+                content: qrBuffer,
+                contentType: 'image/png',
+                cid: 'qr-code',
+            });
+        }
+
+        if (mapBuffer) {
+            attachments.push({
+                filename: `${reqBody.timestamp}-map.png`,
+                content: mapBuffer,
+                contentType: 'image/png',
+                cid: 'event-location',
+            });
+        }
+
+        if (applefileStorageBuffer) {
+            attachments.push({
+                filename: `apple-wallet.png`,
+                content: applefileStorageBuffer,
+                contentType: 'image/png',
+                cid: 'applewalletimg',
+            });
+        }
+
+        if (googlefileStorageBuffer && googleWalletLink) {
+            attachments.push({
+                filename: "enUS_add_to_google_wallet_add-wallet-badge.png",
+                content: googlefileStorageBuffer,
+                contentType: "image/png",
+                cid: "googlewalletimg",
+            });
+        }
+
+        const currentYear = new Date().getFullYear();
+
+
+
+        const eventLocationSection =
+            reqBody.event && reqBody.event_location_name && reqBody.event_location
+                ? `
           <tr>
             <td align="center" style="padding:20px; font-size:16px; color:#333333;">
               <p style="padding-bottom: 10px;"><strong>${emailTemplates[langKey].locationLabel}</strong></p>
@@ -389,9 +389,9 @@ async function event_confirm_registration_email(reqBody) {
             </td>
           </tr>
         `
-				: '';
+                : '';
 
-		const htmlBody = `
+        const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -464,7 +464,7 @@ async function event_confirm_registration_email(reqBody) {
                   
                   ${googleWalletLink ?
 
-				`  <tr> <td height=30 align="center" style="padding:20px; font-size:16px; color:#333333;">
+                `  <tr> <td height=30 align="center" style="padding:20px; font-size:16px; color:#333333;">
                     <a class="pass" href="${googleWalletLink}" style="display:inline-block;">
                     <img        height="54"
                         src="cid:googlewalletimg" 
@@ -473,7 +473,7 @@ async function event_confirm_registration_email(reqBody) {
                       />
                     </a>
                   </td>  </tr>` : ``
-			}
+            }
                      
                    
 
@@ -502,102 +502,102 @@ async function event_confirm_registration_email(reqBody) {
 `;
 
 
-		const bcc = ["development2@german-emirates-club.com", "office2@german-emirates-club.com"];
-		// ✅ Send email using your own SMTP function
-		return await sendRawEmailWithAttachments({
-			to: reqBody.email,
-			subject: `Registration Completed – ${title}`,
-			html: htmlBody,
-			text: 'Your registration is confirmed.',
-			attachments,
-			bcc
-		});
+        const bcc = ["development2@german-emirates-club.com", "office2@german-emirates-club.com"];
+        // ✅ Send email using your own SMTP function
+        return await sendRawEmailWithAttachments({
+            to: reqBody.email,
+            subject: `Registration Completed – ${title}`,
+            html: htmlBody,
+            text: 'Your registration is confirmed.',
+            attachments,
+            bcc
+        });
 
-	} catch (error) {
-		console.error("Failed to send registration email:", error);
-		throw error;
-	}
+    } catch (error) {
+        console.error("Failed to send registration email:", error);
+        throw error;
+    }
 }
 
 async function event_confirm_registration_email_with_invoice(reqBody) {
 
-	const applefileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
-	const googlefileStorage = path.join(__dirname, "..", "file_storage", "enUS_add_to_google_wallet_add-wallet-badge.png");
-	// const pkpassPath = path.join(__dirname, "..", "pass_storage", `${reqBody.event}`, `${reqBody.event_id}.pkpass`);
-	const pkpassPath = `/apple_pass/${reqBody.event}/${reqBody.event_id}.pkpass`;
-	const tempPath = path.join(__dirname, "..", "qr-files");
-	const mapRoot = path.join(__dirname, "..", "maps");
-	const qrPath = path.join(tempPath,`${reqBody.event}` ,`${reqBody.event_id}.png`);
-	const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
-	const invoicePath = path.join(__dirname, "..", "invoice_storage", `${reqBody.event}`, `${reqBody.invoice_filename}`);
-	const { selected_time_for_email } = reqBody;
-	const { googleWalletLink } = reqBody;
-	try {
-		const qrBuffer = fs.readFileSync(qrPath);
-		const mapBuffer = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : null;
-		const invoiceBuffer = fs.existsSync(invoicePath) ? fs.readFileSync(invoicePath) : null;
-		const applefileStorageBuffer = fs.existsSync(applefileStorage) ? fs.readFileSync(applefileStorage) : null;
-		const googlefileStorageBuffer = fs.existsSync(googlefileStorage) ? fs.readFileSync(googlefileStorage) : null;
+    const applefileStorage = path.join(__dirname, "..", "file_storage", "apple-wallet.png");
+    const googlefileStorage = path.join(__dirname, "..", "file_storage", "enUS_add_to_google_wallet_add-wallet-badge.png");
+    // const pkpassPath = path.join(__dirname, "..", "pass_storage", `${reqBody.event}`, `${reqBody.event_id}.pkpass`);
+    const pkpassPath = `/apple_pass/${reqBody.event}/${reqBody.event_id}.pkpass`;
+    const tempPath = path.join(__dirname, "..", "qr-files");
+    const mapRoot = path.join(__dirname, "..", "maps");
+    const qrPath = path.join(tempPath, `${reqBody.event}`, `${reqBody.event_id}.png`);
+    const mapPath = path.join(mapRoot, `${reqBody.event}.png`);
+    const invoicePath = path.join(__dirname, "..", "invoice_storage", `${reqBody.event}`, `${reqBody.invoice_filename}`);
+    const { selected_time_for_email } = reqBody;
+    const { googleWalletLink } = reqBody;
+    try {
+        const qrBuffer = fs.readFileSync(qrPath);
+        const mapBuffer = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : null;
+        const invoiceBuffer = fs.existsSync(invoicePath) ? fs.readFileSync(invoicePath) : null;
+        const applefileStorageBuffer = fs.existsSync(applefileStorage) ? fs.readFileSync(applefileStorage) : null;
+        const googlefileStorageBuffer = fs.existsSync(googlefileStorage) ? fs.readFileSync(googlefileStorage) : null;
 
-		const attachments = [];
+        const attachments = [];
 
-		if (qrBuffer) {
-			attachments.push({
-				filename: `${reqBody.timestamp}-qr.png`,
-				content: qrBuffer,
-				contentType: 'image/png',
-				cid: 'qr-code',
-			});
-		}
+        if (qrBuffer) {
+            attachments.push({
+                filename: `${reqBody.timestamp}-qr.png`,
+                content: qrBuffer,
+                contentType: 'image/png',
+                cid: 'qr-code',
+            });
+        }
 
-		if (mapBuffer) {
-			attachments.push({
-				filename: `${reqBody.timestamp}-map.png`,
-				content: mapBuffer,
-				contentType: 'image/png',
-				cid: 'event-location',
-			});
-		}
+        if (mapBuffer) {
+            attachments.push({
+                filename: `${reqBody.timestamp}-map.png`,
+                content: mapBuffer,
+                contentType: 'image/png',
+                cid: 'event-location',
+            });
+        }
 
-		if (invoiceBuffer) {
-			attachments.push({
-				filename: `${reqBody.invoice_filename}`,
-				content: invoiceBuffer,
-				contentType: 'application/pdf',
-			});
-		}
+        if (invoiceBuffer) {
+            attachments.push({
+                filename: `${reqBody.invoice_filename}`,
+                content: invoiceBuffer,
+                contentType: 'application/pdf',
+            });
+        }
 
-		if (applefileStorageBuffer) {
-			attachments.push({
-				filename: `apple-wallet.png`,
-				content: applefileStorageBuffer,
-				contentType: 'image/png',
-				cid: 'applewalletimg',
-			});
-		}
+        if (applefileStorageBuffer) {
+            attachments.push({
+                filename: `apple-wallet.png`,
+                content: applefileStorageBuffer,
+                contentType: 'image/png',
+                cid: 'applewalletimg',
+            });
+        }
 
-		if (googlefileStorageBuffer) {
-			attachments.push({
-				filename: `aenUS_add_to_google_wallet_add-wallet-badge.png`,
-				content: googlefileStorageBuffer,
-				contentType: 'image/png',
-				cid: 'googlewalletimg',
-			});
-		}
+        if (googlefileStorageBuffer) {
+            attachments.push({
+                filename: `aenUS_add_to_google_wallet_add-wallet-badge.png`,
+                content: googlefileStorageBuffer,
+                contentType: 'image/png',
+                cid: 'googlewalletimg',
+            });
+        }
 
 
-		const currentYear = new Date().getFullYear();
+        const currentYear = new Date().getFullYear();
 
-		const eventTimeSection = reqBody.event_time
-			? `<p><strong>Zeit: </strong> ${reqBody.event_time}</p>`
-			: '';
-		const eventLocationName = reqBody.event_location_name
-			? `<p><strong>Veranstaltungsort: </strong> ${reqBody.event_location_name}</p>`
-			: '';
+        const eventTimeSection = reqBody.event_time
+            ? `<p><strong>Zeit: </strong> ${reqBody.event_time}</p>`
+            : '';
+        const eventLocationName = reqBody.event_location_name
+            ? `<p><strong>Veranstaltungsort: </strong> ${reqBody.event_location_name}</p>`
+            : '';
 
-		const eventLocationSection =
-			reqBody.event && reqBody.event_location_name && reqBody.event_location
-				? `
+        const eventLocationSection =
+            reqBody.event && reqBody.event_location_name && reqBody.event_location
+                ? `
           <tr>
             <td align="center" style="padding:20px; font-size:16px; color:#333333;">
               <p style="padding-bottom: 10px;"><strong>Veranstaltungsort – Karte antippen für Navigation.</strong></p>
@@ -607,9 +607,9 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
             </td>
           </tr>
         `
-				: '';
+                : '';
 
-		const htmlBody = `
+        const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -641,8 +641,8 @@ async function event_confirm_registration_email_with_invoice(reqBody) {
 Teilnahme.</p>
                   <p><strong>Datum:</strong> ${reqBody.event_date}</p>
                                     ${selected_time_for_email
-				? `<p><strong>Uhrzeit:</strong> ${selected_time_for_email}</p>`
-				: ""}
+                ? `<p><strong>Uhrzeit:</strong> ${selected_time_for_email}</p>`
+                : ""}
                   ${eventTimeSection}
                   ${eventLocationName}
                 </td>
@@ -706,29 +706,29 @@ Teilnahme.</p>
 
 `;
 
-		// ✅ Send email using your own SMTP function
-		return await sendRawEmailWithAttachments({
-			to: reqBody.email,
-			subject: `Registration Completed – ${reqBody.title}`,
-			html: htmlBody,
-			text: 'Your registration is confirmed.',
-			attachments
-		});
+        // ✅ Send email using your own SMTP function
+        return await sendRawEmailWithAttachments({
+            to: reqBody.email,
+            subject: `Registration Completed – ${reqBody.title}`,
+            html: htmlBody,
+            text: 'Your registration is confirmed.',
+            attachments
+        });
 
-	} catch (error) {
-		console.error("Failed to send registration email:", error);
-		throw error;
-	}
+    } catch (error) {
+        console.error("Failed to send registration email:", error);
+        throw error;
+    }
 }
 
 
 async function email_otp(reqBody) {
-	const { email, event, otp, message } = reqBody;
-	try {
-		const currentYear = new Date().getFullYear();
-		const event_name = slugToTitle(event);
-    const sectionMessage = message || `To complete your registration for`;
-		const htmlBody = `
+    const { email, event, otp, message } = reqBody;
+    try {
+        const currentYear = new Date().getFullYear();
+        const event_name = slugToTitle(event);
+        const sectionMessage = message || `To complete your registration for`;
+        const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -784,26 +784,26 @@ async function email_otp(reqBody) {
 </html>
 `;
 
-		return await sendRawEmailWithAttachments({
-			to: reqBody.email,
-			subject: `Your OTP Code – ${event_name}`,
-			html: htmlBody,
-			text: `Your OTP code is: ${otp}. It is valid for 1 minutes.`,
-		});
+        return await sendRawEmailWithAttachments({
+            to: reqBody.email,
+            subject: `Your OTP Code – ${event_name}`,
+            html: htmlBody,
+            text: `Your OTP code is: ${otp}. It is valid for 1 minutes.`,
+        });
 
-	} catch (error) {
-		console.log(error);
-		throw error;
-	}
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
 }
 
 
 async function email_request_received(reqBody) {
-	const { email, title, firstName, lastName } = reqBody;
-	try {
-		const currentYear = new Date().getFullYear();
+    const { email, title, firstName, lastName } = reqBody;
+    try {
+        const currentYear = new Date().getFullYear();
 
-		const htmlBody = `
+        const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -859,59 +859,59 @@ async function email_request_received(reqBody) {
 </html>
 `;
 
-		return await sendRawEmailWithAttachments({
-			to: reqBody.email,
-			subject: `Request Received – ${title}`,
-			html: htmlBody,
-			text: `Your request for ${title} has been received. Our team will contact you soon.`,
-		});
+        return await sendRawEmailWithAttachments({
+            to: reqBody.email,
+            subject: `Request Received – ${title}`,
+            html: htmlBody,
+            text: `Your request for ${title} has been received. Our team will contact you soon.`,
+        });
 
-	} catch (error) {
-		console.log(error);
-		throw error;
-	}
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
 }
 
 
 async function company_data_confirmation_email(reqBody) {
-	try {
-		const currentYear = new Date().getFullYear();
-		const event_name = slugToTitle(reqBody.event);
+    try {
+        const currentYear = new Date().getFullYear();
+        const event_name = slugToTitle(reqBody.event);
 
-		// Destructure company data
-		const {
-			company_partnerBrand,
-			company_partnerName,
-			company_cityCountry,
-			company_phone,
-			company_mobile,
-			company_email,
-			company_website,
-			company_employeeCount,
-			company_industry,
-			company_ceoOwnerGm,
-			company_ceoOwnerGm_contactNumber,
-			company_ceoOwnerGm_landline,
-			company_ceoOwnerGm_email,
-			company_hrHead,
-			company_hrHead_contactNumber,
-			company_hrHead_landline,
-			company_hrHead_email,
-			company_accountingHead,
-			company_accountingHead_contactNumber,
-			company_accountingHead_landline,
-			company_accountingHead_email,
-			company_marketingHead,
-			company_marketingHead_contactNumber,
-			company_marketingHead_landline,
-			company_marketingHead_email,
-			company_pa,
-			company_pa_contactNumber,
-			company_pa_landline,
-			company_pa_email
-		} = JSON.parse(reqBody.company_data);
+        // Destructure company data
+        const {
+            company_partnerBrand,
+            company_partnerName,
+            company_cityCountry,
+            company_phone,
+            company_mobile,
+            company_email,
+            company_website,
+            company_employeeCount,
+            company_industry,
+            company_ceoOwnerGm,
+            company_ceoOwnerGm_contactNumber,
+            company_ceoOwnerGm_landline,
+            company_ceoOwnerGm_email,
+            company_hrHead,
+            company_hrHead_contactNumber,
+            company_hrHead_landline,
+            company_hrHead_email,
+            company_accountingHead,
+            company_accountingHead_contactNumber,
+            company_accountingHead_landline,
+            company_accountingHead_email,
+            company_marketingHead,
+            company_marketingHead_contactNumber,
+            company_marketingHead_landline,
+            company_marketingHead_email,
+            company_pa,
+            company_pa_contactNumber,
+            company_pa_landline,
+            company_pa_email
+        } = JSON.parse(reqBody.company_data);
 
-		const htmlBody = `
+        const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -996,28 +996,28 @@ async function company_data_confirmation_email(reqBody) {
 `;
 
 
-		return await sendRawEmailWithAttachments({
-			to: company_email,
-			subject: `Company Data Received – ${event_name}`,
-			html: htmlBody,
-			text: `We have received your company information for ${event_name}.`,
-		});
+        return await sendRawEmailWithAttachments({
+            to: company_email,
+            subject: `Company Data Received – ${event_name}`,
+            html: htmlBody,
+            text: `We have received your company information for ${event_name}.`,
+        });
 
-	} catch (error) {
-		console.log(error);
-		throw error;
-	}
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
 }
 
 
 
 async function gic__reset_password(reqBody) {
-	const { password } = reqBody;
-	try {
-		const currentYear = new Date().getFullYear();
-		const org_name = "German Industrial Club";
+    const { password } = reqBody;
+    try {
+        const currentYear = new Date().getFullYear();
+        const org_name = "German Industrial Club";
 
-		const htmlBody = `
+        const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -1070,26 +1070,26 @@ async function gic__reset_password(reqBody) {
 `;
 
 
-		return await sendRawEmailWithAttachments({
-			to: reqBody.email,
-			subject: `${org_name} - Reset Your Password`,
-			html: htmlBody,
-			text: `Your temporary password is: ${password}. Please log in and reset your password immediately.`,
-		});
+        return await sendRawEmailWithAttachments({
+            to: reqBody.email,
+            subject: `${org_name} - Reset Your Password`,
+            html: htmlBody,
+            text: `Your temporary password is: ${password}. Please log in and reset your password immediately.`,
+        });
 
-	} catch (error) {
-		console.log(error);
-		throw error;
-	}
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
 }
 
 async function emailMembershipCard(reqBody, pkpassBuffer) {
-	const { email, memberName, cardNumber, expiryDate, membershipTier } = reqBody;
+    const { email, memberName, cardNumber, expiryDate, membershipTier } = reqBody;
 
-	try {
-		const currentYear = new Date().getFullYear();
+    try {
+        const currentYear = new Date().getFullYear();
 
-		const htmlBody = `
+        const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -1141,35 +1141,35 @@ async function emailMembershipCard(reqBody, pkpassBuffer) {
 </html>
 `;
 
-		const attachments = [
-			{
-				filename: 'membership.pkpass',  // The filename the recipient sees
-				content: pkpassBuffer,          // Your generated .pkpass as a Buffer
-				contentType: 'application/vnd.apple.pkpass' // MIME type for Apple Pass
-			}
-		];
+        const attachments = [
+            {
+                filename: 'membership.pkpass',  // The filename the recipient sees
+                content: pkpassBuffer,          // Your generated .pkpass as a Buffer
+                contentType: 'application/vnd.apple.pkpass' // MIME type for Apple Pass
+            }
+        ];
 
-		return await sendRawEmailWithAttachments({
-			to: email,
-			subject: `Your German Emirates Club Membership Card`,
-			html: htmlBody,
-			text: `Hello ${memberName},\n\nYour German Emirates Club Membership Card is ready.\nCard Number: ${cardNumber}\nMembership Tier: ${membershipTier}\nExpiry Date: ${expiryDate}`,
-			// Optionally, attach the .pkpass file:
-			attachments: attachments
-		});
+        return await sendRawEmailWithAttachments({
+            to: email,
+            subject: `Your German Emirates Club Membership Card`,
+            html: htmlBody,
+            text: `Hello ${memberName},\n\nYour German Emirates Club Membership Card is ready.\nCard Number: ${cardNumber}\nMembership Tier: ${membershipTier}\nExpiry Date: ${expiryDate}`,
+            // Optionally, attach the .pkpass file:
+            attachments: attachments
+        });
 
-	} catch (error) {
-		console.log(error);
-		throw error;
-	}
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
 }
 
 
 async function send_party_invitation(data) {
-	try {
-		const currentYear = new Date().getFullYear();
-		const { email } = data;
-		const htmlBody = `
+    try {
+        const currentYear = new Date().getFullYear();
+        const { email } = data;
+        const htmlBody = `
 <!DOCTYPE html>
 <html>
   <head>
@@ -1276,28 +1276,87 @@ async function send_party_invitation(data) {
 </html>
 `;
 
-		return await sendRawEmailWithAttachments({
-			to: email,
-			subject: `🎉 You're Invited: German Emirates Club 20th Anniversary Celebration`,
-			html: htmlBody,
-			text: `🎉 You're Invited: German Emirates Club 20th Anniversary Celebration`,
-		});
-	} catch (error) {
-		console.log(error);
-		throw error;
-	}
+        return await sendRawEmailWithAttachments({
+            to: email,
+            subject: `🎉 You're Invited: German Emirates Club 20th Anniversary Celebration`,
+            html: htmlBody,
+            text: `🎉 You're Invited: German Emirates Club 20th Anniversary Celebration`,
+        });
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
 
+}
+
+async function membership_courtacy_at_venue_message(data) {
+     
+        const { email , firstName, lastName, event} = data;
+    try{
+        const htmlBody = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <title>Thank You for Visiting</title>
+      </head>
+      <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
+          <tr>
+            <td align="center">
+              <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1); margin:40px auto;">
+                <tr>
+                  <td bgcolor="#D9B144" style="color:#ffffff; text-align:center; padding:20px; font-size:22px; font-weight:bold; border-top-left-radius:8px; border-top-right-radius:8px;">
+                    Thank You for Visiting
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:30px; font-size:16px; color:#333333; line-height:1.6;">
+                    <p>Dear <strong>${firstName} ${lastName}</strong>,</p>
+                    <p>Thank you for using your virtual membership card to enter the <strong>${slugToTitle(event)}</strong> venue.</p>
+                    <p>We appreciate your participation and look forward to welcoming you again soon.</p>
+                    <p>If you have any questions or need assistance, please feel free to contact us at <a href="mailto:office5@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office5@german-emirates-club.com</a>.</p>
+                    <p>Warm regards,<br />The German Emirates Club Team</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
+                    &copy; ${new Date().getFullYear()} German Emirates Club. All rights reserved.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+    `;
+    
+return await sendRawEmailWithAttachments({
+    to: email,
+    subject: `Welcome! Thank You for Being Part of the German Emirates Club - ${slugToTitle(event)}`,
+    html: htmlBody,
+    text: `Welcome! Thank You for Being Part of the German Emirates Club - ${slugToTitle(event)}`,
+});
+
+
+
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
 }
 
 
 module.exports = {
-	send_party_invitation,
-	emailMembershipCard,
-	comfirm_message_email,
-	event_confirm_registration_email,
-	event_confirm_registration_email_aws,
-	email_otp, company_data_confirmation_email,
-	gic__reset_password,
-	email_request_received,
-	event_confirm_registration_email_with_invoice
+    send_party_invitation,
+    emailMembershipCard,
+    comfirm_message_email,
+    event_confirm_registration_email,
+    event_confirm_registration_email_aws,
+    email_otp, company_data_confirmation_email,
+    gic__reset_password,
+    email_request_received,
+    event_confirm_registration_email_with_invoice,
+    membership_courtacy_at_venue_message,
 };

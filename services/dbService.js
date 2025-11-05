@@ -558,6 +558,17 @@ const dbService = {
         });
     },
 
+    registration_config_auto_register: () => {
+        const query = `select * from registration_config where event_date is not null and event_date = date('now');`;
+
+        return new Promise((resolve, reject) => {
+            db.all(query, [], (err, rows) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+    },
+
 
 
 

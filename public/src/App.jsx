@@ -38,12 +38,29 @@ const RouteLoader = () => {
   return null;
 };
 
+function TitleManager() {
+const location = useLocation();
 
+  useEffect(() => {
+    const segments = location.pathname.split("/").filter(Boolean); // remove empty strings
+    const capitalizedSegments = segments.map(
+      (segment) => segment.charAt(0).toUpperCase() + segment.slice(1)
+    );
+    const formattedPath = capitalizedSegments.join("/");
+
+    document.title = formattedPath
+      ? `GEC - Services | ${formattedPath}`
+      : "GEC - Services";
+  }, [location.pathname]);
+
+  return null;
+}
 
 function AppRoutes() {
   return (
     <>
       <RouteLoader />
+      <TitleManager />
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/registration/:event" element={<TemplateForm />} />

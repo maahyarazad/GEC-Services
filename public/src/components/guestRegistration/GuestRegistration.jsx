@@ -106,18 +106,19 @@ export const GuestRegistration = () => {
             setStatusCode(response.status);
 
             
+            
             if (response.status === 200) {
                 
                 showSnackbar(response_data.message, 'success');
                 return;
             }
 
-            showSnackbar(response_data.message);
+            showSnackbar(response_data.message, "");
 
 
         } catch (err) {
             
-            showSnackbar(err.message);
+            showSnackbar(err.message, "");
             setError("Failed to fetch registration.");
         } finally {
             setLoading(false);
