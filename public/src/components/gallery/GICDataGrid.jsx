@@ -1,9 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import { Box, CircularProgress, Button, Tooltip } from '@mui/material';
-import { MdLockReset } from "react-icons/md";
-import { IoShieldCheckmarkSharp } from "react-icons/io5";
-import { FaExclamation } from "react-icons/fa";
+import {DataGrid} from '@mui/x-data-grid';
+
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
+
+import {MdLockReset} from 'react-icons/md';
+import {IoShieldCheckmarkSharp} from 'react-icons/io5';
+import {FaExclamation} from 'react-icons/fa';
 import {config} from '../../ui_config';
 import FilterParams from '../admin/FilterParams';
 
@@ -80,7 +85,7 @@ const columns = ({ onResendPasswordReset, loadingRowId }) => [
 ];
 
 
-export const GICDataGrid = () => {
+const GICDataGrid = () => {
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];
     const [loadingRowId, setLoadingRowId] = useState(null);
     const [members, setMembers] = useState([]);
@@ -209,3 +214,5 @@ export const GICDataGrid = () => {
         </Box>
     );
 };
+
+export default GICDataGrid;

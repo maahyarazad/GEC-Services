@@ -1,33 +1,43 @@
-import { PDFDownloadLink, PDFViewer } from '@react-pdf/renderer';
-import MyDocument from './MyDocument';
+import React, { useState, useEffect } from 'react';
+import { PDFViewer } from '@react-pdf/renderer';
 import PDFErrorBoundary from './PDFErrorBoundary';
-
-
-
+// import MyDocument from './MyDocument';
+const MyDocument = React.lazy(() => import('./MyDocument'));
 const Invoice = ({ formData }) => {
 
 
-  //   const [renderKey, setRenderKey] = useState(0);
-  // const [changed, setChanged] = useState(null);
-  // useEffect(()=>{
-  //  setChanged((objectChanged));
-  //  setRenderKey(prev => prev + 1);
+  const [resetView, setResetView] = useState(true);
+  useEffect(() => {
 
-  // }, [objectChanged])
+    setResetView(true);
 
 
+    const timeout = setTimeout(() => {
+      setResetView(false);
+    }, 200);
 
+    return () => clearTimeout(timeout);
+  }, [formData]);
 
+  if (resetView) {
+
+    return (
+      <div>Resetting...</div>
+
+    );
+  }
+  const DEV_BUILD_EPOCH = Date.now();
   return (
 
     <PDFErrorBoundary>
-      {/* Download PDF button */}
+
       <div style={{ position: 'default' }}>
 
-      
 
         <div>
-          <PDFViewer width="100%" height="770">
+
+          <PDFViewer width="100%" height="770" key={DEV_BUILD_EPOCH}>
+
             <MyDocument formData={formData} />
           </PDFViewer>
         </div>

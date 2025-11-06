@@ -7,7 +7,7 @@ import { PickersActionBar } from "@mui/x-date-pickers/PickersActionBar";
 import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 
-export function CustomDateTimePicker({
+export default function CustomDateTimePicker({
     target,
     setFieldValue,
     setFieldTouched,

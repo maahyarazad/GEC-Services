@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useLocation, useParams, useSearchParams } from "react-router-dom";
 import CircularProgress from "@mui/material/CircularProgress";
-export const SuccessTemplatePage = ({}) => {
+const SuccessTemplatePage = ({}) => {
     const { event } = useParams(); // "october-party"
     const [searchParams] = useSearchParams();
     const [isLoading, setLoading] = useState(true);
@@ -361,3 +361,5 @@ export const SuccessTemplatePage = ({}) => {
     </div>
   );
 }
+
+export default SuccessTemplatePage;

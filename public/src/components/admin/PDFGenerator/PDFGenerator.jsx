@@ -1,9 +1,8 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 
 
-import { Box, Tooltip } from '@mui/material';
+
+import Box from '@mui/material/Box';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -11,49 +10,48 @@ import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Button from '@mui/material/Button';
 import Switch from '@mui/material/Switch';
-import { Field } from "formik";
 import isEqual from "lodash.isequal";
 
 import './PDFGenerator.css';
 
-import Invoice from "./Invoice";
-import FileList from "./FileList";
+const Invoice = React.lazy(()=> import ("./Invoice")) ;
+const FileList = React.lazy(()=> import ("./FileList")) ;
 import { GrCurrency } from "react-icons/gr";
 
 const PDFGenerator = () => {
 
 
-    const handleKeyDown = (e) => {
-        if (e.key === "Backspace") {
-            const textarea = e.target;
-            const { selectionStart, selectionEnd, value } = textarea;
+    // const handleKeyDown = (e) => {
+    //     if (e.key === "Backspace") {
+    //         const textarea = e.target;
+    //         const { selectionStart, selectionEnd, value } = textarea;
 
-            // Split value into lines
-            const lines = value.split(/\r?\n/);
+    //         // Split value into lines
+    //         const lines = value.split(/\r?\n/);
 
-            // Determine current line index based on caret position
-            const beforeCaret = value.slice(0, selectionStart);
-            const currentLineIndex = beforeCaret.split(/\r?\n/).length - 1;
-            const currentLine = lines[currentLineIndex];
+    //         // Determine current line index based on caret position
+    //         const beforeCaret = value.slice(0, selectionStart);
+    //         const currentLineIndex = beforeCaret.split(/\r?\n/).length - 1;
+    //         const currentLine = lines[currentLineIndex];
 
-            // CASE 1: Prevent line merge or deletion at line start
-            // if (selectionStart === selectionEnd && currentLine.trim() === "" && selectionStart > 0) {
-            //   e.preventDefault(); // stop default backspace
-            //   console.log("Prevented deleting empty line");
-            //   return;
-            // }
+    //         // CASE 1: Prevent line merge or deletion at line start
+    //         // if (selectionStart === selectionEnd && currentLine.trim() === "" && selectionStart > 0) {
+    //         //   e.preventDefault(); // stop default backspace
+    //         //   console.log("Prevented deleting empty line");
+    //         //   return;
+    //         // }
 
-            // // CASE 2: Prevent line merge when caret at beginning of line
-            // const lineStartPosition = beforeCaret.lastIndexOf("\n") + 1;
-            // if (selectionStart === lineStartPosition) {
-            //   e.preventDefault();
-            //   console.log("Prevented merging lines");
-            //   return;
-            // }
+    //         // // CASE 2: Prevent line merge when caret at beginning of line
+    //         // const lineStartPosition = beforeCaret.lastIndexOf("\n") + 1;
+    //         // if (selectionStart === lineStartPosition) {
+    //         //   e.preventDefault();
+    //         //   console.log("Prevented merging lines");
+    //         //   return;
+    //         // }
 
-            // Otherwise, let Backspace work normally
-        }
-    };
+    //         // Otherwise, let Backspace work normally
+    //     }
+    // };
 
 
 
@@ -122,10 +120,8 @@ const PDFGenerator = () => {
     }
     const [formData, setFormData] = useState(_initial_formData);
     const [objectChanged, setObjectChanged] = useState(false);
-    const UpdateForm = (data) => {
 
-        setFormData(data);
-    }
+    const UpdateForm = (data) => {setFormData(data);}
 
 
     useEffect(() => {
@@ -153,62 +149,54 @@ const PDFGenerator = () => {
         }));
     };
 
-
     const handleChange = (e) => {
-        const { name, value } = e.target; // e.g., "customer.name" or "items.0.value"
-        const keys = name.split(".");     // split into array
+  const { name, value } = e.target;
+  const nameParts = name.split('.'); // e.g. ["items", "0", "price"] or ["company", "company_name"]
 
-        setFormData((prev) => {
-            const updated = { ...prev };
-            let temp = updated;
+  if (nameParts[0] === 'items') {
+    // Update an item in the items array
+    const index = parseInt(nameParts[1], 10);
+    const key = nameParts[2];
+
+    setFormData((prev) => {
+      // Defensive: check index and key exist
+      if (isNaN(index) || !key) return prev;
+
+      const updatedItems = [...prev.items];
+      const updatedItem = { ...updatedItems[index], [key]: value };
+      updatedItems[index] = updatedItem;
+
+      return { ...prev, items: updatedItems };
+    });
+  } else {
+    // Handle nested keys in other parts, e.g. project.project_name
+    const topKey = nameParts[0];
+    const subKey = nameParts[1] || null;
+
+    setFormData((prev) => {
+      if (!topKey) return prev;
+
+      if (subKey) {
+        // Nested object update
+        return {
+          ...prev,
+          [topKey]: {
+            ...prev[topKey],
+            [subKey]: value,
+          },
+        };
+      } else {
+        // Direct key update
+        return {
+          ...prev,
+          [topKey]: value,
+        };
+      }
+    });
+  }
+};
 
 
-            // Traverse the nested object except the last key
-            for (let i = 0; i < keys.length - 1; i++) {
-                const key = keys[i];
-
-                // If array index
-                if (key.match(/^\d+$/)) {
-                    temp = temp[parseInt(key)];
-                } else {
-                    temp = temp[key];
-                }
-            }
-
-            // Update the last key
-            const lastKey = keys[keys.length - 1];
-            if (lastKey.match(/^\d+$/)) {
-                temp[parseInt(lastKey)] = value;
-            } else {
-                temp[lastKey] = value;
-            }
-
-            return { ...updated };
-        });
-    };
-
-
-    // Generate PDF
-    const handleDownloadPdf = async () => {
-        const element = printRef.current;
-        // Maahyar CM: We can use scale 2 or 3 for high resulotion
-        const canvas = await html2canvas(element, {
-            scale: 1,
-            ignoreElements: (el) => el.classList.contains("swap-button")
-        });
-
-        // 0.8 also reduce the size
-        const imgData = canvas.toDataURL("image/png", 0.7);
-
-        const pdf = new jsPDF("p", "mm", "a4");
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-        // PNG for high resolution
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-
-        pdf.save(`Procurement-${formData.project.project_name}-${formData.project.project_name_code}.pdf`);
-    };
 
     const tabstyle = {
         backgroundColor: "#00000",      // background of the header
@@ -376,7 +364,7 @@ const PDFGenerator = () => {
                                                         size="small"
                                                         title="Add Currency"
                                                         color="primary"
-                                                        checked={formData.currency.currency_enable}
+                                                        checked={formData.currency?.currency_enable || false}
                                                         onChange={(e) => {
                                                             const checked = e.target.checked;
                                                             setFormData((prev) => ({
@@ -393,8 +381,9 @@ const PDFGenerator = () => {
                                                     <small style={{ fontSize: 14, paddingRight: 10 }}>Enable Currency</small>
                                                 </div>
 
-                                                <div className={`${formData.currency.currency_enable ? "d-flex" : "d-none"} mt-3`}>
-                                                    {Object.entries(formData.currency).map(([key, value]) =>
+                                                <div className={`${formData.currency?.currency_enable ? "d-flex" : "d-none"} mt-3`}>
+                                                    
+                                                    {formData.currency && Object.entries(formData.currency).map(([key, value]) =>
                                                         key !== 'currency_enable' &&
                                                         (
 
@@ -416,79 +405,79 @@ const PDFGenerator = () => {
 
                                             <div className="form-control">
 
-                                                {formData.items.map((item, index) => {
-                                                    const uniqueId = Math.round(Math.random() * 10000000);
+                                              {formData.items.map((item, index) => {
+  // Use item.id if available, else fallback to index (less ideal if items can reorder)
+  const key = item.id ?? index;
 
+  return (
+    <div
+      key={key}
+      className="d-flex flex-column"
+      style={{
+        marginBottom: 10,
+        borderBottom: "1px solid #ccc",
+        paddingBottom: 8,
+      }}
+    >
+      {Object.keys(item).map((key) => {
+        switch (key) {
+          case "body":
+            return (
+              <div className="input-group" key={`${index}-${key}`}>
+                <textarea
+                  rows={3}
+                  name={`items.${index}.${key}`}
+                  value={item[key]}
+                  onChange={handleChange}
+                  placeholder={key.replace(/_/g, " ")}
+                />
+                <label>{key.replace(/_/g, " ")}</label>
+              </div>
+            );
 
-                                                    return ( // ✅ Added return here
-                                                        <div
-                                                            key={uniqueId}
-                                                            className="d-flex flex-column"
-                                                            style={{
-                                                                marginBottom: 10,
-                                                                borderBottom: "1px solid #ccc",
-                                                                paddingBottom: 8,
-                                                            }}
-                                                        >
-                                                            {Object.keys(item).map((key) => {
-                                                                switch (key) {
-                                                                    case "body":
-                                                                        return (
-                                                                            <div className="input-group" key={`${index}-${key}`}>
-                                                                                <textarea
-                                                                                    onKeyDown={handleKeyDown}
-                                                                                    rows={3}
-                                                                                    name={`items.${index}.${key}`}
-                                                                                    value={item[key]}
-                                                                                    onChange={handleChange}
-                                                                                    placeholder={key.replace(/_/g, " ")}
-                                                                                />
-                                                                                <label>{key.replace(/_/g, " ")}</label>
-                                                                            </div>
-                                                                        );
+          case "price":
+            return formData.items_price ? (
+              <div className="input-group" key={`${index}-${key}`}>
+                <input
+                  name={`items.${index}.${key}`}
+                  value={item[key]}
+                  onChange={handleChange}
+                  placeholder={key.replace(/_/g, " ")}
+                />
+                <label>{key.replace(/_/g, " ")}</label>
+              </div>
+            ) : null;
 
-                                                                    case "price":
-                                                                        return formData.items_price ? (
-                                                                            <div className="input-group" key={`${index}-${key}`}>
-                                                                                <input
-                                                                                    name={`items.${index}.${key}`}
-                                                                                    value={item[key]}
-                                                                                    onChange={handleChange}
-                                                                                    placeholder={key.replace(/_/g, " ")}
-                                                                                />
-                                                                                <label>{key.replace(/_/g, " ")}</label>
-                                                                            </div>
-                                                                        ) : null;
+          default:
+            return (
+              <div className="input-group" key={`${index}-${key}`}>
+                <input
+                  name={`items.${index}.${key}`}
+                  value={item[key]}
+                  onChange={handleChange}
+                  placeholder={key.replace(/_/g, " ")}
+                />
+                <label>{key.replace(/_/g, " ")}</label>
+              </div>
+            );
+        }
+      })}
 
-                                                                    default:
-                                                                        return (
-                                                                            <div className="input-group" key={`${index}-${key}`}>
-                                                                                <input
-                                                                                    name={`items.${index}.${key}`}
-                                                                                    value={item[key]}
-                                                                                    onChange={handleChange}
-                                                                                    placeholder={key.replace(/_/g, " ")}
-                                                                                />
-                                                                                <label>{key.replace(/_/g, " ")}</label>
-                                                                            </div>
-                                                                        );
-                                                                }
-                                                            })}
+      <Button
+        variant="contained"
+        sx={{ textTransform: "none" }}
+        size="small"
+        type="button"
+        color="error"
+        onClick={() => removeItem(index)}
+        style={{ marginTop: 4 }}
+      >
+        Remove
+      </Button>
+    </div>
+  );
+})}
 
-                                                            <Button
-                                                                variant="contained"
-                                                                sx={{ textTransform: "none" }}
-                                                                size="small"
-                                                                type="button"
-                                                                color="error"
-                                                                onClick={() => removeItem(index)}
-                                                                style={{ marginTop: 4 }}
-                                                            >
-                                                                Remove
-                                                            </Button>
-                                                        </div>
-                                                    );
-                                                })}
 
 
                                                 <Button type="button"
@@ -580,7 +569,6 @@ const PDFGenerator = () => {
                         </div>
 
                         <div className="col-lg-6 col-12">
-
                             <Invoice formData={formData} />
                         </div>
                     </div>
@@ -590,4 +578,4 @@ const PDFGenerator = () => {
     );
 };
 
-export default PDFGenerator;
+ export default PDFGenerator;

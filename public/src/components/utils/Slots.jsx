@@ -1,5 +1,6 @@
 import React from 'react';
-import { Card, CardContent } from '@mui/material';
+import CardContent from '@mui/material/CardContent';
+import Card from '@mui/material/Card';
 
 
 const Slots = ({ data }) => {

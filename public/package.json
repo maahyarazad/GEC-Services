@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "clean": "rm -rf dist",
+    "build": "npm run clean && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -43,12 +44,9 @@
     "dayjs-plugin-utc": "^0.1.2",
     "formik": "^2.4.6",
     "framer-motion": "^12.23.5",
-    "html2canvas": "^1.4.1",
     "js-cookie": "^3.0.5",
-    "jspdf": "^3.0.2",
     "jwt-decode": "^4.0.0",
     "lodash": "^4.17.21",
-    "mapbox-gl": "^3.13.0",
     "mui-tiptap": "^1.19.0",
     "nprogress": "^0.2.0",
     "prop-types": "^15.8.1",
@@ -74,6 +72,8 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.18",
     "globals": "^15.14.0",
+    "rollup-plugin-visualizer": "^6.0.5",
+    "terser": "^5.44.1",
     "vite": "^6.1.0"
   }
 }

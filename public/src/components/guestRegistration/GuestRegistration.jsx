@@ -1,17 +1,29 @@
+import { useSearchParams, useParams } from 'react-router-dom';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
-import { useSearchParams, useParams } from "react-router-dom";
-import { useState, useEffect, useRef, useCallback } from "react";
+import '../utils/login.css';
 
-import "../utils/login.css";
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
+
 import { getCookie, setEncryptedCookie } from '../utils/cookieUtils';
-import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
+
+import  { AiFillEye }from 'react-icons/ai';
+import  { AiFillEyeInvisible }from 'react-icons/ai';
+import  { GoShieldLock }from 'react-icons/go';
+
 import CircularProgress from '@mui/material/CircularProgress';
-import { GoShieldLock } from "react-icons/go";
-import { Button } from "@mui/material";
-import { useSnackbar } from "../Providers/Snackbar";
-import { Box, Paper, Typography, Container } from '@mui/material';
+import Button from '@mui/material/Button';
+
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import Container from '@mui/material/Container';
+
+import { useSnackbar } from '../Providers/Snackbar';
+
+
+
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
 });

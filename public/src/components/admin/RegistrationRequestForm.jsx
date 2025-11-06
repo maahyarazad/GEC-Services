@@ -13,7 +13,12 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import { Button, Tooltip, CircularProgress, TextField, MenuItem } from "@mui/material";
+import Button from "@mui/material/Button";
+import Tooltip from "@mui/material/Tooltip";
+import CircularProgress from "@mui/material/CircularProgress";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+
 import EventLocationInput from "../utils/EventLocationInput";
 import LockRegistrationSwitch from "../utils/LockRegistrationSwitch";
 import EnableScheduling from "../utils/EnableScheduling";

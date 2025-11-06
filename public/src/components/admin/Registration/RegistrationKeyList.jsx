@@ -1,10 +1,9 @@
 import React from 'react';
-import {
-  Box,
-  Paper,
-  Typography
-} from '@mui/material';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 import { DataGrid } from '@mui/x-data-grid';
+
 
 const columns = [
   // { field: 'id', headerName: 'ID', width: 70 },

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../WebSocketContext';
 import { IoTrashOutline, IoDownloadOutline } from "react-icons/io5";
-import MyDocument from './MyDocument';
+// import MyDocument from './MyDocument';
+const MyDocument = React.lazy(()=> import('./MyDocument')) ;
 
+import CircularProgress from "@mui/material/CircularProgress";
 import { PDFDownloadLink } from '@react-pdf/renderer';
-import { IoSave } from "react-icons/io5";
-import { Button, IconButton } from '@mui/material';
+import {IoSave} from "react-icons/io5";
+import IconButton from '@mui/material/IconButton';
 import { VscNewFile } from "react-icons/vsc";
 import { useSnackbar } from '../../Providers/Snackbar';
 import { useAlertDialog } from '../../Providers/AlertProvider';
@@ -194,6 +196,7 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
                     </IconButton>
                 </div>
 
+{formData && (
 
                 <PDFDownloadLink
                     document={<MyDocument formData={formData} />}
@@ -202,7 +205,7 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
                 >
                     {({ loading }) => (
                         loading ? (
-                            "Loading document..."
+                            <CircularProgress size={iconSize}/>
                         ) : (
                             <IconButton title="Download PDF file">
                                 <IoDownloadOutline color="dark" size={iconSize} />
@@ -210,6 +213,7 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
                         )
                     )}
                 </PDFDownloadLink>
+)}
 
             </div>
 
@@ -266,14 +270,7 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
                     </ul>
                 </div>
             </div>
-
-            {/* Optional quick style: inline CSS or add to your stylesheet */}
-            <style jsx>{`
-        .hover-item:hover {
-          background-color: #e9ecef;
-          transform: scale(1.02);
-        }
-      `}</style>
+        
         </div>
     );
 };

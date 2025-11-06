@@ -5,19 +5,22 @@ import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import { useTheme, useMediaQuery, Slide, Divider } from '@mui/material';
+import Divider from '@mui/material/Divider';
+import Slide from '@mui/material/Slide';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import {useTheme} from '@mui/material';
 import { useRef } from "react";
 import GECLogo from '../../assets/media/HGEC.png'
-import MemberLogin from './PurchaseComponent/MemberLogin';
-import MemberUpdate from './PurchaseComponent/MemberUpdate';
-import { useEffect } from 'react';
+const MemberLogin = React.lazy(()=> import ("./PurchaseComponent/MemberLogin"));
+const MemberUpdate = React.lazy(()=> import ("./PurchaseComponent/MemberUpdate"));
+
+
 import applePass from '../../../../file_storage/apple-wallet.png';
 import googlePass from '../../../../file_storage/enUS_add_to_google_wallet_add-wallet-badge.png';
 
 
 const steps = ['Check Your Current Status', 'Update Your Profile', 'Get Your Membership Pass'];
-
-export function PurchaseMemberShip() {
+const PurchaseMemberShip = () => {
     const [activeStep, setActiveStep] = React.useState(0);
     const [skipped, setSkipped] = React.useState(new Set());
     const [slideDirection, setSlideDirection] = React.useState('left');
@@ -306,3 +309,5 @@ export function PurchaseMemberShip() {
 
 
 }
+
+export default PurchaseMemberShip;

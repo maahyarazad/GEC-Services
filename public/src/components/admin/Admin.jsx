@@ -1,44 +1,68 @@
-
-import { Header } from "../utils/Header";
-import "./admin.css";
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Box from '@mui/material/Box';
+// React & Core
 import { useState, useEffect, useRef, useCallback } from "react";
-import { RegistrationList } from "./Registration/RegistrationList";
-import { RegistrationDataGrid } from "../gallery/RegistrationDataGrid"
-import { MemberDataGrid } from "../gallery/MembersDataGrid"
-import { SurveyDataGrid } from "../gallery/SurveyDataGrid"
-import "../utils/login.css";
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
-import { getCookie, setEncryptedCookie } from '../utils/cookieUtils';
-import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
-import CircularProgress from '@mui/material/CircularProgress';
-import { GoShieldLock } from "react-icons/go";
-import { Button } from "@mui/material";
-import { GiArchiveRegister } from "react-icons/gi";
-import { BsCalendar2Event } from "react-icons/bs";
-import { BsPeopleFill } from "react-icons/bs";
-import { FcSurvey } from "react-icons/fc";
-import { GICDataGrid } from "../gallery/GICDataGrid";
-import { WhatsappBroadcast } from "../../components/admin/WhatsApp/WhatsApp";
-import { IoIdCardOutline } from "react-icons/io5";
-import { GrCatalog } from "react-icons/gr";
-import { GrCatalogOption } from "react-icons/gr";
-import { MdPictureAsPdf } from "react-icons/md";
+import { useNavigate, useLocation } from "react-router-dom";
+import React from 'react';
+// Form & Validation
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
+
+
+// Import only what you use (tree-shake safe)
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import InputAdornment from "@mui/material/InputAdornment";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+
+// Icons
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+import { BsCalendar2Event, BsPeopleFill } from "react-icons/bs";
 import { FaWhatsapp } from "react-icons/fa";
+import { FcSurvey } from "react-icons/fc";
+import { GiArchiveRegister } from "react-icons/gi";
+import { GoShieldLock } from "react-icons/go";
+import { GrCatalog, GrCatalogOption } from "react-icons/gr";
+import { IoIdCardOutline } from "react-icons/io5";
+import { MdPictureAsPdf } from "react-icons/md";
+import { RxDoubleArrowLeft } from "react-icons/rx";
+
+// Utils
+import { Header } from "../utils/Header";
+import { getCookie, setEncryptedCookie } from "../utils/cookieUtils";
+
+// Context
+import { useWebSocket } from "./WebSocketContext";
+
+// Components
+const RegistrationList = React.lazy(() => import("./Registration/RegistrationList"));
+const RegistrationDataGrid = React.lazy(() => import("../gallery/RegistrationDataGrid"));
+const MemberDataGrid = React.lazy(() => import("../gallery/MembersDataGrid"));
+const MemberCardDataGrid = React.lazy(() => import("../gallery/MemberCardDataGrid"));
+const SurveyDataGrid = React.lazy(() => import("../gallery/SurveyDataGrid"));
+const GICDataGrid = React.lazy(() => import("../gallery/GICDataGrid"));
+const WhatsappBroadcast = React.lazy(() => import("../../components/admin/WhatsApp/WhatsApp"));
+const PDFGenerator = React.lazy(() => import("./PDFGenerator/PDFGenerator"));
+
+// import RegistrationList from "./Registration/RegistrationList";
+// import RegistrationDataGrid from "../gallery/RegistrationDataGrid";
+// import MemberDataGrid from "../gallery/MembersDataGrid";
+// import MemberCardDataGrid from "../gallery/MemberCardDataGrid";
+// import SurveyDataGrid from "../gallery/SurveyDataGrid";
+// import GICDataGrid from "../gallery/GICDataGrid";
+// import WhatsappBroadcast from "../../components/admin/WhatsApp/WhatsApp";
+// import PDFGenerator from "./PDFGenerator/PDFGenerator";
+
+
+// Styles
+import "./admin.css";
+import "../utils/login.css";
+
 
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
 });
-import { useNavigate, useLocation } from 'react-router-dom';
-import { MemberCardDataGrid } from "../gallery/MemberCardDataGrid";
-import PDFGenerator from "./PDFGenerator/PDFGenerator";
-import { useWebSocket } from "./WebSocketContext";
-import { RxDoubleArrowLeft } from "react-icons/rx";
-
-export const Admin = ({ data }) => {
+const Admin = ({ data }) => {
 
 
     const { _data } = useWebSocket();
@@ -429,4 +453,5 @@ export const Admin = ({ data }) => {
         </div>
     );
 };
+export default Admin;
 

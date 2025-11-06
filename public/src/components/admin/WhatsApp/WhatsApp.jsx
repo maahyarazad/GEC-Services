@@ -1,10 +1,11 @@
 import "./whatsapp-broadcast.css";
 import { useEffect, useRef, useState } from "react";
 import templates from '../../../assets/whatsapp-template.json';
-import { FaWhatsapp } from "react-icons/fa";
-import { Box } from "@mui/material";
+import {FaWhatsapp} from "react-icons/fa";
 
-export const WhatsappBroadcast = () => {
+import Box  from "@mui/material/Box";
+
+const WhatsappBroadcast = () => {
 
     const [data, setData] = useState([]);
 
@@ -173,3 +174,6 @@ export const WhatsappBroadcast = () => {
     );
 };
 
+
+
+export default WhatsappBroadcast;

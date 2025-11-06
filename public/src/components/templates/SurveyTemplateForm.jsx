@@ -1,10 +1,16 @@
 import "./templateform.css";
+
 import { Field, ErrorMessage } from "formik";
-import { TextField, MenuItem } from "@mui/material";
+
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 import InputAdornment from "@mui/material/InputAdornment";
+
 import Misc from "../../assets/misc.json";
 import surveyTemplate from "../../assets/surveyTemplate.json";
+
 import { IconMap } from "./IconMap";
+
 
 export const SurveyTemplateForm = ({ target, errors, touched, values, gridView = false }) => {
     return (

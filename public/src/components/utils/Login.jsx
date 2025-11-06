@@ -13,7 +13,7 @@ import { GoShieldLock } from "react-icons/go";
 import GECCard_Back from '../../assets/media/card_back.webp';
 import WhatsAppButton from '../utils/WhatsAppButton';
 import { useEffect } from "react";
-export const Login = ({ emailRequired, event }) => {
+const Login = ({ emailRequired, event }) => {
     const validationSchema = Yup.object({
         // email: emailRequired ? Yup.string().email("Enter a valid email").required("Email is required!") : Yup.string().nullable(), 
         registration_code: Yup.string().required("Login code is required!"),
@@ -318,3 +318,5 @@ export const Login = ({ emailRequired, event }) => {
         </div>
     );
 };
+
+export default Login;

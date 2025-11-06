@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { Button } from '@mui/material';
+import Button from '@mui/material/Button';
 const validationSchema = Yup.object({
   firstName: Yup.string().required('First name is required'),
   lastName: Yup.string().required('Last name is required'),

@@ -2,13 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import {
-    TextField,
-    MenuItem,
-    Button,
-    CircularProgress,
-    
-} from "@mui/material";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+
 import misc from '../../../assets/misc.json'
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';

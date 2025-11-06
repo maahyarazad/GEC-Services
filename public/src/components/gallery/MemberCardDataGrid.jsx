@@ -1,11 +1,16 @@
 import { useEffect, useState, useCallback } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import { Box, CircularProgress, Button, Tooltip } from '@mui/material';
+import {DataGrid} from '@mui/x-data-grid';
+
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
 import DashboardCards from '../admin/Dashboard/DashboardCards';
-import { MdWorkspacePremium } from "react-icons/md";
-import { BsFiletypeCsv } from "react-icons/bs";
+import {MdWorkspacePremium}  from "react-icons/md";
+import {BsFiletypeCsv}  from "react-icons/bs";
 import FilterParams from '../admin/FilterParams';
-import { GrVirtualMachine } from "react-icons/gr";
+import {GrVirtualMachine} from "react-icons/gr";
+
 const paidBlue = '#0f0faf';
 const nonpaidBlue = '#55729e';
 const red = '#cc0000';;
@@ -76,7 +81,7 @@ const columns = ({ onResendPasswordReset, loadingRowId }) => [
 ];
 
 
-export const MemberCardDataGrid = () => {
+const MemberCardDataGrid = () => {
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];
     const [loadingRowId, setLoadingRowId] = useState(null);
     const [members, setMembers] = useState([]);
@@ -297,3 +302,6 @@ const handsendEmail = async (type) => {
         </Box>
     );
 };
+
+
+export default MemberCardDataGrid;

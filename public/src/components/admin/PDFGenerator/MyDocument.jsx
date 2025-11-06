@@ -1,12 +1,14 @@
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
 import styles from './Styles';
-
+import { useState, useEffect } from 'react';
 import gec_logo from "../../../assets/media/bp-logo.png";
 
 
 
 const MyDocument = ({ formData, objectChanged }) => {
-
+   
+    
+    // Runs whenever formData changes
     const subtotal = formData.items.reduce(
         (total, item) => total + (parseFloat(item.amount) || 0),
         0
@@ -42,7 +44,7 @@ const MyDocument = ({ formData, objectChanged }) => {
         { positiveTotalExchange: 0, negativeTotalExchange: 0 }
     );
 
-
+    
     return (
         <Document>
             <Page size="A4" style={styles.page}>

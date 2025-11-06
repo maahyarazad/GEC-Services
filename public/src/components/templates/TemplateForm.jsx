@@ -1,48 +1,59 @@
 // React & Hooks
-import { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 
 // Third-Party Libraries
 import { Formik, Form, Field, ErrorMessage } from "formik";
-import { Button, Box, TextField, InputAdornment, MenuItem } from "@mui/material";
+
+import Button from "@mui/material/Button";
+import Box from "@mui/material/Box";
+import TextField from "@mui/material/TextField";
+import InputAdornment from "@mui/material/InputAdornment";
 import CircularProgress from "@mui/material/CircularProgress";
 
 // Icons
 import { FaWhatsapp } from "react-icons/fa6";
 import { MdEmail, MdDriveFileRenameOutline } from "react-icons/md";
 import { LuBriefcaseBusiness } from "react-icons/lu";
-import { BsGenderAmbiguous } from "react-icons/bs";
 import { IoClose, IoCloseCircleOutline } from "react-icons/io5";
-import { IoMdInformationCircleOutline } from "react-icons/io";
+import { IoMdInformationCircleOutline, IoMdArrowRoundBack } from "react-icons/io";
 import { FaPhoneAlt } from "react-icons/fa";
 
 // Utils & Helpers
-import { Login } from "../utils/Login";
+
+const Login = React.lazy(()=> import ("../utils/Login")) ;
+const CustomDateTimePicker = React.lazy(()=> import ("../utils/CustomDateTimePicker")) ;
+const OtpTimer = React.lazy(()=> import ("../utils/OtpTimer")) ;
+const OtpInput = React.lazy(()=> import ("../utils/OtpInput")) ;
+const CountDownComponent = React.lazy(()=> import ("../utils/TenDayCountdown")) ;
+const BirthdayField = React.lazy(()=> import ("../utils/BirthdayField")) ;
+const GICRegistrationForm = React.lazy(()=> import ("./GICRegistrationForm")) ;
+const WhatsAppButton = React.lazy(()=> import ("../utils/WhatsAppButton")) ;
+
+
 import {
-    getEncryptedLocalStorage,
-    removeEncryptedLocalStorage,
+  getEncryptedLocalStorage,
+  removeEncryptedLocalStorage,
 } from "../utils/cookieUtils";
 import { useSnackbar } from "../Providers/Snackbar";
-import OtpTimer from "../utils/OtpTimer";
-import OtpInput from "../utils/OtpInput";
-import CountDownComponent from "../utils/TenDayCountdown";
+
 
 // Forms & Validation
 import { getValidationSchema } from "./dynamicValidation";
 import { SurveyTemplateForm } from "./SurveyTemplateForm";
 import { initialValues } from "./InitialValues";
-import GICRegistrationForm from "./GICRegistrationForm";
 
-// Styles
+
+// Styles & Assets
 import "./templateform.css";
-import BirthdayField from "../utils/BirthdayField";
-import { CustomDateTimePicker } from "../utils/CustomDateTimePicker";
+
+
 import GECBackground from "../../assets/media/GECBackground.webp";
 import StarsField from "../../assets/media/stars-field.webm";
-import WhatsAppButton from "../utils/WhatsappButton";
-import GECLogo from "../../assets/media/20-Jahre.webp";
-import { IoMdArrowRoundBack } from "react-icons/io";
+
+
 import languageData from "../../assets/language";
+
 // const AutofillPhoneAndWhatsapp = ({ mobileNumber }) => {
 //     const { setFieldValue } = useFormikContext();
 
@@ -58,7 +69,7 @@ import languageData from "../../assets/language";
 
 
 
-export const TemplateForm = () => {
+const TemplateForm = () => {
     //OTP
     const { event } = useParams();
     const {showSnackbar} = useSnackbar();
@@ -776,7 +787,7 @@ export const TemplateForm = () => {
         
                                             {/* Autofill phone and whatsapp fields */}
                                             {/* <AutofillPhoneAndWhatsapp mobileNumber={target.mobile_number} /> */}
-                                            <img src={GECLogo} height={70} alt="german-emirates-club"/>
+                                            <img src={`${import.meta.env.VITE_SERVERURL}/uploads/logo@2x.png`} height={70} alt="german-emirates-club"/>
                                             <h1 className="mb-2">{target.title}</h1>
                                             {target.surveyForm === "false" && (
         
@@ -1357,3 +1368,5 @@ export const TemplateForm = () => {
 
 
 };
+
+export default TemplateForm;

@@ -1,4 +1,7 @@
-import { LinearProgress, Box, Typography } from '@mui/material';
+import LinearProgress from "@mui/material/LinearProgress";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+
 
 export const PercentageBar = ({ value }) => {
   const percentage = (Number(value.modified_count) / Number(value.total_count)) * 100;

@@ -1,7 +1,7 @@
 // MessageModalTrigger.jsx
 import React, { useState } from 'react';
 import Modal from '../Modal';
-import { Button } from '@mui/material';
+import Button  from '@mui/material/Button';
 
 const MessageModalTrigger = ({ message }) => {
   const [open, setOpen] = useState(false);

@@ -1,15 +1,23 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import { Box, CircularProgress, Tooltip, Button, Typography } from '@mui/material';
-import { BsFiletypeCsv } from "react-icons/bs";
-import { FaCircleCheck } from "react-icons/fa6";
+import {DataGrid} from '@mui/x-data-grid';
+
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Tooltip from '@mui/material/Tooltip';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+
+import {BsFiletypeCsv} from 'react-icons/bs';
+import {FaCircleCheck} from 'react-icons/fa6';
+import {FcFlashAuto} from 'react-icons/fc';
+import {TfiWrite} from 'react-icons/tfi';
+import {GrVirtualMachine} from 'react-icons/gr';
+
 import MessageModalTrigger from '../utils/MessageModalTrigger';
 import { config } from '../../ui_config';
-import { FcFlashAuto } from "react-icons/fc";
-import FilterParams from "../admin/FilterParams";
-import { TfiWrite } from "react-icons/tfi";
+import FilterParams from '../admin/FilterParams';
 import RegistrationConfigSearch from './RegistrationConfigSearch';
-import { GrVirtualMachine } from "react-icons/gr";
+
 const PAGE_SIZE = 10;
 
 const columns = [
@@ -113,7 +121,7 @@ const columns = [
 
 
 
-export const RegistrationDataGrid = () => {
+const RegistrationDataGrid = () => {
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];
 
     const [registrationList, setRegistrationList] = useState([]);
@@ -315,3 +323,6 @@ export const RegistrationDataGrid = () => {
         </Box>
     );
 };
+
+
+export default RegistrationDataGrid;
