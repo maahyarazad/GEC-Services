@@ -1,91 +1,121 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState , useCallback} from 'react';
 import Modal from '../Modal';
 // import 'mapbox-gl/dist/mapbox-gl.css';
 
 // Removed unused imports: jwtDecode, Cookies
 
-const MapModal = ({ isOpen, onClose, onSelect, isParentModalOpen, initialLon, initialLat }) => {
-  const mapContainer = useRef(null);
-  const markerRef = useRef(null);
-  const mapRef = useRef(null);
-  const [mapboxLoaded, setMapboxLoaded] = useState(false);
+const MapModal = ({ isOpen, onClose, onSelect, isParentModalOpen, values}) => {
 
-  // Wait for mapboxgl to be available globally (loaded from CDN)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+    const mapContainer = useRef();
+    const markerRef = useRef();
+    const mapRef = useRef();
+    const [mapboxLoaded, setMapboxLoaded] = useState(false);
 
-    const checkMapbox = () => {
-      if (window.mapboxgl) {
-        window.mapboxgl.accessToken = "pk.eyJ1IjoibWFoeWFyYXphZCIsImEiOiJjazhzaG9pNjIwYzJ4M2VyczJlNnNndzF6In0.ZFGc5daAFPaXObvBKA20CA";
-        setMapboxLoaded(true);
-      } else {
-        setTimeout(checkMapbox, 100);
-      }
-    };
+    // Wait for mapboxgl to be available globally (loaded from CDN)
+    const checkMapBox = useCallback(() => {
+        if (typeof window === 'undefined') return;
 
-    checkMapbox();
-  }, []);
+        if (window.mapboxgl && window.MapboxGeocoder) {
+            
+            window.mapboxgl.accessToken =
+            'pk.eyJ1IjoibWFoeWFyYXphZCIsImEiOiJjazhzaG9pNjIwYzJ4M2VyczJlNnNndzF6In0.ZFGc5daAFPaXObvBKA20CA';
+            setMapboxLoaded(true);
+        } else {
+            setTimeout(checkMapBox, 100);
+        }
+    }, []);
 
-  useEffect(() => {
-    if (!isOpen || !mapboxLoaded) return;
 
-    const mapboxgl = window.mapboxgl;
 
-    const centerLng = initialLon ?? 55.2708;
-    const centerLat = initialLat ?? 25.2048;
 
-    mapRef.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v11',
-      center: [centerLng, centerLat],
-      zoom: 11,
-    });
+    useEffect(() => {
+        
+        checkMapBox();
+        if (!isOpen || !mapboxLoaded) return;
+        
+        const mapboxgl = window.mapboxgl;
 
-    if (markerRef.current) {
-      markerRef.current.remove();
-      markerRef.current = null;
-    }
+        let centerLng;
+        let centerLat;
+        try{
 
-    if (initialLon != null && initialLat != null) {
-      markerRef.current = new mapboxgl.Marker().setLngLat([initialLon, initialLat]).addTo(mapRef.current);
-    }
+            const parts = values.event_location.split(", ");
+            centerLng =  parts[1];
+            centerLat = parts[0];
+        }catch(error){
+            centerLng =  25.194519,
+            centerLat =  55.270900
 
-    mapRef.current.on('click', (e) => {
-      const { lng, lat } = e.lngLat;
+        }
+        
 
-      if (markerRef.current) {
-        markerRef.current.setLngLat([lng, lat]);
-      } else {
-        markerRef.current = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(mapRef.current);
-      }
 
-      onSelect({ lat, lng });
-    });
+        mapRef.current = new mapboxgl.Map({
+            container: mapContainer.current,
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [centerLng, centerLat],
+            zoom: 11,
+        });
 
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, [isOpen, mapboxLoaded, initialLon, initialLat, onSelect]);
+        
+        mapRef.current.addControl(
+            new MapboxGeocoder({
+                accessToken: mapboxgl.accessToken,
+                useBrowserFocus: true,
+                mapboxgl: mapboxgl
+            })
+        );
 
-  useEffect(() => {
-    if (!isParentModalOpen) {
-      onClose();
-    }
-  }, [isParentModalOpen, onClose]);
+        
+        markerRef.current = new mapboxgl.Marker({color: "#FF0000"})
+                .setLngLat([centerLng, centerLat])
+                .addTo(mapRef.current);
 
-  return (
-    <>
-      {isParentModalOpen && (
-        <Modal isOpen={isOpen} onRequestClose={onClose} title="Select Event Location">
-          <div style={{ height: '500px' }} ref={mapContainer} />
-          <p className="text-muted small mt-2">Click on the map to set a location.</p>
-        </Modal>
-      )}
-    </>
-  );
+        mapRef.current.on('click', (e) => {
+            const { lng, lat } = e.lngLat;
+            console.log('Map clicked at:', lng, lat);
+
+            
+
+            if (markerRef.current) {
+                markerRef.current.setLngLat([lng, lat]);
+            } else {
+            markerRef.current = new mapboxgl.Marker({color: "#FF0000"})
+                .setLngLat([lng, lat])
+                .addTo(mapRef.current);
+            }
+
+            onSelect({ lat, lng });
+        });
+
+
+      return () => mapRef.current.remove();
+
+        
+    }, [checkMapBox, isOpen]);
+
+
+
+
+    useEffect(() => {
+
+        if (!isParentModalOpen) {
+            
+            onClose();
+        }
+    }, [isParentModalOpen, onClose]);
+
+    return (
+        <>
+            {isParentModalOpen && (
+                <Modal isOpen={isOpen} onRequestClose={onClose} title="Select Event Location"  >
+                    <h4 className="text-muted small mb-2">Click on the map to set a location, and make sure the red pin appears on your screen.</h4>
+                    <div style={{ height: '500px' }} ref={mapContainer} />
+
+                </Modal>
+            )}
+        </>
+    );
 };
 
 export default MapModal;

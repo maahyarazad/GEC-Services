@@ -2,44 +2,95 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+
+    <!-- Favicons -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- ✅ Bootstrap CSS (non-blocking preload) -->
     <link
-      rel="stylesheet"
+      rel="preload"
       href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.7/css/bootstrap.min.css"
-      integrity="sha512-fw7f+TcMjTb7bpbLJZlP8g2Y4XcCyFZW8uy8HsRZsH/SwbMw0plKHFHr99DN3l04VsYNwvzicUX/6qurvIxbxw=="
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
-    <link
-      href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css"
-      rel="stylesheet"
-    />
+    <noscript>
+      <link
+      
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.7/css/bootstrap.min.css"
+      />
+    </noscript>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0 viewport-fit=cover" />
+    <!-- ✅ Quill CSS (non-blocking preload) -->
+    <link
+      rel="preload"
+      href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css"
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css"
+      />
+    </noscript>
+
+
+
+
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>GEC Services</title>
   </head>
+
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <!-- ✅ Accessibility: main landmark for root app -->
+    <main id="root"></main>
+
+    <!-- ✅ App entry (deferred) -->
+    <script type="module" src="/src/main.jsx" defer></script>
+
+    <!-- ✅ Bootstrap JS (deferred) -->
     <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.7/js/bootstrap.min.js"
-      integrity="sha512-zKeerWHHuP3ar7kX2WKBSENzb+GJytFSBL6HrR2nPSR1kOX1qjm+oHooQtbDpDBSITgyl7QXZApvDfDWvKjkUw=="
+      src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.7/js/bootstrap.bundle.min.js"
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
+      defer
     ></script>
-    <!-- Mapbox CSS -->
-    <link
-      href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
-      rel="stylesheet"
-    />
 
-    <!-- Mapbox JS -->
-    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    
+  <!-- ✅ Mapbox GL JS -->
+  <link
+    href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
+    rel="stylesheet"
+  />
+  <script
+    src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"
+    async
+  ></script>
+
+  <!-- ✅ Mapbox Geocoder -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mapbox/mapbox-gl-geocoder@5.1.2/lib/mapbox-gl-geocoder.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@mapbox/mapbox-gl-geocoder@5.1.2/dist/mapbox-gl-geocoder.min.js"
+  integrity="sha256-DZAVZrQqWa3b3ma/Csuj5Czkm25vJyBFymuuzlJyzLM=" 
+  async
+  crossorigin="anonymous"></script>
 
 
+
+    <!-- ✅ (Optional) Quill JS (deferred, only if you use it on pages) -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.min.js"
+      defer
+    ></script>
   </body>
 </html>

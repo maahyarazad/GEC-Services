@@ -179,7 +179,7 @@ export default function NewRegistrationPage({
         description: initialData?.description || "",
         event_date: initialData?.event_date || "",
         event_time: initialData?.event_time || "",
-        event_location: initialData?.event_location || "",
+        event_location: initialData?.event_location || "25.242110, 55.353244",
         event_location_name: initialData?.event_location_name || "",
         uniqeCodeAccess: enableUniqueMemberCode ? uniqeCodeAccess : 1,
         archived: 0,
@@ -187,11 +187,11 @@ export default function NewRegistrationPage({
     };
 
     useEffect(() => {
-
+        
         if (initialValues.image && typeof initialValues.image === "string") {
             const url = `${import.meta.env.VITE_SERVERURL}/uploads/${initialValues.image}`;
             setPreview(url);
-
+            
             // Optionally fetch image and convert to File object
             fetch(url)
                 .then(res => res.blob())
@@ -210,7 +210,7 @@ export default function NewRegistrationPage({
             typeof initialValues.event_location === "string"
         ) {
             const parts = initialValues.event_location.split(", ");
-
+            
             setInitialLat(parts[0]);
             setInitialLon(parts[1]);
         }
@@ -383,10 +383,7 @@ export default function NewRegistrationPage({
 
             <Formik
                 enableReinitialize={true}
-                initialValues={{
-                                                ...initialValues,
-                                                
-                                            }}
+                initialValues={initialValues}
                 validationSchema={validationSchema}
                 onSubmit={async (values, { resetForm, setFieldValue }) => {
                     await handleSubmit(values, {
@@ -662,6 +659,7 @@ export default function NewRegistrationPage({
                                         touched={touched}
                                         setFieldValue={setFieldValue}
                                         isParentModalOpen={isParentModalOpen}
+                                        values={values}
                                     />
                                     {/* <div className='col-6'>
 

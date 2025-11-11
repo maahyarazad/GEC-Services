@@ -824,13 +824,13 @@ const RegistrationList = () => {
                     setIsParentModalOpen(false);
                 }}
                 onAfterClose={() => setInitialData(null)}
-                title={`Modify ${initialData?.title}`}>
-                <RegistrationRequestForm initialData={initialData} isParentModalOpen={isParentModalOpen} modalSwitch={() => {
-                    setEditReg(false);
-                    setIsParentModalOpen(false);
-                    fetchData();
-                    setInitialData(null);
-                }} />
+                    title={`Modify ${initialData?.title}`}>
+                    <RegistrationRequestForm initialData={initialData} isParentModalOpen={isParentModalOpen} modalSwitch={() => {
+                        setEditReg(false);
+                        setIsParentModalOpen(false);
+                        fetchData();
+                        setInitialData(null);
+                    }} />
             </Modal>
 
 
