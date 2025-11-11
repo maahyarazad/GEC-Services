@@ -28,6 +28,7 @@ import { useWebSocket } from "../WebSocketContext"
 import { PercentageBar } from "../PercentageBar";
 import { StatData } from "../StatData";
 import { MdCleaningServices } from "react-icons/md";
+import ErrorBoundary from "../../utils/ErrorBoundary";
 
 const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate, onArchive, onAutoRgister, onCleanUp, requestloading, localData }) => [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -371,7 +372,7 @@ const RegistrationList = () => {
     const [codeList, setCodeList] = useState(null);
     const [codeEventTitle, setCodeEventTitle] = useState(null);
     const [memberCount, setMemberCount] = useState(0);
-    const [isParentModalOpen, setIsParentModalOpen] = useState(false);
+    const [isMapModalOpen, setIsMapModalOpen] = useState(false);
     const dialogRef = useRef();
     const {showSnackbar} = useSnackbar();
     const {openDialog} = useAlertDialog();
@@ -620,7 +621,7 @@ const RegistrationList = () => {
 
             setInitialData(selectedRow);
             setEditReg(true);
-            setIsParentModalOpen(true);
+            
         }
     };
 
@@ -755,7 +756,7 @@ const RegistrationList = () => {
     const [activeStep, setActiveStep] = useState(0);
     const handleNext = () => {
         setActiveStep((prev) => prev + 1);
-        setIsParentModalOpen(true);
+        
     };
 
     const handleBack = () => {
@@ -818,20 +819,21 @@ const RegistrationList = () => {
 
 
 
+
             <Modal isOpen={editReg} _style={{ minWidth: '50vw', minHeight: '95vh' }}
                 onRequestClose={() => {
                     setEditReg(false);
-                    setIsParentModalOpen(false);
                 }}
                 onAfterClose={() => setInitialData(null)}
                     title={`Modify ${initialData?.title}`}>
-                    <RegistrationRequestForm initialData={initialData} isParentModalOpen={isParentModalOpen} modalSwitch={() => {
-                        setEditReg(false);
-                        setIsParentModalOpen(false);
-                        fetchData();
-                        setInitialData(null);
-                    }} />
+                    <RegistrationRequestForm initialData={initialData}
+                        modalSwitch={() => {
+                            setEditReg(false);
+                            fetchData();
+                            setInitialData(null);
+                        }} />
             </Modal>
+
 
 
             <Modal isOpen={codeModal}
@@ -853,8 +855,7 @@ const RegistrationList = () => {
                 isOpen={newReg}
                 onRequestClose={() => {
                     setNewReg(false);
-                    setIsParentModalOpen(false);
-
+                    
                 }}
                 onAfterClose={() => { fetchData(); setActiveStep(0); }}
                 title="New Registration Page">
@@ -928,9 +929,7 @@ const RegistrationList = () => {
                                 disableLogin={disableLogin}
                                 modalSwitch={() => {
                                     setNewReg(false);
-                                    setIsParentModalOpen(false);
                                     setActiveStep(0); // reset step on close
-
                                     fetchData();
                                 }}
                             />

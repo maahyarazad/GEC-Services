@@ -1,10 +1,12 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import ReactModal from "react-modal";
 import { IoClose } from "react-icons/io5";
 
-const Modal = ({ isOpen, onRequestClose, title, children, _style = null }) => {
-    useEffect(() => {
 
+const Modal = ({ isOpen, onRequestClose, title, children, _style = null, onAfterOpen }) => {
+
+    const idRef = useRef(Math.floor(Date.now() + Math.random() * 100));
+    useEffect(() => {
         const handleEsc = (event) => {
             if (event.key === "Escape" && isOpen) {
                 onRequestClose();
@@ -12,15 +14,14 @@ const Modal = ({ isOpen, onRequestClose, title, children, _style = null }) => {
         };
 
         window.addEventListener("keydown", handleEsc);
-
-        return () => {
-            window.removeEventListener("keydown", handleEsc);
-        };
+        return () => window.removeEventListener("keydown", handleEsc);
     }, [isOpen, onRequestClose]);
 
     return (
         <ReactModal
-            isOpen={true} // always mounted
+            onAfterOpen={onAfterOpen}
+            key={idRef.current}
+            isOpen={isOpen}
             onRequestClose={onRequestClose}
             closeTimeoutMS={300}
             overlayClassName={{
@@ -36,36 +37,13 @@ const Modal = ({ isOpen, onRequestClose, title, children, _style = null }) => {
             ariaHideApp={false}
             shouldCloseOnOverlayClick={true}
             shouldCloseOnEsc={true}
-            style={{
-                overlay: {
-                   
-                    visibility: isOpen ? "visible" : "hidden",
-                    opacity: isOpen ? 1 : 0,
-                    transition: "opacity 300ms ease-in-out, visibility 300ms ease-in-out",
-                    pointerEvents: isOpen ? "auto" : "none",
-                },
-                content: {
-                    minWidth: _style ? _style.minWidth : undefined,
-                    minHeight: _style ? _style.minHeight : undefined,
-                    transform: isOpen ? "translateY(0)" : "translateY(100px)",
-                    opacity: isOpen ? 1 : 0,
-                    transition: "transform 300ms ease-in-out, opacity 300ms ease-in-out",
-                    // pointerEvents: isOpen ? "auto" : "none",
-                },
-            }}
         >
             <div className="modal-header">
-
                 <h2>{title}</h2>
-                <button
-                    className="modal-close-btn justify-self-end"
-                    onClick={onRequestClose}
-                >
+                <button className="modal-close-btn" onClick={onRequestClose}>
                     <IoClose size={25} />
                 </button>
-
             </div>
-
             <div className="modal-body">{children}</div>
         </ReactModal>
     );

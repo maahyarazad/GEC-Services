@@ -1,54 +1,49 @@
-import React, { useRef, useEffect, useState , useCallback} from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import Modal from '../Modal';
-// import 'mapbox-gl/dist/mapbox-gl.css';
 
-// Removed unused imports: jwtDecode, Cookies
-
-const MapModal = ({ isOpen, onClose, onSelect, isParentModalOpen, values}) => {
-
-    const mapContainer = useRef();
-    const markerRef = useRef();
-    const mapRef = useRef();
+const MapModal = ({ isOpen, onClose, onSelect, values }) => {
+    const mapContainer = useRef(null);
+    const markerRef = useRef(null);
+    const mapRef = useRef(null);
     const [mapboxLoaded, setMapboxLoaded] = useState(false);
 
-    // Wait for mapboxgl to be available globally (loaded from CDN)
     const checkMapBox = useCallback(() => {
         if (typeof window === 'undefined') return;
 
         if (window.mapboxgl && window.MapboxGeocoder) {
-            
             window.mapboxgl.accessToken =
-            'pk.eyJ1IjoibWFoeWFyYXphZCIsImEiOiJjazhzaG9pNjIwYzJ4M2VyczJlNnNndzF6In0.ZFGc5daAFPaXObvBKA20CA';
+                'pk.eyJ1IjoibWFoeWFyYXphZCIsImEiOiJjazhzaG9pNjIwYzJ4M2VyczJlNnNndzF6In0.ZFGc5daAFPaXObvBKA20CA';
             setMapboxLoaded(true);
         } else {
             setTimeout(checkMapBox, 100);
         }
     }, []);
 
-
-
-
     useEffect(() => {
-        
         checkMapBox();
-        if (!isOpen || !mapboxLoaded) return;
-        
+    }, [checkMapBox]);
+
+    // Initialize the map - called when modal is fully opened and container is mounted
+    const initMap = () => {
+        if (!mapboxLoaded || !mapContainer.current) return;
+
+        if (mapRef.current) {
+            mapRef.current.remove();
+            mapRef.current = null;
+        }
+
         const mapboxgl = window.mapboxgl;
 
-        let centerLng;
-        let centerLat;
-        try{
+        let centerLng = 25.194519;
+        let centerLat = 55.2709;
 
+        try {
             const parts = values.event_location.split(", ");
-            centerLng =  parts[1];
-            centerLat = parts[0];
-        }catch(error){
-            centerLng =  25.194519,
-            centerLat =  55.270900
-
+            centerLng = parseFloat(parts[1]);
+            centerLat = parseFloat(parts[0]);
+        } catch (error) {
+            // fallback coords already set
         }
-        
-
 
         mapRef.current = new mapboxgl.Map({
             container: mapContainer.current,
@@ -57,64 +52,56 @@ const MapModal = ({ isOpen, onClose, onSelect, isParentModalOpen, values}) => {
             zoom: 11,
         });
 
-        
         mapRef.current.addControl(
-            new MapboxGeocoder({
+            new window.MapboxGeocoder({
                 accessToken: mapboxgl.accessToken,
                 useBrowserFocus: true,
-                mapboxgl: mapboxgl
+                mapboxgl: mapboxgl,
             })
         );
 
-        
-        markerRef.current = new mapboxgl.Marker({color: "#FF0000"})
-                .setLngLat([centerLng, centerLat])
-                .addTo(mapRef.current);
+        markerRef.current = new mapboxgl.Marker({ color: "#FF0000" })
+            .setLngLat([centerLng, centerLat])
+            .addTo(mapRef.current);
 
         mapRef.current.on('click', (e) => {
             const { lng, lat } = e.lngLat;
-            console.log('Map clicked at:', lng, lat);
-
             
 
             if (markerRef.current) {
                 markerRef.current.setLngLat([lng, lat]);
             } else {
-            markerRef.current = new mapboxgl.Marker({color: "#FF0000"})
-                .setLngLat([lng, lat])
-                .addTo(mapRef.current);
+                markerRef.current = new mapboxgl.Marker({ color: "#FF0000" })
+                    .setLngLat([lng, lat])
+                    .addTo(mapRef.current);
             }
 
             onSelect({ lat, lng });
         });
+    };
 
-
-      return () => mapRef.current.remove();
-
-        
-    }, [checkMapBox, isOpen]);
-
-
-
-
+    // Cleanup map on modal close or unmount
     useEffect(() => {
-
-        if (!isParentModalOpen) {
-            
-            onClose();
+        if (!isOpen) {
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+            }
         }
-    }, [isParentModalOpen, onClose]);
+    }, [isOpen]);
 
     return (
-        <>
-            {isParentModalOpen && (
-                <Modal isOpen={isOpen} onRequestClose={onClose} title="Select Event Location"  >
-                    <h4 className="text-muted small mb-2">Click on the map to set a location, and make sure the red pin appears on your screen.</h4>
-                    <div style={{ height: '500px' }} ref={mapContainer} />
-
-                </Modal>
-            )}
-        </>
+        <Modal
+            isOpen={isOpen}
+            title="Select Event Location"
+            onAfterOpen={initMap} // <-- run after modal fully opens and content mounted
+            onRequestClose={onClose}
+        >
+            <h4 className="small mb-3" >
+                Click on the map to set a location, and make sure the red pin appears on your screen.
+            </h4>
+            <div style={{ height: '500px' }} ref={mapContainer} />
+        </Modal>
     );
 };
 

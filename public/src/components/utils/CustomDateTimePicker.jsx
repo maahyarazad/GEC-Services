@@ -135,7 +135,6 @@ export default function CustomDateTimePicker({
     // };
 
     return (
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
 
             <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <TimePicker
@@ -194,53 +193,54 @@ export default function CustomDateTimePicker({
 
 
             </LocalizationProvider>
+        // <LocalizationProvider dateAdapter={AdapterDayjs}>
 
 
-            {/* <DateTimePicker
-                label="Select Time"
-                value={values[name] || null}
-                views={['hours']}
-                onChange={(newValue) => { setFieldValue(name, newValue);}}
-                minTime={dayjs("2025-09-19T10:00")}
-                maxTime={dayjs("2025-09-19T18:00")}
-                minutesStep={15}
-                ampm={false}
-                shouldDisableTime={shouldDisableHours}
-                slots={{
-                    actionBar: PickersActionBar,
-                }}
-                slotProps={{
-                    actionBar: {
-                        actions: ["accept"], // 👈 use "accept", not "ok"
-                        sx: {
-                            "& .MuiButton-root": {
-                                textTransform: "none", // lowercase
-                                fontSize: "0.8rem",
-                                padding: "2px 10px",
-                            },
-                            "& .MuiButton-textPrimary": {
-                                color: "black", // accept button
-                            },
-                            "& .MuiButton-textSecondary": {
-                                color: "black", // cancel button
-                            },
-                        },
-                    },
-                    textField: {
-                        size: "small",
-                        fullWidth: false,
-                        error: Boolean(errorText),
-                        helperText: errorText,
-                        InputProps: {
-                            endAdornment: values[name] && (
-                                <IconButton size="small" onClick={() => setFieldValue(name, null)} edge="end">
-                                    <ClearIcon fontSize="small" />
-                                </IconButton>
-                            ),
-                        },
-                    },
-                }} /> */}
+        //     <DateTimePicker
+        //         label="Select Time"
+        //         value={values[name] || null}
+        //         views={['hours']}
+        //         onChange={(newValue) => { setFieldValue(name, newValue);}}
+        //         minTime={dayjs("2025-09-19T10:00")}
+        //         maxTime={dayjs("2025-09-19T18:00")}
+        //         minutesStep={15}
+        //         ampm={false}
+        //         shouldDisableTime={shouldDisableHours}
+        //         slots={{
+        //             actionBar: PickersActionBar,
+        //         }}
+        //         slotProps={{
+        //             actionBar: {
+        //                 actions: ["accept"], // 👈 use "accept", not "ok"
+        //                 sx: {
+        //                     "& .MuiButton-root": {
+        //                         textTransform: "none", // lowercase
+        //                         fontSize: "0.8rem",
+        //                         padding: "2px 10px",
+        //                     },
+        //                     "& .MuiButton-textPrimary": {
+        //                         color: "black", // accept button
+        //                     },
+        //                     "& .MuiButton-textSecondary": {
+        //                         color: "black", // cancel button
+        //                     },
+        //                 },
+        //             },
+        //             textField: {
+        //                 size: "small",
+        //                 fullWidth: false,
+        //                 error: Boolean(errorText),
+        //                 helperText: errorText,
+        //                 InputProps: {
+        //                     endAdornment: values[name] && (
+        //                         <IconButton size="small" onClick={() => setFieldValue(name, null)} edge="end">
+        //                             <ClearIcon fontSize="small" />
+        //                         </IconButton>
+        //                     ),
+        //                 },
+        //             },
+        //         }} />
 
-        </LocalizationProvider>
+        // </LocalizationProvider>
     );
 }

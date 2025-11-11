@@ -327,11 +327,18 @@ const Admin = ({ data }) => {
             break;
     }
 
-    return isCheckingAuth ? (
-        <div className="w-100 min-vh-100 d-flex justify-content-center align-items-center flex-column">
 
-            <CircularProgress />
-        </div>
+const FallBackLoader = () => (
+  <div
+    className="d-flex justify-content-center align-items-center flex-column"
+    style={{ height: "100vh", width: "100vw" }}
+  >
+    <CircularProgress />
+  </div>
+);
+
+    return isCheckingAuth ? (
+       <FallBackLoader/>
     ) : adminUser ? (
         <>
             <Header adminUser={adminUser} setAdminUser={setAdminUser} showMenu={showMenu} burgerActive={burgerActive} setBurgerActive={setBurgerActive} />
@@ -376,7 +383,9 @@ const Admin = ({ data }) => {
                         </Tabs>
                     </Box>
                 </div>
-                <div >{content}</div>
+                <React.Suspense fallback={   <FallBackLoader/>}>
+                    <div >{content}</div>
+                </React.Suspense>
             </div>
         </>
     ) : (

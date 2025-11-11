@@ -6,15 +6,16 @@ import eventLocation from "../../assets/media/event_navigation.png";
 import { IoClose } from "react-icons/io5";
 import PropTypes from "prop-types";
 import { config } from '../../ui_config';
+import ErrorBoundary from "./ErrorBoundary";
 const EventLocationInput = ({
     errors,
     touched,
     setFieldValue,
-    isParentModalOpen,
     values
 }) => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
+    
+    // const idRef = useRef(Math.floor(Date.now() + Math.random() * 100));
+    const [isMapModalOpen, setIsMapModalOpen] = useState(false);
     const handleLocationSelect = ({ lat, lng }) => {
         const locationStr = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
 
@@ -53,7 +54,7 @@ const EventLocationInput = ({
                         <label htmlFor="event_location" className="form-label">
                             Event Location
                         </label>
-                        <div onClick={() => setIsModalOpen(true)}>
+                        <div onClick={() => setIsMapModalOpen(true)}>
                             <div className="position-relative" style={{ minHeight: 38 }}>
                                 <Field
                                     name="event_location"
@@ -96,14 +97,17 @@ const EventLocationInput = ({
                     </div>
                 </Tooltip>
             </div>
-            <MapModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onSelect={handleLocationSelect}
-                isParentModalOpen={isParentModalOpen}
+            <ErrorBoundary>
 
+            <MapModal
+                onClose={() => setIsMapModalOpen(false)}
+                // setIsMapModalOpen={setIsMapModalOpen}
+                isOpen={isMapModalOpen}
+                onSelect={handleLocationSelect}
                 values={values}
+
             />
+            </ErrorBoundary>
 
             {/* <MapModal
                     isOpen={isModalOpen}

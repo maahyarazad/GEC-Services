@@ -90,7 +90,6 @@ export default function NewRegistrationPage({
     uniqeCodeAccess,
     disableLogin,
     enableUniqueMemberCode,
-    isParentModalOpen,
 }) {
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [slug, setSlug] = useState(null);
@@ -653,12 +652,10 @@ export default function NewRegistrationPage({
                                     </div>
 
                                     <EventLocationInput
-                                        initialLat={initialLat}
-                                        initialLon={initialLon}
+                                        
                                         errors={errors}
                                         touched={touched}
                                         setFieldValue={setFieldValue}
-                                        isParentModalOpen={isParentModalOpen}
                                         values={values}
                                     />
                                     {/* <div className='col-6'>
