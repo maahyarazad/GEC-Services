@@ -10,29 +10,44 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
 
-    <!-- ✅ Bootstrap CSS (non-blocking preload) -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>GEC Services</title>
+
+    <!-- ✅ Bootstrap CSS (non-blocking) -->
     <link
       rel="preload"
       href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.7/css/bootstrap.min.css"
       as="style"
-      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.7/css/bootstrap.min.css"
+      media="print"
+      onload="this.media='all'"
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
     <noscript>
       <link
-      
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.7/css/bootstrap.min.css"
       />
     </noscript>
 
-    <!-- ✅ Quill CSS (non-blocking preload) -->
+    <!-- ✅ Quill CSS (non-blocking) -->
     <link
       rel="preload"
       href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css"
       as="style"
-      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css"
+      media="print"
+      onload="this.media='all'"
     />
     <noscript>
       <link
@@ -41,22 +56,15 @@
       />
     </noscript>
 
-
-
-
-
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    />
-    <title>GEC Services</title>
+    <!-- ✅ Inline critical app CSS if possible -->
+    <!-- <link rel="stylesheet" href="/assets/index-CJ3nFqsf.css" /> -->
   </head>
 
   <body>
-    <!-- ✅ Accessibility: main landmark for root app -->
+    <!-- Accessibility -->
     <main id="root"></main>
 
-    <!-- ✅ App entry (deferred) -->
+    <!-- ✅ Main app entry -->
     <script type="module" src="/src/main.jsx" defer></script>
 
     <!-- ✅ Bootstrap JS (deferred) -->
@@ -67,30 +75,37 @@
       defer
     ></script>
 
-    
-  <!-- ✅ Mapbox GL JS -->
-  <link
-    href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
-    rel="stylesheet"
-  />
-  <script
-    src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"
-    async
-  ></script>
+    <!-- ✅ Lazy-load Mapbox and Quill AFTER render -->
+    <script>
+      window.addEventListener("load", () => {
+        // Mapbox
+        const mapboxCss = document.createElement("link");
+        mapboxCss.rel = "stylesheet";
+        mapboxCss.href =
+          "https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css";
+        document.head.appendChild(mapboxCss);
 
-  <!-- ✅ Mapbox Geocoder -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mapbox/mapbox-gl-geocoder@5.1.2/lib/mapbox-gl-geocoder.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@mapbox/mapbox-gl-geocoder@5.1.2/dist/mapbox-gl-geocoder.min.js"
-  integrity="sha256-DZAVZrQqWa3b3ma/Csuj5Czkm25vJyBFymuuzlJyzLM=" 
-  async
-  crossorigin="anonymous"></script>
+        const mapboxScript = document.createElement("script");
+        mapboxScript.src =
+          "https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js";
+        mapboxScript.async = true;
+        document.body.appendChild(mapboxScript);
 
+        const geocoderCss = document.createElement("link");
+        geocoderCss.rel = "stylesheet";
+        geocoderCss.href =
+          "https://cdn.jsdelivr.net/npm/@mapbox/mapbox-gl-geocoder@5.1.2/lib/mapbox-gl-geocoder.min.css";
+        document.head.appendChild(geocoderCss);
 
+        const geocoderScript = document.createElement("script");
+        geocoderScript.src =
+          "https://cdn.jsdelivr.net/npm/@mapbox/mapbox-gl-geocoder@5.1.2/dist/mapbox-gl-geocoder.min.js";
+        geocoderScript.crossOrigin = "anonymous";
+        geocoderScript.async = true;
+        document.body.appendChild(geocoderScript);
 
-    <!-- ✅ (Optional) Quill JS (deferred, only if you use it on pages) -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.min.js"
-      defer
-    ></script>
+       
+      });
+    </script>
   </body>
 </html>

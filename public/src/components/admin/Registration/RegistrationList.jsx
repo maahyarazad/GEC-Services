@@ -922,7 +922,6 @@ const RegistrationList = () => {
                     {activeStep === 1 && (
                         <>
                             <RegistrationRequestForm
-                                isParentModalOpen={isParentModalOpen}
                                 initialData={null}
                                 uniqeCodeAccess={memberCount}
                                 enableUniqueMemberCode={enableUniqueMemberCode}
