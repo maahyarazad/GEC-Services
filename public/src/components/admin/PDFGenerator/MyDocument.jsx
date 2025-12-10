@@ -47,7 +47,7 @@ const MyDocument = ({ formData, objectChanged }) => {
     
     return (
         <Document>
-            <Page size="A4" style={styles.page}>
+            <Page size="A4" style={styles.page} wrap>
                 {/* Header */}
                 <View style={styles.header}>
                     <Image src={gec_logo} style={styles.logo} />
@@ -121,78 +121,71 @@ const MyDocument = ({ formData, objectChanged }) => {
                     </View>
 
                     {/* Items */}
-                    {formData.items.map((item, i) => (
+<View
+  render={() => (
+    <>
+      {formData.items.map((item, i) => {
+        // Example condition: render only if total items length is > 5 (adjust as needed)
+        if (formData.items.length === 0) {
+            return null; // skip if condition not met
+        }
+        return (
+          <View key={`item-${i}`} break>
+            {/* your item JSX here */}
+            <View style={styles.tableRow}>
+              <Text style={styles.tableColDescription}>{item.title || "No Title"}</Text>
 
-                        <View key={`item-${i}`}>
-                            {/* Currency row (shown only if enabled) */}
+              {formData.items_price ? (
+                <Text style={styles.tableCol}>{item.price || "-"}</Text>
+              ) : (
+                <Text style={[styles.tableCol, { color: "transparent" }]}>{item.price || "-"}</Text>
+              )}
 
+              <Text style={styles.tableCol}>{item.qty || "-"}</Text>
+              <Text style={styles.tableCol}>{item.disc || "0%"}</Text>
+              <Text style={styles.tableCol}>{item.vat_p || "0"}</Text>
+              <Text style={styles.tableCol}>{item.vat || "-"}</Text>
 
-                            {/* Main item row */}
-                            <View style={styles.tableRow}>
-                                <Text style={styles.tableColDescription}>{item.title || "No Title"}</Text>
+              {formData?.currency?.currency_enable ? (
+                <Text style={styles.tableColAmount}>
+                  {formData?.currency?.currency_symbol} {item.amount || "0"}
+                </Text>
+              ) : (
+                <Text style={styles.tableColAmount}>AED {item.amount || "0"}</Text>
+              )}
+            </View>
 
-                                {formData.items_price ? (
-                                    <Text style={styles.tableCol}>{item.price || "-"}</Text>
-                                ) : (
-                                    <Text style={[styles.tableCol, { color: "transparent" }]}>{item.price || "-"}</Text>
-                                )}
+            <View style={[styles.tableRowCurrency, !formData?.currency?.currency_enable && { height: 0, opacity: 0 }]}>
+              <Text style={styles.tableColDescription}></Text>
+              <Text style={styles.tableCol}></Text>
+              <Text style={styles.tableCol}></Text>
+              <Text style={styles.tableCol}></Text>
+              <Text style={styles.tableCol}></Text>
+              <Text style={[styles.tableCol, styles.currencyTotalStyle]}>({item.vat || "-"})</Text>
 
-                                <Text style={styles.tableCol}>{item.qty || "-"}</Text>
-                                <Text style={styles.tableCol}>{item.disc || "0%"}</Text>
-                                <Text style={styles.tableCol}>{item.vat_p || "0"}</Text>
-                                <Text style={styles.tableCol}>{item.vat || "-"}</Text>
+              <Text style={[styles.tableColAmount, styles.currencyTotalStyle]}>
+                {(item.amount && formData?.currency?.currency_rate)
+                  ? `(AED ${(item.amount * formData.currency.currency_rate).toFixed(2)})`
+                  : `(AED 0.00)`
+                }
+              </Text>
+            </View>
 
-                                {/* Base amount (AED) */}
+            <View style={styles.tableBodyRow} key={`body-${i}`}>
+              <Text style={styles.tableBodyText} flex={6}>
+                <Text style={styles.body_row}>
+                  {item?.body || " "}
+                </Text>
+            
+              </Text>
+            </View>
+          </View>
+        );
+      })}
+    </>
+  )}
+/>
 
-                                {formData?.currency?.currency_enable ? (
-                                    <Text style={styles.tableColAmount}>
-                                        {formData?.currency?.currency_symbol} {item.amount || "0"}
-                                    </Text>
-                                ) : (
-                                    <Text style={styles.tableColAmount}>AED {item.amount || "0"}</Text>
-                                )}
-
-
-                            </View>
-
-
-
-                            <View style={[styles.tableRowCurrency, !formData?.currency?.currency_enable && { height: 0, opacity: 0  }]}>
-                                {/* Empty cells to align with columns */}
-                                <Text style={styles.tableColDescription}></Text>
-                                <Text style={styles.tableCol}></Text>
-                                <Text style={styles.tableCol}></Text>
-                                <Text style={styles.tableCol}></Text>
-                                <Text style={styles.tableCol}></Text>
-                                <Text style={[styles.tableCol, styles.currencyTotalStyle]}>({item.vat || "-"})</Text>
-
-                                {/* Currency amount */}
-                                <Text style={[styles.tableColAmount,styles.currencyTotalStyle]}>
-                                    {(item.amount && formData?.currency?.currency_rate)
-                                        ? `(AED ${(item.amount * formData.currency.currency_rate).toFixed(2)})`
-                                        : `(AED 0.00)`
-                                    }
-                                </Text>
-                            </View>
-
-
-
-
-
-                            <View style={styles.tableBodyRow} key={`body-${i}`}>
-                                <Text style={styles.tableBodyText} flex={6}>
-                                    <Text style={styles.body_row}>
-                                        {item?.body || " "}
-                                    </Text>
-                                </Text>
-                            </View>
-
-
-
-
-
-                        </View>
-                    ))}
                 </View>
 
                 {/* Bank Details */}

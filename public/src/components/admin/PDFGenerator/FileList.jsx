@@ -38,12 +38,12 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
     const Save = async () => {
         try {
             
-            // let warning_message;
-            // if(fileList.some(item => item.project.project_name.includes(formData.project.project_name))){
-            //     formData.project.project_name = `${formData.project.project_name} ${Date.now()}`;
-            //     warning_message = 'There is another file with the same project name you entered, so a random number will be added to the end to prevent overwriting.'
-
-            // }
+            let warning_message;
+            if(selectedItem !== formData.project.project_name && fileList.some(item => item.project.project_name.includes(formData.project.project_name))){
+                formData.project.project_name = `${formData.project.project_name} ${Date.now()}`;
+                warning_message = 'There is another file with the same project name you entered, so a random number will be added to the end to prevent overwriting.'
+                window.alert('There is another file with the same project name you entered, so a random number will be added to the end to prevent overwriting.');  
+            }
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/invoice-save`, {
                 method: 'POST',
