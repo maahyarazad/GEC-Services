@@ -226,10 +226,10 @@ const PDFGenerator = () => {
                 </div>
                 <div className="col-10">
 
-                    <div className="row" style={{ height: '85vh', overflow: 'scroll' }}>
+                    <div className="row" >
 
                         {/* Form to update PDF content */}
-                        <div className="col-lg-6 col-12 left-panel">
+                        <div className="col-lg-6 col-12 left-panel" style={{ height: '85vh', overflow: 'scroll' }}>
 
                             <form style={{ display: 'block' }}>
                                 <Accordion>

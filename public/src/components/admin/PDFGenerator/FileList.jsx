@@ -11,8 +11,9 @@ import IconButton from '@mui/material/IconButton';
 import { VscNewFile } from "react-icons/vsc";
 import { useSnackbar } from '../../Providers/Snackbar';
 import { useAlertDialog } from '../../Providers/AlertProvider';
+import InvoiceDownload from './InvoiceDownload';
 
-const FileList = ({ onSelect, formData, initialFormData }) => {
+const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
 
     const { showSnackbar } = useSnackbar();
     const { openDialog } = useAlertDialog();
@@ -37,12 +38,12 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
     const Save = async () => {
         try {
             
-            let warning_message;
-            if(fileList.some(item => item.project.project_name.includes(formData.project.project_name))){
-                formData.project.project_name = `${formData.project.project_name} ${Date.now()}`;
-                warning_message = 'There is another file with the same project name you entered, so a random number will be added to the end to prevent overwriting.'
+            // let warning_message;
+            // if(fileList.some(item => item.project.project_name.includes(formData.project.project_name))){
+            //     formData.project.project_name = `${formData.project.project_name} ${Date.now()}`;
+            //     warning_message = 'There is another file with the same project name you entered, so a random number will be added to the end to prevent overwriting.'
 
-            }
+            // }
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/invoice-save`, {
                 method: 'POST',
@@ -62,7 +63,7 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
 
 
             if (respnse_data) {
-                showSnackbar(`${respnse_data.message} ${warning_message}`, 'success');
+                showSnackbar(`${respnse_data.message}`, 'success');
                 sendRequest("invoice");
 
             }
@@ -203,24 +204,7 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
                     </IconButton>
                 </div>
 
-{formData && (
-
-                <PDFDownloadLink
-                    document={<MyDocument formData={formData} />}
-                    fileName="invoice.pdf"
-                    style={{ textDecoration: 'none' }}
-                >
-                    {({ loading }) => (
-                        loading ? (
-                            <CircularProgress size={iconSize}/>
-                        ) : (
-                            <IconButton title="Download PDF file">
-                                <IoDownloadOutline color="dark" size={iconSize} />
-                            </IconButton>
-                        )
-                    )}
-                </PDFDownloadLink>
-)}
+            <InvoiceDownload iconSize={iconSize} formData={formData} loadingFlag={loadingFlag}/>
 
             </div>
 
