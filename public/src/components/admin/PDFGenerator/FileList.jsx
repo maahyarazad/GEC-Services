@@ -33,9 +33,16 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
 
     const { sendRequest } = useWebSocket();
 
-
+        
     const Save = async () => {
         try {
+            
+            let warning_message;
+            if(fileList.some(item => item.project.project_name.includes(formData.project.project_name))){
+                formData.project.project_name = `${formData.project.project_name} ${Date.now()}`;
+                warning_message = 'There is another file with the same project name you entered, so a random number will be added to the end to prevent overwriting.'
+
+            }
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/invoice-save`, {
                 method: 'POST',
@@ -55,7 +62,7 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
 
 
             if (respnse_data) {
-                showSnackbar(respnse_data.message, 'success');
+                showSnackbar(`${respnse_data.message} ${warning_message}`, 'success');
                 sendRequest("invoice");
 
             }
