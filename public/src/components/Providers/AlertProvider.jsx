@@ -5,12 +5,12 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import Slide from "@mui/material/Slide";
+import Fade from '@mui/material/Fade';
 
 const AlertDialogContext = createContext(null);
 
 const Transition = React.forwardRef(function Transition(props, ref) {
-  return <Slide direction="left" ref={ref} {...props} />;
+  return <Fade ref={ref} {...props} timeout={{ enter: 500, exit: 400 }} />;
 });
 
 export const AlertDialogProvider = ({ children }) => {
@@ -53,7 +53,7 @@ export const AlertDialogProvider = ({ children }) => {
         keepMounted
       >
         <DialogTitle id="alert-dialog-title">{actionTitle}</DialogTitle>
-        <DialogContent>
+        <DialogContent  sx={{ color: "black", willChange: "opacity" }}>
           <DialogContentText id="alert-dialog-description" sx={{ color: "black" }}>
             {message}
           </DialogContentText>

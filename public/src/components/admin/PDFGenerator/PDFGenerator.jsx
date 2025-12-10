@@ -14,8 +14,8 @@ import isEqual from "lodash.isequal";
 
 import './PDFGenerator.css';
 
-const Invoice = React.lazy(()=> import ("./Invoice")) ;
-const FileList = React.lazy(()=> import ("./FileList")) ;
+const Invoice = React.lazy(() => import("./Invoice"));
+const FileList = React.lazy(() => import("./FileList"));
 import { GrCurrency } from "react-icons/gr";
 
 const PDFGenerator = () => {
@@ -110,7 +110,7 @@ const PDFGenerator = () => {
         },
         items_price: false,
         items: [
-            { title: "Item Title", price: "100 AED", qty: "1", disc: "0.00", vat: "0.00", vat_p: "0", amount: "", body: "is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." },
+            { deleted: false, title: "Item Title", price: "100 AED", qty: "1", disc: "0.00", vat: "0.00", vat_p: "0", amount: "", body: "is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." },
         ],
         currency: {
             currency_enable: false,
@@ -121,7 +121,7 @@ const PDFGenerator = () => {
     const [formData, setFormData] = useState(_initial_formData);
     const [objectChanged, setObjectChanged] = useState(false);
 
-    const UpdateForm = (data) => {setFormData(data);}
+    const UpdateForm = (data) => { setFormData(data); }
 
 
     useEffect(() => {
@@ -131,13 +131,16 @@ const PDFGenerator = () => {
     }, [formData]);
 
 
+
+    
+
     const _objectChanged = () => { return objectChanged };
 
     // Add a new empty item
     const addItem = () => {
         setFormData((prev) => ({
             ...prev,
-            items: [...prev.items, { title: "Item Title", price: "", qty: "1", disc: "0.00", vat: "0.00", vat_p: "0", amount: "", body: "" }],
+            items: [...prev.items, { deleted: false, title: "Item Title", price: "", qty: "1", disc: "0.00", vat: "0.00", vat_p: "0", amount: "", body: "" }],
         }));
     };
 
@@ -145,56 +148,58 @@ const PDFGenerator = () => {
     const removeItem = (index) => {
         setFormData((prev) => ({
             ...prev,
-            items: prev.items.filter((_, i) => i !== index),
+            items: prev.items.map((item, i) =>
+                i === index ? { ...item, deleted: true } : item
+            ),
         }));
     };
 
     const handleChange = (e) => {
-  const { name, value } = e.target;
-  const nameParts = name.split('.'); // e.g. ["items", "0", "price"] or ["company", "company_name"]
+        const { name, value } = e.target;
+        const nameParts = name.split('.'); // e.g. ["items", "0", "price"] or ["company", "company_name"]
 
-  if (nameParts[0] === 'items') {
-    // Update an item in the items array
-    const index = parseInt(nameParts[1], 10);
-    const key = nameParts[2];
+        if (nameParts[0] === 'items') {
+            // Update an item in the items array
+            const index = parseInt(nameParts[1], 10);
+            const key = nameParts[2];
 
-    setFormData((prev) => {
-      // Defensive: check index and key exist
-      if (isNaN(index) || !key) return prev;
+            setFormData((prev) => {
+                // Defensive: check index and key exist
+                if (isNaN(index) || !key) return prev;
 
-      const updatedItems = [...prev.items];
-      const updatedItem = { ...updatedItems[index], [key]: value };
-      updatedItems[index] = updatedItem;
+                const updatedItems = [...prev.items];
+                const updatedItem = { ...updatedItems[index], [key]: value };
+                updatedItems[index] = updatedItem;
 
-      return { ...prev, items: updatedItems };
-    });
-  } else {
-    // Handle nested keys in other parts, e.g. project.project_name
-    const topKey = nameParts[0];
-    const subKey = nameParts[1] || null;
+                return { ...prev, items: updatedItems };
+            });
+        } else {
+            // Handle nested keys in other parts, e.g. project.project_name
+            const topKey = nameParts[0];
+            const subKey = nameParts[1] || null;
 
-    setFormData((prev) => {
-      if (!topKey) return prev;
+            setFormData((prev) => {
+                if (!topKey) return prev;
 
-      if (subKey) {
-        // Nested object update
-        return {
-          ...prev,
-          [topKey]: {
-            ...prev[topKey],
-            [subKey]: value,
-          },
-        };
-      } else {
-        // Direct key update
-        return {
-          ...prev,
-          [topKey]: value,
-        };
-      }
-    });
-  }
-};
+                if (subKey) {
+                    // Nested object update
+                    return {
+                        ...prev,
+                        [topKey]: {
+                            ...prev[topKey],
+                            [subKey]: value,
+                        },
+                    };
+                } else {
+                    // Direct key update
+                    return {
+                        ...prev,
+                        [topKey]: value,
+                    };
+                }
+            });
+        }
+    };
 
 
 
@@ -351,7 +356,7 @@ const PDFGenerator = () => {
                                                                 items_price: checked
                                                             }));
                                                         }}
-
+                                                        checked={!!formData?.items_price}
                                                         color="primary"
 
                                                     />
@@ -364,7 +369,7 @@ const PDFGenerator = () => {
                                                         size="small"
                                                         title="Add Currency"
                                                         color="primary"
-                                                        checked={formData.currency?.currency_enable || false}
+                                                        checked={formData.currency?.currency_enable}
                                                         onChange={(e) => {
                                                             const checked = e.target.checked;
                                                             setFormData((prev) => ({
@@ -382,7 +387,7 @@ const PDFGenerator = () => {
                                                 </div>
 
                                                 <div className={`${formData.currency?.currency_enable ? "d-flex" : "d-none"} mt-3`}>
-                                                    
+
                                                     {formData.currency && Object.entries(formData.currency).map(([key, value]) =>
                                                         key !== 'currency_enable' &&
                                                         (
@@ -405,78 +410,82 @@ const PDFGenerator = () => {
 
                                             <div className="form-control">
 
-                                              {formData.items.map((item, index) => {
-  // Use item.id if available, else fallback to index (less ideal if items can reorder)
-  const key = item.id ?? index;
+                                                {formData.items.map((item, index) => {
+                                                    // Use item.id if available, else fallback to index (less ideal if items can reorder)
+                                                    const key = item.id ?? index;
 
-  return (
-    <div
-      key={key}
-      className="d-flex flex-column"
-      style={{
-        marginBottom: 10,
-        borderBottom: "1px solid #ccc",
-        paddingBottom: 8,
-      }}
-    >
-      {Object.keys(item).map((key) => {
-        switch (key) {
-          case "body":
-            return (
-              <div className="input-group" key={`${index}-${key}`}>
-                <textarea
-                  rows={3}
-                  name={`items.${index}.${key}`}
-                  value={item[key]}
-                  onChange={handleChange}
-                  placeholder={key.replace(/_/g, " ")}
-                />
-                <label>{key.replace(/_/g, " ")}</label>
-              </div>
-            );
+                                                    return (
+                                                        <div
+                                                            key={key}
+                                                            className={`d-flex flex-column ${item.deleted ? "d-none":  ""}`}
+                                                            style={{
+                                                                marginBottom: 10,
+                                                                borderBottom: "1px solid #ccc",
+                                                                paddingBottom: 8,
+                                                            }}
+                                                        >
+                                                            {Object.keys(item).map((key) => {
+                                                                switch (key) {
+                                                                    case "deleted":
+                                                                        return (
+                                                                           null
+                                                                        );
+                                                                    case "body":
+                                                                        return (
+                                                                            <div className="input-group" key={`${index}-${key}`}>
+                                                                                <textarea
+                                                                                    rows={3}
+                                                                                    name={`items.${index}.${key}`}
+                                                                                    value={item[key]}
+                                                                                    onChange={handleChange}
+                                                                                    placeholder={key.replace(/_/g, " ")}
+                                                                                />
+                                                                                <label>{key.replace(/_/g, " ")}</label>
+                                                                            </div>
+                                                                        );
 
-          case "price":
-            return formData.items_price ? (
-              <div className="input-group" key={`${index}-${key}`}>
-                <input
-                  name={`items.${index}.${key}`}
-                  value={item[key]}
-                  onChange={handleChange}
-                  placeholder={key.replace(/_/g, " ")}
-                />
-                <label>{key.replace(/_/g, " ")}</label>
-              </div>
-            ) : null;
+                                                                    case "price":
+                                                                        return formData.items_price ? (
+                                                                            <div className="input-group" key={`${index}-${key}`}>
+                                                                                <input
+                                                                                    name={`items.${index}.${key}`}
+                                                                                    value={item[key]}
+                                                                                    onChange={handleChange}
+                                                                                    placeholder={key.replace(/_/g, " ")}
+                                                                                />
+                                                                                <label>{key.replace(/_/g, " ")}</label>
+                                                                            </div>
+                                                                        ) : null;
 
-          default:
-            return (
-              <div className="input-group" key={`${index}-${key}`}>
-                <input
-                  name={`items.${index}.${key}`}
-                  value={item[key]}
-                  onChange={handleChange}
-                  placeholder={key.replace(/_/g, " ")}
-                />
-                <label>{key.replace(/_/g, " ")}</label>
-              </div>
-            );
-        }
-      })}
+                                                                    default:
+                                                                        return (
+                                                                            <div className="input-group" key={`${index}-${key}`}>
+                                                                                <input
+                                                                                    name={`items.${index}.${key}`}
+                                                                                    value={item[key]}
+                                                                                    onChange={handleChange}
+                                                                                    placeholder={key.replace(/_/g, " ")}
+                                                                                />
+                                                                                <label>{key.replace(/_/g, " ")}</label>
+                                                                            </div>
+                                                                        );
+                                                                }
+                                                            })}
 
-      <Button
-        variant="contained"
-        sx={{ textTransform: "none" }}
-        size="small"
-        type="button"
-        color="error"
-        onClick={() => removeItem(index)}
-        style={{ marginTop: 4 }}
-      >
-        Remove
-      </Button>
-    </div>
-  );
-})}
+                                                            <Button
+                                                                variant="contained"
+                                                                sx={{ textTransform: "none" }}
+                                                                size="small"
+                                                                type="button"
+                                                                color="error"
+                                                                onClick={() => removeItem(index)}
+                                                                style={{ marginTop: 4 }}
+                                                            >
+                                                                Remove
+                                                            </Button>
+                                                        </div>
+                                                    );
+                                                })}
 
 
 
@@ -578,4 +587,4 @@ const PDFGenerator = () => {
     );
 };
 
- export default PDFGenerator;
+export default PDFGenerator;

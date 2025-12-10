@@ -9,24 +9,24 @@ const InvoiceDownload = ({ formData, iconSize, loadingFlag }) => {
   const [delayedFormData, setDelayedFormData] = useState(null);
   
 
-  useEffect(() => {
+  //useEffect(() => {
     
 
-    const timeout = setTimeout(() => {
-      setDelayedFormData(formData);
+  //   const timeout = setTimeout(() => {
+  //     setDelayedFormData(formData);
       
-    }, 1000); // 1 second delay
+  //   }, 1000); // 1 second delay
 
-    return () => clearTimeout(timeout);
-  }, [loadingFlag]);
+  //   return () => clearTimeout(timeout);
+  // }, [loadingFlag]);
 
-  if (loadingFlag) {
+  if (!formData) {
     return <CircularProgress size={iconSize} />; // or a spinner if you want
   }
 
   return (
     <PDFDownloadLink
-      document={<MyDocument formData={delayedFormData} />}
+      document={<MyDocument formData={formData} />}
       fileName="invoice.pdf"
       style={{ textDecoration: 'none' }}
     >
