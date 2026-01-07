@@ -396,7 +396,7 @@ const WhatsappBroadcast = () => {
 
             <Modal isOpen={testAction}
                 onRequestClose={() => setTestAction(false)}
-                title={`Test Message → ${content.friendlyName}`}>
+                title={`Test Message → ${content?.friendlyName}`}>
                 <form onSubmit={handleSubmit}>
                     <label htmlFor="test-input">Recipient phone number:</label>
                     <input
