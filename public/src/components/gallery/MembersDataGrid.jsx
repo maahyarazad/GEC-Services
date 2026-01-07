@@ -291,7 +291,7 @@ const MemberDataGrid = () => {
                     <CircularProgress />
                 </Box>
             ) : (
-                <div style={{ width: '100%', height: '82dvh' }}>
+                <div style={{ width: '100%', height: 'calc(100vh - 155px)' }}>
                     <DataGrid
                         rows={members}
                         columns={columns({ onEdit: openEdit, onSwitchActive: switchActive })}

@@ -26,7 +26,7 @@ const Invoice = ({ formData }) => {
   }, [formData]);
 
   return (
-    <div style={{ height: '85vh', overflow: 'scroll' }}>
+    <div style={{ height: 'calc(100vh - 70px)', overflow: 'scroll' }}>
       
       <PDFErrorBoundary ref={pdfErrorBoundaryRef}>
         <div style={{ width: '100%', height: '770px' }}>

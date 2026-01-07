@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const {messageSender, fetchMessages} = require('../services/whatsAppSender');
+const {messageSender, fetchMessages, otpSender} = require('../services/whatsAppSender');
 
 router.post('/api/whatsapp/send', async (req, res) => {
   
    try {
-
         const result = await messageSender(req);
 
         return { status: result.status, code: 200, message: 'Message sent successfully' };
