@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Box from '@mui/material/Box';
 import './HealthCheck.css';
 
@@ -16,47 +16,62 @@ function SiteHealthChecker() {
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(true);
   
-    useEffect(() => {
-        const checkHealth = async () => {
-            const checks = await Promise.all(
-                websites.map(async (url) => {
-                    try {
-                        const response = await fetch(url, {
-                            method: "GET",
-                            cache: "no-store",
-                        });
 
-                        return {
-                            url,
-                            status: response.ok ? "up" : "down",
-                        };
-                    } catch {
-                        return {
-                            url,
-                            status: "down",
-                        };
-                    }
-                })
-            );
+    const intervalRef = useRef(null);
 
-            setResults(
-                checks.map((c) => ({
-                    ...c,
-                    lastChecked: new Date().toLocaleTimeString(),
-                }))
-            );
-        };
+const checkHealth = useCallback(async () => {
+    setLoading(true);
 
-        
-        // run immediately
+    const checks = await Promise.all(
+        websites.map(async (url) => {
+            try {
+                const response = await fetch(url, {
+                    method: "GET",
+                    cache: "no-store",
+                });
+
+                return {
+                    url,
+                    status: response.status >= 200 && response.status < 500 ? "up" : "down"
+                };
+            } catch {
+                return {
+                    url,
+                    status: "down",
+                };
+            }
+        })
+    );
+
+    setResults(
+        checks.map((c) => ({
+            ...c,
+            lastChecked: new Date().toLocaleTimeString(),
+        }))
+    );
+
+    setLoading(false);
+}, []);
+
+
+
+   
+useEffect(() => {
+    // initial run
+    checkHealth();
+
+    // store interval id in ref
+    intervalRef.current = window.setInterval(() => {
         checkHealth();
-        debugger;
-        setLoading(false);
-        // every 1 minute
-        const intervalId = setInterval(checkHealth, 60_000);
+    }, 60_000);
 
-        return () => clearInterval(intervalId);
-    }, []);
+    return () => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+    };
+}, [checkHealth]);
 
 
     return (
