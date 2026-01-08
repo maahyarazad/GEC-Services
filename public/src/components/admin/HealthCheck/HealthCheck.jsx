@@ -3,15 +3,10 @@ import Box from '@mui/material/Box';
 import './HealthCheck.css';
 
 import CircularProgress from '@mui/material/CircularProgress';
+import { Paper } from "@mui/material";
 
 function SiteHealthChecker() {
-    const websites = [
-        "https://experts.german-emirates-club.com",
-        "https://www.german-emirates-club.com",
-        "https://www.angels-bureau.com",
-        "https://www.difa.agency",
-        "https://www.palm-x.com",
-    ];
+    
 
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -19,39 +14,37 @@ function SiteHealthChecker() {
 
     const intervalRef = useRef(null);
 
-const checkHealth = useCallback(async () => {
-    setLoading(true);
 
-    const checks = await Promise.all(
-        websites.map(async (url) => {
+
+     const checkHealth = useCallback(async () => {
             try {
-                const response = await fetch(url, {
-                    method: "GET",
-                    cache: "no-store",
+                setLoading(true);
+                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/health-check`, {
+                    method: 'GET',
+                    credentials: "include"
                 });
-
-                return {
-                    url,
-                    status: response.status >= 200 && response.status < 500 ? "up" : "down"
-                };
-            } catch {
-                return {
-                    url,
-                    status: "down",
-                };
+    
+                const respnse_data = await response.json();
+                debugger;
+                if (!response.ok) {
+    
+                   
+                    throw new Error(response.message);
+                }
+    
+    
+                if (respnse_data) {
+                    setResults(respnse_data)
+                  
+                }
+            } catch (err) {
+                console.error('Error fetching data:', err);
+            } finally {
+                setLoading(false);
             }
-        })
-    );
+        }, []);
 
-    setResults(
-        checks.map((c) => ({
-            ...c,
-            lastChecked: new Date().toLocaleTimeString(),
-        }))
-    );
 
-    setLoading(false);
-}, []);
 
 
 
@@ -87,11 +80,14 @@ useEffect(() => {
             ) : (
 
                 results.map(({ url, status, lastChecked }) => (
-                    <div key={url} style={{ marginBottom: 8 }} >
-                        <b onClick={() => window.open(url, '_blank')} style={{ marginBottom: 8 , cursor:'pointer'}} >{url}</b>
-                        <div className="status-container">Status: <span className={`status-dot  ${status === "up" ? "up" : "down"}`}></span></div>
-                        <p>Last checked: {lastChecked}</p>
-                    </div>
+                    <Paper key={url} style={{ marginBottom: 8, maxWidth: '500px', padding: '20px', backgroundColor: `${status === "up" ? "rgba(71, 213, 32, 0.182)" : "rgba(213, 32, 32, 0.182)"}` }} elevation={5}  >
+                        <b onClick={() => window.open(url, '_blank')} style={{ marginBottom: 8 , cursor:'pointer'}} > 
+                            <span> {url}</span>
+                           
+                        </b>
+                        <div className="status-container">Status: <span className={`status-dot  ${status === "up" ? "up pulse" : "down"}`}></span></div>
+                        <div>Last checked: { new Date(lastChecked).toLocaleString()}</div>
+                    </Paper>
                 ))
             )
             }

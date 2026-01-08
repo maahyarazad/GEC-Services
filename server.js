@@ -23,6 +23,7 @@ const g_sheet = require('./routes/gSheet.js');
 const email_sender = require('./routes/email_sender.js');
 const invoice = require('./routes/invoice.js');
 const whatsapp = require('./routes/whatsapp_sender.js');
+const health_check = require('./routes/health_check.js');
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
 const { createWebSocketServer } = require("./websocket/admin.js");
@@ -79,6 +80,17 @@ const allowedOrigins = [
 
 app.set("trust proxy", 1);
 
+
+app.get("/health", (_req, res) => {
+    res.status(200).json({
+        status: "ok",
+        uptime: process.uptime(),
+        timestamp: Date.now(),
+    });
+});
+
+
+
 app.use(cors({
   origin: allowedOrigins,
   credentials: true
@@ -116,6 +128,7 @@ app.use('/', email_sender);
 app.use('/', g_sheet);
 app.use('/', invoice);
 app.use('/', whatsapp);
+app.use('/', health_check);
 
 
 
