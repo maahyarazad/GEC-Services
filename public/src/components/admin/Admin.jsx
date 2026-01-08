@@ -25,7 +25,7 @@ import { GoShieldLock } from "react-icons/go";
 import { GrCatalog, GrCatalogOption } from "react-icons/gr";
 import { IoIdCardOutline } from "react-icons/io5";
 import { MdPictureAsPdf } from "react-icons/md";
-import { RxDoubleArrowLeft } from "react-icons/rx";
+import { MdOutlineHealthAndSafety } from "react-icons/md";
 
 // Utils
 import { Header } from "../utils/Header";
@@ -35,6 +35,7 @@ import { getCookie, setEncryptedCookie } from "../utils/cookieUtils";
 import { useWebSocket } from "./WebSocketContext";
 
 // Components
+const HealthCheck = React.lazy(() => import("./HealthCheck/HealthCheck"));
 const RegistrationList = React.lazy(() => import("./Registration/RegistrationList"));
 const RegistrationDataGrid = React.lazy(() => import("../gallery/RegistrationDataGrid"));
 const MemberDataGrid = React.lazy(() => import("../gallery/MembersDataGrid"));
@@ -184,6 +185,10 @@ const Admin = ({ data }) => {
     const tabStyle = { textTransform: 'none', alignSelf: 'baseline', mi: '10px' };
     const tabConfig = [
         {
+            icon: <MdOutlineHealthAndSafety size={20} />,
+            label: "Website Health",
+        },
+        {
             icon: <GiArchiveRegister size={20} />,
             label: "Registration Config",
         },
@@ -302,27 +307,30 @@ const Admin = ({ data }) => {
     let content;
     switch (tabValue) {
         case 0:
-            content = <RegistrationList />;
+            content = <HealthCheck />;
             break;
         case 1:
-            content = <RegistrationDataGrid />;
+            content = <RegistrationList />;
             break;
         case 2:
-            content = <SurveyDataGrid />;
+            content = <RegistrationDataGrid />;
             break;
         case 3:
-            content = <MemberCardDataGrid />;
+            content = <SurveyDataGrid />;
             break;
         case 4:
-            content = <GICDataGrid />;
+            content = <MemberCardDataGrid />;
             break;
         case 5:
-            content = <MemberDataGrid />;
+            content = <GICDataGrid />;
             break;
         case 6:
-            content = <PDFGenerator />;
+            content = <MemberDataGrid />;
             break;
         case 7:
+            content = <PDFGenerator />;
+            break;
+        case 8:
             content = <WhatsappBroadcast />;
             break;
     }
