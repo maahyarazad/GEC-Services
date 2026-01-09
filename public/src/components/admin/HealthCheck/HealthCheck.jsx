@@ -80,12 +80,15 @@ useEffect(() => {
             ) : (
 
                 results.map(({ url, status, lastChecked }) => (
-                    <Paper key={url} style={{ marginBottom: 8, maxWidth: '500px', padding: '20px', backgroundColor: `${status === "up" ? "rgba(71, 213, 32, 0.182)" : "rgba(213, 32, 32, 0.182)"}` }} elevation={5}  >
+                    <Paper key={url} className={`paper-container ${status === "up" ? "up": "down"}` } elevation={5}  >
                         <b onClick={() => window.open(url, '_blank')} style={{ marginBottom: 8 , cursor:'pointer'}} > 
                             <span> {url}</span>
                            
                         </b>
-                        <div className="status-container">Status: <span className={`status-dot  ${status === "up" ? "up pulse" : "down"}`}></span></div>
+                        <div className="status-container">Status: 
+                            <span className={`status-dot  ${status === "up" ? "up pulse" : "down"}`}></span>
+                            <span className={`status-info  ${status === "up" ? "up" : "down"}`}>{status === "up" ? "No Issues" : status}</span>
+                        </div>
                         <div>Last checked: { new Date(lastChecked).toLocaleString()}</div>
                     </Paper>
                 ))

@@ -156,7 +156,7 @@ const WhatsappBroadcast = () => {
 
                     <div className="row m-0">
 
-                    <div className="col-4">
+                    <div className="col-lg-4 col-12">
                         {groupedByTypeKey && Object.keys(groupedByTypeKey).length > 0 ? (
                             Object.keys(groupedByTypeKey).map((key) => (
                                 <Accordion key={key}>
@@ -192,7 +192,7 @@ const WhatsappBroadcast = () => {
                             <Typography>No data available</Typography>
                         )}
                     </div>
-                    <div className="col-8">
+                    <div className="col-lg-8 col-12">
                         
                         {content && content.types ? (
                             (() => {

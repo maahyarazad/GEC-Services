@@ -1,35 +1,65 @@
-$status-green: #22c55e;
+$status-green: #199647;
+$status-red: rgb(184, 1, 1);
+;
+$up-bg-color: rgba(71, 213, 32, 0.10);
+$down-bg-color: rgba(213, 32, 32, 0.10);
 
-.status-container {
-    display: flex;
-    justify-content: start;
-    align-items: center;
-    min-height: 25px;
+.paper-container {
+    margin-bottom: 8px;
+    max-width: 500px;
+    padding: 20px;
 
-    .status-dot {
-        margin-left: 10px;
-        width: 18px;
-        height: 18px;
-        background: $status-green;
-        border-radius: 50%;
-        display: inline-block;
-        position: relative;
+    &.up {
+        background-color: $up-bg-color !important;
+    }
 
+    &.down {
+        background-color: $down-bg-color !important;
+    }
 
-        &.pulse {
-            &::after{
+    .status-container {
+        display: flex;
+        justify-content: start;
+        align-items: center;
+        min-height: 25px;
 
-                content: "";
-                position: absolute;
-                inset: 0;
-                border-radius: 50%;
-                background: rgba($status-green, 0.6);
-                animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .status-info {
+            padding-left: 10px;
+
+            &.up {
+                color: $status-green
+            }
+
+            &.down {
+                color: $status-red
             }
         }
 
-        &.down{
-            background: red;
+        .status-dot {
+            margin-left: 20px;
+            width: 10px;
+            height: 10px;
+            background: $status-green;
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+
+
+            &.pulse {
+                &::after {
+
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    border-radius: 50%;
+                    background: rgba($status-green, 0.6);
+                    animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+                }
+            }
+
+            &.down {
+                background: $status-red
+            }
         }
     }
 }
@@ -37,11 +67,11 @@ $status-green: #22c55e;
 @keyframes pulse-ring {
     0% {
         transform: scale(1);
-        opacity: 0.8;
+        opacity: 1;
     }
 
     70% {
-        transform: scale(2.9);
+        transform: scale(3);
         opacity: 0;
     }
 

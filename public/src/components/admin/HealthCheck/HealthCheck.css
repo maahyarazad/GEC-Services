@@ -1,37 +1,57 @@
-.status-container {
+.paper-container {
+  margin-bottom: 8px;
+  max-width: 500px;
+  padding: 20px;
+}
+.paper-container.up {
+  background-color: rgba(71, 213, 32, 0.1) !important;
+}
+.paper-container.down {
+  background-color: rgba(213, 32, 32, 0.1) !important;
+}
+.paper-container .status-container {
   display: flex;
   justify-content: start;
   align-items: center;
   min-height: 25px;
 }
-.status-container .status-dot {
-  margin-left: 10px;
-  width: 18px;
-  height: 18px;
-  background: #22c55e;
+.paper-container .status-container .status-info {
+  padding-left: 10px;
+}
+.paper-container .status-container .status-info.up {
+  color: #199647;
+}
+.paper-container .status-container .status-info.down {
+  color: rgb(184, 1, 1);
+}
+.paper-container .status-container .status-dot {
+  margin-left: 20px;
+  width: 10px;
+  height: 10px;
+  background: #199647;
   border-radius: 50%;
   display: inline-block;
   position: relative;
 }
-.status-container .status-dot.pulse::after {
+.paper-container .status-container .status-dot.pulse::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: rgba(34, 197, 94, 0.6);
-  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background: rgba(25, 150, 71, 0.6);
+  animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
-.status-container .status-dot.down {
-  background: red;
+.paper-container .status-container .status-dot.down {
+  background: rgb(184, 1, 1);
 }
 
 @keyframes pulse-ring {
   0% {
     transform: scale(1);
-    opacity: 0.8;
+    opacity: 1;
   }
   70% {
-    transform: scale(2.9);
+    transform: scale(3);
     opacity: 0;
   }
   100% {
