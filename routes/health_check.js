@@ -6,7 +6,7 @@ const router = express.Router();
 const websites = [
         "https://experts.german-emirates-club.com/health",
         "https://www.german-emirates-club.com/api",
-        "https://www.angels-bureau.com/health",
+        "https://www.angels-bureau.com/api/health",
         "https://www.difa.agency/health",
         "https://www.palm-x.com/health",
     ];

@@ -1,8 +1,9 @@
 const twilioClient = require("twilio")(
   process.env.TWILIO_ACOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
-  
 );
+
+
 
 const otpSender = async (req) => {
   let { mobile_number, otp } = req.body;
@@ -77,7 +78,7 @@ const data = template.types[templateType];
 
     // Base message options
     const messageOptions = {
-    //   from: "whatsapp:+971521160991",
+    from: "whatsapp:+971521160991",
       to: `whatsapp:${mobile_number}`,
       contentSid: template.sid,
       messagingServiceSid: process.env.TWILIO_SERVICE_SID,
@@ -89,8 +90,28 @@ function hasPlaceholders(text) {
 }
 
 switch (templateType) {
-  case "whatsapp/authentication": break;
-  case "twilio/text": break;
+  case "whatsapp/authentication": 
+  
+  if (data.body && hasPlaceholders(data.body)) {
+      
+      messageOptions.contentVariables = JSON.stringify({
+        1: '1623',
+        2: "5 minutes",
+        
+      });
+    }
+  
+   break;
+  case "twilio/text": 
+    if (data.body && hasPlaceholders(data.body)) {
+      
+      messageOptions.contentVariables = JSON.stringify({
+        1: "Your dynamic content here",    
+        
+      });
+    }
+  
+    break;
   case "twilio/call-to-action":
     if (data.body && hasPlaceholders(data.body)) {
       // Prepare contentVariables — replace with your actual dynamic data mapping

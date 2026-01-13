@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {messageSender, fetchMessages, otpSender} = require('../services/whatsAppSender');
-
+const dbService = require('../services/dbService')
 router.post('/api/whatsapp/send', async (req, res) => {
   
    try {
@@ -29,6 +29,25 @@ router.get('/api/whatsapp/list', async (req, res) => {
 });
 
 
+router.post('/whatsapp/twilio-callback', (req, res) => {
+  try {
+    console.log('Twilio Status Callback received');
+    console.log('Body:', req.body);
+
+    res.sendStatus(202);
+
+    // Fire and forget
+    dbService
+      .createSafe('twilio_delivery', { response: JSON.stringify(req.body) })
+      .catch(err => {
+        console.error('Failed to store Twilio callback:', err);
+      });
+
+  } catch (error) {
+    console.error('Twilio callback error:', error);
+    res.sendStatus(200); // still 2xx
+  }
+});
 
 
 module.exports = router;

@@ -29,6 +29,10 @@ CREATE TABLE IF NOT EXISTS registration_keys (
 );
 
 
+CREATE TABLE IF NOT EXISTS twilio_delivery (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  response TEXT
+);
 
 CREATE TABLE IF NOT EXISTS registration_config (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
