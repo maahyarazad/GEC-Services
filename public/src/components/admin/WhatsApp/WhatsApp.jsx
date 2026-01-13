@@ -1,6 +1,5 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import templates from '../../../assets/whatsapp-template.json';
 import { FaWhatsapp } from "react-icons/fa";
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -12,8 +11,53 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { Icon, Paper } from "@mui/material";
 import { Button } from '@mui/material'
 import Modal from '../../Modal';
+import SlideMenu from '../../SlideMenu/SlideMenu';
+import { DataGrid } from '@mui/x-data-grid';
+import FilterParams from '../../admin/FilterParams';
+import JSONPretty from 'react-json-pretty';
+import 'react-json-pretty/themes/monikai.css'; // optional styling
 
 
+
+
+const columns = () => [
+    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'metadata_createdAt', headerName: 'Created At', width: 160, filterable: true },
+
+
+    {
+        field: 'response',
+        headerName: 'Log',
+        width: 1000,
+        
+        filterable: true,
+        renderCell: (params) => {
+            let json;
+
+            try {
+
+                json =
+                    typeof params.row.response === 'string'
+                        ? JSON.parse(params.row.response)
+                        : params.row.response;
+            } catch (e) {
+                // Fallback if invalid JSON
+                json = { raw: params.row.response };
+            }
+
+            return (
+               <div style={{ fontSize: 12, height: '115px', overflow: 'scroll' }}>
+        <JSONPretty  id={params.row.id} data={json} />
+      </div>
+            );
+        },
+        
+    }
+
+
+
+
+];
 const tabstyle = {
     backgroundColor: "#00000",      // background of the header
     color: "#fffff",                // text color
@@ -36,9 +80,16 @@ const WhatsappBroadcast = () => {
     const [data, setData] = useState();
     const [groupedByTypeKey, setGroupedByTypeKey] = useState();
     const [content, setContent] = useState(null);
+    const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [testAction, setTestAction] = useState(false);
     const [inputValue, setInputValue] = useState();
+
+
+
+
+
+
 
 
 
@@ -134,6 +185,64 @@ const WhatsappBroadcast = () => {
     };
 
 
+    /////////////////////////////////  LOGS   //////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+
+    const defaultSortModel = [{ field: 'id', sort: 'desc' }];
+    const [rowCount, setRowCount] = useState(0);
+    const [loading_logs, setloading_logs] = useState(false);
+    const [sortModel, setSortModel] = useState(defaultSortModel);
+    const [filterModel, setFilterModel] = useState({
+        items: [],
+    });
+    const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
+    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
+    const [logs, setLogs] = useState([]);
+    const fetchLogs = useCallback(
+        async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
+            setloading_logs(true);
+            try {
+                const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
+                const sortField = sort.field || '';
+                const sortOrder = sort.sort || '';
+
+                // Parse filters from filterModel.items
+                const filterParams = FilterParams(filterModel);
+
+                const queryParams = [
+                    `page=${paginationModel.page + 1}`,
+                    `pageSize=${paginationModel.pageSize}`,
+                    sortField ? `sortField=${sortField}` : '',
+                    sortOrder ? `sortOrder=${sortOrder}` : '',
+                    filterParams,
+                ].filter(Boolean).join('&');
+
+                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-delivery-logs?${queryParams}`, { credentials: "include" });
+
+                const data = await response.json();
+
+                setLogs(data.data || []);
+                setRowCount(data.total || 0);
+            } catch (err) {
+                console.error('Failed to fetch:', err);
+            } finally {
+                setloading_logs(false);
+            }
+        },
+        []
+    );
+
+    useEffect(() => {
+        if (open) fetchLogs(paginationModel, sortModel, filterModel);
+
+    }, [open, paginationModel, sortModel, applyFilterTrigger]);
+
+
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+
 
     if (loading) {
         return (
@@ -148,246 +257,293 @@ const WhatsappBroadcast = () => {
     return (
 
         <Box sx={{ padding: 1, position: 'relative' }}>
-                <Button variant="contained" color="primary" sx={{textTransform : 'none'}} onClick={() => setTestAction(true)} disabled={content === null}>  
-                    <FaWhatsapp size={17} style={{marginRight: 10}}/> Test Message
-                </Button>
+            <SlideMenu
+                isOpen={open}
+                onClose={() => setOpen(false)}
+                headerTitle={`Twilio Delivery Logs`}
+            >
+
+
+                {loading_logs ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <div style={{ width: '100%', height: 'calc(100vh - 225px)' }}>
+                        <DataGrid
+                            rows={logs}
+                            columns={columns()}
+                            rowCount={rowCount}
+                            rowHeight={100}
+                            rowsPerPageOptions={[25, 50, 100]}
+                            paginationMode="server"
+                            sortingMode="server"
+                            filterMode="server"
+                            paginationModel={paginationModel}
+                            sortModel={sortModel}
+                            onPaginationModelChange={setPaginationModel}
+                            onSortModelChange={setSortModel}
+                            filterModel={filterModel}              // ✅ Pass full model
+                            onFilterModelChange={(newModel) => {
+                                setFilterModel(newModel); // use the raw model now
+                            }}
+                            // ✅ Accept full model
+                            disableRowSelectionOnClick
+                            disableSelectionOnClick
+                            showToolbar
+                        />
+                    </div>
+                )}
+
+
+            </SlideMenu>
+
+
+
+
+            <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none' }} onClick={() => setTestAction(true)} disabled={content === null}>
+                <FaWhatsapp size={17} style={{ marginRight: 10 }} /> Test Message
+            </Button>
+            <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginLeft: 1 }} onClick={() => setOpen(true)}>
+                Twilio Delivery Logs
+            </Button>
             <div style={{ height: 'calc(100vh - 155px)', overflow: 'scroll' }} >
                 <div className="mt-2">
 
                     <div className="row m-0">
 
-                    <div className="col-lg-4 col-12">
-                        {groupedByTypeKey && Object.keys(groupedByTypeKey).length > 0 ? (
-                            Object.keys(groupedByTypeKey).map((key) => (
-                                <Accordion key={key}>
-                                    <AccordionSummary
-                                        expandIcon={<ExpandMoreIcon />}
-                                        aria-controls="panel2-content"
-                                        id="panel2-header"
-                                        sx={tabstyle}
-                                    >
-                                        <Typography component="span">{key.charAt(0).toUpperCase() + key.slice(1)}</Typography>
-                                    </AccordionSummary>
-                                    <AccordionDetails>
-                                        <div className="d-flex">
-                                            <div className="col form-control">
-                                                {Object.values(groupedByTypeKey[key]).map((item, idx) => (
-                                                    <div key={idx}  onClick={() => { setContent(item); console.log(item)}} 
-                                                        style={{ border: 'solid', borderRadius: '5px', borderColor: 'gray', borderWidth: '1px', padding: '5px', marginBottom:'5px', cursor:'pointer'}}>
-                                                        
+                        <div className="col-lg-4 col-12">
+                            {groupedByTypeKey && Object.keys(groupedByTypeKey).length > 0 ? (
+                                Object.keys(groupedByTypeKey).map((key) => (
+                                    <Accordion key={key}>
+                                        <AccordionSummary
+                                            expandIcon={<ExpandMoreIcon />}
+                                            aria-controls="panel2-content"
+                                            id="panel2-header"
+                                            sx={tabstyle}
+                                        >
+                                            <Typography component="span">{key.charAt(0).toUpperCase() + key.slice(1)}</Typography>
+                                        </AccordionSummary>
+                                        <AccordionDetails>
+                                            <div className="d-flex">
+                                                <div className="col form-control">
+                                                    {Object.values(groupedByTypeKey[key]).map((item, idx) => (
+                                                        <div key={idx} onClick={() => { setContent(item); console.log(item) }}
+                                                            style={{ border: 'solid', borderRadius: '5px', borderColor: 'gray', borderWidth: '1px', padding: '5px', marginBottom: '5px', cursor: 'pointer' }}>
+
                                                             <strong>{item.friendlyName}</strong> ({item.language})<br />
-                                                            SID: <small style={{fontSize: '15px'}}>{item.sid}</small><br />
+                                                            SID: <small style={{ fontSize: '15px' }}>{item.sid}</small><br />
                                                             Created: {new Date(item.dateCreated).toLocaleString()}<br />
                                                             Updated: {new Date(item.dateUpdated).toLocaleString()}<br />
                                                             URL: <a href={item.url} target="_blank" rel="noopener noreferrer">View in Twilio</a>
-                                                        
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </AccordionDetails>
-                                </Accordion>
-                            ))
-                        ) : (
-                            <Typography>No data available</Typography>
-                        )}
-                    </div>
-                    <div className="col-lg-8 col-12">
-                        
-                        {content && content.types ? (
-                            (() => {
-                                const typeKey = Object.keys(content.types)[0];
-                                const data = content.types[typeKey];
 
-                                switch (typeKey) {
-                                    case "whatsapp/authentication": {
-                                        const { body, actions, add_security_recommendation } = data;
-                                        return (
-                                            <Paper sx={{ p: 2 }} elevation={5}>
-                                                <Typography variant="h6">WhatsApp Authentication</Typography>
-                                                <Typography sx={{ my: 2 }}>{body.replace("{{1}}", "123456")}</Typography>
-                                                {actions?.map((action, i) => {
-                                                    if (action.type === "COPY_CODE") {
-
-                                                        return (
-                                                            <div key={i}>
-
-                                                            <Button variant="contained" color="primary" sx={{textTransform : 'none'}}
-                                                                
-                                                                onClick={() => navigator.clipboard.writeText("123456")}
-                                                                style={{ padding: "8px 16px", cursor: "pointer" }}
-                                                            >
-                                                                {action.copy_code_text}
-                                                            </Button>
-                                                            </div>
-                                                        );
-                                                    }
-                                                    return null;
-                                                })}
-                                                {add_security_recommendation && (
-                                                    <Typography color="error" sx={{ mt: 2 }}>
-                                                        Please add security recommendations.
-                                                    </Typography>
-                                                )}
-                                            </Paper>
-                                        );
-                                    }
-
-                                    case "twilio/list-picker": {
-                                        const { body, button, items } = data;
-                                        return (
-                                            <Paper sx={{ p: 2 }} elevation={5}>
-                                                <Typography variant="h6">Twilio List Picker</Typography>
-                                                <Typography sx={{ my: 2 }}>
-                                                    {body.replace("{{order_number}}", "12345").replace("{{date}}", "Jan 10")}
-                                                </Typography>
-                                                <ul style={{ listStyle: "none", padding: 0 }}>
-                                                    {items.map(({ id, item, description }) => (
-                                                        <li
-                                                            key={id}
-                                                            style={{
-                                                                marginBottom: 10,
-                                                                padding: 10,
-                                                                background: "#f0f0f0",
-                                                                borderRadius: 4,
-                                                            }}
-                                                        >
-                                                            <strong>{item}</strong>
-                                                            <div style={{ fontSize: 12, color: "#555" }}>{description}</div>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                                <Button variant="contained" color="primary" sx={{textTransform : 'none'}}> 
-                                                    {button}
-                                                </Button>
-                                            </Paper>
-                                        );
-                                    }
-
-                                    case "twilio/text": {
-                                        const { body } = data;
-                                        return (
-                                            <Paper sx={{ p: 2 }} elevation={5}>
-                                                <Typography variant="h6">Twilio Text</Typography>
-                                                <Typography sx={{ my: 2 }}>{body.replace("{{1}}", "User")}</Typography>
-                                            </Paper>
-                                        );
-                                    }
-
-                                    case "twilio/media": {
-                                        const { body, media } = data;
-                                        return (
-                                            <Paper sx={{ p: 2 }} elevation={5}>
-                                                <Typography variant="h6">Twilio Media</Typography>
-                                                <Typography sx={{ my: 2 }}>{body}</Typography>
-                                                {media?.map((url, idx) => (
-                                                    <img
-                                                        key={idx}
-                                                        src={url}
-                                                        alt={`media-${idx}`}
-                                                        style={{ maxWidth: "100%", marginBottom: 10, borderRadius: 4 }}
-                                                    />
-                                                ))}
-                                            </Paper>
-                                        );
-                                    }
-
-                                    case "twilio/card": {
-                                        const { title, subtitle, body, media, actions, orientation } = data;
-                                        return (
-                                            <Paper sx={{ p: 2, maxWidth: 400, border: "1px solid #ccc", borderRadius: 4 }}>
-                                                <Typography variant="h5">{title}</Typography>
-                                                {subtitle && <Typography variant="subtitle1" color="text.secondary">{subtitle}</Typography>}
-                                                {media?.length > 0 && (
-                                                    <img
-                                                        src={media[0]}
-                                                        alt="card media"
-                                                        style={{
-                                                            width: "100%",
-                                                            height: orientation === "VERTICAL" ? 200 : 100,
-                                                            objectFit: "cover",
-                                                            borderRadius: 4,
-                                                            marginTop: 8,
-                                                            marginBottom: 8,
-                                                        }}
-                                                    />
-                                                )}
-                                                {body && <Typography sx={{ my: 1 }}>{body}</Typography>}
-                                                {actions?.length > 0 && (
-                                                    <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
-                                                        {actions.map((action, i) => (
-                                                            <div  key={action}>
-
-                                                            <Button variant="contained" color="primary" sx={{textTransform : 'none'}}>
-
-                                                                {action.title || action.label || "Action"}
-                                                            </Button>
-                                                            </div>
-                                                        ))}
-                                                    </Box>
-                                                )}
-                                            </Paper>
-                                        );
-                                    }
-
-                                    case "twilio/quick-reply": {
-                                        const { body, actions } = data;
-                                        return (
-                                            <Paper sx={{ p: 2 }} elevation={5}>
-                                                <Typography variant="h6">Twilio Quick Reply</Typography>
-                                                <Typography sx={{ my: 2 }}>{body}</Typography>
-                                                <Box sx={{ display: "flex", gap: 1 }}>
-                                                    {actions?.map(({ id, title }) => (
-                                                        <div  key={id}>
-                                                        <Button variant="contained" color="primary" sx={{textTransform : 'none'}}
-                                                            onClick={() => alert(`You clicked: ${title}`)}>
-                                                        
-                                                            {title}
-                                                        </Button>
                                                         </div>
                                                     ))}
-                                                </Box>
-                                            </Paper>
-                                        );
-                                    }
+                                                </div>
+                                            </div>
+                                        </AccordionDetails>
+                                    </Accordion>
+                                ))
+                            ) : (
+                                <Typography>No data available</Typography>
+                            )}
+                        </div>
+                        <div className="col-lg-8 col-12">
 
-                                    case "twilio/call-to-action": {
-                                        const { body, actions } = data;
-                                        return (
-                                            <Paper sx={{ p: 2 }} elevation={5}>
-                                                <Typography variant="h6">Twilio Call To Action</Typography>
-                                                <Typography sx={{ my: 2 }}>{body.replace("{{first_name}}", "John")}</Typography>
-                                                <Box sx={{ display: "flex", gap: 1 }}>
+                            {content && content.types ? (
+                                (() => {
+                                    const typeKey = Object.keys(content.types)[0];
+                                    const data = content.types[typeKey];
+
+                                    switch (typeKey) {
+                                        case "whatsapp/authentication": {
+                                            const { body, actions, add_security_recommendation } = data;
+                                            return (
+                                                <Paper sx={{ p: 2 }} elevation={5}>
+                                                    <Typography variant="h6">WhatsApp Authentication</Typography>
+                                                    <Typography sx={{ my: 2 }}>{body.replace("{{1}}", "123456")}</Typography>
                                                     {actions?.map((action, i) => {
-                                                        if (action.type === "URL" && action.url) {
+                                                        if (action.type === "COPY_CODE") {
+
                                                             return (
-                                                                <div  key={i}>
+                                                                <div key={i}>
 
-                                                                    <Button variant="contained" color="primary" sx={{textTransform : 'none'}}
-                                                                    
+                                                                    <Button variant="contained" color="primary" sx={{ textTransform: 'none' }}
 
-                                                                        onClick={() => window.open(action.url, "_blank", "noopener noreferrer")}
+                                                                        onClick={() => navigator.clipboard.writeText("123456")}
+                                                                        style={{ padding: "8px 16px", cursor: "pointer" }}
                                                                     >
-                                                                        {action.title}
+                                                                        {action.copy_code_text}
                                                                     </Button>
                                                                 </div>
                                                             );
                                                         }
                                                         return null;
                                                     })}
-                                                </Box>
-                                            </Paper>
-                                        );
-                                    }
+                                                    {add_security_recommendation && (
+                                                        <Typography color="error" sx={{ mt: 2 }}>
+                                                            Please add security recommendations.
+                                                        </Typography>
+                                                    )}
+                                                </Paper>
+                                            );
+                                        }
 
-                                    default:
-                                        return <Typography>Unsupported template type: {typeKey}</Typography>;
-                                }
-                            })()
-                        ) : (
-                            <Typography>Select a template to preview</Typography>
-                        )}
-                    </div>
+                                        case "twilio/list-picker": {
+                                            const { body, button, items } = data;
+                                            return (
+                                                <Paper sx={{ p: 2 }} elevation={5}>
+                                                    <Typography variant="h6">Twilio List Picker</Typography>
+                                                    <Typography sx={{ my: 2 }}>
+                                                        {body.replace("{{order_number}}", "12345").replace("{{date}}", "Jan 10")}
+                                                    </Typography>
+                                                    <ul style={{ listStyle: "none", padding: 0 }}>
+                                                        {items.map(({ id, item, description }) => (
+                                                            <li
+                                                                key={id}
+                                                                style={{
+                                                                    marginBottom: 10,
+                                                                    padding: 10,
+                                                                    background: "#f0f0f0",
+                                                                    borderRadius: 4,
+                                                                }}
+                                                            >
+                                                                <strong>{item}</strong>
+                                                                <div style={{ fontSize: 12, color: "#555" }}>{description}</div>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                    <Button variant="contained" color="primary" sx={{ textTransform: 'none' }}>
+                                                        {button}
+                                                    </Button>
+                                                </Paper>
+                                            );
+                                        }
+
+                                        case "twilio/text": {
+                                            const { body } = data;
+                                            return (
+                                                <Paper sx={{ p: 2 }} elevation={5}>
+                                                    <Typography variant="h6">Twilio Text</Typography>
+                                                    <Typography sx={{ my: 2 }}>{body.replace("{{1}}", "User")}</Typography>
+                                                </Paper>
+                                            );
+                                        }
+
+                                        case "twilio/media": {
+                                            const { body, media } = data;
+                                            return (
+                                                <Paper sx={{ p: 2 }} elevation={5}>
+                                                    <Typography variant="h6">Twilio Media</Typography>
+                                                    <Typography sx={{ my: 2 }}>{body}</Typography>
+                                                    {media?.map((url, idx) => (
+                                                        <img
+                                                            key={idx}
+                                                            src={url}
+                                                            alt={`media-${idx}`}
+                                                            style={{ maxWidth: "100%", marginBottom: 10, borderRadius: 4 }}
+                                                        />
+                                                    ))}
+                                                </Paper>
+                                            );
+                                        }
+
+                                        case "twilio/card": {
+                                            const { title, subtitle, body, media, actions, orientation } = data;
+                                            return (
+                                                <Paper sx={{ p: 2, maxWidth: 400, border: "1px solid #ccc", borderRadius: 4 }}>
+                                                    <Typography variant="h5">{title}</Typography>
+                                                    {subtitle && <Typography variant="subtitle1" color="text.secondary">{subtitle}</Typography>}
+                                                    {media?.length > 0 && (
+                                                        <img
+                                                            src={media[0]}
+                                                            alt="card media"
+                                                            style={{
+                                                                width: "100%",
+                                                                height: orientation === "VERTICAL" ? 200 : 100,
+                                                                objectFit: "cover",
+                                                                borderRadius: 4,
+                                                                marginTop: 8,
+                                                                marginBottom: 8,
+                                                            }}
+                                                        />
+                                                    )}
+                                                    {body && <Typography sx={{ my: 1 }}>{body}</Typography>}
+                                                    {actions?.length > 0 && (
+                                                        <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
+                                                            {actions.map((action, i) => (
+                                                                <div key={action}>
+
+                                                                    <Button variant="contained" color="primary" sx={{ textTransform: 'none' }}>
+
+                                                                        {action.title || action.label || "Action"}
+                                                                    </Button>
+                                                                </div>
+                                                            ))}
+                                                        </Box>
+                                                    )}
+                                                </Paper>
+                                            );
+                                        }
+
+                                        case "twilio/quick-reply": {
+                                            const { body, actions } = data;
+                                            return (
+                                                <Paper sx={{ p: 2 }} elevation={5}>
+                                                    <Typography variant="h6">Twilio Quick Reply</Typography>
+                                                    <Typography sx={{ my: 2 }}>{body}</Typography>
+                                                    <Box sx={{ display: "flex", gap: 1 }}>
+                                                        {actions?.map(({ id, title }) => (
+                                                            <div key={id}>
+                                                                <Button variant="contained" color="primary" sx={{ textTransform: 'none' }}
+                                                                    onClick={() => alert(`You clicked: ${title}`)}>
+
+                                                                    {title}
+                                                                </Button>
+                                                            </div>
+                                                        ))}
+                                                    </Box>
+                                                </Paper>
+                                            );
+                                        }
+
+                                        case "twilio/call-to-action": {
+                                            const { body, actions } = data;
+                                            return (
+                                                <Paper sx={{ p: 2 }} elevation={5}>
+                                                    <Typography variant="h6">Twilio Call To Action</Typography>
+                                                    <Typography sx={{ my: 2 }}>{body.replace("{{first_name}}", "John")}</Typography>
+                                                    <Box sx={{ display: "flex", gap: 1 }}>
+                                                        {actions?.map((action, i) => {
+                                                            if (action.type === "URL" && action.url) {
+                                                                return (
+                                                                    <div key={i}>
+
+                                                                        <Button variant="contained" color="primary" sx={{ textTransform: 'none' }}
+
+
+                                                                            onClick={() => window.open(action.url, "_blank", "noopener noreferrer")}
+                                                                        >
+                                                                            {action.title}
+                                                                        </Button>
+                                                                    </div>
+                                                                );
+                                                            }
+                                                            return null;
+                                                        })}
+                                                    </Box>
+                                                </Paper>
+                                            );
+                                        }
+
+                                        default:
+                                            return <Typography>Unsupported template type: {typeKey}</Typography>;
+                                    }
+                                })()
+                            ) : (
+                                <Typography>Select a template to preview</Typography>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -409,7 +565,7 @@ const WhatsappBroadcast = () => {
                         required
                         style={{ width: "100%", padding: "8px", margin: "10px 0" }}
                     />
-                    <Button variant="contained" color="primary" sx={{textTransform : 'none'}} type="submit" >
+                    <Button variant="contained" color="primary" sx={{ textTransform: 'none' }} type="submit" >
                         Send Message
                     </Button>
                 </form>

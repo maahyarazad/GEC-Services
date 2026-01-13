@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS registration_keys (
 
 CREATE TABLE IF NOT EXISTS twilio_delivery (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  response TEXT
+  response TEXT,
+metadata_createdAt DATETIME DEFAULT (datetime('now')),
 );
 
 CREATE TABLE IF NOT EXISTS registration_config (
