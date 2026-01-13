@@ -7,10 +7,11 @@ router.post('/api/whatsapp/send', async (req, res) => {
    try {
         const result = await messageSender(req);
 
-        return { status: result.status, code: 200, message: 'Message sent successfully' };
+         res.status(200).json({ status: result.status,message: 'Message sent successfully' });
+        
     } catch (error) {
         console.error("Failed to send message", error.message);
-        return { status: false, code: 500, message: 'Failed to send the message' };
+        res.status(500).json({ status: false, message: "Failed to send the message" });
     }
 });
 

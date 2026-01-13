@@ -16,7 +16,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import FilterParams from '../../admin/FilterParams';
 import JSONPretty from 'react-json-pretty';
 import 'react-json-pretty/themes/monikai.css'; // optional styling
-
+import { useSnackbar } from '../../Providers/Snackbar';
 
 
 
@@ -29,7 +29,7 @@ const columns = () => [
         field: 'response',
         headerName: 'Log',
         width: 1000,
-        
+
         filterable: true,
         renderCell: (params) => {
             let json;
@@ -46,12 +46,12 @@ const columns = () => [
             }
 
             return (
-               <div style={{ fontSize: 12, height: '115px', overflow: 'scroll' }}>
-        <JSONPretty  id={params.row.id} data={json} />
-      </div>
+                <div style={{ fontSize: 12, height: '115px', overflow: 'scroll' }}>
+                    <JSONPretty id={params.row.id} data={json} />
+                </div>
             );
         },
-        
+
     }
 
 
@@ -83,15 +83,8 @@ const WhatsappBroadcast = () => {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [testAction, setTestAction] = useState(false);
-    const [inputValue, setInputValue] = useState();
-
-
-
-
-
-
-
-
+    const [inputValue, setInputValue] = useState("");
+    const { showSnackbar } = useSnackbar();
 
     const fetchData = useCallback(async () => {
         try {
@@ -171,16 +164,22 @@ const WhatsappBroadcast = () => {
                 }),
             });
 
+            console.log(response);
+            debugger;
             if (response.ok) {
                 const responseData = await response.json();
-                alert(`Message sent! Status: ${responseData.result || "unknown"}`);
+                 showSnackbar(`${responseData.message}`, 'success');
+                setTestAction(false);
             } else {
                 const errorData = await response.json();
-                alert(`Failed to send message: ${errorData.message || response.statusText}`);
+                debugger;
+                 showSnackbar(`${errorData.message}`);
+                
             }
         } catch (error) {
             console.error("Failed to send:", error);
-            alert("Error sending message. See console.");
+             showSnackbar(`${error}`);
+            
         }
     };
 
