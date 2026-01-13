@@ -273,7 +273,7 @@ const handsendEmail = async (type) => {
                     <CircularProgress />
                 </Box>
             ) : (
-                <div style={{ width: '100%', height: 'calc(100vh - 225px)' }}>
+                <div style={{ width: '100%', height: 'calc(100vh - 240px)' }}>
                     <DataGrid
                         rows={members}
                         columns={columns({ onResendPasswordReset: handleResetPassword, loadingRowId: loadingRowId })}

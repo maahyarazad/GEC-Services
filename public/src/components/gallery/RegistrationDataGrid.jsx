@@ -276,7 +276,7 @@ const RegistrationDataGrid = () => {
                             <CircularProgress />
                         </Box>
                     ) : (
-                        <div style={{ width: '100%', height: 'calc(100vh - 155px)' }}>
+                        <div style={{ width: '100%', height: 'calc(100vh - 175px)' }}>
 
                             <DataGrid
                                 rows={registrationList}

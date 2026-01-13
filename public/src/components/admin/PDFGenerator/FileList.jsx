@@ -269,7 +269,7 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
                 />
 
                 {/* List */}
-                <div style={{ overflow: 'scroll', height: '78vh' }}>
+                <div style={{ overflow: 'scroll', height: '76vh' }}>
 
                     <ul className="list-unstyled p-0 m-0 list-group" >
                         {filteredList.length > 0 ? (

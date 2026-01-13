@@ -23,7 +23,36 @@ import { useSnackbar } from '../../Providers/Snackbar';
 const columns = () => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'metadata_createdAt', headerName: 'Created At', width: 160, filterable: true },
+    {
+        field: 'To',
+        headerName: 'To',
+        width: 150,
+        filterable: false,
+        sortable: false,
+        renderCell: (params) => {
+            const log = JSON.parse(params.row.response);
 
+            return (
+                <>{log.To.replace("whatsapp:", "")}</>
+            );
+        },
+
+    },
+    {
+        field: 'SmsStatus',
+        headerName: 'SmsStatus',
+        width: 100,
+        filterable: false,
+        sortable: false,
+        renderCell: (params) => {
+            const log = JSON.parse(params.row.response);
+
+            return (
+                <>{log.SmsStatus}</>
+            );
+        },
+
+    },
 
     {
         field: 'response',
@@ -168,18 +197,18 @@ const WhatsappBroadcast = () => {
             debugger;
             if (response.ok) {
                 const responseData = await response.json();
-                 showSnackbar(`${responseData.message}`, 'success');
+                showSnackbar(`${responseData.message}`, 'success');
                 setTestAction(false);
             } else {
                 const errorData = await response.json();
                 debugger;
-                 showSnackbar(`${errorData.message}`);
-                
+                showSnackbar(`${errorData.message}`);
+
             }
         } catch (error) {
             console.error("Failed to send:", error);
-             showSnackbar(`${error}`);
-            
+            showSnackbar(`${error}`);
+
         }
     };
 
@@ -268,7 +297,7 @@ const WhatsappBroadcast = () => {
                         <CircularProgress />
                     </Box>
                 ) : (
-                    <div style={{ width: '100%', height: 'calc(100vh - 225px)' }}>
+                    <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
                         <DataGrid
                             rows={logs}
                             columns={columns()}
