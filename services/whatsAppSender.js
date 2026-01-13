@@ -3,8 +3,6 @@ const twilioClient = require("twilio")(
   process.env.TWILIO_AUTH_TOKEN
 );
 
-
-
 const otpSender = async (req) => {
   let { mobile_number, otp } = req.body;
 
@@ -22,16 +20,18 @@ const otpSender = async (req) => {
 
     // Prevent sending to the same number as your WhatsApp sender
     if (mobile_number === "+971521160991") {
-      throw new Error("Cannot send message to the sender's own WhatsApp number.");
+      throw new Error(
+        "Cannot send message to the sender's own WhatsApp number."
+      );
     }
 
     const whatsapp_sender_result = await twilioClient.messages.create({
       from: "whatsapp:+971521160991",
       to: `whatsapp:${mobile_number}`,
-        
+
       contentSid: process.env.TWILIO_OTP_CONTENT_SID,
       contentVariables: JSON.stringify({
-        1: '1623',
+        1: "1623",
         2: "5 minutes",
       }),
     });
@@ -44,103 +44,85 @@ const otpSender = async (req) => {
   }
 };
 
-
-// const messageSender = async (req) => {
-//   try {
-//     const { message, mobile_number } = req.body;
-
-//     const whatsapp_sender_result = await twilioClient.messages.create({
-//       from: "whatsapp:+971521160991",
-//       to: `whatsapp:${mobile_number}`,
-//       contentSid: process.env.TWILIO_MESSAGE_CONTENT_SID,
-//       contentVariables: JSON.stringify({
-//         1: `${message}`,
-//       }),
-//     });
-
-//     console.log(whatsapp_sender_result);
-//     return { status: true, result: whatsapp_sender_result.status };
-//   } catch (error) {
-//     console.error("WhatsApp sendser error:", error);
-
-//     return { status: false, result: error };
-//   }
-// };
-
-
-const messageSender = async (req) => {
-  try {
-    const { template, mobile_number } = req.body;
-
-    // Determine template type key (e.g., "twilio/text", "twilio/media", etc.)
-const templateType = Object.keys(template.types)[0];
-const data = template.types[templateType];
-
-    // Base message options
-    const messageOptions = {
-    from: "whatsapp:+971521160991",
-      to: `whatsapp:${mobile_number}`,
-      contentSid: template.sid,
-      messagingServiceSid: process.env.TWILIO_SERVICE_SID,
-    };
+function extractPlaceholders(text) {
+  const regex = /{{\s*(\d+)\s*}}/g;
+  const matches = [...text.matchAll(regex)];
+  return matches.map((m) => m[1]); // returns ["1", "2", ...]
+}
 
 // Helper to detect placeholders in body
 function hasPlaceholders(text) {
   return /{{\s*[^}]+\s*}}/.test(text);
 }
 
-switch (templateType) {
-  case "whatsapp/authentication": 
-  
-  if (data.body && hasPlaceholders(data.body)) {
-      
-      messageOptions.contentVariables = JSON.stringify({
-        1: '1623',
-        2: "5 minutes",
-        
-      });
-    }
-  
-   break;
-  case "twilio/text": 
-    if (data.body && hasPlaceholders(data.body)) {
-      
-      messageOptions.contentVariables = JSON.stringify({
-        1: "Your dynamic content here",    
-        
-      });
-    }
-  
-    break;
-  case "twilio/call-to-action":
-    if (data.body && hasPlaceholders(data.body)) {
-      // Prepare contentVariables — replace with your actual dynamic data mapping
-      messageOptions.contentVariables = JSON.stringify({
-        1: "Your dynamic content here",    // Map based on placeholders in data.body
-        first_name: "John",                 // Example for {{first_name}}
-      });
-    }
-    // else: no placeholders, so no contentVariables needed
-    break;
+const messageSender = async (req) => {
+  try {
+    const { template, payload, phone } = req.body;
 
-  case "twilio/media":
-    messageOptions.body = data.body || "";
-    if (Array.isArray(data.media)) {
-      messageOptions.mediaUrls = data.media; // Twilio supports mediaUrls as array
-    } else if (typeof data.media === "string") {
-      messageOptions.mediaUrl = data.media;
+    // Determine template type key (e.g., "twilio/text", "twilio/media", etc.)
+    const templateType = Object.keys(template.types)[0];
+    const data = template.types[templateType];
+
+    // Base message options
+    const messageOptions = {
+      from: "whatsapp:+971521160991",
+      to: `whatsapp:${phone}`,
+      contentSid: template.sid,
+      messagingServiceSid: process.env.TWILIO_SERVICE_SID,
+    };
+
+    if (payload !== null && Object.keys(payload)) {
+      const contentVariables = {};
+
+      Object.keys(payload).forEach((key) => {
+        if (payload[key] !== undefined) {
+          contentVariables[key] = payload[key];
+        }
+      });
+
+      if (Object.keys(contentVariables).length > 0) {
+        messageOptions.contentVariables = JSON.stringify(contentVariables);
+      }
     }
-    break;
+    switch (templateType) {
+      case "whatsapp/authentication":
+        break;
+      case "twilio/text":
+        break;
+      case "twilio/call-to-action":
+        if (data.body && hasPlaceholders(data.body)) {
+          // Prepare contentVariables — replace with your actual dynamic data mapping
+          messageOptions.contentVariables = JSON.stringify({
+            1: "Your dynamic content here", // Map based on placeholders in data.body
+            first_name: "John", // Example for {{first_name}}
+          });
+        }
+        // else: no placeholders, so no contentVariables needed
+        break;
 
-  case "twilio/list-picker":     break;
-  case "twilio/quick-reply":     break;
-  case "twilio/card":
-    messageOptions.interactive = buildInteractiveMessage(templateType, data);
-    break;
+      case "twilio/media":
+        messageOptions.body = data.body || "";
+        if (Array.isArray(data.media)) {
+          messageOptions.mediaUrls = data.media; // Twilio supports mediaUrls as array
+        } else if (typeof data.media === "string") {
+          messageOptions.mediaUrl = data.media;
+        }
+        break;
 
-  default:
-    throw new Error(`Unsupported template type: ${templateType}`);
-}
+      case "twilio/list-picker":
+        break;
+      case "twilio/quick-reply":
+        break;
+      case "twilio/card":
+        messageOptions.interactive = buildInteractiveMessage(
+          templateType,
+          data
+        );
+        break;
+
+      default:
+        throw new Error(`Unsupported template type: ${templateType}`);
+    }
 
     const result = await twilioClient.messages.create(messageOptions);
     console.log("Message sent:", result);
@@ -157,7 +139,11 @@ function buildInteractiveMessage(type, data) {
     case "twilio/list-picker":
       return {
         type: "list",
-        body: { text: data.body.replace("{{order_number}}", "12345").replace("{{date}}", "Jan 10") },
+        body: {
+          text: data.body
+            .replace("{{order_number}}", "12345")
+            .replace("{{date}}", "Jan 10"),
+        },
         action: {
           button: data.button || "Select an option",
           sections: [
@@ -194,8 +180,13 @@ function buildInteractiveMessage(type, data) {
       // Example here:
       return {
         type: "button",
-        body: { text: data.title + (data.subtitle ? "\n" + data.subtitle : "") },
-        header: data.media && data.media.length > 0 ? { type: "image", image: { link: data.media[0] } } : undefined,
+        body: {
+          text: data.title + (data.subtitle ? "\n" + data.subtitle : ""),
+        },
+        header:
+          data.media && data.media.length > 0
+            ? { type: "image", image: { link: data.media[0] } }
+            : undefined,
         action: {
           buttons: (data.actions || []).map((action, idx) => ({
             type: "reply",
@@ -214,7 +205,9 @@ function buildInteractiveMessage(type, data) {
 
 const fetchMessages = async () => {
   try {
-    const templates = await twilioClient.content.v1.contents.list({ limit: 100 });
+    const templates = await twilioClient.content.v1.contents.list({
+      limit: 100,
+    });
     return { status: true, result: templates };
   } catch (error) {
     console.error("WhatsApp sender error:", error);
@@ -224,18 +217,15 @@ const fetchMessages = async () => {
 
 const deleteContent = async (req, res) => {
   try {
-    const templates = await twilioClient.content.v1.contents.list({ limit: 100 });
+    const templates = await twilioClient.content.v1.contents.list({
+      limit: 100,
+    });
 
-
-// const filtered = 
-//   templates
-//     .filter(obj => 
-//      Object.prototype.hasOwnProperty.call(obj.translations, "en")
-//     );
-
-
-    
-    
+    // const filtered =
+    //   templates
+    //     .filter(obj =>
+    //      Object.prototype.hasOwnProperty.call(obj.translations, "en")
+    //     );
 
     // const filtered = templates.filter(item =>
     //     item.friendlyName.includes("verify_auto_created") && item.language !== "en"
@@ -243,14 +233,11 @@ const deleteContent = async (req, res) => {
     // filtered.forEach(async element => {
     //     await twilioClient.content.v1.contents(element.sid).remove();
     // });
-
-   
   } catch (error) {
     console.error("WhatsApp sendser error:", error);
 
     return { status: false, result: error };
   }
 };
-
 
 module.exports = { otpSender, messageSender, fetchMessages };

@@ -112,7 +112,9 @@ const WhatsappBroadcast = () => {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [testAction, setTestAction] = useState(false);
-    const [inputValue, setInputValue] = useState("");
+    const [inputValue, setInputValue] = useState({});
+    const [phone, SetPhone] = useState(null);
+
     const { showSnackbar } = useSnackbar();
 
     const fetchData = useCallback(async () => {
@@ -168,49 +170,54 @@ const WhatsappBroadcast = () => {
 
 
 
-    const handleSubmit = async (e) => {
-        e.preventDefault(); // prevent page reload on form submit
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-        try {
-            if (!inputValue) {
-                alert("Please enter a phone number");
-                return;
-            }
-            if (!content) {
-                alert("Please select a template");
-                return;
-            }
+  try {
+    
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/send`, {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    mobile_number: inputValue,
-                    template: content,
-                }),
-            });
+    
+    const requiredKeys = content?.variables
+      ? Object.keys(content.variables)
+      : [];
 
-            console.log(response);
-            debugger;
-            if (response.ok) {
-                const responseData = await response.json();
-                showSnackbar(`${responseData.message}`, 'success');
-                setTestAction(false);
-            } else {
-                const errorData = await response.json();
-                debugger;
-                showSnackbar(`${errorData.message}`);
+    for (const key of requiredKeys) {
+      if (!inputValue[key] || inputValue[key].trim() === "") {
+        alert(`Please fill Variable ${key}`);
+        return;
+      }
+    }
 
-            }
-        } catch (error) {
-            console.error("Failed to send:", error);
-            showSnackbar(`${error}`);
+    
+    const response = await fetch(
+      `${import.meta.env.VITE_SERVERURL}/api/whatsapp/send`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone,                 
+          payload: inputValue,   
+          template: content,
+        }),
+      }
+    );
 
-        }
-    };
+    if (response.ok) {
+      const responseData = await response.json();
+      showSnackbar(responseData.message, "success");
+      setTestAction(false);
+    } else {
+      const errorData = await response.json();
+      showSnackbar(errorData.message || "Failed to send message","error");
+    }
+  } catch (error) {
+    console.error("Failed to send:", error);
+    showSnackbar("Unexpected error occurred", "error");
+  }
+};
 
 
     /////////////////////////////////  LOGS   //////////////////////////////////////
@@ -329,7 +336,7 @@ const WhatsappBroadcast = () => {
 
 
 
-            <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none' }} onClick={() => setTestAction(true)} disabled={content === null}>
+            <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none' }} onClick={() => { setTestAction(true); console.log(content) }} disabled={content === null}>
                 <FaWhatsapp size={17} style={{ marginRight: 10 }} /> Test Message
             </Button>
             <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginLeft: 1 }} onClick={() => setOpen(true)}>
@@ -356,7 +363,7 @@ const WhatsappBroadcast = () => {
                                             <div className="d-flex">
                                                 <div className="col form-control">
                                                     {Object.values(groupedByTypeKey[key]).map((item, idx) => (
-                                                        <div key={idx} onClick={() => { setContent(item); console.log(item) }}
+                                                        <div key={idx} onClick={() => { setInputValue({}); setContent(item); console.log(item) }}
                                                             style={{ border: 'solid', borderRadius: '5px', borderColor: 'gray', borderWidth: '1px', padding: '5px', marginBottom: '5px', cursor: 'pointer' }}>
 
                                                             <strong>{item.friendlyName}</strong> ({item.language})<br />
@@ -581,22 +588,53 @@ const WhatsappBroadcast = () => {
             <Modal isOpen={testAction}
                 onRequestClose={() => setTestAction(false)}
                 title={`Test Message → ${content?.friendlyName}`}>
-                <form onSubmit={handleSubmit}>
-                    <label htmlFor="test-input">Recipient phone number:</label>
-                    <input
-                        id="test-input"
-                        type="tel"
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        placeholder="+971501234567"
-                        pattern="^\+?[0-9]{7,15}$" // allows optional + and 7-15 digits
-                        required
-                        style={{ width: "100%", padding: "8px", margin: "10px 0" }}
-                    />
-                    <Button variant="contained" color="primary" sx={{ textTransform: 'none' }} type="submit" >
-                        Send Message
-                    </Button>
-                </form>
+                <div className="p-2 ">
+
+                    <form onSubmit={handleSubmit}>
+                        <div className="form-control ">
+
+                            <label htmlFor="test-input">Recipient phone number:</label>
+                            <input
+                                id="test-input"
+                                type="tel"
+                                value={phone}
+                                onChange={(e) => SetPhone(e.target.value)}
+                                placeholder="+971501234567"
+                                pattern="^\+?[0-9]{7,15}$" // allows optional + and 7-15 digits
+                                required
+
+                            />
+
+                            {content?.variables && Object.keys(content.variables).map((key) => (
+                                <div key={key}>
+                                    <label htmlFor={`variable-${key}`}>Variable {key}</label>
+
+                                    <input
+                                        id={`variable-${key}`}
+                                        type="text"
+                                        value={inputValue[key] || ""}
+                                        onChange={(e) =>
+                                            setInputValue((prev) => ({
+                                                ...prev,
+                                                [key]: e.target.value,
+                                            }))
+                                        }
+                                        placeholder={content.variables[key]}
+                                        required
+                                    />
+                                </div>
+                            ))}
+
+
+
+                        </div>
+
+
+                        <Button variant="contained" color="primary" sx={{ textTransform: 'none' }} type="submit" disabled={phone === null}>
+                            Send Message
+                        </Button>
+                    </form>
+                </div>
 
             </Modal>
 
