@@ -50,4 +50,26 @@ router.post('/whatsapp/twilio-callback', (req, res) => {
 });
 
 
+router.get('/api/whatsapp/twilio-delivery-logs', async (req, res) => {
+  try {
+
+        const table_name = "twilio_delivery";
+        const { filters, data } = await dbService.QuerySqlConverter(req.query, table_name);
+
+        const total = await dbService.getTotalCount(table_name, filters);
+
+        return res.json({
+            status: true,
+            data,
+            total
+        });
+
+    } catch (error) {
+        console.error("Error in /member:", error);
+        res.status(500).json({ status: false, message: 'Server error' });
+    }
+});
+
+
+
 module.exports = router;
