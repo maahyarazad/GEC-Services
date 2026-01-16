@@ -57,82 +57,85 @@ function hasPlaceholders(text) {
 
 const messageSender = async (req) => {
   try {
-    const { template, payload, phone } = req.body;
+    const { phoneList } = req.body;
+    phoneList.map(async (el) => {
+      const { template, payload } = req.body;
+      const phone = el.phone;
+      // Determine template type key (e.g., "twilio/text", "twilio/media", etc.)
+      const templateType = Object.keys(template.types)[0];
+      const data = template.types[templateType];
 
-    // Determine template type key (e.g., "twilio/text", "twilio/media", etc.)
-    const templateType = Object.keys(template.types)[0];
-    const data = template.types[templateType];
+      // Base message options
+      const messageOptions = {
+        from: "whatsapp:+971521160991",
+        to: `whatsapp:${phone}`,
+        contentSid: template.sid,
+        messagingServiceSid: process.env.TWILIO_SERVICE_SID,
+      };
 
-    // Base message options
-    const messageOptions = {
-      from: "whatsapp:+971521160991",
-      to: `whatsapp:${phone}`,
-      contentSid: template.sid,
-      messagingServiceSid: process.env.TWILIO_SERVICE_SID,
-    };
+      if (payload !== null && Object.keys(payload)) {
+        const contentVariables = {};
 
-    if (payload !== null && Object.keys(payload)) {
-      const contentVariables = {};
+        Object.keys(payload).forEach((key) => {
+          if (payload[key] !== undefined) {
+            contentVariables[key] = payload[key];
+          }
+        });
 
-      Object.keys(payload).forEach((key) => {
-        if (payload[key] !== undefined) {
-          contentVariables[key] = payload[key];
+        if (Object.keys(contentVariables).length > 0) {
+          messageOptions.contentVariables = JSON.stringify(contentVariables);
         }
-      });
-
-      if (Object.keys(contentVariables).length > 0) {
-        messageOptions.contentVariables = JSON.stringify(contentVariables);
       }
-    }
-    switch (templateType) {
-      case "whatsapp/authentication":
-        break;
-      case "twilio/text":
-        break;
-      case "twilio/call-to-action":
-        if (data.body && hasPlaceholders(data.body)) {
-          // Prepare contentVariables — replace with your actual dynamic data mapping
-          messageOptions.contentVariables = JSON.stringify({
-            1: "Your dynamic content here", // Map based on placeholders in data.body
-            first_name: "John", // Example for {{first_name}}
-          });
-        }
-        // else: no placeholders, so no contentVariables needed
-        break;
+      switch (templateType) {
+        case "whatsapp/authentication":
+          break;
+        case "twilio/text":
+          break;
+        case "twilio/call-to-action":
+          if (data.body && hasPlaceholders(data.body)) {
+            // Prepare contentVariables — replace with your actual dynamic data mapping
+            messageOptions.contentVariables = JSON.stringify({
+              1: "Your dynamic content here", // Map based on placeholders in data.body
+              first_name: "John", // Example for {{first_name}}
+            });
+          }
+          // else: no placeholders, so no contentVariables needed
+          break;
 
-      case "twilio/media":
-        messageOptions.body = data.body || "";
-        if (Array.isArray(data.media)) {
-          messageOptions.mediaUrls = data.media; // Twilio supports mediaUrls as array
-        } else if (typeof data.media === "string") {
-          messageOptions.mediaUrl = data.media;
-        }
-        break;
+        case "twilio/media":
+          messageOptions.body = data.body || "";
+          if (Array.isArray(data.media)) {
+            messageOptions.mediaUrls = data.media; // Twilio supports mediaUrls as array
+          } else if (typeof data.media === "string") {
+            messageOptions.mediaUrl = data.media;
+          }
+          break;
 
-      case "twilio/list-picker":
-        break;
-      case "twilio/quick-reply":
-        break;
-      case "twilio/card":
-        messageOptions.interactive = buildInteractiveMessage(
-          templateType,
-          data
-        );
-        break;
+        case "twilio/list-picker":
+          break;
+        case "twilio/quick-reply":
+          break;
+        case "twilio/card":
+          messageOptions.interactive = buildInteractiveMessage(
+            templateType,
+            data
+          );
+          break;
 
-      default:
-        throw new Error(`Unsupported template type: ${templateType}`);
-    }
+        default:
+          throw new Error(`Unsupported template type: ${templateType}`);
+      }
 
-    const result = await twilioClient.messages.create(messageOptions);
-    console.log("Message sent:", result);
-    return { status: true, result: result.status };
+      const result = await twilioClient.messages.create(messageOptions);
+      console.log("Message sent:", result);
+    });
+
+    return { status: true };
   } catch (error) {
     console.error("WhatsApp sender error:", error);
     return { status: false, result: error.message || error };
   }
 };
-
 
 // Helper function to build interactive object for WhatsApp interactive messages
 function buildInteractiveMessage(type, data) {

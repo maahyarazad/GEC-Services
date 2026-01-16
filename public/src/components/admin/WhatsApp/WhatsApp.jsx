@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import { Icon, Paper } from "@mui/material";
+import { Icon, IconButton, Paper } from "@mui/material";
 import { Button } from '@mui/material'
 import Modal from '../../Modal';
 import SlideMenu from '../../SlideMenu/SlideMenu';
@@ -17,8 +17,8 @@ import FilterParams from '../../admin/FilterParams';
 import JSONPretty from 'react-json-pretty';
 import 'react-json-pretty/themes/monikai.css'; // optional styling
 import { useSnackbar } from '../../Providers/Snackbar';
-
-
+import { IoMdAdd } from "react-icons/io";
+import { TiDelete } from "react-icons/ti";
 
 const columns = () => [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -87,6 +87,73 @@ const columns = () => [
 
 
 ];
+
+
+const responseColumns = () => [
+    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'received_at', headerName: 'received_at', width: 160, filterable: true },
+    { field: 'source', headerName: 'source', width: 160, filterable: true },
+    { field: 'event_type', headerName: 'event_type', width: 160, filterable: true },
+
+     {
+        field: 'event_type',
+        headerName: 'Message Body',
+        width: 1000,
+
+        filterable: true,
+        renderCell: (params) => {
+            let _json;
+
+            try {
+
+                _json =
+                    typeof params.row.payload === 'string'
+                        ? JSON.parse(params.row.payload)
+                        : params.row.payload;
+            } catch (e) {
+                // Fallback if invalid JSON
+                _json = { raw: params.row.payload };
+            }
+
+            return (
+                <div style={{ fontSize: 12, height: '115px', overflow: 'scroll' }} id={params.row.id}>
+                    {_json.body}
+                </div>
+            );
+        },
+
+    },
+    {
+        field: 'payload',
+        headerName: 'Response',
+        width: 1000,
+
+        filterable: true,
+        renderCell: (params) => {
+            let json;
+
+            try {
+
+                json =
+                    typeof params.row.payload === 'string'
+                        ? JSON.parse(params.row.payload)
+                        : params.row.payload;
+            } catch (e) {
+                // Fallback if invalid JSON
+                json = { raw: params.row.payload };
+            }
+
+            return (
+                <div style={{ fontSize: 12, height: '115px', overflow: 'scroll' }}>
+                    <JSONPretty id={params.row.id} data={json} />
+                </div>
+            );
+        },
+
+    }
+
+];
+
 const tabstyle = {
     backgroundColor: "#00000",      // background of the header
     color: "#fffff",                // text color
@@ -104,16 +171,34 @@ const tabstyle = {
     },
 
 }
+
+
+
+function normalizePhone(input) {
+  // Remove everything except digits and plus
+  let val = input.replace(/[^0-9+]/g, '');
+  // Allow '+' only at the start
+  val = val.replace(/(?!^\+)\+/g, '');
+  return val;
+}
+
+
+
+
 const WhatsappBroadcast = () => {
 
     const [data, setData] = useState();
     const [groupedByTypeKey, setGroupedByTypeKey] = useState();
     const [content, setContent] = useState(null);
-    const [open, setOpen] = useState(false);
+    const [openLogs, setOpenLogs] = useState(false);
+    const [openResponses, setOpenResponses] = useState(false);
     const [loading, setLoading] = useState(true);
     const [testAction, setTestAction] = useState(false);
+    const [massAction, setMassAction] = useState(false);
     const [inputValue, setInputValue] = useState({});
     const [phone, SetPhone] = useState(null);
+    const [loadingMassSend, SetloadingMassSend] = useState(false);
+    const [phoneList, SetPhoneList] = useState([]);
 
     const { showSnackbar } = useSnackbar();
 
@@ -170,54 +255,56 @@ const WhatsappBroadcast = () => {
 
 
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+SetloadingMassSend(true);
+        try {
 
-  try {
-    
+            const requiredKeys = content?.variables
+                ? Object.keys(content.variables)
+                : [];
 
-    
-    const requiredKeys = content?.variables
-      ? Object.keys(content.variables)
-      : [];
+            for (const key of requiredKeys) {
+                if (!inputValue[key] || inputValue[key].trim() === "") {
+                    alert(`Please fill Variable ${key}`);
+                    return;
+                }
+            }
 
-    for (const key of requiredKeys) {
-      if (!inputValue[key] || inputValue[key].trim() === "") {
-        alert(`Please fill Variable ${key}`);
-        return;
-      }
-    }
 
-    
-    const response = await fetch(
-      `${import.meta.env.VITE_SERVERURL}/api/whatsapp/send`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          phone,                 
-          payload: inputValue,   
-          template: content,
-        }),
-      }
-    );
 
-    if (response.ok) {
-      const responseData = await response.json();
-      showSnackbar(responseData.message, "success");
-      setTestAction(false);
-    } else {
-      const errorData = await response.json();
-      showSnackbar(errorData.message || "Failed to send message","error");
-    }
-  } catch (error) {
-    console.error("Failed to send:", error);
-    showSnackbar("Unexpected error occurred", "error");
-  }
-};
+            const response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/whatsapp/send`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        phoneList,
+                        payload: inputValue,
+                        template: content,
+                    }),
+                }
+            );
+
+            if (response.ok) {
+                const responseData = await response.json();
+                showSnackbar(responseData.message, "success");
+                setTestAction(false);
+            } else {
+                const errorData = await response.json();
+                showSnackbar(errorData.message || "Failed to send message", "error");
+            }
+        } catch (error) {
+            console.error("Failed to send:", error);
+            showSnackbar("Unexpected error occurred", "error");
+        }finally{
+            SetloadingMassSend(false);
+            SetPhoneList([]);
+        }
+    };
 
 
     /////////////////////////////////  LOGS   //////////////////////////////////////
@@ -234,6 +321,42 @@ const handleSubmit = async (e) => {
     const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
     const [logs, setLogs] = useState([]);
+    const [responses, setResponses] = useState([]);
+
+    const fetchResponses = useCallback(
+        async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
+            setloading_logs(true);
+            try {
+                const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
+                const sortField = sort.field || '';
+                const sortOrder = sort.sort || '';
+
+                // Parse filters from filterModel.items
+                const filterParams = FilterParams(filterModel);
+
+                const queryParams = [
+                    `page=${paginationModel.page + 1}`,
+                    `pageSize=${paginationModel.pageSize}`,
+                    sortField ? `sortField=${sortField}` : '',
+                    sortOrder ? `sortOrder=${sortOrder}` : '',
+                    filterParams,
+                ].filter(Boolean).join('&');
+
+                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-response-logs?${queryParams}`, { credentials: "include" });
+
+                const data = await response.json();
+
+                setResponses(data.data || []);
+                setRowCount(data.total || 0);
+            } catch (err) {
+                console.error('Failed to fetch:', err);
+            } finally {
+                setloading_logs(false);
+            }
+        },
+        []
+    );
+
     const fetchLogs = useCallback(
         async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
             setloading_logs(true);
@@ -269,9 +392,10 @@ const handleSubmit = async (e) => {
     );
 
     useEffect(() => {
-        if (open) fetchLogs(paginationModel, sortModel, filterModel);
+        if (openLogs) fetchLogs(paginationModel, sortModel, filterModel);
+        if (openResponses) fetchResponses(paginationModel, sortModel, filterModel);
 
-    }, [open, paginationModel, sortModel, applyFilterTrigger]);
+    }, [openLogs, openResponses, paginationModel, sortModel, applyFilterTrigger]);
 
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -293,9 +417,12 @@ const handleSubmit = async (e) => {
 
         <Box sx={{ padding: 1, position: 'relative' }}>
             <SlideMenu
-                isOpen={open}
-                onClose={() => setOpen(false)}
-                headerTitle={`Twilio Delivery Logs`}
+                isOpen={openLogs || openResponses}
+                onClose={() => {
+                    setOpenLogs(false);
+                    setOpenResponses(false);
+                }}
+                headerTitle={openLogs ? 'Delivery Logs' : 'Responses Logs'}
             >
 
 
@@ -304,43 +431,78 @@ const handleSubmit = async (e) => {
                         <CircularProgress />
                     </Box>
                 ) : (
-                    <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
-                        <DataGrid
-                            rows={logs}
-                            columns={columns()}
-                            rowCount={rowCount}
-                            rowHeight={100}
-                            rowsPerPageOptions={[25, 50, 100]}
-                            paginationMode="server"
-                            sortingMode="server"
-                            filterMode="server"
-                            paginationModel={paginationModel}
-                            sortModel={sortModel}
-                            onPaginationModelChange={setPaginationModel}
-                            onSortModelChange={setSortModel}
-                            filterModel={filterModel}              // ✅ Pass full model
-                            onFilterModelChange={(newModel) => {
-                                setFilterModel(newModel); // use the raw model now
-                            }}
-                            // ✅ Accept full model
-                            disableRowSelectionOnClick
-                            disableSelectionOnClick
-                            showToolbar
-                        />
-                    </div>
+                    <>
+                        {openLogs && (
+                            <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
+                                <DataGrid
+                                    rows={logs}
+                                    columns={columns()}
+                                    rowCount={rowCount}
+                                    rowHeight={100}
+                                    rowsPerPageOptions={[25, 50, 100]}
+                                    paginationMode="server"
+                                    sortingMode="server"
+                                    filterMode="server"
+                                    paginationModel={paginationModel}
+                                    sortModel={sortModel}
+                                    onPaginationModelChange={setPaginationModel}
+                                    onSortModelChange={setSortModel}
+                                    filterModel={filterModel}              // ✅ Pass full model
+                                    onFilterModelChange={(newModel) => {
+                                        setFilterModel(newModel); // use the raw model now
+                                    }}
+                                    // ✅ Accept full model
+                                    disableRowSelectionOnClick
+                                    disableSelectionOnClick
+                                    showToolbar
+                                />
+                            </div>
+                        )}
+
+                        {openResponses && (
+                            <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
+                                <DataGrid
+                                    rows={responses}
+                                    columns={responseColumns()}
+                                    rowCount={rowCount}
+                                    rowHeight={100}
+                                    rowsPerPageOptions={[25, 50, 100]}
+                                    paginationMode="server"
+                                    sortingMode="server"
+                                    filterMode="server"
+                                    paginationModel={paginationModel}
+                                    sortModel={sortModel}
+                                    onPaginationModelChange={setPaginationModel}
+                                    onSortModelChange={setSortModel}
+                                    filterModel={filterModel}              // ✅ Pass full model
+                                    onFilterModelChange={(newModel) => {
+                                        setFilterModel(newModel); // use the raw model now
+                                    }}
+                                    // ✅ Accept full model
+                                    disableRowSelectionOnClick
+                                    disableSelectionOnClick
+                                    showToolbar
+                                />
+                            </div>
+                        )}
+                    </>
                 )}
+
 
 
             </SlideMenu>
 
-
-
-
-            <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none' }} onClick={() => { setTestAction(true); console.log(content) }} disabled={content === null}>
+            {/* <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { setTestAction(true); }} disabled={content === null}>
                 <FaWhatsapp size={17} style={{ marginRight: 10 }} /> Test Message
+            </Button> */}
+            <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { setMassAction(true); }} disabled={content === null}>
+                <FaWhatsapp size={17} style={{ marginRight: 10 }} /> Send Message
             </Button>
-            <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginLeft: 1 }} onClick={() => setOpen(true)}>
+            <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenLogs(true)}>
                 Twilio Delivery Logs
+            </Button>
+            <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none' }} onClick={() => setOpenResponses(true)}>
+                Response Logs
             </Button>
             <div style={{ height: 'calc(100vh - 155px)', overflow: 'scroll' }} >
                 <div className="mt-2">
@@ -395,7 +557,7 @@ const handleSubmit = async (e) => {
                                             const { body, actions, add_security_recommendation } = data;
                                             return (
                                                 <Paper sx={{ p: 2 }} elevation={5}>
-                                                    <Typography variant="h6">WhatsApp Authentication</Typography>
+                                                    <Typography variant="h6">{content?.friendlyName}</Typography>
                                                     <Typography sx={{ my: 2 }}>{body.replace("{{1}}", "123456")}</Typography>
                                                     {actions?.map((action, i) => {
                                                         if (action.type === "COPY_CODE") {
@@ -428,7 +590,7 @@ const handleSubmit = async (e) => {
                                             const { body, button, items } = data;
                                             return (
                                                 <Paper sx={{ p: 2 }} elevation={5}>
-                                                    <Typography variant="h6">Twilio List Picker</Typography>
+                                                    <Typography variant="h6">{content?.friendlyName}</Typography>
                                                     <Typography sx={{ my: 2 }}>
                                                         {body.replace("{{order_number}}", "12345").replace("{{date}}", "Jan 10")}
                                                     </Typography>
@@ -469,7 +631,7 @@ const handleSubmit = async (e) => {
                                             const { body, media } = data;
                                             return (
                                                 <Paper sx={{ p: 2 }} elevation={5}>
-                                                    <Typography variant="h6">Twilio Media</Typography>
+                                                    <Typography variant="h6">{content?.friendlyName}</Typography>
                                                     <Typography sx={{ my: 2 }}>{body}</Typography>
                                                     {media?.map((url, idx) => (
                                                         <img
@@ -487,7 +649,7 @@ const handleSubmit = async (e) => {
                                             const { title, subtitle, body, media, actions, orientation } = data;
                                             return (
                                                 <Paper sx={{ p: 2, maxWidth: 400, border: "1px solid #ccc", borderRadius: 4 }}>
-                                                    <Typography variant="h5">{title}</Typography>
+                                                    <Typography variant="h5">{content?.friendlyName}</Typography>
                                                     {subtitle && <Typography variant="subtitle1" color="text.secondary">{subtitle}</Typography>}
                                                     {media?.length > 0 && (
                                                         <img
@@ -522,10 +684,11 @@ const handleSubmit = async (e) => {
                                         }
 
                                         case "twilio/quick-reply": {
-                                            const { body, actions } = data;
+                                            console.log(data);
+                                            const { body, actions, title } = data;
                                             return (
                                                 <Paper sx={{ p: 2 }} elevation={5}>
-                                                    <Typography variant="h6">Twilio Quick Reply</Typography>
+                                                    <Typography variant="h6">{content?.friendlyName}</Typography>
                                                     <Typography sx={{ my: 2 }}>{body}</Typography>
                                                     <Box sx={{ display: "flex", gap: 1 }}>
                                                         {actions?.map(({ id, title }) => (
@@ -546,7 +709,7 @@ const handleSubmit = async (e) => {
                                             const { body, actions } = data;
                                             return (
                                                 <Paper sx={{ p: 2 }} elevation={5}>
-                                                    <Typography variant="h6">Twilio Call To Action</Typography>
+                                                    <Typography variant="h6">{content?.friendlyName}</Typography>
                                                     <Typography sx={{ my: 2 }}>{body.replace("{{first_name}}", "John")}</Typography>
                                                     <Box sx={{ display: "flex", gap: 1 }}>
                                                         {actions?.map((action, i) => {
@@ -585,55 +748,117 @@ const handleSubmit = async (e) => {
             </div>
 
 
-            <Modal isOpen={testAction}
-                onRequestClose={() => setTestAction(false)}
+            <Modal isOpen={massAction}
+                onRequestClose={() => { setTestAction(false); setMassAction(false) }}
                 title={`Test Message → ${content?.friendlyName}`}>
                 <div className="p-2 ">
 
-                    <form onSubmit={handleSubmit}>
-                        <div className="form-control ">
+                    <form onSubmit={handleSubmit} className="row">
 
+
+                        <div className="col-4 m-0 p- 0">
+                            <div className="form-control mb-2">
+
+                                {/* <label htmlFor="test-input">Recipient phone number:</label>
+                                <input
+                                    id="test-input"
+                                    type="tel"
+                                    value={phone}
+                                    onChange={(e) => SetPhone(e.target.value.replace())}
+                                    placeholder="+971501234567"
+                                    pattern="^\+?[0-9]{7,15}$" // allows optional + and 7-15 digits
+                                    required
+
+                                /> */}
+
+                                {content?.variables && Object.keys(content.variables).map((key) => (
+                                    <div key={key}>
+                                        <label htmlFor={`variable-${key}`}>Variable {key}</label>
+
+                                        <input
+                                            id={`variable-${key}`}
+                                            type="text"
+                                            value={inputValue[key] || ""}
+                                            onChange={(e) =>
+                                                setInputValue((prev) => ({
+                                                    ...prev,
+                                                    [key]: e.target.value,
+                                                }))
+                                            }
+                                            placeholder={content.variables[key]}
+                                            required
+                                        />
+                                    </div>
+                                ))}
+
+
+
+                            </div>
+                        </div>
+
+                        <div className={`col-6 m-0 p-0 ${massAction ? "" : "d-none"}`}>
                             <label htmlFor="test-input">Recipient phone number:</label>
                             <input
                                 id="test-input"
                                 type="tel"
                                 value={phone}
-                                onChange={(e) => SetPhone(e.target.value)}
+                                onChange={(e) => SetPhone(normalizePhone(e.target.value))}
                                 placeholder="+971501234567"
                                 pattern="^\+?[0-9]{7,15}$" // allows optional + and 7-15 digits
-                                required
+                                
 
                             />
 
-                            {content?.variables && Object.keys(content.variables).map((key) => (
-                                <div key={key}>
-                                    <label htmlFor={`variable-${key}`}>Variable {key}</label>
+                            <IconButton onClick={() => {
+                                if (!phone) return;
+                                SetPhoneList((prev) => [
+                                    ...prev,
+                                    { id: Date.now().toString(), phone: normalizePhone(phone) }
+                                ]);
+                                SetPhone('');
+                            }}
+                            >
+                                <IoMdAdd />
+                            </IconButton>
+                            <ul>
 
-                                    <input
-                                        id={`variable-${key}`}
-                                        type="text"
-                                        value={inputValue[key] || ""}
-                                        onChange={(e) =>
-                                            setInputValue((prev) => ({
-                                                ...prev,
-                                                [key]: e.target.value,
-                                            }))
-                                        }
-                                        placeholder={content.variables[key]}
-                                        required
-                                    />
-                                </div>
-                            ))}
-
-
+                                {phoneList.map(({ id, phone }) => (
+                                    <li key={id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span>{phone}</span>
+                                        <IconButton
+                                            type="button"
+                                            onClick={() => {
+                                                SetPhoneList((prev) => prev.filter(item => item.id !== id));
+                                            }}
+                                        >
+                                            <TiDelete color="red" />
+                                        </IconButton>
+                                    </li>
+                                ))}
+                            </ul>
 
                         </div>
 
 
-                        <Button variant="contained" color="primary" sx={{ textTransform: 'none' }} type="submit" disabled={phone === null}>
-                            Send Message
-                        </Button>
+
+
+
+
+                    <Button variant="contained" 
+                    color="primary" sx={{ textTransform: 'none', width: '100%' }} type="submit" disabled={phoneList.length === 0}
+                    startIcon={
+                                                                loadingMassSend ? (
+                                                                    <CircularProgress size={20} color="inherit" />
+                                                                ) : (
+                                                                    <></>
+                                                                )
+                                                            }
+                    >
+                        Send Message
+                       
+                    </Button>
                     </form>
+
                 </div>
 
             </Modal>
