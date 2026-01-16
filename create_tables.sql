@@ -29,6 +29,15 @@ CREATE TABLE IF NOT EXISTS registration_keys (
 );
 
 
+CREATE TABLE IF NOT EXISTS twilio_responses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  source VARCHAR(100) NOT NULL,          -- e.g. 'twilio', 'stripe', etc.
+  event_type VARCHAR(100) DEFAULT NULL, -- e.g. 'message.received', 'delivery.status'
+  payload TEXT NOT NULL,                 -- full raw JSON/text response
+  received_at DATETIME DEFAULT (datetime('now')),  -- when you saved it
+  processed BOOLEAN DEFAULT 0            -- flag if you've processed this record
+);
+
 CREATE TABLE IF NOT EXISTS twilio_delivery (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   response TEXT,

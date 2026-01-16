@@ -72,5 +72,33 @@ router.get('/api/whatsapp/twilio-delivery-logs', async (req, res) => {
 });
 
 
+router.post("/webhooks/whatsapp", express.urlencoded({ extended: false }), (req, res) => {
+    console.log('Incoming WhatsApp message:', req.body);
+ const { From, Body, ButtonPayload, ButtonText } = req.body;
+
+  const logMessage = `Incoming message from: ${From}`;
+  console.log(logMessage);
+
+  if (ButtonPayload) {
+    console.log('User clicked a Quick Reply button!');
+    console.log('ButtonPayload:', ButtonPayload);
+    console.log('ButtonText:', ButtonText);
+  } else {
+    console.log('User typed message:', Body);
+  }
+
+  // Fire and forget: save raw payload + log message to DB
+  dbService.createSafe('api_responses', {
+    source: 'twilio',
+    event_type: 'whatsapp.message.received',
+    payload: JSON.stringify(req.body),
+    log_message: logMessage,
+  }).catch(err => {
+    console.error('Failed to store Twilio callback:', err);
+  });
+
+  res.sendStatus(200);
+});
+
 
 module.exports = router;
