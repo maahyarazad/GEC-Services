@@ -15,6 +15,9 @@ router.post('/api/whatsapp/send', async (req, res) => {
     }
 });
 
+
+
+
 router.get('/api/whatsapp/list', async (req, res) => {
   try {
     const result = await fetchMessages(req, res);
@@ -32,9 +35,7 @@ router.get('/api/whatsapp/list', async (req, res) => {
 
 router.post('/whatsapp/twilio-callback', (req, res) => {
   try {
-    console.log('Twilio Status Callback received');
-    console.log('Body:', req.body);
-
+    
     res.sendStatus(202);
 
     // Fire and forget
@@ -70,9 +71,28 @@ router.get('/api/whatsapp/twilio-delivery-logs', async (req, res) => {
         res.status(500).json({ status: false, message: 'Server error' });
     }
 });
+router.get('/api/whatsapp/twilio-response-logs', async (req, res) => {
+  try {
+
+        const table_name = "twilio_responses";
+        const { filters, data } = await dbService.QuerySqlConverter(req.query, table_name);
+
+        const total = await dbService.getTotalCount(table_name, filters);
+
+        return res.json({
+            status: true,
+            data,
+            total
+        });
+
+    } catch (error) {
+        console.error("Error in /member:", error);
+        res.status(500).json({ status: false, message: 'Server error' });
+    }
+});
 
 
-router.post("/webhooks/whatsapp", express.urlencoded({ extended: false }), (req, res) => {
+router.post("/webhooks/whatsapp", express.urlencoded({ extended: false }), async (req, res) => {
     console.log('Incoming WhatsApp message:', req.body);
  const { From, Body, ButtonPayload, ButtonText } = req.body;
 
@@ -88,14 +108,16 @@ router.post("/webhooks/whatsapp", express.urlencoded({ extended: false }), (req,
   }
 
   // Fire and forget: save raw payload + log message to DB
-  dbService.createSafe('api_responses', {
-    source: 'twilio',
-    event_type: 'whatsapp.message.received',
-    payload: JSON.stringify(req.body),
-    log_message: logMessage,
-  }).catch(err => {
-    console.error('Failed to store Twilio callback:', err);
-  });
+  try {
+    await dbService.createSafe('twilio_responses', {
+        source: 'twilio',
+        event_type: 'whatsapp.message.received',
+        payload: JSON.stringify(req.body),
+    });
+        console.log('DB insert successful');
+    } catch (err) {
+        console.error('Failed to store Twilio callback:', err);
+    }
 
   res.sendStatus(200);
 });
