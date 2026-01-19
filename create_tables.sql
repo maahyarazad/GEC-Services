@@ -44,6 +44,22 @@ CREATE TABLE IF NOT EXISTS twilio_delivery (
     metadata_createdAt DATETIME DEFAULT (datetime('now'))
 );
 
+
+
+CREATE TABLE contact_book (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title VARCHAR(10),
+  first_name VARCHAR(255),
+  last_name VARCHAR(255),
+  gender VARCHAR(10),
+  phone VARCHAR(50),
+  type VARCHAR(20) NOT NULL CHECK (type IN ('club_member', 'club_partner', 'expert')),
+  club_partner_name VARCHAR(255),
+  blacklist BOOLEAN DEFAULT FALSE
+);
+
+
+
 CREATE TABLE IF NOT EXISTS registration_config (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   page VARCHAR(100),
