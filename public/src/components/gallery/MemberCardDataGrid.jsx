@@ -10,7 +10,9 @@ import {MdWorkspacePremium}  from "react-icons/md";
 import {BsFiletypeCsv}  from "react-icons/bs";
 import FilterParams from '../admin/FilterParams';
 import {GrVirtualMachine} from "react-icons/gr";
-
+import Modal from '../Modal';
+import { IconButton } from '@mui/material';
+import { FaUsersViewfinder } from "react-icons/fa6";
 const paidBlue = '#0f0faf';
 const nonpaidBlue = '#55729e';
 const red = '#cc0000';;
@@ -86,6 +88,7 @@ const MemberCardDataGrid = () => {
     const [loadingRowId, setLoadingRowId] = useState(null);
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [viewStatus, setViewStatus] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [sortModel, setSortModel] = useState(defaultSortModel);
@@ -219,15 +222,22 @@ const handsendEmail = async (type) => {
 
     return (
         <Box sx={{ padding: 1 }}>
-            <div className="row mb-1">
+            <Modal isOpen={viewStatus}
+                onRequestClose={() => { setViewStatus(false); }}
+                title={`MemberShip Status`}>
 
                 <div className="d-lg-flex justify-content-between align-items-center">
-                    <div>
 
                         <DashboardCards />
                     </div>
-                    <div style={{ alignSelf: 'end' }}>
-
+            </Modal>
+            <div className="row mb-1">
+      
+                
+                    <div  className=''>
+  <IconButton title='View MemberShip Status' onClick={()=> setViewStatus(true)}>
+<FaUsersViewfinder/>
+        </IconButton>
                         <Button
 
                             variant="outlined"
@@ -266,14 +276,14 @@ const handsendEmail = async (type) => {
                    
                 </div>
 
-            </div>
+            
 
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                     <CircularProgress />
                 </Box>
             ) : (
-                <div style={{ width: '100%', height: 'calc(100vh - 240px)' }}>
+                <div style={{ width: '100%', height: 'calc(100vh - 180px)' }}>
                     <DataGrid
                         rows={members}
                         columns={columns({ onResendPasswordReset: handleResetPassword, loadingRowId: loadingRowId })}

@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import { Icon, IconButton, Paper } from "@mui/material";
+import { Switch, IconButton, Paper } from "@mui/material";
 import { Button } from '@mui/material'
 import Modal from '../../Modal';
 import SlideMenu from '../../SlideMenu/SlideMenu';
@@ -19,8 +19,12 @@ import 'react-json-pretty/themes/monikai.css'; // optional styling
 import { useSnackbar } from '../../Providers/Snackbar';
 import { IoMdAdd } from "react-icons/io";
 import { TiDelete } from "react-icons/ti";
+import { RiContactsBook2Fill } from "react-icons/ri";
+import { IoMdOpen } from "react-icons/io";
+import { RiUserReceivedFill } from "react-icons/ri";
+import { RiCheckDoubleFill } from "react-icons/ri";
 
-const columns = () => [
+const columns = ({ onViewJson }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'metadata_createdAt', headerName: 'Created At', width: 160, filterable: true },
     {
@@ -39,16 +43,16 @@ const columns = () => [
 
     },
     {
-        field: 'SmsStatus',
-        headerName: 'SmsStatus',
-        width: 100,
+        field: 'MessageStatus',
+        headerName: 'MessageStatus',
+        width: 150,
         filterable: false,
         sortable: false,
         renderCell: (params) => {
             const log = JSON.parse(params.row.response);
 
             return (
-                <>{log.SmsStatus}</>
+                <>{log.MessageStatus}</>
             );
         },
 
@@ -57,7 +61,7 @@ const columns = () => [
     {
         field: 'response',
         headerName: 'Log',
-        width: 1000,
+        width: 30,
 
         filterable: true,
         renderCell: (params) => {
@@ -75,8 +79,11 @@ const columns = () => [
             }
 
             return (
-                <div style={{ fontSize: 12, height: '115px', overflow: 'scroll' }}>
-                    <JSONPretty id={params.row.id} data={json} />
+                <div>
+
+                    <IconButton onClick={() => onViewJson(params.row.response)}>
+                        <IoMdOpen />
+                    </IconButton>
                 </div>
             );
         },
@@ -89,44 +96,122 @@ const columns = () => [
 ];
 
 
-const responseColumns = () => [
-    { field: 'id', headerName: 'ID', width: 70 },
+const responseColumns = ({ onViewJson }) => [
+    // { field: 'id', headerName: 'ID', width: 70 },
     { field: 'received_at', headerName: 'received_at', width: 160, filterable: true },
-    { field: 'source', headerName: 'source', width: 160, filterable: true },
-    { field: 'event_type', headerName: 'event_type', width: 160, filterable: true },
-
-     {
-        field: 'event_type',
-        headerName: 'Message Body',
-        width: 1000,
-
-        filterable: true,
+    {
+        field: '___',
+        headerName: 'MessageType',
+        width: 100,
+        filterable: false,
         renderCell: (params) => {
-            let _json;
-
+            let json;
             try {
 
-                _json =
+                json =
                     typeof params.row.payload === 'string'
                         ? JSON.parse(params.row.payload)
                         : params.row.payload;
             } catch (e) {
                 // Fallback if invalid JSON
-                _json = { raw: params.row.payload };
+                json = { raw: params.row.payload };
             }
 
             return (
-                <div style={{ fontSize: 12, height: '115px', overflow: 'scroll' }} id={params.row.id}>
-                    {_json.body}
+                <div >
+                    {json['MessageType']}
                 </div>
             );
         },
 
     },
+    // { field: 'event_type', headerName: 'event_type', width: 160, filterable: true },
+
+    {
+        field: '_',
+        headerName: 'Body',
+        width: 200,
+        filterable: false,
+        renderCell: (params) => {
+            let json;
+            try {
+
+                json =
+                    typeof params.row.payload === 'string'
+                        ? JSON.parse(params.row.payload)
+                        : params.row.payload;
+            } catch (e) {
+                // Fallback if invalid JSON
+                json = { raw: params.row.payload };
+            }
+
+            return (
+                <div >
+                    {json['Body']}
+                </div>
+            );
+        },
+
+    },
+
+    {
+        field: '__',
+        headerName: 'ProfileName',
+        width: 200,
+        filterable: false,
+        renderCell: (params) => {
+            let json;
+            try {
+
+                json =
+                    typeof params.row.payload === 'string'
+                        ? JSON.parse(params.row.payload)
+                        : params.row.payload;
+            } catch (e) {
+                // Fallback if invalid JSON
+                json = { raw: params.row.payload };
+            }
+
+            return (
+                <div >
+                    {json['ProfileName']}
+                </div>
+            );
+        },
+
+    },
+
+    {
+        field: '____',
+        headerName: 'Sender Phone Number',
+        width: 200,
+        filterable: false,
+        renderCell: (params) => {
+            let json;
+            try {
+
+                json =
+                    typeof params.row.payload === 'string'
+                        ? JSON.parse(params.row.payload)
+                        : params.row.payload;
+            } catch (e) {
+                // Fallback if invalid JSON
+                json = { raw: params.row.payload };
+            }
+
+            return (
+                <div >
+                    {json['WaId']}
+                </div>
+            );
+        },
+
+    },
+
     {
         field: 'payload',
         headerName: 'Response',
-        width: 1000,
+        width: 90,
 
         filterable: true,
         renderCell: (params) => {
@@ -144,13 +229,29 @@ const responseColumns = () => [
             }
 
             return (
-                <div style={{ fontSize: 12, height: '115px', overflow: 'scroll' }}>
-                    <JSONPretty id={params.row.id} data={json} />
+                <div>
+                    {/*  */}
+                    <IconButton onClick={() => onViewJson(params.row.payload)}>
+                        <IoMdOpen />
+                    </IconButton>
                 </div>
             );
         },
 
     }
+
+];
+
+const contactBookColumn = () => [
+    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'type', headerName: 'type', width: 160, filterable: true },
+    { field: 'title', headerName: 'title', width: 160, filterable: true },
+    { field: 'first_name', headerName: 'first_name', width: 160, filterable: true },
+    { field: 'last_name', headerName: 'last_name', width: 160, filterable: true },
+    { field: 'phone', headerName: 'phone', width: 160, filterable: true },
+    { field: 'club_partner_name', headerName: 'club_partner_name', width: 160, filterable: true },
+    { field: 'gender', headerName: 'gender', width: 160, filterable: true },
+    { field: 'blacklist', headerName: 'blacklist', width: 160, filterable: true }
 
 ];
 
@@ -175,11 +276,11 @@ const tabstyle = {
 
 
 function normalizePhone(input) {
-  // Remove everything except digits and plus
-  let val = input.replace(/[^0-9+]/g, '');
-  // Allow '+' only at the start
-  val = val.replace(/(?!^\+)\+/g, '');
-  return val;
+    // Remove everything except digits and plus
+    let val = input.replace(/[^0-9+]/g, '');
+    // Allow '+' only at the start
+    val = val.replace(/(?!^\+)\+/g, '');
+    return val;
 }
 
 
@@ -191,14 +292,19 @@ const WhatsappBroadcast = () => {
     const [groupedByTypeKey, setGroupedByTypeKey] = useState();
     const [content, setContent] = useState(null);
     const [openLogs, setOpenLogs] = useState(false);
+    const [openContactBook, setOpenContactBook] = useState(false);
     const [openResponses, setOpenResponses] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [viewJsonModal, setViewJsonModal] = useState(false);
+    const [JSON_Value_Response_Log, setJSON_Value_Response_Log] = useState(null);
     const [testAction, setTestAction] = useState(false);
     const [massAction, setMassAction] = useState(false);
     const [inputValue, setInputValue] = useState({});
     const [phone, SetPhone] = useState(null);
     const [loadingMassSend, SetloadingMassSend] = useState(false);
     const [phoneList, SetPhoneList] = useState([]);
+    const [contactList, setContactList] = useState([]);
+    const [useContactBook, setUseContactBook] = useState(false);
 
     const { showSnackbar } = useSnackbar();
 
@@ -227,6 +333,35 @@ const WhatsappBroadcast = () => {
         []
     );
 
+
+    const fetchContactData = useCallback(async () => {
+        try {
+
+            setloading_logs(true)
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts`, { credentials: "include" });
+
+
+            if (response.status === 200) {
+                const response_data = await response.json();
+
+                setContactList(response_data.data);
+
+
+
+
+            }
+        } catch (err) {
+            console.error('Failed to fetch:', err);
+        } finally {
+            setloading_logs(false)
+        }
+    },
+
+        []
+    );
+
+
+
     useEffect(() => {
 
         fetchData();
@@ -234,6 +369,14 @@ const WhatsappBroadcast = () => {
 
 
 
+
+    const onViewJson = (value) => {
+        debugger;
+        setViewJsonModal(true);
+        setJSON_Value_Response_Log(value);
+    }
+
+    useEffect(() => { }, [viewJsonModal])
     useEffect(() => {
         if (data) {
             const _groupedByTypeKey = data.reduce((acc, obj) => {
@@ -257,7 +400,7 @@ const WhatsappBroadcast = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-SetloadingMassSend(true);
+        SetloadingMassSend(true);
         try {
 
             const requiredKeys = content?.variables
@@ -282,6 +425,7 @@ SetloadingMassSend(true);
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
+                        useContactBook: useContactBook,
                         phoneList,
                         payload: inputValue,
                         template: content,
@@ -300,7 +444,7 @@ SetloadingMassSend(true);
         } catch (error) {
             console.error("Failed to send:", error);
             showSnackbar("Unexpected error occurred", "error");
-        }finally{
+        } finally {
             SetloadingMassSend(false);
             SetPhoneList([]);
         }
@@ -394,8 +538,9 @@ SetloadingMassSend(true);
     useEffect(() => {
         if (openLogs) fetchLogs(paginationModel, sortModel, filterModel);
         if (openResponses) fetchResponses(paginationModel, sortModel, filterModel);
+        if (openContactBook) fetchContactData();
 
-    }, [openLogs, openResponses, paginationModel, sortModel, applyFilterTrigger]);
+    }, [openLogs, openResponses, openContactBook, paginationModel, sortModel, applyFilterTrigger]);
 
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -421,6 +566,7 @@ SetloadingMassSend(true);
                 onClose={() => {
                     setOpenLogs(false);
                     setOpenResponses(false);
+
                 }}
                 headerTitle={openLogs ? 'Delivery Logs' : 'Responses Logs'}
             >
@@ -436,9 +582,9 @@ SetloadingMassSend(true);
                             <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
                                 <DataGrid
                                     rows={logs}
-                                    columns={columns()}
+                                    columns={columns({ onViewJson })}
                                     rowCount={rowCount}
-                                    rowHeight={100}
+
                                     rowsPerPageOptions={[25, 50, 100]}
                                     paginationMode="server"
                                     sortingMode="server"
@@ -463,9 +609,9 @@ SetloadingMassSend(true);
                             <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
                                 <DataGrid
                                     rows={responses}
-                                    columns={responseColumns()}
+                                    columns={responseColumns({ onViewJson })}
                                     rowCount={rowCount}
-                                    rowHeight={100}
+                                    // rowHeight={100}
                                     rowsPerPageOptions={[25, 50, 100]}
                                     paginationMode="server"
                                     sortingMode="server"
@@ -485,6 +631,8 @@ SetloadingMassSend(true);
                                 />
                             </div>
                         )}
+
+
                     </>
                 )}
 
@@ -492,17 +640,82 @@ SetloadingMassSend(true);
 
             </SlideMenu>
 
+            <SlideMenu id={'contact-book'}
+                isOpen={openContactBook}
+                onClose={() => {
+
+                    setOpenContactBook(false);
+                }}
+                headerTitle={'Contact Book'}
+            >
+
+
+                {loading_logs ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <>
+
+
+                        {openContactBook && (
+                            <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
+                                <DataGrid
+                                    rows={contactList}
+                                    columns={contactBookColumn()}
+                                    
+                                    pageSizeOptions={[25, 50, 100]}
+                                    initialState={{
+                                        pagination: {
+                                            paginationModel: {
+                                                pageSize: 25,
+                                                page: 0,
+                                            },
+                                        },
+                                    }}
+                                    disableRowSelectionOnClick
+                                    disableSelectionOnClick
+                                    showToolbar
+                                />
+
+                            </div>
+                        )}
+                    </>
+                )}
+
+
+
+            </SlideMenu>
+
+
+            <Modal isOpen={viewJsonModal}
+                onRequestClose={() => {
+                    setViewJsonModal(false);
+                    setJSON_Value_Response_Log(null);
+                }}
+
+                title={`Twilio Json Log`}>
+                <JSONPretty data={JSON_Value_Response_Log} />
+            </Modal>
+
+
             {/* <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { setTestAction(true); }} disabled={content === null}>
                 <FaWhatsapp size={17} style={{ marginRight: 10 }} /> Test Message
             </Button> */}
             <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { setMassAction(true); }} disabled={content === null}>
-                <FaWhatsapp size={17} style={{ marginRight: 10 }} /> Send Message
+                <FaWhatsapp size={17} style={{ marginRight: 2 }} /> Send Message
+            </Button>
+            <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenContactBook(true)}>
+                <RiContactsBook2Fill size={17} style={{ marginRight: 2 }} />
+                Contact Book
+            </Button>
+            <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenResponses(true)}>
+                <RiUserReceivedFill style={{ marginRight: 2 }} />
+                Response Logs
             </Button>
             <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenLogs(true)}>
-                Twilio Delivery Logs
-            </Button>
-            <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none' }} onClick={() => setOpenResponses(true)}>
-                Response Logs
+                <RiCheckDoubleFill style={{ marginRight: 2 }} />
+                Delivery Logs
             </Button>
             <div style={{ height: 'calc(100vh - 155px)', overflow: 'scroll' }} >
                 <div className="mt-2">
@@ -751,15 +964,31 @@ SetloadingMassSend(true);
             <Modal isOpen={massAction}
                 onRequestClose={() => { setTestAction(false); setMassAction(false) }}
                 title={`Test Message → ${content?.friendlyName}`}>
-                <div className="p-2 ">
 
-                    <form onSubmit={handleSubmit} className="row">
+                <div className="ps-3">
+                    <label htmlFor="test-input">Use Contact Book</label>
 
 
-                        <div className="col-4 m-0 p- 0">
-                            <div className="form-control mb-2">
+                    <Switch
+                        size="small"
+                        title="Use Contact Book"
+                        checked={useContactBook}
+                        onChange={(e) => setUseContactBook(e.target.checked)}
+                        color="primary"
 
-                                {/* <label htmlFor="test-input">Recipient phone number:</label>
+                    />
+
+
+                    <form onSubmit={handleSubmit} >
+
+
+                        <div className="row">
+
+                            <div className={`col-4 p-0 m-0${Object.keys(content?.variables ?? {}).length === 0 ? "d-none" : ""}`}>
+
+                                <div className="p-2">
+
+                                    {/* <label htmlFor="test-input">Recipient phone number:</label>
                                 <input
                                     id="test-input"
                                     type="tel"
@@ -771,95 +1000,149 @@ SetloadingMassSend(true);
 
                                 /> */}
 
-                                {content?.variables && Object.keys(content.variables).map((key) => (
-                                    <div key={key}>
-                                        <label htmlFor={`variable-${key}`}>Variable {key}</label>
+                                    {content?.variables && Object.keys(content.variables).map((key) => (
+                                        <div key={key}>
+                                            <label htmlFor={`variable-${key}`}>Variable {key}</label>
 
+                                            <input
+                                                id={`variable-${key}`}
+                                                type="text"
+                                                value={inputValue[key] || ""}
+                                                onChange={(e) =>
+                                                    setInputValue((prev) => ({
+                                                        ...prev,
+                                                        [key]: e.target.value,
+                                                    }))
+                                                }
+                                                placeholder={content.variables[key]}
+                                                required
+                                            />
+                                        </div>
+                                    ))}
+
+
+
+                                </div>
+                            </div>
+
+
+                            <div className={`col-8 p-0 m-0 ${massAction ? "" : "d-none"} ${useContactBook ? "d-none" : ""}`}>
+                                <div className="d-flex flex-column justify-content-start p-2">
+
+                                    <div>
+
+                                        <label htmlFor="test-input">Recipient phone number:</label>
                                         <input
-                                            id={`variable-${key}`}
-                                            type="text"
-                                            value={inputValue[key] || ""}
-                                            onChange={(e) =>
-                                                setInputValue((prev) => ({
-                                                    ...prev,
-                                                    [key]: e.target.value,
-                                                }))
-                                            }
-                                            placeholder={content.variables[key]}
-                                            required
-                                        />
-                                    </div>
-                                ))}
+                                            id="test-input"
+                                            type="tel"
+                                            value={phone}
+                                            onChange={(e) => SetPhone(normalizePhone(e.target.value))}
+                                            placeholder="+971501234567"
+                                            pattern="^\+?[0-9]{7,15}$" // allows optional + and 7-15 digits
 
+
+                                        />
+                                        <IconButton onClick={() => {
+                                            if (!phone) return;
+                                            SetPhoneList((prev) => [
+                                                ...prev,
+                                                { id: Date.now().toString(), phone: normalizePhone(phone) }
+                                            ]);
+                                            SetPhone('');
+                                        }}
+                                        >
+                                            <IoMdAdd />
+                                        </IconButton>
+                                    </div>
+                                </div>
+
+                                <ul>
+
+                                    {phoneList.map(({ id, phone }) => (
+                                        <li key={id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span>{phone}</span>
+                                            <IconButton
+                                                type="button"
+                                                onClick={() => {
+                                                    SetPhoneList((prev) => prev.filter(item => item.id !== id));
+                                                }}
+                                            >
+                                                <TiDelete color="red" />
+                                            </IconButton>
+                                        </li>
+                                    ))}
+                                </ul>
 
 
                             </div>
-                        </div>
 
-                        <div className={`col-6 m-0 p-0 ${massAction ? "" : "d-none"}`}>
-                            <label htmlFor="test-input">Recipient phone number:</label>
-                            <input
-                                id="test-input"
-                                type="tel"
-                                value={phone}
-                                onChange={(e) => SetPhone(normalizePhone(e.target.value))}
-                                placeholder="+971501234567"
-                                pattern="^\+?[0-9]{7,15}$" // allows optional + and 7-15 digits
-                                
 
-                            />
 
-                            <IconButton onClick={() => {
-                                if (!phone) return;
-                                SetPhoneList((prev) => [
-                                    ...prev,
-                                    { id: Date.now().toString(), phone: normalizePhone(phone) }
-                                ]);
-                                SetPhone('');
-                            }}
+
+
+
+                            <div
+                                className={`col-8 m-0 p-0 ${useContactBook ? "" : "d-none"}`}
+                                style={{ padding: "0" }}
                             >
-                                <IoMdAdd />
-                            </IconButton>
-                            <ul>
+                                <div className="p-0">
 
-                                {phoneList.map(({ id, phone }) => (
-                                    <li key={id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <span>{phone}</span>
-                                        <IconButton
-                                            type="button"
-                                            onClick={() => {
-                                                SetPhoneList((prev) => prev.filter(item => item.id !== id));
-                                            }}
-                                        >
-                                            <TiDelete color="red" />
-                                        </IconButton>
-                                    </li>
-                                ))}
-                            </ul>
+                                    <p >
+                                        When you want to send personalized WhatsApp messages, you can tell the system which information to include for each person by typing special keywords separated by spaces.
+                                    </p>
 
+                                    <p>
+                                        For example, if you type <code>"first_name last_name"</code> in a field, the message will include the person’s first name and last name together.
+                                    </p>
+
+                                    <p><strong>Here are the keywords you can use:</strong></p>
+
+                                    <ul>
+                                        <li><code>id</code> — The person’s unique ID</li>
+                                        <li><code>title</code> — Their title (like Mr., Ms., Dr.)</li>
+                                        <li><code>first_name</code> — Their first name</li>
+                                        <li><code>last_name</code> — Their last name</li>
+                                        <li><code>gender</code> — Their gender</li>
+                                        <li><code>phone</code> — Their phone number</li>
+                                        <li><code>type</code> — Their contact type (like member, partner)</li>
+                                        <li><code>club_partner_name</code> — The name of their club or partner</li>
+                                        <li><code>blacklist</code> — Whether they are blacklisted or not</li>
+                                    </ul>
+
+                                    <p>
+                                        You can combine any of these by typing them with spaces in between, like <code>"first_name last_name title"</code>.
+                                    </p>
+                                </div>
+                            </div>
+
+
+                            <div className="row">
+
+                                <div className="col-12 m-0 p-0">
+
+                                    <Button variant="contained"
+                                        color="primary" sx={{ textTransform: 'none', width: '100%' }} type="submit"
+                                        disabled={useContactBook ? !true : phoneList.length === 0}
+                                        startIcon={
+                                            loadingMassSend ? (
+                                                <CircularProgress size={20} color="inherit" />
+                                            ) : (
+                                                <></>
+                                            )
+                                        }
+                                    >
+                                        Send Message
+
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
 
 
-
-
-
-
-                    <Button variant="contained" 
-                    color="primary" sx={{ textTransform: 'none', width: '100%' }} type="submit" disabled={phoneList.length === 0}
-                    startIcon={
-                                                                loadingMassSend ? (
-                                                                    <CircularProgress size={20} color="inherit" />
-                                                                ) : (
-                                                                    <></>
-                                                                )
-                                                            }
-                    >
-                        Send Message
-                       
-                    </Button>
                     </form>
-
                 </div>
+
+
 
             </Modal>
 
