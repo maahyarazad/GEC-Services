@@ -23,6 +23,7 @@ const g_sheet = require('./routes/gSheet.js');
 const email_sender = require('./routes/email_sender.js');
 const invoice = require('./routes/invoice.js');
 const whatsapp = require('./routes/whatsapp_sender.js');
+const contact_book = require('./routes/contact_book.js');
 const health_check = require('./routes/health_check.js');
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
@@ -129,6 +130,7 @@ app.use('/', g_sheet);
 app.use('/', invoice);
 app.use('/', whatsapp);
 app.use('/', health_check);
+app.use('/', contact_book);
 
 
 
