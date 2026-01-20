@@ -23,271 +23,15 @@ import { RiContactsBook2Fill } from "react-icons/ri";
 import { IoMdOpen } from "react-icons/io";
 import { RiUserReceivedFill } from "react-icons/ri";
 import { RiCheckDoubleFill } from "react-icons/ri";
-
-const columns = ({ onViewJson }) => [
-    { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'metadata_createdAt', headerName: 'Created At', width: 160, filterable: true },
-    {
-        field: 'To',
-        headerName: 'To',
-        width: 150,
-        filterable: false,
-        sortable: false,
-        renderCell: (params) => {
-            const log = JSON.parse(params.row.response);
-
-            return (
-                <>{log.To.replace("whatsapp:", "")}</>
-            );
-        },
-
-    },
-    {
-        field: 'MessageStatus',
-        headerName: 'MessageStatus',
-        width: 150,
-        filterable: false,
-        sortable: false,
-        renderCell: (params) => {
-            const log = JSON.parse(params.row.response);
-
-            return (
-                <>{log.MessageStatus}</>
-            );
-        },
-
-    },
-
-    {
-        field: 'response',
-        headerName: 'Log',
-        width: 30,
-
-        filterable: true,
-        renderCell: (params) => {
-            let json;
-
-            try {
-
-                json =
-                    typeof params.row.response === 'string'
-                        ? JSON.parse(params.row.response)
-                        : params.row.response;
-            } catch (e) {
-                // Fallback if invalid JSON
-                json = { raw: params.row.response };
-            }
-
-            return (
-                <div>
-
-                    <IconButton onClick={() => onViewJson(params.row.response)}>
-                        <IoMdOpen />
-                    </IconButton>
-                </div>
-            );
-        },
-
-    }
-
-
-
-
-];
-
-
-const responseColumns = ({ onViewJson }) => [
-    // { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'received_at', headerName: 'received_at', width: 160, filterable: true },
-    {
-        field: '___',
-        headerName: 'MessageType',
-        width: 100,
-        filterable: false,
-        renderCell: (params) => {
-            let json;
-            try {
-
-                json =
-                    typeof params.row.payload === 'string'
-                        ? JSON.parse(params.row.payload)
-                        : params.row.payload;
-            } catch (e) {
-                // Fallback if invalid JSON
-                json = { raw: params.row.payload };
-            }
-
-            return (
-                <div >
-                    {json['MessageType']}
-                </div>
-            );
-        },
-
-    },
-    // { field: 'event_type', headerName: 'event_type', width: 160, filterable: true },
-
-    {
-        field: '_',
-        headerName: 'Body',
-        width: 200,
-        filterable: false,
-        renderCell: (params) => {
-            let json;
-            try {
-
-                json =
-                    typeof params.row.payload === 'string'
-                        ? JSON.parse(params.row.payload)
-                        : params.row.payload;
-            } catch (e) {
-                // Fallback if invalid JSON
-                json = { raw: params.row.payload };
-            }
-
-            return (
-                <div >
-                    {json['Body']}
-                </div>
-            );
-        },
-
-    },
-
-    {
-        field: '__',
-        headerName: 'ProfileName',
-        width: 200,
-        filterable: false,
-        renderCell: (params) => {
-            let json;
-            try {
-
-                json =
-                    typeof params.row.payload === 'string'
-                        ? JSON.parse(params.row.payload)
-                        : params.row.payload;
-            } catch (e) {
-                // Fallback if invalid JSON
-                json = { raw: params.row.payload };
-            }
-
-            return (
-                <div >
-                    {json['ProfileName']}
-                </div>
-            );
-        },
-
-    },
-
-    {
-        field: '____',
-        headerName: 'Sender Phone Number',
-        width: 200,
-        filterable: false,
-        renderCell: (params) => {
-            let json;
-            try {
-
-                json =
-                    typeof params.row.payload === 'string'
-                        ? JSON.parse(params.row.payload)
-                        : params.row.payload;
-            } catch (e) {
-                // Fallback if invalid JSON
-                json = { raw: params.row.payload };
-            }
-
-            return (
-                <div >
-                    {json['WaId']}
-                </div>
-            );
-        },
-
-    },
-
-    {
-        field: 'payload',
-        headerName: 'Response',
-        width: 90,
-
-        filterable: true,
-        renderCell: (params) => {
-            let json;
-
-            try {
-
-                json =
-                    typeof params.row.payload === 'string'
-                        ? JSON.parse(params.row.payload)
-                        : params.row.payload;
-            } catch (e) {
-                // Fallback if invalid JSON
-                json = { raw: params.row.payload };
-            }
-
-            return (
-                <div>
-                    {/*  */}
-                    <IconButton onClick={() => onViewJson(params.row.payload)}>
-                        <IoMdOpen />
-                    </IconButton>
-                </div>
-            );
-        },
-
-    }
-
-];
-
-const contactBookColumn = () => [
-    { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'type', headerName: 'type', width: 160, filterable: true },
-    { field: 'title', headerName: 'title', width: 160, filterable: true },
-    { field: 'first_name', headerName: 'first_name', width: 160, filterable: true },
-    { field: 'last_name', headerName: 'last_name', width: 160, filterable: true },
-    { field: 'phone', headerName: 'phone', width: 160, filterable: true },
-    { field: 'club_partner_name', headerName: 'club_partner_name', width: 160, filterable: true },
-    { field: 'gender', headerName: 'gender', width: 160, filterable: true },
-    { field: 'blacklist', headerName: 'blacklist', width: 160, filterable: true }
-
-];
-
-const tabstyle = {
-    backgroundColor: "#00000",      // background of the header
-    color: "#fffff",                // text color
-    "& .MuiAccordionSummary-expandIconWrapper": {
-        color: "#fffff",             // icon color
-    },
-    '&.Mui-expanded': {
-        bgcolor: '#037bfc',
-        '& .MuiTypography-root': {
-            color: '#fff',   // text color when expanded
-        },
-        '& .MuiSvgIcon-root': {
-            color: '#fff',   // expand icon color when expanded
-        },
-    },
-
-}
-
-
-
-function normalizePhone(input) {
-    // Remove everything except digits and plus
-    let val = input.replace(/[^0-9+]/g, '');
-    // Allow '+' only at the start
-    val = val.replace(/(?!^\+)\+/g, '');
-    return val;
-}
-
-
-
+import CreateContact from "../WhatsAppComponents/CreateContact";
+import { IoAddCircleOutline } from "react-icons/io5";
+import { columns, responseColumns, contactBookColumn, tabstyle, normalizePhone } from './WhatsAppComponentConfig'
+import MessageModal from "./MessageModal";
+import { useAlertDialog } from "../../Providers/AlertProvider";
 
 const WhatsappBroadcast = () => {
 
+    const { openDialog } = useAlertDialog();
     const [data, setData] = useState();
     const [groupedByTypeKey, setGroupedByTypeKey] = useState();
     const [content, setContent] = useState(null);
@@ -297,6 +41,7 @@ const WhatsappBroadcast = () => {
     const [loading, setLoading] = useState(true);
     const [viewJsonModal, setViewJsonModal] = useState(false);
     const [JSON_Value_Response_Log, setJSON_Value_Response_Log] = useState(null);
+    const [viewCreateNewContact, setViewCreateNewContact] = useState(false);
     const [testAction, setTestAction] = useState(false);
     const [massAction, setMassAction] = useState(false);
     const [inputValue, setInputValue] = useState({});
@@ -311,32 +56,21 @@ const WhatsappBroadcast = () => {
     const fetchData = useCallback(async () => {
         try {
 
-
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/list`, { credentials: "include" });
-
-
             if (response.status === 200) {
                 const response_data = await response.json();
                 setData(response_data.templates);
-
-
-
-
             }
         } catch (err) {
             console.error('Failed to fetch:', err);
         } finally {
             setLoading(false);
         }
-    },
-
-        []
-    );
+    },[]);
 
 
     const fetchContactData = useCallback(async () => {
         try {
-
             setloading_logs(true)
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts`, { credentials: "include" });
 
@@ -345,25 +79,17 @@ const WhatsappBroadcast = () => {
                 const response_data = await response.json();
 
                 setContactList(response_data.data);
-
-
-
-
             }
         } catch (err) {
             console.error('Failed to fetch:', err);
         } finally {
             setloading_logs(false)
         }
-    },
-
-        []
-    );
+    }, []);
 
 
 
     useEffect(() => {
-
         fetchData();
     }, [fetchData]);
 
@@ -371,10 +97,70 @@ const WhatsappBroadcast = () => {
 
 
     const onViewJson = (value) => {
-        debugger;
+
         setViewJsonModal(true);
         setJSON_Value_Response_Log(value);
     }
+
+    const [contactModifyVal, setContactModifyVal] = useState(null);
+
+    const onModifyContact = (val) => {
+        setContactModifyVal(val);
+        setViewCreateNewContact(true);
+    }
+
+    const deleteContact = async (contactId) => {
+        try {
+            setloading_logs(true);
+
+            const response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/contacts`,
+                {
+                    method: 'DELETE',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: contactId }),
+                }
+            );
+
+            const responseData = await response.json();
+
+            if (!response.ok) {
+               showSnackbar(responseData.message, "error");
+            }
+
+await fetchContactData();
+
+
+        } catch (err) {
+            console.error('Failed to delete contact:', err);
+            showSnackbar(err.message, "error");
+        } finally {
+            setloading_logs(false);
+        }
+    };
+
+
+    const onDeleteContact = (row) => {
+        openDialog(
+            <div>
+                <div>
+                    Are you sure you want to <strong>delete this contact</strong>?
+                    This action <strong>cannot be undone</strong>.
+                </div>
+            </div>,
+            'Delete Contact',
+            {
+                text: 'Delete',
+                color: 'error',
+            },
+            () => {deleteContact(row.id);},
+            () => {}
+        );
+    };
+
 
     useEffect(() => { }, [viewJsonModal])
     useEffect(() => {
@@ -561,6 +347,7 @@ const WhatsappBroadcast = () => {
     return (
 
         <Box sx={{ padding: 1, position: 'relative' }}>
+
             <SlideMenu
                 isOpen={openLogs || openResponses}
                 onClose={() => {
@@ -659,11 +446,15 @@ const WhatsappBroadcast = () => {
 
 
                         {openContactBook && (
-                            <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
+                            <div style={{ width: '100%', height: 'calc(100vh - 125px)' }}>
+                                <Button
+                                    variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginBottom: 1 }} onClick={() => { setViewCreateNewContact(true); }}>
+                                    <IoAddCircleOutline size={17} style={{ marginRight: 2 }} /> Create New Contact
+                                </Button>
                                 <DataGrid
                                     rows={contactList}
-                                    columns={contactBookColumn()}
-                                    
+                                    columns={contactBookColumn({ onModifyContact, onDeleteContact })}
+
                                     pageSizeOptions={[25, 50, 100]}
                                     initialState={{
                                         pagination: {
@@ -699,9 +490,7 @@ const WhatsappBroadcast = () => {
             </Modal>
 
 
-            {/* <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { setTestAction(true); }} disabled={content === null}>
-                <FaWhatsapp size={17} style={{ marginRight: 10 }} /> Test Message
-            </Button> */}
+
             <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { setMassAction(true); }} disabled={content === null}>
                 <FaWhatsapp size={17} style={{ marginRight: 2 }} /> Send Message
             </Button>
@@ -961,194 +750,38 @@ const WhatsappBroadcast = () => {
             </div>
 
 
-            <Modal isOpen={massAction}
-                onRequestClose={() => { setTestAction(false); setMassAction(false) }}
-                title={`Test Message → ${content?.friendlyName}`}>
-
-                <div className="ps-3">
-                    <label htmlFor="test-input">Use Contact Book</label>
-
-
-                    <Switch
-                        size="small"
-                        title="Use Contact Book"
-                        checked={useContactBook}
-                        onChange={(e) => setUseContactBook(e.target.checked)}
-                        color="primary"
-
-                    />
-
-
-                    <form onSubmit={handleSubmit} >
-
-
-                        <div className="row">
-
-                            <div className={`col-4 p-0 m-0${Object.keys(content?.variables ?? {}).length === 0 ? "d-none" : ""}`}>
-
-                                <div className="p-2">
-
-                                    {/* <label htmlFor="test-input">Recipient phone number:</label>
-                                <input
-                                    id="test-input"
-                                    type="tel"
-                                    value={phone}
-                                    onChange={(e) => SetPhone(e.target.value.replace())}
-                                    placeholder="+971501234567"
-                                    pattern="^\+?[0-9]{7,15}$" // allows optional + and 7-15 digits
-                                    required
-
-                                /> */}
-
-                                    {content?.variables && Object.keys(content.variables).map((key) => (
-                                        <div key={key}>
-                                            <label htmlFor={`variable-${key}`}>Variable {key}</label>
-
-                                            <input
-                                                id={`variable-${key}`}
-                                                type="text"
-                                                value={inputValue[key] || ""}
-                                                onChange={(e) =>
-                                                    setInputValue((prev) => ({
-                                                        ...prev,
-                                                        [key]: e.target.value,
-                                                    }))
-                                                }
-                                                placeholder={content.variables[key]}
-                                                required
-                                            />
-                                        </div>
-                                    ))}
+            <MessageModal
+                massAction={massAction}
+                setMassAction={setMassAction}
+                setTestAction={setTestAction}
+                content={content}
+                useContactBook={useContactBook}
+                setUseContactBook={setUseContactBook}
+                handleSubmit={handleSubmit}
+                inputValue={inputValue}
+                setInputValue={setInputValue}
+                phone={phone}
+                SetPhone={SetPhone}
+                phoneList={phoneList}
+                SetPhoneList={SetPhoneList}
+                normalizePhone={normalizePhone}
+                loadingMassSend={loadingMassSend}
+            />
 
 
 
-                                </div>
-                            </div>
+            <Modal isOpen={viewCreateNewContact}
+                onRequestClose={() => { setViewCreateNewContact(false); setContactModifyVal(null); }}
 
-
-                            <div className={`col-8 p-0 m-0 ${massAction ? "" : "d-none"} ${useContactBook ? "d-none" : ""}`}>
-                                <div className="d-flex flex-column justify-content-start p-2">
-
-                                    <div>
-
-                                        <label htmlFor="test-input">Recipient phone number:</label>
-                                        <input
-                                            id="test-input"
-                                            type="tel"
-                                            value={phone}
-                                            onChange={(e) => SetPhone(normalizePhone(e.target.value))}
-                                            placeholder="+971501234567"
-                                            pattern="^\+?[0-9]{7,15}$" // allows optional + and 7-15 digits
-
-
-                                        />
-                                        <IconButton onClick={() => {
-                                            if (!phone) return;
-                                            SetPhoneList((prev) => [
-                                                ...prev,
-                                                { id: Date.now().toString(), phone: normalizePhone(phone) }
-                                            ]);
-                                            SetPhone('');
-                                        }}
-                                        >
-                                            <IoMdAdd />
-                                        </IconButton>
-                                    </div>
-                                </div>
-
-                                <ul>
-
-                                    {phoneList.map(({ id, phone }) => (
-                                        <li key={id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span>{phone}</span>
-                                            <IconButton
-                                                type="button"
-                                                onClick={() => {
-                                                    SetPhoneList((prev) => prev.filter(item => item.id !== id));
-                                                }}
-                                            >
-                                                <TiDelete color="red" />
-                                            </IconButton>
-                                        </li>
-                                    ))}
-                                </ul>
-
-
-                            </div>
-
-
-
-
-
-
-                            <div
-                                className={`col-8 m-0 p-0 ${useContactBook ? "" : "d-none"}`}
-                                style={{ padding: "0" }}
-                            >
-                                <div className="p-0">
-
-                                    <p >
-                                        When you want to send personalized WhatsApp messages, you can tell the system which information to include for each person by typing special keywords separated by spaces.
-                                    </p>
-
-                                    <p>
-                                        For example, if you type <code>"first_name last_name"</code> in a field, the message will include the person’s first name and last name together.
-                                    </p>
-
-                                    <p><strong>Here are the keywords you can use:</strong></p>
-
-                                    <ul>
-                                        <li><code>id</code> — The person’s unique ID</li>
-                                        <li><code>title</code> — Their title (like Mr., Ms., Dr.)</li>
-                                        <li><code>first_name</code> — Their first name</li>
-                                        <li><code>last_name</code> — Their last name</li>
-                                        <li><code>gender</code> — Their gender</li>
-                                        <li><code>phone</code> — Their phone number</li>
-                                        <li><code>type</code> — Their contact type (like member, partner)</li>
-                                        <li><code>club_partner_name</code> — The name of their club or partner</li>
-                                        <li><code>blacklist</code> — Whether they are blacklisted or not</li>
-                                    </ul>
-
-                                    <p>
-                                        You can combine any of these by typing them with spaces in between, like <code>"first_name last_name title"</code>.
-                                    </p>
-                                </div>
-                            </div>
-
-
-                            <div className="row">
-
-                                <div className="col-12 m-0 p-0">
-
-                                    <Button variant="contained"
-                                        color="primary" sx={{ textTransform: 'none', width: '100%' }} type="submit"
-                                        disabled={useContactBook ? !true : phoneList.length === 0}
-                                        startIcon={
-                                            loadingMassSend ? (
-                                                <CircularProgress size={20} color="inherit" />
-                                            ) : (
-                                                <></>
-                                            )
-                                        }
-                                    >
-                                        Send Message
-
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-
-
-                    </form>
-                </div>
-
-
-
+                title={`${contactModifyVal ? `Modify ${contactModifyVal.first_name} ${contactModifyVal.last_name}` : "Create a New Contact"}`}>
+                <CreateContact
+                    initialValues={contactModifyVal}
+                    CloseModal={async () => {setViewCreateNewContact(false); setContactModifyVal(null); await fetchContactData(); }}
+                />
             </Modal>
 
+
         </Box>
-
-
 
 
 
