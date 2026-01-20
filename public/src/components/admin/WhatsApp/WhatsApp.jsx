@@ -495,6 +495,7 @@ await fetchContactData();
             </Modal>
 
 
+<div className="pb-2 border-bottom border-1">
 
             <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { setMassAction(true); }} disabled={content === null}>
                 <FaWhatsapp size={17} style={{ marginRight: 2 }} /> Send Message
@@ -511,6 +512,7 @@ await fetchContactData();
                 <RiCheckDoubleFill style={{ marginRight: 2 }} />
                 Delivery Logs
             </Button>
+</div>
             <div style={{ height: 'calc(100vh - 155px)', overflow: 'scroll' }} >
                 <div className="mt-2">
 

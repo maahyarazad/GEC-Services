@@ -4,6 +4,7 @@ const twilioClient = require("twilio")(
 );
 
 const dbService = require("../services/dbService");
+const testBook = require("./TestBook.json");
 
 const otpSender = async (req) => {
   let { mobile_number, otp } = req.body;
@@ -64,7 +65,7 @@ const contactBookData = async () => {
       SELECT *
       FROM contact_book
       WHERE phone IS NOT NULL AND blacklist = 0
-      GROUP BY phone
+      GROUP BY phone order by id DESC
     `;
 
   const result = await new Promise((resolve, reject) => {
@@ -80,14 +81,17 @@ const contactBookData = async () => {
   return result;
 };
 
+
+
 const messageSender = async (req) => {
   try {
     
+
     const { phoneList, useContactBook, useTestBook } = req.body;
 
     if(useTestBook){
         await Promise.all(
-        phoneList.map(async (el) => {
+        testBook.map(async (el) => {
           const phone = el.phone;
           const { template, payload } = req.body;
           return sendMessageToPhone(phone, template, payload);
