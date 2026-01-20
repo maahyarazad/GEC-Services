@@ -282,6 +282,15 @@ export const normalizePhone = (input) => {
     let val = input.replace(/[^0-9+]/g, '');
     // Allow '+' only at the start
     val = val.replace(/(?!^\+)\+/g, '');
+
+     if (val.startsWith('0')) {
+            val = '+' + val.slice(1);
+        }
+        
+        if(!val.startsWith('+')){
+             val = '+' + val;
+        }
+        
     return val;
 }
 
