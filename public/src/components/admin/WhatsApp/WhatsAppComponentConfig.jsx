@@ -6,7 +6,7 @@ import { IoMdOpen } from "react-icons/io";
 import { RiEditLine } from "react-icons/ri";
 import { IoTrashOutline } from "react-icons/io5";
 export const columns = ({ onViewJson }) => [
-    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'id', headerName: 'ID', width: 70, hide: true },
     { field: 'metadata_createdAt', headerName: 'Created At', width: 160, filterable: true },
     {
         field: 'To',
@@ -78,7 +78,7 @@ export const columns = ({ onViewJson }) => [
 
 
 export const responseColumns = ({ onViewJson }) => [
-    // { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'id', headerName: 'ID', width: 70, hide: true },
     { field: 'received_at', headerName: 'received_at', width: 160, filterable: true },
     {
         field: '___',

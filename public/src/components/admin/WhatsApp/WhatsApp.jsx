@@ -45,11 +45,12 @@ const WhatsappBroadcast = () => {
     const [testAction, setTestAction] = useState(false);
     const [massAction, setMassAction] = useState(false);
     const [inputValue, setInputValue] = useState({});
-    const [phone, SetPhone] = useState(null);
+    const [phone, SetPhone] = useState('');
     const [loadingMassSend, SetloadingMassSend] = useState(false);
     const [phoneList, SetPhoneList] = useState([]);
     const [contactList, setContactList] = useState([]);
     const [useContactBook, setUseContactBook] = useState(false);
+    const [useTestBook, setUseTestBook] = useState(false);
 
     const { showSnackbar } = useSnackbar();
 
@@ -145,12 +146,12 @@ await fetchContactData();
 
     const onDeleteContact = (row) => {
         openDialog(
-            <div>
-                <div>
+            <>
+                <>
                     Are you sure you want to <strong>delete this contact</strong>?
                     This action <strong>cannot be undone</strong>.
-                </div>
-            </div>,
+                </>
+            </>,
             'Delete Contact',
             {
                 text: 'Delete',
@@ -185,6 +186,7 @@ await fetchContactData();
 
 
     const handleSubmit = async (e) => {
+        debugger;
         e.preventDefault();
         SetloadingMassSend(true);
         try {
@@ -212,6 +214,7 @@ await fetchContactData();
                     },
                     body: JSON.stringify({
                         useContactBook: useContactBook,
+                        useTestBook: useTestBook,
                         phoneList,
                         payload: inputValue,
                         template: content,
@@ -258,8 +261,9 @@ await fetchContactData();
             setloading_logs(true);
             try {
                 const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
-                const sortField = sort.field || '';
-                const sortOrder = sort.sort || '';
+                const sortField = sort.field || defaultSortModel.field;
+                const sortOrder = sort.sort || defaultSortModel.sort;
+
 
                 // Parse filters from filterModel.items
                 const filterParams = FilterParams(filterModel);
@@ -292,12 +296,13 @@ await fetchContactData();
             setloading_logs(true);
             try {
                 const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
-                const sortField = sort.field || '';
-                const sortOrder = sort.sort || '';
+                const sortField = sort.field || defaultSortModel.field;
+                const sortOrder = sort.sort || defaultSortModel.sort;
 
                 // Parse filters from filterModel.items
                 const filterParams = FilterParams(filterModel);
 
+                
                 const queryParams = [
                     `page=${paginationModel.page + 1}`,
                     `pageSize=${paginationModel.pageSize}`,
@@ -527,7 +532,7 @@ await fetchContactData();
                                             <div className="d-flex">
                                                 <div className="col form-control">
                                                     {Object.values(groupedByTypeKey[key]).map((item, idx) => (
-                                                        <div key={idx} onClick={() => { setInputValue({}); setContent(item); console.log(item) }}
+                                                        <div key={idx} onClick={() => { setInputValue({}); setContent(item); }}
                                                             style={{ border: 'solid', borderRadius: '5px', borderColor: 'gray', borderWidth: '1px', padding: '5px', marginBottom: '5px', cursor: 'pointer' }}>
 
                                                             <strong>{item.friendlyName}</strong> ({item.language})<br />
@@ -686,7 +691,7 @@ await fetchContactData();
                                         }
 
                                         case "twilio/quick-reply": {
-                                            console.log(data);
+                                            
                                             const { body, actions, title } = data;
                                             return (
                                                 <Paper sx={{ p: 2 }} elevation={5}>
@@ -756,7 +761,9 @@ await fetchContactData();
                 setTestAction={setTestAction}
                 content={content}
                 useContactBook={useContactBook}
+                useTestBook={useTestBook}
                 setUseContactBook={setUseContactBook}
+                setUseTestBook={setUseTestBook}
                 handleSubmit={handleSubmit}
                 inputValue={inputValue}
                 setInputValue={setInputValue}

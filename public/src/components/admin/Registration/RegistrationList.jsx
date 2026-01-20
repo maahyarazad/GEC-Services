@@ -629,10 +629,10 @@ const RegistrationList = () => {
         if (row.lockRegistration === "false") {
 
             openDialog(
-                <div>
-                    <div>Enabling this option will <strong>lock the registration page and prevent further submissions.</strong> Are you sure you want to proceed?</div>
+                <>
+                    <>Enabling this option will <strong>lock the registration page and prevent further submissions.</strong> Are you sure you want to proceed?</>
                     <img src={lockRegistrationImage} alt="Lock" width={400} className="mt-1 rounded-1" />
-                </div>,
+                </>,
                 'Confirm Action',
                 {
                     text: 'Lock Page',
@@ -663,10 +663,10 @@ const RegistrationList = () => {
 
 
         openDialog(
-            <div>
+            <>
                 Do you want to <strong>Auto Register base on the Google Sheet Geburtstagsparty </strong>
                 Are you sure you want to proceed?
-            </div>,
+            </>,
             'Confirm Action',
             {
                 text: 'Confirm',
@@ -692,10 +692,10 @@ const RegistrationList = () => {
     const eventCleanUpAlert = (row) => {
 
         openDialog(
-            <div>
+            <>
                 Do you want to <strong>delete PKPass and QRCode files from the server</strong>?
                 Are you sure you want to proceed?
-            </div>,
+            </>,
             'Confirm Action',
             {
                 text: 'Confirm',
@@ -721,10 +721,10 @@ const RegistrationList = () => {
 
     const archiveAlert = (row) => {
         openDialog(
-            <div>
+            <>
                 Do you want to <strong>archive the registration record and hide it from active listings. </strong>
                 Are you sure you want to proceed?
-            </div>,
+            </>,
             'Confirm Action',
             {
                 text: 'Archive',

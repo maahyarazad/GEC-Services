@@ -38,6 +38,10 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
         if (val.startsWith('0')) {
             val = '+' + val.slice(1);
         }
+        
+        if(!val.startsWith('+')){
+             val = '+' + val;
+        }
 
         return val;
     }

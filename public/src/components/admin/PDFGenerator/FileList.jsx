@@ -159,11 +159,11 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
     const confirmDelete = (projectName) => {
 
         openDialog(
-            <div>
+            <>
                 Deleting this file will <strong>permanently remove it and its data. </strong>
                 Are you sure you want to proceed?
 
-            </div>,
+            </>,
             'Delete', {
             text: 'Delete',
             color: 'error'

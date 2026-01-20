@@ -312,10 +312,10 @@ const SurveyDataGrid = () => {
     const handleDelete = (row) => {
 
         openDialog(
-            <div>
+            <>
                 Do you want to <strong>delete {row.partnerName} from database</strong>?
                 Are you sure you want to proceed?
-            </div>,
+            </>,
             'Confirm Action',
             {
                 text: 'Confirm',
