@@ -23,7 +23,7 @@ import { RiContactsBook2Fill } from "react-icons/ri";
 import { IoMdOpen } from "react-icons/io";
 import { RiUserReceivedFill } from "react-icons/ri";
 import { RiCheckDoubleFill } from "react-icons/ri";
-import CreateContact from "../WhatsAppComponents/CreateContact";
+import CreateContact from "./CreateContact";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { columns, responseColumns, contactBookColumn, tabstyle, normalizePhone } from './WhatsAppComponentConfig'
 import MessageModal from "./MessageModal";

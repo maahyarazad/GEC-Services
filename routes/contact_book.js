@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-
 const dbService = require("../services/dbService");
 
 router.post("/api/contacts/create", async (req, res) => {
@@ -34,9 +33,9 @@ router.post("/api/contacts/create", async (req, res) => {
 
 router.delete("/api/contacts", async (req, res) => {
   try {
-    const id = req.body;
+    const { id } = req.body;
 
-    await dbService.remove("contact_book", id);
+    const result = await dbService.remove("contact_book", id);
 
     res.status(200).json({
       status: true,
@@ -94,7 +93,7 @@ router.get("/api/contacts", async (req, res) => {
       SELECT *
       FROM contact_book
       WHERE phone IS NOT NULL AND blacklist = 0
-      GROUP BY phone
+      GROUP BY phone order by id DESC
     `;
 
     const result = await new Promise((resolve, reject) => {

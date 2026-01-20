@@ -82,7 +82,20 @@ const contactBookData = async () => {
 
 const messageSender = async (req) => {
   try {
-    const { phoneList, useContactBook } = req.body;
+    
+    const { phoneList, useContactBook, useTestBook } = req.body;
+
+    if(useTestBook){
+        await Promise.all(
+        phoneList.map(async (el) => {
+          const phone = el.phone;
+          const { template, payload } = req.body;
+          return sendMessageToPhone(phone, template, payload);
+        })
+      );
+       return { status: true };
+    }
+
 
     if (useContactBook) {
       const contactBook = await contactBookData();

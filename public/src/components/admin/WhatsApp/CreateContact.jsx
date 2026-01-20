@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSnackbar } from '../../Providers/Snackbar';
 import { Button, CircularProgress } from '@mui/material';
+import {normalizePhone} from './WhatsAppComponentConfig';
 
 const defaultFormData = {
     title: '',
@@ -31,20 +32,7 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
         }
     }, [initialValues]);
 
-    function normalizePhone(input) {
-        let val = input.replace(/[^0-9+]/g, '');
-        val = val.replace(/(?!^\+)\+/g, '');
 
-        if (val.startsWith('0')) {
-            val = '+' + val.slice(1);
-        }
-        
-        if(!val.startsWith('+')){
-             val = '+' + val;
-        }
-
-        return val;
-    }
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -85,19 +73,22 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
 
             const responseData = await response.json();
 
-            
+            debugger;
             if (!response.ok) {
                 console.error(responseData.error);
                 showSnackbar(responseData.message, "error");
+
             }else{
+                showSnackbar(responseData.message, "success");
                 CloseModal();
+                 if (!initialValues) {
+                    setFormData(defaultFormData);
+                }
             }
 
-            showSnackbar(responseData.message, "success");
+            
 
-            if (!initialValues) {
-                setFormData(defaultFormData);
-            }
+           
 
          
 

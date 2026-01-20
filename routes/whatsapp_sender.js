@@ -71,6 +71,8 @@ router.get('/api/whatsapp/twilio-delivery-logs', async (req, res) => {
         res.status(500).json({ status: false, message: 'Server error' });
     }
 });
+
+
 router.get('/api/whatsapp/twilio-response-logs', async (req, res) => {
   try {
 
