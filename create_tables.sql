@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS twilio_delivery (
 
 
 
-CREATE TABLE contact_book (
+CREATE TABLE  IF NOT EXISTS contact_book (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title VARCHAR(10),
   first_name VARCHAR(255),

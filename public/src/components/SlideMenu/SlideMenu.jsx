@@ -1,9 +1,22 @@
-import React from "react";
+import React, {useEffect} from "react";
 import "./SlideMenu.css";
 
 
 
 const SlideMenu = ({ isOpen, onClose, children, headerTitle }) => {
+
+     useEffect(() => {
+            const handleEsc = (event) => {
+                if (event.key === "Escape" && isOpen) {
+                    onClose();
+                }
+            };
+    
+            window.addEventListener("keydown", handleEsc);
+            return () => window.removeEventListener("keydown", handleEsc);
+        }, [isOpen, onClose]);
+
+
   return (
     <>
       {/* Backdrop */}
