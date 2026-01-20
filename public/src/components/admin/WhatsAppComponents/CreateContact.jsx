@@ -46,6 +46,7 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
         const { name, value, type, checked } = e.target;
         let newValue = type === 'checkbox' ? checked : value;
 
+        
         if (name === 'phone') {
             newValue = normalizePhone(newValue);
         }
@@ -67,7 +68,7 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
                 return;
             }
 
-            debugger;
+            
             const response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/api/contacts/${initialValues ? 'modify' : 'create'}`,
                 {
@@ -80,7 +81,7 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
 
             const responseData = await response.json();
 
-            debugger;
+            
             if (!response.ok) {
                 console.error(responseData.error);
                 showSnackbar(responseData.message, "error");
@@ -151,8 +152,8 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
                             className="form-select"
                         >
                             <option value="">Select type</option>
-                            <option value="club_member">Male</option>
-                            <option value="club_partner">Female</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
                             
                         </select>
                     </div>

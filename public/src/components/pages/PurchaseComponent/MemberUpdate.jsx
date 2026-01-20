@@ -265,7 +265,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
 
 
         } catch (err) {
-            debugger;
+            
             if (statusRef.current) {
 
                 statusRef.current.textContent = `Verification failed: ${err.message}`;
@@ -283,7 +283,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
     const getMemberPass = async () => {
 
         try {
-            debugger;
+            
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-pass`, {
                 method: 'POST',
                 headers: {
