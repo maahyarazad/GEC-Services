@@ -6,38 +6,39 @@ import { IoMdOpen } from "react-icons/io";
 import { RiEditLine } from "react-icons/ri";
 import { IoTrashOutline } from "react-icons/io5";
 export const columns = ({ onViewJson }) => [
-    { field: 'id', headerName: 'ID', width: 70, hide: true },
+    // { field: 'id', headerName: 'ID', width: 70, hide: true },
     { field: 'metadata_createdAt', headerName: 'Created At', width: 160, filterable: true },
     {
-        field: 'To',
-        headerName: 'To',
-        width: 150,
-        filterable: false,
-        sortable: false,
-        renderCell: (params) => {
-            const log = JSON.parse(params.row.response);
+        field: 'MessageStatus', headerName: 'Message Status', width: 120, renderCell: (params) => {
+            let status = '—';
 
-            return (
-                <>{log.To.replace("whatsapp:", "")}</>
-            );
+            try {
+                const response =
+                    typeof params.row.response === 'string'
+                        ? JSON.parse(params.row.response)
+                        : params.row.response;
+
+                status = response?.MessageStatus ?? '—';
+            } catch (e) {
+                // silently fail – do NOT break UI
+            }
+
+            return <div>{status}</div>;
         },
-
     },
+    { field: 'templateFriendlyName', headerName: 'Used Template Name', width: 200, filterable: true },
     {
-        field: 'MessageStatus',
-        headerName: 'MessageStatus',
-        width: 150,
-        filterable: false,
-        sortable: false,
-        renderCell: (params) => {
-            const log = JSON.parse(params.row.response);
+        field: 'first_name', headerName: 'Full Name', width: 200, filterable: true, renderCell: (params) => {
 
             return (
-                <>{log.MessageStatus}</>
-            );
-        },
+                <div>
 
+                    {params.row.first_name} {params.row.last_name}
+                </div>
+            );
+        }
     },
+    { field: 'phone', headerName: 'Phone Number', width: 160, filterable: true },
 
     {
         field: 'response',
@@ -223,23 +224,25 @@ export const responseColumns = ({ onViewJson }) => [
 
 ];
 
-export const contactBookColumn = ({onModifyContact, onDeleteContact}) => [
+export const contactBookColumn = ({ onModifyContact, onDeleteContact }) => [
     { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'type', headerName: 'type', width: 160, filterable: true },
-    { field: 'title', headerName: 'title', width: 160, filterable: true },
-    { field: 'first_name', headerName: 'first_name', width: 160, filterable: true },
-    { field: 'last_name', headerName: 'last_name', width: 160, filterable: true },
-    { field: 'phone', headerName: 'phone', width: 160, filterable: true },
-    { field: 'club_partner_name', headerName: 'club_partner_name', width: 160, filterable: true },
-    { field: 'gender', headerName: 'gender', width: 160, filterable: true },
-     {
+    { field: 'type', headerName: 'Type', width: 110, filterable: true },
+    { field: 'title', headerName: 'Title', width: 70, filterable: true },
+    { field: 'language', headerName: 'language', width: 80, filterable: true },
+    { field: 'first_name', headerName: 'First Name', width: 160, filterable: true },
+    { field: 'last_name', headerName: 'Last Name', width: 160, filterable: true },
+    { field: 'phone', headerName: 'Phone Number', width: 160, filterable: true },
+
+    { field: 'club_partner_name', headerName: 'Club Patner Name', width: 160, filterable: true },
+    { field: 'gender', headerName: 'Gender', width: 90, filterable: true },
+    {
         field: '_',
         headerName: 'Actions',
         width: 90,
 
         filterable: true,
         renderCell: (params) => {
-            
+
 
             return (
                 <div>
@@ -248,7 +251,7 @@ export const contactBookColumn = ({onModifyContact, onDeleteContact}) => [
                         <RiEditLine />
                     </IconButton>
                     <IconButton onClick={() => onDeleteContact(params.row)}>
-                        <IoTrashOutline color="red"/>
+                        <IoTrashOutline color="red" />
                     </IconButton>
                 </div>
             );
@@ -283,14 +286,14 @@ export const normalizePhone = (input) => {
     // Allow '+' only at the start
     val = val.replace(/(?!^\+)\+/g, '');
 
-     if (val.startsWith('0')) {
-            val = '+' + val.slice(1);
-        }
-        
-        if(!val.startsWith('+')){
-             val = '+' + val;
-        }
-        
+    if (val.startsWith('0')) {
+        val = '+' + val.slice(1);
+    }
+
+    if (!val.startsWith('+')) {
+        val = '+' + val;
+    }
+
     return val;
 }
 

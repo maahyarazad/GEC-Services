@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const dbService = require("../services/dbService");
+const db = dbService.getDB();
 
 router.post("/api/contacts/create", async (req, res) => {
   try {
@@ -87,12 +88,14 @@ router.put("/api/contacts/modify", async (req, res) => {
 
 router.get("/api/contacts", async (req, res) => {
   try {
-    const db = dbService.getDB();
+    
+
+    const { blacklist } = req.query;
 
     const query = `
       SELECT *
       FROM contact_book
-      WHERE phone IS NOT NULL AND blacklist = 0
+      WHERE phone IS NOT NULL AND blacklist = ${blacklist === undefined ? 0 : 1}
       GROUP BY phone order by id DESC
     `;
 

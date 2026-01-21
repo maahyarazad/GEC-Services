@@ -81,30 +81,26 @@ const contactBookData = async () => {
   return result;
 };
 
-
-
 const messageSender = async (req) => {
   try {
-    
-
     const { phoneList, useContactBook, useTestBook } = req.body;
 
-    if(useTestBook){
-        await Promise.all(
+    if (useTestBook) {
+      await Promise.all(
         testBook.map(async (el) => {
           const phone = el.phone;
           const { template, payload } = req.body;
           return sendMessageToPhone(phone, template, payload, el);
         })
       );
-       return { status: true };
+      return { status: true };
     }
-
 
     if (useContactBook) {
       const contactBook = await contactBookData();
+      const randomContacts = getRandomItems(contactBook, 350);
       await Promise.all(
-        contactBook.map(async (el) => {
+        randomContacts.map(async (el) => {
           const phone = el.phone;
           const { template, payload } = req.body;
           return sendMessageToPhone(phone, template, payload, el);
@@ -221,7 +217,15 @@ async function sendMessageToPhone(
   }
 
   const result = await twilioClient.messages.create(messageOptions);
-  console.log("Message sent:", result);
+  dbService
+    .createSafe("twilio_template_message", {
+      messageSid: result.sid,
+      contentSid: messageOptions.contentSid,
+    })
+    .catch((err) => {
+      console.error("Failed to store Twilio callback:", err);
+    });
+
   return result;
 }
 
@@ -331,5 +335,14 @@ const deleteContent = async (req, res) => {
     return { status: false, result: error };
   }
 };
+
+function getRandomItems(array, count) {
+  const arrCopy = [...array]; // copy to avoid mutating original
+  for (let i = arrCopy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arrCopy[i], arrCopy[j]] = [arrCopy[j], arrCopy[i]];
+  }
+  return arrCopy.slice(0, count);
+}
 
 module.exports = { otpSender, messageSender, fetchMessages };

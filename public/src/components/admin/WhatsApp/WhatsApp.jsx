@@ -51,6 +51,7 @@ const WhatsappBroadcast = () => {
     const [contactList, setContactList] = useState([]);
     const [useContactBook, setUseContactBook] = useState(false);
     const [useTestBook, setUseTestBook] = useState(false);
+    const [viewBlackList, setViewBlackList] = useState(false);
 
     const { showSnackbar } = useSnackbar();
 
@@ -67,13 +68,14 @@ const WhatsappBroadcast = () => {
         } finally {
             setLoading(false);
         }
-    },[]);
+    }, []);
 
 
     const fetchContactData = useCallback(async () => {
         try {
             setloading_logs(true)
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts`, { credentials: "include" });
+
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts${viewBlackList ? '?blacklist=1' : ''}`, { credentials: "include" });
 
 
             if (response.status === 200) {
@@ -86,7 +88,7 @@ const WhatsappBroadcast = () => {
         } finally {
             setloading_logs(false)
         }
-    }, []);
+    }, [viewBlackList]);
 
 
 
@@ -129,10 +131,10 @@ const WhatsappBroadcast = () => {
             const responseData = await response.json();
 
             if (!response.ok) {
-               showSnackbar(responseData.message, "error");
+                showSnackbar(responseData.message, "error");
             }
 
-await fetchContactData();
+            await fetchContactData();
 
 
         } catch (err) {
@@ -157,8 +159,8 @@ await fetchContactData();
                 text: 'Delete',
                 color: 'error',
             },
-            () => {deleteContact(row.id);},
-            () => {}
+            () => { deleteContact(row.id); },
+            () => { }
         );
     };
 
@@ -186,7 +188,7 @@ await fetchContactData();
 
 
     const handleSubmit = async (e) => {
-        debugger;
+        
         e.preventDefault();
         SetloadingMassSend(true);
         try {
@@ -253,6 +255,11 @@ await fetchContactData();
     });
     const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
+    const [_paginationModel, _setPaginationModel] = useState({
+        page: 0,
+        pageSize: 100,
+    });
+
     const [logs, setLogs] = useState([]);
     const [responses, setResponses] = useState([]);
 
@@ -292,31 +299,32 @@ await fetchContactData();
     );
 
     const fetchLogs = useCallback(
+        
         async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
+            
             setloading_logs(true);
             try {
-                const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
-                const sortField = sort.field || defaultSortModel.field;
-                const sortOrder = sort.sort || defaultSortModel.sort;
+                // const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
+                // const sortField = sort.field || defaultSortModel.field;
+                // const sortOrder = sort.sort || defaultSortModel.sort;
 
-                // Parse filters from filterModel.items
-                const filterParams = FilterParams(filterModel);
+                // // Parse filters from filterModel.items
+                // const filterParams = FilterParams(filterModel);
 
-                
-                const queryParams = [
-                    `page=${paginationModel.page + 1}`,
-                    `pageSize=${paginationModel.pageSize}`,
-                    sortField ? `sortField=${sortField}` : '',
-                    sortOrder ? `sortOrder=${sortOrder}` : '',
-                    filterParams,
-                ].filter(Boolean).join('&');
 
-                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-delivery-logs?${queryParams}`, { credentials: "include" });
+                // const queryParams = [
+                //     `page=${paginationModel.page + 1}`,
+                //     `pageSize=${paginationModel.pageSize}`,
+                //     sortField ? `sortField=${sortField}` : '',
+                //     sortOrder ? `sortOrder=${sortOrder}` : '',
+                //     filterParams,
+                // ].filter(Boolean).join('&');
 
+                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-delivery-logs`, { credentials: "include" });
                 const data = await response.json();
-
-                setLogs(data.data || []);
-                setRowCount(data.total || 0);
+                
+                setLogs(data.result || []);
+                setRowCount(data.result.length || 0);
             } catch (err) {
                 console.error('Failed to fetch:', err);
             } finally {
@@ -329,9 +337,13 @@ await fetchContactData();
     useEffect(() => {
         if (openLogs) fetchLogs(paginationModel, sortModel, filterModel);
         if (openResponses) fetchResponses(paginationModel, sortModel, filterModel);
-        if (openContactBook) fetchContactData();
 
-    }, [openLogs, openResponses, openContactBook, paginationModel, sortModel, applyFilterTrigger]);
+
+    }, [openLogs, openResponses, paginationModel, sortModel, applyFilterTrigger]);
+
+    useEffect(() => {
+        if (openContactBook) fetchContactData();
+    }, [openContactBook, viewBlackList]);
 
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -375,21 +387,10 @@ await fetchContactData();
                                 <DataGrid
                                     rows={logs}
                                     columns={columns({ onViewJson })}
-                                    rowCount={rowCount}
-
-                                    rowsPerPageOptions={[25, 50, 100]}
-                                    paginationMode="server"
-                                    sortingMode="server"
-                                    filterMode="server"
-                                    paginationModel={paginationModel}
-                                    sortModel={sortModel}
-                                    onPaginationModelChange={setPaginationModel}
-                                    onSortModelChange={setSortModel}
-                                    filterModel={filterModel}              // ✅ Pass full model
-                                    onFilterModelChange={(newModel) => {
-                                        setFilterModel(newModel); // use the raw model now
-                                    }}
-                                    // ✅ Accept full model
+                                    paginationModel={_paginationModel}
+                                    onPaginationModelChange={_setPaginationModel}
+                                    pageSizeOptions={[25,50,100]}
+                                    pagination
                                     disableRowSelectionOnClick
                                     disableSelectionOnClick
                                     showToolbar
@@ -451,29 +452,44 @@ await fetchContactData();
 
 
                         {openContactBook && (
-                            <div style={{ width: '100%', height: 'calc(100vh - 125px)' }}>
-                                <Button
-                                    variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginBottom: 1 }} onClick={() => { setViewCreateNewContact(true); }}>
-                                    <IoAddCircleOutline size={17} style={{ marginRight: 2 }} /> Create New Contact
-                                </Button>
+                            <div style={{ width: '100%', height: 'calc(100vh - 125px)' }} >
+                                <div className="col-12 d-flex flex-start align-items-center">
+
+                                    <div className="">
+
+                                        <Button className="me-2"
+                                            variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginBottom: 1 }} onClick={() => { setViewCreateNewContact(true); }}>
+                                            <IoAddCircleOutline size={17} style={{ marginRight: 2 }} /> Create New Contact
+                                        </Button>
+                                    </div>
+
+                                    <div>
+                                        <div className="">
+
+                                            <label htmlFor="test-input">View Blacklist</label>
+
+                                            <Switch
+                                                size="small"
+                                                title="Use Contact Book"
+                                                checked={viewBlackList}
+                                                onChange={(e) => setViewBlackList(e.target.checked)}
+                                                color="primary"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <DataGrid
                                     rows={contactList}
                                     columns={contactBookColumn({ onModifyContact, onDeleteContact })}
-
-                                    pageSizeOptions={[25, 50, 100]}
-                                    initialState={{
-                                        pagination: {
-                                            paginationModel: {
-                                                pageSize: 25,
-                                                page: 0,
-                                            },
-                                        },
-                                    }}
+                                    paginationModel={_paginationModel}
+                                    onPaginationModelChange={_setPaginationModel}
+                                    pageSizeOptions={[25,50,100]}
+                                    pagination
                                     disableRowSelectionOnClick
                                     disableSelectionOnClick
                                     showToolbar
                                 />
-
                             </div>
                         )}
                     </>
@@ -495,24 +511,24 @@ await fetchContactData();
             </Modal>
 
 
-<div className="pb-2 border-bottom border-1">
+            <div className="pb-2 border-bottom border-1">
 
-            <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { setMassAction(true); }} disabled={content === null}>
-                <FaWhatsapp size={17} style={{ marginRight: 2 }} /> Send Message
-            </Button>
-            <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenContactBook(true)}>
-                <RiContactsBook2Fill size={17} style={{ marginRight: 2 }} />
-                Contact Book
-            </Button>
-            <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenResponses(true)}>
-                <RiUserReceivedFill style={{ marginRight: 2 }} />
-                Response Logs
-            </Button>
-            <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenLogs(true)}>
-                <RiCheckDoubleFill style={{ marginRight: 2 }} />
-                Delivery Logs
-            </Button>
-</div>
+                <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { setMassAction(true); }} disabled={content === null}>
+                    <FaWhatsapp size={17} style={{ marginRight: 2 }} /> Send Message
+                </Button>
+                <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenContactBook(true)}>
+                    <RiContactsBook2Fill size={17} style={{ marginRight: 2 }} />
+                    Contact Book
+                </Button>
+                <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenResponses(true)}>
+                    <RiUserReceivedFill style={{ marginRight: 2 }} />
+                    Response Logs
+                </Button>
+                <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenLogs(true)}>
+                    <RiCheckDoubleFill style={{ marginRight: 2 }} />
+                    Delivery Logs
+                </Button>
+            </div>
             <div style={{ height: 'calc(100vh - 155px)', overflow: 'scroll' }} >
                 <div className="mt-2">
 
@@ -693,7 +709,7 @@ await fetchContactData();
                                         }
 
                                         case "twilio/quick-reply": {
-                                            
+
                                             const { body, actions, title } = data;
                                             return (
                                                 <Paper sx={{ p: 2 }} elevation={5}>
@@ -785,7 +801,7 @@ await fetchContactData();
                 title={`${contactModifyVal ? `Modify ${contactModifyVal.first_name} ${contactModifyVal.last_name}` : "Create a New Contact"}`}>
                 <CreateContact
                     initialValues={contactModifyVal}
-                    CloseModal={async () => {setViewCreateNewContact(false); setContactModifyVal(null); await fetchContactData(); }}
+                    CloseModal={async () => { setViewCreateNewContact(false); setContactModifyVal(null); await fetchContactData(); }}
                 />
             </Modal>
 
