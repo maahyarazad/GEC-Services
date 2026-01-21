@@ -94,7 +94,7 @@ const messageSender = async (req) => {
         testBook.map(async (el) => {
           const phone = el.phone;
           const { template, payload } = req.body;
-          return sendMessageToPhone(phone, template, payload);
+          return sendMessageToPhone(phone, template, payload, el);
         })
       );
        return { status: true };
