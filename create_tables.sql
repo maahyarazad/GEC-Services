@@ -51,11 +51,19 @@ CREATE TABLE  IF NOT EXISTS contact_book (
   title VARCHAR(10),
   first_name VARCHAR(255),
   last_name VARCHAR(255),
-  gender VARCHAR(10),
+  gender VARCHAR(8),
   phone VARCHAR(50),
+  language VARCHAR(2) NOT NULL,
   type VARCHAR(20) NOT NULL CHECK (type IN ('club_member', 'club_partner', 'expert')),
   club_partner_name VARCHAR(255),
   blacklist BOOLEAN DEFAULT FALSE
+);
+
+
+CREATE TABLE  IF NOT EXISTS twilio_template_message (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  messageSid VARCHAR(100) NOT NULL,
+  contentSid VARCHAR(100) NOT NULL
 );
 
 

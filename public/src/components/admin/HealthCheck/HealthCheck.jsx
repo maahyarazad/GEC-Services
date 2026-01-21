@@ -25,7 +25,7 @@ function SiteHealthChecker() {
                 });
     
                 const respnse_data = await response.json();
-                debugger;
+                
                 if (!response.ok) {
     
                    

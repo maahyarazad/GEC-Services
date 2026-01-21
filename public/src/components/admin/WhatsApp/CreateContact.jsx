@@ -9,6 +9,7 @@ const defaultFormData = {
     last_name: '',
     gender: '',
     phone: '',
+    language: '',
     type: '',
     club_partner_name: '',
     blacklist: false,
@@ -73,7 +74,7 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
 
             const responseData = await response.json();
 
-            debugger;
+            
             if (!response.ok) {
                 console.error(responseData.error);
                 showSnackbar(responseData.message, "error");
@@ -186,7 +187,7 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
                 </div>
 
                 <div className="row">
-                    <div className="col-12 mb-3">
+                    <div className="col-6 mb-3">
                         <label>Club / Partner Name:</label>
                         <input
                             name="club_partner_name"
@@ -194,6 +195,21 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
                             onChange={handleChange}
                             className="form-control"
                         />
+                    </div>
+                       <div className="col-6 mb-3">
+                        <label>Language:</label>
+                        <select
+                            name="language"
+                            value={formData.language}
+                            onChange={handleChange}
+                            required
+                            className="form-select"
+                        >
+                            <option value="">Select type</option>
+                            <option value="de">German</option>
+                            <option value="en">English</option>
+                            
+                        </select>
                     </div>
                 </div>
 
