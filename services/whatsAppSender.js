@@ -99,13 +99,26 @@ const messageSender = async (req) => {
     if (useContactBook) {
       const contactBook = await contactBookData();
       const randomContacts = getRandomItems(contactBook, 350);
-      await Promise.all(
-        randomContacts.map(async (el) => {
-          const phone = el.phone;
-          const { template, payload } = req.body;
-          return sendMessageToPhone(phone, template, payload, el);
-        })
-      );
+     
+        const batchSize = 60; // safe batch size below max throughput
+        const delayMs = 1000; // 1 second delay between batches
+
+        const batches = chunkArray(randomContacts, batchSize);
+
+        for (const batch of batches) {
+            await Promise.all(
+                batch.map(async (el) => {
+                const phone = el.phone;
+                const { template, payload } = req.body;
+                return sendMessageToPhone(phone, template, payload, el);
+                })
+        );
+
+            // Delay before sending next batch to respect rate limits
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+
+
     } else {
       await Promise.all(
         phoneList.map(async (el) => {
@@ -329,6 +342,7 @@ const deleteContent = async (req, res) => {
     // filtered.forEach(async element => {
     //     await twilioClient.content.v1.contents(element.sid).remove();
     // });
+    
   } catch (error) {
     console.error("WhatsApp sendser error:", error);
 
@@ -344,5 +358,17 @@ function getRandomItems(array, count) {
   }
   return arrCopy.slice(0, count);
 }
+
+
+function chunkArray(arr, size) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
+
+
+
 
 module.exports = { otpSender, messageSender, fetchMessages };

@@ -1,14 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const {
-  messageSender,
-  fetchMessages,
-  otpSender,
-} = require("../services/whatsAppSender");
+const { messageSender, fetchMessages } = require("../services/whatsAppSender");
 const crypto = require("crypto");
 
 const dbService = require("../services/dbService");
 const db = dbService.getDB();
+
+const MessagingResponse = require("twilio").twiml.MessagingResponse;
+
 router.post("/api/whatsapp/send", async (req, res) => {
   try {
     const result = await messageSender(req);
@@ -44,7 +43,6 @@ router.post("/whatsapp/twilio-callback", (req, res) => {
   try {
     res.sendStatus(202);
 
-    // Fire and forget
     dbService
       .createSafe("twilio_delivery", { response: JSON.stringify(req.body) })
       .catch((err) => {
@@ -127,33 +125,72 @@ router.post(
   "/webhooks/whatsapp",
   express.urlencoded({ extended: false }),
   async (req, res) => {
-    console.log("Incoming WhatsApp message:", req.body);
-    const { From, Body, ButtonPayload, ButtonText } = req.body;
-
-    const logMessage = `Incoming message from: ${From}`;
-    console.log(logMessage);
-
-    if (ButtonPayload) {
-      console.log("User clicked a Quick Reply button!");
-      console.log("ButtonPayload:", ButtonPayload);
-      console.log("ButtonText:", ButtonText);
-    } else {
-      console.log("User typed message:", Body);
-    }
-
-    // Fire and forget: save raw payload + log message to DB
     try {
+         const response = new MessagingResponse();
+        response.message("");
+
+        res.writeHead(200, { "Content-Type": "text/xml" });
+        res.end(response.toString());
+      const { From, Body, ButtonPayload, ButtonText } = req.body;
+
+      //   const logMessage = `Incoming message from: ${From}`;
+
+      const from = From.replace("whatsapp:", "");
+
+      if (ButtonPayload === "INTERESTED") {
+
+        const templates = await fetchMessages();
+        
+        const template = templates.result.find((x) => x.sid === "HX6b3e75b231d4e0a205d575c3f90b27d3");
+
+
+        const query = `
+                       SELECT * FROM contact_book cb
+                                WHERE cb.phone = '${from}'
+                            
+                    `;
+
+        const contactInfo = await new Promise((resolve, reject) => {
+          db.all(query, [], (err, rows) => {
+            if (err) {
+              console.error("DB error:", err);
+              return reject(err);
+            }
+            resolve(rows);
+          });
+        });
+
+        const phoneList = [
+          { id: "8176278162873", phone: contactInfo[0].phone },
+        ];
+
+        const payload = {
+          1: `${contactInfo[0].first_name} ${contactInfo[0].last_name}`,
+          2: "ClubTime Dubai",
+          3: "27 January 2026",
+          4: "From 7:00 PM",
+          5: "Media One Hotel Dubai, QWERTY Restaurant",
+        };
+
+        const result = await messageSender({
+          body: { template, phoneList, payload },
+        });
+
+      } else {
+
+       
+      }
+
+      // Fire and forget: save raw payload + log message to DB
       await dbService.createSafe("twilio_responses", {
         source: "twilio",
         event_type: "whatsapp.message.received",
         payload: JSON.stringify(req.body),
       });
-      console.log("DB insert successful");
+      
     } catch (err) {
       console.error("Failed to store Twilio callback:", err);
     }
-
-    res.sendStatus(200);
   }
 );
 
