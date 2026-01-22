@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { messageSender, fetchContentTemplates, handleAutoResponse } = require("../services/whatsAppSender");
+const { messageSender, fetchContentTemplates, handleAutoResponse, flattenObject, normalizeRow } = require("../services/whatsAppSender");
 const crypto = require("crypto");
 
 const dbService = require("../services/dbService");
@@ -108,11 +108,13 @@ router.get("/api/whatsapp/twilio-response-logs", async (req, res) => {
       table_name
     );
 
+    const flatData = data.map(normalizeRow);
+
     const total = await dbService.getTotalCount(table_name, filters);
 
     return res.json({
       status: true,
-      data,
+      data: flatData,
       total,
     });
   } catch (error) {

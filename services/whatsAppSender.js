@@ -372,27 +372,27 @@ async function handleAutoResponse(From, ButtonPayload) {
   if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
     const templates = await fetchContentTemplates();
 
-    const template = templates.result.find(
-      (x) => x.sid === "HX6b3e75b231d4e0a205d575c3f90b27d3"
-    );
-
+    
     const query = `
-                       SELECT * FROM contact_book cb
-                                WHERE cb.phone = '${from}'
-                            
-                    `;
-
+    SELECT * FROM contact_book cb
+    WHERE cb.phone = '${from}'
+    
+    `;
+    
     const contactInfo = await new Promise((resolve, reject) => {
-      db.all(query, [], (err, rows) => {
-        if (err) {
-          console.error("DB error:", err);
-          return reject(err);
-        }
-        resolve(rows);
-      });
+        db.all(query, [], (err, rows) => {
+            if (err) {
+                console.error("DB error:", err);
+                return reject(err);
+            }
+            resolve(rows);
+        });
     });
-
+    
     const phoneList = [{ id: "8176278162873", phone: contactInfo[0].phone }];
+    // const media_template = contactInfo[0].type === 'club_member' ? "HX4974a2a0c07f4b9d7b31db0737e87d50" : "HX6b3e75b231d4e0a205d575c3f90b27d3";
+    
+    const template = templates.result.find((x) => x.sid === 'HX8b9664f6b44014a6597627be81349003');
 
     const payload = {
       1: `${contactInfo[0].first_name} ${contactInfo[0].last_name}`,
@@ -409,9 +409,51 @@ async function handleAutoResponse(From, ButtonPayload) {
   }
 }
 
+
+ const flattenObject = (obj, parentKey = "", result = {}) => {
+  for (const key in obj) {
+    const newKey = parentKey ? `${parentKey}_${key}` : key;
+
+    if (
+      typeof obj[key] === "object" &&
+      obj[key] !== null &&
+      !Array.isArray(obj[key])
+    ) {
+      flattenObject(obj[key], newKey, result);
+    } else {
+      result[newKey] = obj[key];
+    }
+  }
+  return result;
+}
+
+ const normalizeRow =  (row) => {
+  // 1️⃣ Parse payload
+  let payload = {};
+  try {
+    payload = JSON.parse(row.payload);
+  } catch {}
+
+  // 2️⃣ Parse ChannelMetadata if exists
+  if (payload.ChannelMetadata) {
+    try {
+      payload.ChannelMetadata = JSON.parse(payload.ChannelMetadata);
+    } catch {}
+  }
+
+  // 3️⃣ Merge & flatten
+  return flattenObject({
+    ...row,
+    payload,
+  });
+}
+
+
 module.exports = {
   otpSender,
   messageSender,
   fetchContentTemplates,
   handleAutoResponse,
+  flattenObject,
+  normalizeRow
 };

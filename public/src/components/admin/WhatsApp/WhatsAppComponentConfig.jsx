@@ -79,141 +79,25 @@ export const columns = ({ onViewJson }) => [
 
 
 export const responseColumns = ({ onViewJson }) => [
-    { field: 'id', headerName: 'ID', width: 70, hide: true },
-    { field: 'received_at', headerName: 'received_at', width: 160, filterable: true },
-    {
-        field: '___',
-        headerName: 'MessageType',
-        width: 100,
-        filterable: false,
-        renderCell: (params) => {
-            let json;
-            try {
-
-                json =
-                    typeof params.row.payload === 'string'
-                        ? JSON.parse(params.row.payload)
-                        : params.row.payload;
-            } catch (e) {
-                // Fallback if invalid JSON
-                json = { raw: params.row.payload };
-            }
-
-            return (
-                <div >
-                    {json['MessageType']}
-                </div>
-            );
-        },
-
-    },
-    // { field: 'event_type', headerName: 'event_type', width: 160, filterable: true },
-
-    {
+  { field: 'id', headerName: 'ID', width: 70, hide: true },
+  { field: 'received_at', headerName: 'received_at', width: 160, filterable: true },
+  { field: 'payload_WaId', headerName: 'From Number', width: 160, filterable: true },
+  { field: 'payload_ProfileName', headerName: 'ProfileName', width: 200, filterable: true },
+  { field: 'payload_Body', headerName: 'Body', width: 200, filterable: true },
+  { field: 'payload_MessageType', headerName: 'Type', width: 100, filterable: true },
+   {
         field: '_',
-        headerName: 'Body',
-        width: 200,
-        filterable: false,
-        renderCell: (params) => {
-            let json;
-            try {
-
-                json =
-                    typeof params.row.payload === 'string'
-                        ? JSON.parse(params.row.payload)
-                        : params.row.payload;
-            } catch (e) {
-                // Fallback if invalid JSON
-                json = { raw: params.row.payload };
-            }
-
-            return (
-                <div >
-                    {json['Body']}
-                </div>
-            );
-        },
-
-    },
-
-    {
-        field: '__',
-        headerName: 'ProfileName',
-        width: 200,
-        filterable: false,
-        renderCell: (params) => {
-            let json;
-            try {
-
-                json =
-                    typeof params.row.payload === 'string'
-                        ? JSON.parse(params.row.payload)
-                        : params.row.payload;
-            } catch (e) {
-                // Fallback if invalid JSON
-                json = { raw: params.row.payload };
-            }
-
-            return (
-                <div >
-                    {json['ProfileName']}
-                </div>
-            );
-        },
-
-    },
-
-    {
-        field: '____',
-        headerName: 'Sender Phone Number',
-        width: 200,
-        filterable: false,
-        renderCell: (params) => {
-            let json;
-            try {
-
-                json =
-                    typeof params.row.payload === 'string'
-                        ? JSON.parse(params.row.payload)
-                        : params.row.payload;
-            } catch (e) {
-                // Fallback if invalid JSON
-                json = { raw: params.row.payload };
-            }
-
-            return (
-                <div >
-                    {json['WaId']}
-                </div>
-            );
-        },
-
-    },
-
-    {
-        field: 'payload',
-        headerName: 'Response',
+        headerName: 'View Body',
         width: 90,
 
-        filterable: true,
+        filterable: false,
         renderCell: (params) => {
-            let json;
-
-            try {
-
-                json =
-                    typeof params.row.payload === 'string'
-                        ? JSON.parse(params.row.payload)
-                        : params.row.payload;
-            } catch (e) {
-                // Fallback if invalid JSON
-                json = { raw: params.row.payload };
-            }
+  
 
             return (
                 <div>
-                    {/*  */}
-                    <IconButton onClick={() => onViewJson(params.row.payload)}>
+                    
+                    <IconButton onClick={() => onViewJson(params.row.payload_Body)}>
                         <IoMdOpen />
                     </IconButton>
                 </div>
@@ -221,7 +105,6 @@ export const responseColumns = ({ onViewJson }) => [
         },
 
     }
-
 ];
 
 export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBlacklist }) => [

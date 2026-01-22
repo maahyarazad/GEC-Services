@@ -41,6 +41,7 @@ const WhatsappBroadcast = () => {
     const [loading, setLoading] = useState(true);
     const [viewJsonModal, setViewJsonModal] = useState(false);
     const [JSON_Value_Response_Log, setJSON_Value_Response_Log] = useState(null);
+    
     const [viewCreateNewContact, setViewCreateNewContact] = useState(false);
     const [testAction, setTestAction] = useState(false);
     const [massAction, setMassAction] = useState(false);
@@ -100,7 +101,7 @@ const WhatsappBroadcast = () => {
 
 
     const onViewJson = (value) => {
-
+        
         setViewJsonModal(true);
         setJSON_Value_Response_Log(value);
     }
@@ -388,6 +389,15 @@ const onSwitchBlacklist = (row, val) => {
     }, [openContactBook, viewBlackList]);
 
 
+    const isValidJson = (value) => {
+  try {
+    JSON.parse(value);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
@@ -548,7 +558,7 @@ const onSwitchBlacklist = (row, val) => {
                     setJSON_Value_Response_Log(null);
                 }}
 
-                title={`Twilio Json Log`}>
+                title={`${isValidJson(JSON_Value_Response_Log)? "Log Details" : "Message Body"}`}>
                 <JSONPretty data={JSON_Value_Response_Log} />
             </Modal>
 
