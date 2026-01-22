@@ -312,7 +312,7 @@ function buildInteractiveMessage(type, data) {
   }
 }
 
-const fetchMessages = async () => {
+const fetchContentTemplates = async () => {
   try {
     const templates = await twilioClient.content.v1.contents.list({
       limit: 100,
@@ -371,4 +371,53 @@ function chunkArray(arr, size) {
 
 
 
-module.exports = { otpSender, messageSender, fetchMessages };
+async function handleAutoResponse(From, ButtonPayload) {
+
+    const from = From.replace("whatsapp:", "");
+
+    if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
+
+        const templates = await fetchContentTemplates();
+
+        const template = templates.result.find((x) => x.sid === "HX6b3e75b231d4e0a205d575c3f90b27d3");
+
+
+        const query = `
+                       SELECT * FROM contact_book cb
+                                WHERE cb.phone = '${from}'
+                            
+                    `;
+
+        const contactInfo = await new Promise((resolve, reject) => {
+            db.all(query, [], (err, rows) => {
+                if (err) {
+                    console.error("DB error:", err);
+                    return reject(err);
+                }
+                resolve(rows);
+            });
+        });
+
+        const phoneList = [
+            { id: "8176278162873", phone: contactInfo[0].phone },
+        ];
+
+        const payload = {
+            1: `${contactInfo[0].first_name} ${contactInfo[0].last_name}`,
+            2: "ClubTime Dubai",
+            3: "27 January 2026",
+            4: "From 7:00 PM",
+            5: "Media One Hotel Dubai, QWERTY Restaurant",
+        };
+
+        const result = await messageSender({
+            body: { template, phoneList, payload },
+        });
+
+    } else {
+    }
+}
+
+
+
+module.exports = { otpSender, messageSender, fetchContentTemplates, handleAutoResponse };

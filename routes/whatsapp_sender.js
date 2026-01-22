@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { messageSender, fetchMessages } = require("../services/whatsAppSender");
+const { messageSender, fetchContentTemplates, handleAutoResponse } = require("../services/whatsAppSender");
 const crypto = require("crypto");
 
 const dbService = require("../services/dbService");
@@ -25,7 +25,7 @@ router.post("/api/whatsapp/send", async (req, res) => {
 
 router.get("/api/whatsapp/list", async (req, res) => {
   try {
-    const result = await fetchMessages(req, res);
+    const result = await fetchContentTemplates(req, res);
     if (result.status) {
       res.status(200).json({ status: true, templates: result.result });
     } else {
@@ -56,7 +56,7 @@ router.post("/whatsapp/twilio-callback", (req, res) => {
 
 router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
   try {
-    const templates = await fetchMessages();
+    const templates = await fetchContentTemplates();
     const templateMap = new Map();
 
     templates.result.forEach((t) => {
@@ -70,7 +70,7 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
                         ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
                     LEFT JOIN contact_book cb
                         ON json_extract(td.response, '$.To') = 'whatsapp:' || cb.phone
-                    WHERE ttm.messageSid IS NOT NULL
+                    WHERE ttm.messageSid IS NOT NULL ORDER BY td.metadata_createdAt DESC;
                     
             `;
 
@@ -133,53 +133,9 @@ router.post(
         res.end(response.toString());
       const { From, Body, ButtonPayload, ButtonText } = req.body;
 
-      //   const logMessage = `Incoming message from: ${From}`;
+      
 
-      const from = From.replace("whatsapp:", "");
-
-      if (ButtonPayload === "INTERESTED") {
-
-        const templates = await fetchMessages();
-        
-        const template = templates.result.find((x) => x.sid === "HX6b3e75b231d4e0a205d575c3f90b27d3");
-
-
-        const query = `
-                       SELECT * FROM contact_book cb
-                                WHERE cb.phone = '${from}'
-                            
-                    `;
-
-        const contactInfo = await new Promise((resolve, reject) => {
-          db.all(query, [], (err, rows) => {
-            if (err) {
-              console.error("DB error:", err);
-              return reject(err);
-            }
-            resolve(rows);
-          });
-        });
-
-        const phoneList = [
-          { id: "8176278162873", phone: contactInfo[0].phone },
-        ];
-
-        const payload = {
-          1: `${contactInfo[0].first_name} ${contactInfo[0].last_name}`,
-          2: "ClubTime Dubai",
-          3: "27 January 2026",
-          4: "From 7:00 PM",
-          5: "Media One Hotel Dubai, QWERTY Restaurant",
-        };
-
-        const result = await messageSender({
-          body: { template, phoneList, payload },
-        });
-
-      } else {
-
-       
-      }
+      await handleAutoResponse(From, ButtonPayload);
 
       // Fire and forget: save raw payload + log message to DB
       await dbService.createSafe("twilio_responses", {
@@ -195,3 +151,4 @@ router.post(
 );
 
 module.exports = router;
+
