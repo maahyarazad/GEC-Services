@@ -224,7 +224,7 @@ const PDFGenerator = () => {
         <Box sx={{ padding: 1 }}>
             <div className="row">
 
-                <div className="col-2">
+                <div className='col-2' style={{overflowX: 'hidden'}}>
 
                     <FileList onSelect={UpdateForm} formData={formData} initialFormData={_initial_formData} />
 

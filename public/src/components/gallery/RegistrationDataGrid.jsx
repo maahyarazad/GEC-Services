@@ -266,7 +266,7 @@ const RegistrationDataGrid = () => {
             </div>
 
             <div className='row'>
-                <div className='col-2'>
+                <div className='col-2' style={{overflowX: 'hidden'}}>
                     <RegistrationConfigSearch onSelect={handleCheck} />
                 </div>
                 <div className='col-10'>

@@ -165,6 +165,48 @@ const WhatsappBroadcast = () => {
     };
 
 
+const onSwitchBlacklist = (row, val) => {
+    const updatedRow = {
+        ...row,
+        blacklist: val ? 1 : 0
+    };
+
+    handleSwitchBlacklist(updatedRow);
+};
+
+    const handleSwitchBlacklist = async (row) => {
+        try {
+
+            const response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/contacts/modify`,
+                {
+                    method: "PUT",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ...row }),
+                }
+            );
+
+            const responseData = await response.json();
+
+
+            if (!response.ok) {
+                console.error(responseData.error);
+                showSnackbar(responseData.message, "error");
+              
+
+            } else {
+                showSnackbar(responseData.message, "success");
+                  await fetchContactData();
+            }
+        } catch (error) {
+            console.error(error);
+            showSnackbar(error.message || "Unexpected error occurred", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => { }, [viewJsonModal])
     useEffect(() => {
         if (data) {
@@ -188,7 +230,7 @@ const WhatsappBroadcast = () => {
 
 
     const handleSubmit = async (e) => {
-        
+
         e.preventDefault();
         SetloadingMassSend(true);
         try {
@@ -299,9 +341,9 @@ const WhatsappBroadcast = () => {
     );
 
     const fetchLogs = useCallback(
-        
+
         async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
-            
+
             setloading_logs(true);
             try {
                 // const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
@@ -322,7 +364,7 @@ const WhatsappBroadcast = () => {
 
                 const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-delivery-logs`, { credentials: "include" });
                 const data = await response.json();
-                
+
                 setLogs(data.result || []);
                 setRowCount(data.result.length || 0);
             } catch (err) {
@@ -389,7 +431,7 @@ const WhatsappBroadcast = () => {
                                     columns={columns({ onViewJson })}
                                     paginationModel={_paginationModel}
                                     onPaginationModelChange={_setPaginationModel}
-                                    pageSizeOptions={[25,50,100]}
+                                    pageSizeOptions={[25, 50, 100]}
                                     pagination
                                     disableRowSelectionOnClick
                                     disableSelectionOnClick
@@ -481,10 +523,10 @@ const WhatsappBroadcast = () => {
 
                                 <DataGrid
                                     rows={contactList}
-                                    columns={contactBookColumn({ onModifyContact, onDeleteContact })}
+                                    columns={contactBookColumn({ onModifyContact, onDeleteContact, onSwitchBlacklist })}
                                     paginationModel={_paginationModel}
                                     onPaginationModelChange={_setPaginationModel}
-                                    pageSizeOptions={[25,50,100]}
+                                    pageSizeOptions={[25, 50, 100]}
                                     pagination
                                     disableRowSelectionOnClick
                                     disableSelectionOnClick
