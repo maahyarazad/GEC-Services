@@ -4,7 +4,7 @@ const twilioClient = require("twilio")(
 );
 
 const dbService = require("../services/dbService");
-const testBook = require("./TestBook.json");
+const db = dbService.getDB();
 
 const otpSender = async (req) => {
   let { mobile_number, otp } = req.body;
@@ -59,8 +59,6 @@ function hasPlaceholders(text) {
 }
 
 const contactBookData = async () => {
-  const db = dbService.getDB();
-
   const query = `
       SELECT *
       FROM contact_book
@@ -86,6 +84,10 @@ const messageSender = async (req) => {
     const { phoneList, useContactBook, useTestBook } = req.body;
 
     if (useTestBook) {
+      const testBook = await dbService.findExactWithConditions("contact_book", {
+        type: "gec_staff",
+      });
+
       await Promise.all(
         testBook.map(async (el) => {
           const phone = el.phone;
@@ -99,26 +101,24 @@ const messageSender = async (req) => {
     if (useContactBook) {
       const contactBook = await contactBookData();
       const randomContacts = getRandomItems(contactBook, 350);
-     
-        const batchSize = 60; // safe batch size below max throughput
-        const delayMs = 1000; // 1 second delay between batches
 
-        const batches = chunkArray(randomContacts, batchSize);
+      const batchSize = 60; // safe batch size below max throughput
+      const delayMs = 1000; // 1 second delay between batches
 
-        for (const batch of batches) {
-            await Promise.all(
-                batch.map(async (el) => {
-                const phone = el.phone;
-                const { template, payload } = req.body;
-                return sendMessageToPhone(phone, template, payload, el);
-                })
+      const batches = chunkArray(randomContacts, batchSize);
+
+      for (const batch of batches) {
+        await Promise.all(
+          batch.map(async (el) => {
+            const phone = el.phone;
+            const { template, payload } = req.body;
+            return sendMessageToPhone(phone, template, payload, el);
+          })
         );
 
-            // Delay before sending next batch to respect rate limits
-            await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
-
-
+        // Delay before sending next batch to respect rate limits
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
     } else {
       await Promise.all(
         phoneList.map(async (el) => {
@@ -342,7 +342,6 @@ const deleteContent = async (req, res) => {
     // filtered.forEach(async element => {
     //     await twilioClient.content.v1.contents(element.sid).remove();
     // });
-    
   } catch (error) {
     console.error("WhatsApp sendser error:", error);
 
@@ -359,7 +358,6 @@ function getRandomItems(array, count) {
   return arrCopy.slice(0, count);
 }
 
-
 function chunkArray(arr, size) {
   const chunks = [];
   for (let i = 0; i < arr.length; i += size) {
@@ -368,56 +366,52 @@ function chunkArray(arr, size) {
   return chunks;
 }
 
-
-
-
 async function handleAutoResponse(From, ButtonPayload) {
+  const from = From.replace("whatsapp:", "");
 
-    const from = From.replace("whatsapp:", "");
+  if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
+    const templates = await fetchContentTemplates();
 
-    if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
+    const template = templates.result.find(
+      (x) => x.sid === "HX6b3e75b231d4e0a205d575c3f90b27d3"
+    );
 
-        const templates = await fetchContentTemplates();
-
-        const template = templates.result.find((x) => x.sid === "HX6b3e75b231d4e0a205d575c3f90b27d3");
-
-
-        const query = `
+    const query = `
                        SELECT * FROM contact_book cb
                                 WHERE cb.phone = '${from}'
                             
                     `;
 
-        const contactInfo = await new Promise((resolve, reject) => {
-            db.all(query, [], (err, rows) => {
-                if (err) {
-                    console.error("DB error:", err);
-                    return reject(err);
-                }
-                resolve(rows);
-            });
-        });
+    const contactInfo = await new Promise((resolve, reject) => {
+      db.all(query, [], (err, rows) => {
+        if (err) {
+          console.error("DB error:", err);
+          return reject(err);
+        }
+        resolve(rows);
+      });
+    });
 
-        const phoneList = [
-            { id: "8176278162873", phone: contactInfo[0].phone },
-        ];
+    const phoneList = [{ id: "8176278162873", phone: contactInfo[0].phone }];
 
-        const payload = {
-            1: `${contactInfo[0].first_name} ${contactInfo[0].last_name}`,
-            2: "ClubTime Dubai",
-            3: "27 January 2026",
-            4: "From 7:00 PM",
-            5: "Media One Hotel Dubai, QWERTY Restaurant",
-        };
+    const payload = {
+      1: `${contactInfo[0].first_name} ${contactInfo[0].last_name}`,
+      2: "ClubTime Dubai",
+      3: "27 January 2026",
+      4: "From 7:00 PM",
+      5: "Media One Hotel Dubai, QWERTY Restaurant",
+    };
 
-        const result = await messageSender({
-            body: { template, phoneList, payload },
-        });
-
-    } else {
-    }
+    const result = await messageSender({
+      body: { template, phoneList, payload },
+    });
+  } else {
+  }
 }
 
-
-
-module.exports = { otpSender, messageSender, fetchContentTemplates, handleAutoResponse };
+module.exports = {
+  otpSender,
+  messageSender,
+  fetchContentTemplates,
+  handleAutoResponse,
+};
