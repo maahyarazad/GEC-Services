@@ -571,12 +571,12 @@ const onSwitchBlacklist = (row, val) => {
                     Delivery Logs
                 </Button>
             </div>
-            <div style={{ height: 'calc(100vh - 155px)', overflow: 'scroll' }} >
+            <div style={{ height: 'calc(100vh - 155px)', overflow: 'scroll' , position:'relative'}} >
                 <div className="mt-2">
 
                     <div className="row m-0">
 
-                        <div className="col-lg-4 col-12">
+                        <div className="col-lg-5 col-12" style={{height:'calc(100vh - 185px)', overflow: 'scroll'}}>
                             {groupedByTypeKey && Object.keys(groupedByTypeKey).length > 0 ? (
                                 Object.keys(groupedByTypeKey).map((key) => (
                                     <Accordion key={key}>
@@ -593,7 +593,7 @@ const onSwitchBlacklist = (row, val) => {
                                                 <div className="col form-control">
                                                     {Object.values(groupedByTypeKey[key]).map((item, idx) => (
                                                         <div key={idx} onClick={() => { setInputValue({}); setContent(item); }}
-                                                            style={{ border: 'solid', borderRadius: '5px', borderColor: 'gray', borderWidth: '1px', padding: '5px', marginBottom: '5px', cursor: 'pointer' }}>
+                                                            style={{ border: 'solid', borderRadius: '5px', borderColor: 'gray', borderWidth: '1px', padding: '5px', marginBottom: '5px', cursor: 'pointer', overflow:'clip' }}>
 
                                                             <strong>{item.friendlyName}</strong> ({item.language})<br />
                                                             SID: <small style={{ fontSize: '15px' }}>{item.sid}</small><br />
@@ -612,7 +612,7 @@ const onSwitchBlacklist = (row, val) => {
                                 <Typography>No data available</Typography>
                             )}
                         </div>
-                        <div className="col-lg-8 col-12">
+                        <div  style={{position: 'fixed' , right: 10, maxWidth: '45vw', height:'calc(100vh - 200px)', overflow: 'scroll'}}>
 
                             {content && content.types ? (
                                 (() => {
@@ -623,7 +623,7 @@ const onSwitchBlacklist = (row, val) => {
                                         case "whatsapp/authentication": {
                                             const { body, actions, add_security_recommendation } = data;
                                             return (
-                                                <Paper sx={{ p: 2 }} elevation={5}>
+                                                <Paper sx={{ p: 2 }} elevation={5} >
                                                     <Typography variant="h6">{content?.friendlyName}</Typography>
                                                     <Typography sx={{ my: 2 }}>{body.replace("{{1}}", "123456")}</Typography>
                                                     {actions?.map((action, i) => {
