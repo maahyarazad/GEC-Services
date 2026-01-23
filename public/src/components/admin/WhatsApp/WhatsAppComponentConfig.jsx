@@ -63,7 +63,7 @@ export const columns = ({ onViewJson }) => [
             return (
                 <div>
 
-                    <IconButton onClick={() => onViewJson(params.row.response)}>
+                    <IconButton onClick={() => onViewJson(params.row.response, 'log')}>
                         <IoMdOpen />
                     </IconButton>
                 </div>
@@ -97,7 +97,7 @@ export const responseColumns = ({ onViewJson }) => [
             return (
                 <div>
                     
-                    <IconButton onClick={() => onViewJson(params.row.payload_Body)}>
+                    <IconButton onClick={() => onViewJson(params.row, 'response')}>
                         <IoMdOpen />
                     </IconButton>
                 </div>

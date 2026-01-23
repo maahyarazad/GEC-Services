@@ -28,6 +28,7 @@ import { IoAddCircleOutline } from "react-icons/io5";
 import { columns, responseColumns, contactBookColumn, tabstyle, normalizePhone } from './WhatsAppComponentConfig'
 import MessageModal from "./MessageModal";
 import { useAlertDialog } from "../../Providers/AlertProvider";
+import QuickReply from "./QuickReply";
 
 const WhatsappBroadcast = () => {
 
@@ -100,10 +101,10 @@ const WhatsappBroadcast = () => {
 
 
 
-    const onViewJson = (value) => {
-        
+    const onViewJson = (value, type) => {
+
         setViewJsonModal(true);
-        setJSON_Value_Response_Log(value);
+        setJSON_Value_Response_Log({value, type});
     }
 
     const [contactModifyVal, setContactModifyVal] = useState(null);
@@ -558,8 +559,20 @@ const onSwitchBlacklist = (row, val) => {
                     setJSON_Value_Response_Log(null);
                 }}
 
-                title={`${isValidJson(JSON_Value_Response_Log)? "Log Details" : "Message Body"}`}>
-                <JSONPretty data={JSON_Value_Response_Log} />
+                title={`${JSON_Value_Response_Log?.type === 'log'? "Log Details" : "Message Body"}`}>
+
+                    {JSON_Value_Response_Log?.type === 'log'? <JSONPretty data={JSON_Value_Response_Log?.value} /> :  
+                    
+                    
+                    <div className=""> 
+                        <QuickReply incoming_message={JSON_Value_Response_Log?.value} CloseModal={()=> {setViewJsonModal(false);
+                    setJSON_Value_Response_Log(null);}}/>
+                    </div>
+                    
+                    
+                    }
+
+                
             </Modal>
 
 

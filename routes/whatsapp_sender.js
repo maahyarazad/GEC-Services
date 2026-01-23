@@ -1,6 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const { messageSender, fetchContentTemplates, handleAutoResponse, flattenObject, normalizeRow } = require("../services/whatsAppSender");
+const {
+  messageSender,
+  fetchContentTemplates,
+  handleAutoResponse,
+  flattenObject,
+  normalizeRow,
+} = require("../services/whatsAppSender");
 const crypto = require("crypto");
 
 const dbService = require("../services/dbService");
@@ -12,6 +18,49 @@ router.post("/api/whatsapp/send", async (req, res) => {
   try {
     const result = await messageSender(req);
 
+    res
+      .status(200)
+      .json({ status: result.status, message: "Message sent successfully" });
+  } catch (error) {
+    console.error("Failed to send message", error.message);
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to send the message" });
+  }
+});
+
+router.post("/api/whatsapp/quick-reply", async (req, res) => {
+  try {
+
+    const {message, incoming_message} = req.body;
+    const templates = await fetchContentTemplates();
+    const simple_response = templates.result.find(x=> x.sid === 'HXb1ce9479f3d42819bef456f00448afcc');
+
+
+    if (!message?.trim()) {
+      return res.status(400).json({
+        status: false,
+        message: "Message cannot be empty"
+      });
+    }
+
+    if (!incoming_message?.payload_WaId) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid incoming WhatsApp message"
+      });
+    }
+
+    
+    if (!simple_response) {
+      return res.status(500).json({
+        status: false,
+        message: "WhatsApp template not found"
+      });
+    }
+
+    const _req = {body: {phoneList : [{id:"99999", phone:`+${incoming_message.payload_WaId}`}], template: simple_response, payload:{1: message}}};
+    const result = await messageSender(_req);
     res
       .status(200)
       .json({ status: result.status, message: "Message sent successfully" });
@@ -128,14 +177,12 @@ router.post(
   express.urlencoded({ extended: false }),
   async (req, res) => {
     try {
-         const response = new MessagingResponse();
-        response.message("");
+      const response = new MessagingResponse();
+      response.message("");
 
-        res.writeHead(200, { "Content-Type": "text/xml" });
-        res.end(response.toString());
+      res.writeHead(200, { "Content-Type": "text/xml" });
+      res.end(response.toString());
       const { From, Body, ButtonPayload, ButtonText } = req.body;
-
-      
 
       await handleAutoResponse(From, ButtonPayload);
 
@@ -145,7 +192,6 @@ router.post(
         event_type: "whatsapp.message.received",
         payload: JSON.stringify(req.body),
       });
-      
     } catch (err) {
       console.error("Failed to store Twilio callback:", err);
     }
@@ -153,4 +199,3 @@ router.post(
 );
 
 module.exports = router;
-
