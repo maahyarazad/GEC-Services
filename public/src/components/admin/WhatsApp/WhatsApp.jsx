@@ -52,6 +52,7 @@ const WhatsappBroadcast = () => {
     const [phoneList, SetPhoneList] = useState([]);
     const [contactList, setContactList] = useState([]);
     const [useContactBook, setUseContactBook] = useState(false);
+    const [useLanguage, setUseLanguage] = useState(true);
     const [useTestBook, setUseTestBook] = useState(false);
     const [viewBlackList, setViewBlackList] = useState(false);
 
@@ -261,6 +262,7 @@ const onSwitchBlacklist = (row, val) => {
                     body: JSON.stringify({
                         useContactBook: useContactBook,
                         useTestBook: useTestBook,
+                        useLanguage: useLanguage,
                         phoneList,
                         payload: inputValue,
                         template: content,
@@ -845,7 +847,9 @@ const onSwitchBlacklist = (row, val) => {
                 content={content}
                 useContactBook={useContactBook}
                 useTestBook={useTestBook}
+                useLanguage={useLanguage}
                 setUseContactBook={setUseContactBook}
+                setUseLanguage={setUseLanguage}
                 setUseTestBook={setUseTestBook}
                 handleSubmit={handleSubmit}
                 inputValue={inputValue}

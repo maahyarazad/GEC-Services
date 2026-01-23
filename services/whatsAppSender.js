@@ -58,11 +58,16 @@ function hasPlaceholders(text) {
   return /{{\s*[^}]+\s*}}/.test(text);
 }
 
-const contactBookData = async () => {
+const contactBookData = async (conditions) => {
   const query = `
       SELECT *
       FROM contact_book
       WHERE phone IS NOT NULL AND blacklist = 0
+      ${
+        Object.keys(conditions).length === 0
+          ? ``
+          : `AND language = '${conditions?.language}'`
+      }
       GROUP BY phone order by id DESC
     `;
 
@@ -81,12 +86,20 @@ const contactBookData = async () => {
 
 const messageSender = async (req) => {
   try {
-    const { phoneList, useContactBook, useTestBook } = req.body;
+    const { phoneList, useContactBook, useTestBook, useLanguage, template } =
+      req.body;
 
     if (useTestBook) {
-      const testBook = await dbService.findExactWithConditions("contact_book", {
-        type: "gec_staff",
-      });
+      const conditions = { type: "gec_staff" };
+
+      if (useLanguage) {
+        conditions.language = template.language;
+      }
+
+      const testBook = await dbService.findExactWithConditions(
+        "contact_book",
+        conditions
+      );
 
       await Promise.all(
         testBook.map(async (el) => {
@@ -99,7 +112,12 @@ const messageSender = async (req) => {
     }
 
     if (useContactBook) {
-      const contactBook = await contactBookData();
+      const conditions = {};
+      if (useLanguage) {
+        conditions.language = template.language;
+      }
+
+      const contactBook = await contactBookData(conditions);
       const randomContacts = getRandomItems(contactBook, 350);
 
       const batchSize = 60; // safe batch size below max throughput
@@ -371,36 +389,34 @@ async function handleAutoResponse(From, ButtonPayload) {
 
   if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
     const templates = await fetchContentTemplates();
+    const second_response_message__en_sid = 'HX3730fd2ee94eb7379fcad84fd41830b6';
+    const second_response_message__de_sid = 'HXccdd9e3ca743d83e248cc162fbfcf235';
 
-    
+     const en_template = templates.result.find((x) => x.sid === second_response_message__en_sid);
+     const de_template = templates.result.find((x) => x.sid === second_response_message__de_sid);
+
+
     const query = `
-    SELECT * FROM contact_book cb
-    WHERE cb.phone = '${from}'
-    
+        SELECT * FROM contact_book cb
+        WHERE cb.phone = '${from}'
     `;
-    
+
     const contactInfo = await new Promise((resolve, reject) => {
-        db.all(query, [], (err, rows) => {
-            if (err) {
-                console.error("DB error:", err);
-                return reject(err);
-            }
-            resolve(rows);
-        });
+      db.all(query, [], (err, rows) => {
+        if (err) {
+          console.error("DB error:", err);
+          return reject(err);
+        }
+        resolve(rows);
+      });
     });
-    
+
     const phoneList = [{ id: "8176278162873", phone: contactInfo[0].phone }];
     // const media_template = contactInfo[0].type === 'club_member' ? "HX4974a2a0c07f4b9d7b31db0737e87d50" : "HX6b3e75b231d4e0a205d575c3f90b27d3";
-    
-    const template = templates.result.find((x) => x.sid === 'HX8b9664f6b44014a6597627be81349003');
+    const template = contactInfo[0].language === 'de' ? de_template: en_template
+   
 
-    const payload = {
-      1: `${contactInfo[0].first_name} ${contactInfo[0].last_name}`,
-      2: "ClubTime Dubai",
-      3: "27 January 2026",
-      4: "From 7:00 PM",
-      5: "Media One Hotel Dubai, QWERTY Restaurant",
-    };
+    const payload = {1: `https://maps.app.goo.gl/m53EBxwzYHD3CotY7?g_st=awb`};
 
     const result = await messageSender({
       body: { template, phoneList, payload },
@@ -409,8 +425,7 @@ async function handleAutoResponse(From, ButtonPayload) {
   }
 }
 
-
- const flattenObject = (obj, parentKey = "", result = {}) => {
+const flattenObject = (obj, parentKey = "", result = {}) => {
   for (const key in obj) {
     const newKey = parentKey ? `${parentKey}_${key}` : key;
 
@@ -425,9 +440,9 @@ async function handleAutoResponse(From, ButtonPayload) {
     }
   }
   return result;
-}
+};
 
- const normalizeRow =  (row) => {
+const normalizeRow = (row) => {
   // 1️⃣ Parse payload
   let payload = {};
   try {
@@ -446,8 +461,7 @@ async function handleAutoResponse(From, ButtonPayload) {
     ...row,
     payload,
   });
-}
-
+};
 
 module.exports = {
   otpSender,
@@ -455,5 +469,5 @@ module.exports = {
   fetchContentTemplates,
   handleAutoResponse,
   flattenObject,
-  normalizeRow
+  normalizeRow,
 };

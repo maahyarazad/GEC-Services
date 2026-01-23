@@ -11,8 +11,10 @@ const MessageModal = ({
     content,
     useContactBook,
     useTestBook,
+    useLanguage,
     setUseContactBook,
     setUseTestBook,
+    setUseLanguage,
     handleSubmit,
     inputValue,
     setInputValue,
@@ -33,24 +35,44 @@ const MessageModal = ({
             title={`Test Message → ${content?.friendlyName}`}
         >
             <div className="">
-                <label htmlFor="test-input">Use Contact Book</label>
 
-                <Switch
-                    size="small"
-                    title="Use Contact Book"
-                    checked={useContactBook}
-                    onChange={(e) => setUseContactBook(e.target.checked)}
-                    color="primary"
-                />
-                <label htmlFor="test-input">Use Test Book</label>
+                <div className="row m-0 p-0">
+                    <div className="col-12">
 
-                <Switch
-                    size="small"
-                    title="Use Contact Book"
-                    checked={useTestBook}
-                    onChange={(e) => setUseTestBook(e.target.checked)}
-                    color="primary"
-                />
+                        <label htmlFor="test-input">Use Contact Book</label>
+                        <Switch
+                            size="small"
+                            title="Use Contact Book"
+                            checked={useContactBook}
+                            onChange={(e) => setUseContactBook(e.target.checked)}
+                            color="primary"
+                        />
+                        <label htmlFor="test-input">Use Test Book</label>
+
+                        <Switch
+                            size="small"
+                            title="Use Contact Book"
+                            checked={useTestBook}
+                            onChange={(e) => setUseTestBook(e.target.checked)}
+                            color="primary"
+                        />
+                    </div>
+                    <div className="col-12">
+
+                        <label htmlFor="test-input">Pick Language From Contact Book</label>
+                        <Switch
+                            size="small"
+                            title="Language"
+                            checked={useLanguage}
+                            onChange={(e) => setUseLanguage(e.target.checked)}
+                            color="primary"
+                        />
+                    </div>
+                   
+
+
+                </div>
+
 
                 <form onSubmit={handleSubmit}>
                     <div className="row m-0 p-0 w-100">
@@ -90,7 +112,7 @@ const MessageModal = ({
                         {/* PHONE INPUT */}
                         <div
                             className={`col-lg-8 m-0 p-0 col-12 ${massAction ? "" : "d-none"
-                                } ${useContactBook || useTestBook? "d-none" : ""}`}
+                                } ${useContactBook || useTestBook ? "d-none" : ""}`}
                         >
                             <div className="p-2">
 
@@ -100,7 +122,7 @@ const MessageModal = ({
                                         <input
                                             id="test-input"
                                             type="tel"
-                                           value={phone || ''}
+                                            value={phone || ''}
                                             onChange={(e) =>
                                                 SetPhone(normalizePhone(e.target.value))
                                             }
@@ -197,24 +219,24 @@ const MessageModal = ({
                         </div>
 
 
-                <div className="row p-0 m-0">
-                    <div className="col-12 m-0 p-0">
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            sx={{ textTransform: "none", width: "100%" }}
-                            type="submit"
-                            disabled={useContactBook|| useTestBook ? false : phoneList.length === 0}
-                            startIcon={
-                                loadingMassSend ? (
-                                    <CircularProgress size={20} color="inherit" />
-                                ) : null
-                            }
-                        >
-                            Send Message
-                        </Button>
-                    </div>
-                </div>
+                        <div className="row p-0 m-0">
+                            <div className="col-12 m-0 p-0">
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    sx={{ textTransform: "none", width: "100%" }}
+                                    type="submit"
+                                    disabled={loadingMassSend? true : useContactBook || useTestBook ? false : phoneList.length === 0}
+                                    startIcon={
+                                        loadingMassSend ? (
+                                            <CircularProgress size={20} color="inherit" />
+                                        ) : null
+                                    }
+                                >
+                                    {loadingMassSend ? "Sending..." : "Send Message"}
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
