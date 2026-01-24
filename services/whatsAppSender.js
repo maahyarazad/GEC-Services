@@ -86,28 +86,35 @@ const contactBookData = async (conditions) => {
 
 const messageSender = async (req) => {
   try {
-    const { phoneList, useContactBook, useTestBook, useLanguage, template } =
-      req.body;
+    const { phoneList, useContactBook, useTestBook, useLanguage, template, payload } = req.body;
+
+    // Helper function to safely send message and swallow errors
+    const safeSendMessage = async (el) => {
+      try {
+        return await sendMessageToPhone(el.phone, template, payload, el);
+      } catch (error) {
+        console.error(`Error sending message to ${el.phone}:`, error);
+        dbService
+            .createSafe("error_log", {
+                error: error.toString(),         
+                origin_function: "sendMessageToPhone"  
+            })
+            .catch((err) => {
+                console.error("Failed to store error log:", err);
+            });
+        return null;
+      }
+    };
 
     if (useTestBook) {
       const conditions = { type: "gec_staff" };
-
       if (useLanguage) {
         conditions.language = template.language;
       }
 
-      const testBook = await dbService.findExactWithConditions(
-        "contact_book",
-        conditions
-      );
+      const testBook = await dbService.findExactWithConditions("contact_book", conditions);
+      await Promise.all(testBook.map(safeSendMessage));
 
-      await Promise.all(
-        testBook.map(async (el) => {
-          const phone = el.phone;
-          const { template, payload } = req.body;
-          return sendMessageToPhone(phone, template, payload, el);
-        })
-      );
       return { status: true };
     }
 
@@ -120,39 +127,35 @@ const messageSender = async (req) => {
       const contactBook = await contactBookData(conditions);
       const randomContacts = getRandomItems(contactBook, 350);
 
-      const batchSize = 60; // safe batch size below max throughput
-      const delayMs = 1000; // 1 second delay between batches
+      const batchSize = 20; // safe batch size below max throughput
+      const delayMs = 15 * 60 * 1000; // 15 minutes
 
       const batches = chunkArray(randomContacts, batchSize);
 
-      for (const batch of batches) {
-        await Promise.all(
-          batch.map(async (el) => {
-            const phone = el.phone;
-            const { template, payload } = req.body;
-            return sendMessageToPhone(phone, template, payload, el);
-          })
-        );
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
 
-        // Delay before sending next batch to respect rate limits
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        console.log(`Sending batch ${i + 1} of ${batches.length}...`);
+        await Promise.all(batch.map(safeSendMessage));
+        console.log(`Batch ${i + 1} sent.`);
+
+        // Delay before sending next batch except after last batch
+        if (i < batches.length - 1) {
+          console.log(`Waiting ${delayMs / 60000} minutes before next batch...`);
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
       }
     } else {
-      await Promise.all(
-        phoneList.map(async (el) => {
-          const phone = el.phone;
-          const { template, payload } = req.body;
-          return sendMessageToPhone(phone, template, payload);
-        })
-      );
+      await Promise.all(phoneList.map(safeSendMessage));
     }
 
     return { status: true };
   } catch (error) {
     console.error("WhatsApp sender error:", error);
-    return { status: false, result: error.message || error };
+    // You can decide whether to return false or not here.
   }
 };
+
 
 async function sendMessageToPhone(
   phone,
@@ -160,7 +163,9 @@ async function sendMessageToPhone(
   payload,
   contactPayload = null
 ) {
-  // Determine template type key (e.g., "twilio/text", "twilio/media", etc.)
+    try{
+
+        // Determine template type key (e.g., "twilio/text", "twilio/media", etc.)
   const templateType = Object.keys(template.types)[0];
   const data = template.types[templateType];
 
@@ -258,6 +263,12 @@ async function sendMessageToPhone(
     });
 
   return result;
+    }catch (error) {
+    console.error(`Failed to send message to ${phone}:`, error);
+    // swallow error so caller can continue
+    return null;
+  }
+  
 }
 
 // Helper function to build interactive object for WhatsApp interactive messages
