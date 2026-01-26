@@ -345,6 +345,7 @@ const dbService = {
     getPaginatedFilteredData: (
         table,
         filters = {},
+         jsonFilters = [],
         page = 0,
         pageSize = 10,
         sortField = null,
@@ -357,13 +358,40 @@ const dbService = {
         const [whereParts, params ]=  paramBuilder(filters);
 
 
-        const whereClause = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : "";
+        
 
-        // Validate sortField and sortOrder to avoid SQL injection
-        const orderClause =
-            sortField && /^[a-zA-Z0-9_]+$/.test(sortField) && /^(ASC|DESC)$/i.test(sortOrder)
-                ? `ORDER BY ${sortField} ${sortOrder.toUpperCase()}`
-                : "";
+// 🔥 Add JSON filters
+    jsonFilters.forEach(f => {
+        whereParts.push(
+            `json_extract(${f.column}, ?) LIKE ?`
+        );
+        params.push(f.path);
+        params.push(`%${f.value}%`);
+    });
+
+    const whereClause = whereParts.length
+        ? `WHERE ${whereParts.join(" AND ")}`
+        : "";
+
+    // 🔥 JSON sorting support
+    let orderClause = "";
+    if (sortField) {
+        if (sortField.startsWith("payload_")) {
+            const jsonPath = sortField
+                .replace("payload_", "")
+                .split("_")
+                .join(".");
+
+            orderClause = `
+                ORDER BY json_extract(payload, '$.${jsonPath}') ${sortOrder.toUpperCase()}
+            `;
+        } else if (
+            /^[a-zA-Z0-9_]+$/.test(sortField) &&
+            /^(ASC|DESC)$/i.test(sortOrder)
+        ) {
+            orderClause = `ORDER BY ${sortField} ${sortOrder.toUpperCase()}`;
+        }
+    }
 
         // Optional LEFT JOIN
         let joinClause = "";
@@ -405,25 +433,47 @@ const dbService = {
 
         // Extract filters sent as filter_<field>=value
         const filters = {};
+        const jsonFilters = [];
+        
         Object.entries(queryFilters).forEach(([key, value]) => {
             if (!key.startsWith("filter_")) return;
 
             let field = key.replace("filter_", "");
-            if (value === undefined || value === "") return;
 
-            if (Object.keys(leftJoin).length !== 0) {
-                const alias = table_name[table_name.length - 1];
-                filters[`${alias}.${field}`] = value;
+
+            if (field.startsWith("payload_")) {
+                const jsonPath = field
+                    .replace("payload_", "")
+                    .split("_")
+                    .join(".");
+
+                jsonFilters.push({
+                    column: "payload",
+                    path: `$.${jsonPath}`,
+                    value,
+                });
             } else {
+                // Normal column
+                 if (value === undefined || value === "") return;
 
-                filters[field] = value;
+                if (Object.keys(leftJoin).length !== 0) {
+                    const alias = table_name[table_name.length - 1];
+                    filters[`${alias}.${field}`] = value;
+                } else {
+
+                    filters[field] = value;
+                }
             }
+
+
+           
 
         });
 
         const data = await dbService.getPaginatedFilteredData(
             table_name,
             filters,
+            jsonFilters,
             pageNumber,
             limit,
             sortField,
@@ -432,7 +482,7 @@ const dbService = {
             columns
         );
 
-        return { filters, data };
+        return { filters,jsonFilters ,data };
     },
 
     createRegistrationKeys: (registration_config_id, keys) => {

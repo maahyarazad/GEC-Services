@@ -157,14 +157,15 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
 router.get("/api/whatsapp/twilio-response-logs", async (req, res) => {
   try {
     const table_name = "twilio_responses";
-    const { filters, data } = await dbService.QuerySqlConverter(
-      req.query,
-      table_name
-    );
+    const { filters, jsonFilters, data } = await dbService.QuerySqlConverter(req.query, table_name);
 
     const flatData = data.map(normalizeRow);
 
-    const total = await dbService.getTotalCount(table_name, filters);
+    const total = await dbService.getTotalCount(
+      table_name,
+      filters,
+      jsonFilters
+    );
 
     return res.json({
       status: true,
