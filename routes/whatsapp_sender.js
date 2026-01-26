@@ -14,19 +14,17 @@ const db = dbService.getDB();
 
 const MessagingResponse = require("twilio").twiml.MessagingResponse;
 
-router.post("/api/whatsapp/send", async (req, res) => {
-  try {
-    const result = await messageSender(req);
+router.post("/api/whatsapp/send", (req, res) => {
+  // Fire and forget: run messageSender but don't await
+  messageSender(req).catch((error) => {
+    console.error("Background messageSender error:", error);
+  });
 
-    res
-      .status(200)
-      .json({ status: result.status, message: "Message sent successfully" });
-  } catch (error) {
-    console.error("Failed to send message", error.message);
-    res
-      .status(500)
-      .json({ status: false, message: "Failed to send the message" });
-  }
+  // Respond immediately
+  res.status(200).json({
+    status: true,
+    message: "Your request is being processed. Check the logs for progress."
+  });
 });
 
 router.post("/api/whatsapp/quick-reply", async (req, res) => {
