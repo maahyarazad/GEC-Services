@@ -179,10 +179,11 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
                             className="form-select"
                         >
                             <option value="">Select type</option>
-                            <option value="club_member">Club Member</option>
-                            <option value="club_partner">Club Partner</option>
                             <option value="gec_staff">GEC Staff</option>
+                            <option value="club_partner">Club Partner</option>
+                            <option value="club_member">Club Member</option>
                             <option value="expert">Expert</option>
+                            <option value="difa">Difa</option>
                         </select>
                     </div>
                 </div>

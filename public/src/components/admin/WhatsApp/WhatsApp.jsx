@@ -29,6 +29,10 @@ import { columns, responseColumns, contactBookColumn, tabstyle, normalizePhone }
 import MessageModal from "./MessageModal";
 import { useAlertDialog } from "../../Providers/AlertProvider";
 import QuickReply from "./QuickReply";
+import { IoStatsChartSharp } from "react-icons/io5";
+import WhastAppReport from '../Dashboard/WhastAppReport';
+
+
 
 const WhatsappBroadcast = () => {
 
@@ -42,7 +46,7 @@ const WhatsappBroadcast = () => {
     const [loading, setLoading] = useState(true);
     const [viewJsonModal, setViewJsonModal] = useState(false);
     const [JSON_Value_Response_Log, setJSON_Value_Response_Log] = useState(null);
-    
+    const [viewStatus, setViewStatus] = useState(false);
     const [viewCreateNewContact, setViewCreateNewContact] = useState(false);
     const [testAction, setTestAction] = useState(false);
     const [massAction, setMassAction] = useState(false);
@@ -392,19 +396,20 @@ const onSwitchBlacklist = (row, val) => {
     }, [openContactBook, viewBlackList]);
 
 
-    const isValidJson = (value) => {
-  try {
-    JSON.parse(value);
-    return true;
-  } catch {
-    return false;
+
+
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+const [showChart, setShowChart] = useState(false);
+    useEffect(() => {
+  if(viewStatus) {
+    const timer = setTimeout(() => setShowChart(true), 200);
+    return () => clearTimeout(timer);
+  } else {
+    setShowChart(false);
   }
-};
-
-    ////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////
-
+}, [viewStatus]);
 
     if (loading) {
         return (
@@ -419,6 +424,17 @@ const onSwitchBlacklist = (row, val) => {
     return (
 
         <Box sx={{ padding: 1, position: 'relative' }}>
+
+            <Modal isOpen={viewStatus}
+                onRequestClose={() => { setViewStatus(false); }}
+                title={`Delivery Status`}>
+
+                <div className="d-lg-flex justify-content-between align-items-center">
+
+                        {showChart && <WhastAppReport />}
+                    </div>
+            </Modal>
+
 
             <SlideMenu
                 isOpen={openLogs || openResponses}
@@ -579,6 +595,10 @@ const onSwitchBlacklist = (row, val) => {
 
 
             <div className="pb-2 border-bottom border-1">
+
+                <IconButton title='View MemberShip Status' onClick={()=> setViewStatus(true)}>
+                    <IoStatsChartSharp/>
+                </IconButton>
 
                 <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { setMassAction(true); }} disabled={content === null}>
                     <FaWhatsapp size={17} style={{ marginRight: 2 }} /> Send Message

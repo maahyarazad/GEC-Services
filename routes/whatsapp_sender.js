@@ -23,41 +23,48 @@ router.post("/api/whatsapp/send", (req, res) => {
   // Respond immediately
   res.status(200).json({
     status: true,
-    message: "Your request is being processed. Check the logs for progress."
+    message: "Your request is being processed. Check the logs for progress.",
   });
 });
 
 router.post("/api/whatsapp/quick-reply", async (req, res) => {
   try {
-
-    const {message, incoming_message} = req.body;
+    const { message, incoming_message } = req.body;
     const templates = await fetchContentTemplates();
-    const simple_response = templates.result.find(x=> x.sid === 'HXb1ce9479f3d42819bef456f00448afcc');
-
+    const simple_response = templates.result.find(
+      (x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc"
+    );
 
     if (!message?.trim()) {
       return res.status(400).json({
         status: false,
-        message: "Message cannot be empty"
+        message: "Message cannot be empty",
       });
     }
 
     if (!incoming_message?.payload_WaId) {
       return res.status(400).json({
         status: false,
-        message: "Invalid incoming WhatsApp message"
+        message: "Invalid incoming WhatsApp message",
       });
     }
 
-    
     if (!simple_response) {
       return res.status(500).json({
         status: false,
-        message: "WhatsApp template not found"
+        message: "WhatsApp template not found",
       });
     }
 
-    const _req = {body: {phoneList : [{id:"99999", phone:`+${incoming_message.payload_WaId}`}], template: simple_response, payload:{1: message}}};
+    const _req = {
+      body: {
+        phoneList: [
+          { id: "99999", phone: `+${incoming_message.payload_WaId}` },
+        ],
+        template: simple_response,
+        payload: { 1: message },
+      },
+    };
     const result = await messageSender(_req);
     res
       .status(200)
@@ -195,5 +202,71 @@ router.post(
     }
   }
 );
+
+router.get("/api/whatsapp/insight", async (req, res) => {
+  try {
+    const deliveryCountQuery = `
+                            SELECT 
+                                COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
+                            FROM twilio_delivery td
+                            LEFT JOIN twilio_template_message ttm
+                                ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+                            WHERE json_extract(td.response, '$.MessageStatus') = ?
+                                AND ttm.contentSid = ?
+                            `;
+
+    const buttonCountQuery = `
+                        SELECT COUNT(*) AS to_number
+                        FROM twilio_responses
+                        WHERE json_extract(payload, '$.ButtonPayload') = ?
+                        `;
+
+    const contentSid = "HX01112eac1bf320e6213b4e2ff6ff060f";
+    const simpleMessageContentSid = "HXb1ce9479f3d42819bef456f00448afcc";
+
+    
+    const runQuery = (db, query, params = []) =>
+        new Promise((resolve, reject) => {
+            db.all(query, params, (err, rows) => {
+                if (err) {
+                    console.error("DB error:", err);
+                    return reject(err);
+                }
+                resolve(rows);
+            });
+        });
+        
+        const [undelivered, delivered, read, simpleMessageDelivered, simpleMessageUndelivered ,notAttend, attend] = await Promise.all(
+          [
+            runQuery(db, deliveryCountQuery, ["undelivered", contentSid]),
+            runQuery(db, deliveryCountQuery, ["delivered", contentSid]),
+            runQuery(db, deliveryCountQuery, ["read", contentSid]),
+            runQuery(db, deliveryCountQuery, ["delivered", simpleMessageContentSid]),
+            runQuery(db, deliveryCountQuery, ["undelivered", simpleMessageContentSid]),
+            runQuery(db, buttonCountQuery, ["NOT_ATTEND"]),
+            runQuery(db, buttonCountQuery, ["ATTEND"]),
+          ]
+        );
+        
+    const stats = {
+      undelivered: undelivered[0]?.to_number ?? 0,
+      delivered: delivered[0]?.to_number ?? 0,
+      read: read[0]?.to_number ?? 0,
+      simpleMessageDelivered: simpleMessageDelivered[0]?.to_number ?? 0,
+      simpleMessageUndelivered: simpleMessageUndelivered[0]?.to_number ?? 0,
+      attend: attend[0]?.to_number ?? 0,
+      notAttend: notAttend[0]?.to_number ?? 0,
+    };
+
+    return  res
+      .status(200)
+      .json({ status: true, data:stats });
+
+  } catch (err) {
+    console.error("Failed to fetch insights", err);
+    
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
 
 module.exports = router;
