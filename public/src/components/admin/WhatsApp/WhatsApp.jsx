@@ -338,6 +338,7 @@ const onSwitchBlacklist = (row, val) => {
 
                 const data = await response.json();
 
+                
                 setResponses(data.data || []);
                 setRowCount(data.total || 0);
             } catch (err) {
@@ -636,7 +637,7 @@ useEffect(() => {
                     
                     <div className=""> 
                         <QuickReply incoming_message={JSON_Value_Response_Log?.value} CloseModal={()=> {setViewJsonModal(false);
-                    setJSON_Value_Response_Log(null);}}/>
+                        setJSON_Value_Response_Log(null);}}/>
                     </div>
                     
                     

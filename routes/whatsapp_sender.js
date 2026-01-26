@@ -11,6 +11,12 @@ const crypto = require("crypto");
 
 const dbService = require("../services/dbService");
 const db = dbService.getDB();
+const fs = require('fs');
+const path = require('path');
+const { pipeline, Readable } = require('stream');
+const { promisify } = require('util');
+const streamPipeline = promisify(pipeline);
+const fetch = require('node-fetch'); 
 
 const MessagingResponse = require("twilio").twiml.MessagingResponse;
 
@@ -267,6 +273,57 @@ router.get("/api/whatsapp/insight", async (req, res) => {
     console.error("Failed to fetch insights", err);
     
     res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
+
+router.get("/api/whatsapp/download-media", async (req, res) => {
+  try {
+    const { mediaUrl, filename } = req.query;
+
+    if (!mediaUrl) {
+      return res.status(400).json({
+        status: false,
+        message: "mediaUrl is required",
+      });
+    }
+
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+    const authHeader = "Basic " + Buffer.from(`${accountSid}:${authToken}`).toString("base64");
+
+    const response = await fetch(mediaUrl, {
+      headers: {
+        Authorization: authHeader,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch media: ${response.statusText}`);
+    }
+
+    const finalName = filename || `twilio_audio_${Date.now()}.ogg`;
+    const uploadDir = path.join(__dirname, "..", "twilio_media");
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const filePath = path.join(uploadDir, finalName);
+
+    // Convert web ReadableStream to Node.js stream and pipe to file
+    const nodeStream = Readable.from(response.body);
+    await streamPipeline(nodeStream, fs.createWriteStream(filePath));
+
+    // Send the file for download to the client
+    return res.download(filePath);
+  } catch (error) {
+    console.error("Media download error:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Failed to download media",
+    });
   }
 });
 
