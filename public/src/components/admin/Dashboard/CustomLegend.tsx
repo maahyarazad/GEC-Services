@@ -1,7 +1,7 @@
 import { LegendPayload, Legend } from 'recharts';
 
 const customLegend = (props: any) => {
-    debugger;
+    
   const { payload } = props as { payload: LegendPayload[] };
   // Define desired order explicitly
   const order = [
@@ -9,6 +9,7 @@ const customLegend = (props: any) => {
     "Read",
     "Attend",
     "Not Attend",
+    "Viewed, No Reply",
     "Sylvia Responses (Delivered)",
     "Sylvia Responses (Undelivered)"
   ];
@@ -21,7 +22,7 @@ const customLegend = (props: any) => {
     : [];
 
   return (
-    <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+    <ul style={{ listStyle: 'none', margin: 0, marginRight: 0, paddingRight: 5 }}>
       {sortedPayload.map((entry) => (
         <li key={entry.value} style={{ color: entry.color, marginBottom: 4 }}>
           <svg width="14" height="14" style={{ marginRight: 4 }}>

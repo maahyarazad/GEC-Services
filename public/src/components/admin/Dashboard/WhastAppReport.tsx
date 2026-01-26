@@ -3,6 +3,7 @@ import { RechartsDevtools } from '@recharts/devtools';
 import { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList } from "recharts";
 import customLegend from './CustomLegend';
+import renderPercentLabel from './CustomLabel';
 
 // #endregion
 export default function WhastAppReport({
@@ -55,6 +56,8 @@ export default function WhastAppReport({
   }, []);
 
 
+
+
     if (loading) return <div>Loading report…</div>;
     if (!panelData) return <div>No data available</div>;
 
@@ -70,6 +73,7 @@ export default function WhastAppReport({
             name: "User Responses",
             responseAttend: panelData.attend ?? 0,
             responseNotAttend: panelData.notAttend ?? 0,
+            stall: panelData.read - (panelData.attend + panelData.notAttend) ,
         },
         {
             name: "Sylvia Responses",
@@ -85,8 +89,9 @@ const bars = [
   { dataKey: "readCount", fill: "#0ce8d9", name: "Read", stackId: undefined },                  // Blue 600
   { dataKey: "responseAttend", fill: "#44e00b", name: "Attend", stackId: "a" },                // Green 600
   { dataKey: "responseNotAttend", fill: "#dc2626", name: "Not Attend", stackId: "a" },         // Red 600
+  { dataKey: "stall", fill: "#8f8d8d", name: "Viewed, No Reply", stackId: "a" },         // Red 600
   { dataKey: "simpleResponseCount", fill: "#2563eb", name: "Sylvia Responses (Delivered)", stackId: "b" }, // Sky 500
-  { dataKey: "simpleUndeliveredCount", fill: "#5c0101", name: "Sylvia Responses (Undelivered)", stackId: "b" }, // Purple 700
+  { dataKey: "simpleUndeliveredCount", fill: "#000", name: "Sylvia Responses (Undelivered)", stackId: "b" }, // Purple 700
 ];
 
     return (
@@ -117,10 +122,11 @@ const bars = [
                             barSize={stackId ? 80 : undefined} // only set barSize for stacked bars if you want
                             isAnimationActive={isAnimationActive}
                         >
+                            {/* <LabelList content={renderPercentLabel} /> */}
                             <LabelList
                                 dataKey={dataKey}
-                                style={{ fill: "#636261", fontWeight: "bold", fontSize: 14 }}
-                                position="top"
+                                style={{ fill: "#000", fontWeight: "bold", fontSize: 12 }}
+                                position="middle"
                             />
                         </Bar>
                     ))}

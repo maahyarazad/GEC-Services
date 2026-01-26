@@ -31,11 +31,12 @@ import { useAlertDialog } from "../../Providers/AlertProvider";
 import QuickReply from "./QuickReply";
 import { IoStatsChartSharp } from "react-icons/io5";
 import WhastAppReport from '../Dashboard/WhastAppReport';
-
-
+import {   useNavigate, useLocation } from "react-router-dom";
 
 const WhatsappBroadcast = () => {
-
+    
+    const location = useLocation();
+    const navigate = useNavigate();
     const { openDialog } = useAlertDialog();
     const [data, setData] = useState();
     const [groupedByTypeKey, setGroupedByTypeKey] = useState();
@@ -410,6 +411,57 @@ const [showChart, setShowChart] = useState(false);
     setShowChart(false);
   }
 }, [viewStatus]);
+
+
+useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const modalView = params.get("view");
+    if (modalView === "report") {
+      setViewStatus(true);
+    }
+  }, [location.search]);
+
+  // When viewStatus changes, update the URL query params accordingly
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+
+    if (viewStatus) {
+      // Add or keep view=report
+      params.set("view", "report");
+    } else {
+      // Remove the view param
+      params.delete("view");
+    }
+
+    // Update URL without reloading page
+    navigate({
+      pathname: location.pathname,
+      search: params.toString() ? `?${params.toString()}` : "",
+    }, { replace: true }); // replace to avoid history stack pollution
+
+  }, [viewStatus, navigate, location.pathname, location.search]);
+
+
+//  useEffect(() => {
+          
+  
+//           if (location.search) {
+//               const params = new URLSearchParams(location.search);
+              
+//                 const modalView = params.get("view");
+//               switch (modalView){
+//                 case 'report':
+//                     setViewStatus(true);
+
+//               }
+             
+  
+  
+//           } 
+  
+//       }, [])
+
+
 
     if (loading) {
         return (

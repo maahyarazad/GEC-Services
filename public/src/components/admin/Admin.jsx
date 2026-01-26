@@ -249,26 +249,23 @@ const Admin = ({ data }) => {
     const slugify = (text) =>
         text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
 
-    useEffect(() => {
-        const tabSlug = slugify(tabConfig[0].label);
+useEffect(() => {
+    const tabSlug = slugify(tabConfig[0].label);
 
-        if (location.search) {
-            const params = new URLSearchParams(location.search);
-
-            const index = tabConfig.findIndex(tab => slugify(tab.label) === params.get("tab"));
-            setTabValue(index);
-
-
-        } else {
-
-            navigate(`/admin?tab=${tabSlug}`, {
-                state: { tab: tabSlug },
-            });
-
-            setTabValue(0);
-        }
-
-    }, [])
+    if (location.search) {
+        const params = new URLSearchParams(location.search);
+        const tab = params.get("tab");
+        const index = tabConfig.findIndex(tabItem => slugify(tabItem.label) === tab);
+        
+        // If index is invalid, fallback to 0
+        setTabValue(index >= 0 ? index : 0);
+    } else {
+        navigate(`/admin?tab=${tabSlug}`, {
+            state: { tab: tabSlug },
+        });
+        setTabValue(0);
+    }
+}, []);
 
     const handletabChange = (event, newValue) => {
 
