@@ -315,32 +315,17 @@ const onSwitchBlacklist = (row, val) => {
     const [responses, setResponses] = useState([]);
 
     const fetchResponses = useCallback(
-        async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
+        async () => {
             setloading_logs(true);
             try {
-                const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
-                const sortField = sort.field || defaultSortModel.field;
-                const sortOrder = sort.sort || defaultSortModel.sort;
-
-
-                // Parse filters from filterModel.items
-                const filterParams = FilterParams(filterModel);
-
-                const queryParams = [
-                    `page=${paginationModel.page + 1}`,
-                    `pageSize=${paginationModel.pageSize}`,
-                    sortField ? `sortField=${sortField}` : '',
-                    sortOrder ? `sortOrder=${sortOrder}` : '',
-                    filterParams,
-                ].filter(Boolean).join('&');
-
-                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-response-logs?${queryParams}`, { credentials: "include" });
+                
+                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-response-logs?`, { credentials: "include" });
 
                 const data = await response.json();
 
                 
                 setResponses(data.data || []);
-                setRowCount(data.total || 0);
+                setRowCount(data.length || 0);
             } catch (err) {
                 console.error('Failed to fetch:', err);
             } finally {
@@ -352,29 +337,15 @@ const onSwitchBlacklist = (row, val) => {
 
     const fetchLogs = useCallback(
 
-        async (paginationModel, sortModel = [], filterModel = { items: [] }) => {
+        async () => {
 
             setloading_logs(true);
             try {
-                // const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
-                // const sortField = sort.field || defaultSortModel.field;
-                // const sortOrder = sort.sort || defaultSortModel.sort;
-
-                // // Parse filters from filterModel.items
-                // const filterParams = FilterParams(filterModel);
-
-
-                // const queryParams = [
-                //     `page=${paginationModel.page + 1}`,
-                //     `pageSize=${paginationModel.pageSize}`,
-                //     sortField ? `sortField=${sortField}` : '',
-                //     sortOrder ? `sortOrder=${sortOrder}` : '',
-                //     filterParams,
-                // ].filter(Boolean).join('&');
+               
 
                 const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-delivery-logs`, { credentials: "include" });
                 const data = await response.json();
-
+                debugger;
                 setLogs(data.result || []);
                 setRowCount(data.result.length || 0);
             } catch (err) {
@@ -387,11 +358,11 @@ const onSwitchBlacklist = (row, val) => {
     );
 
     useEffect(() => {
-        if (openLogs) fetchLogs(paginationModel, sortModel, filterModel);
-        if (openResponses) fetchResponses(paginationModel, sortModel, filterModel);
+        if (openLogs) fetchLogs();
+        if (openResponses) fetchResponses();
 
 
-    }, [openLogs, openResponses, paginationModel, sortModel, applyFilterTrigger]);
+    }, [openLogs, openResponses]);
 
     useEffect(() => {
         if (openContactBook) fetchContactData();
@@ -442,25 +413,6 @@ useEffect(() => {
 
   }, [viewStatus, navigate, location.pathname, location.search]);
 
-
-//  useEffect(() => {
-          
-  
-//           if (location.search) {
-//               const params = new URLSearchParams(location.search);
-              
-//                 const modalView = params.get("view");
-//               switch (modalView){
-//                 case 'report':
-//                     setViewStatus(true);
-
-//               }
-             
-  
-  
-//           } 
-  
-//       }, [])
 
 
 
@@ -527,21 +479,9 @@ useEffect(() => {
                                 <DataGrid
                                     rows={responses}
                                     columns={responseColumns({ onViewJson })}
-                                    rowCount={rowCount}
-                                    // rowHeight={100}
+                                     paginationModel={_paginationModel}
                                     rowsPerPageOptions={[25, 50, 100]}
-                                    paginationMode="server"
-                                    sortingMode="server"
-                                    filterMode="server"
-                                    paginationModel={paginationModel}
-                                    sortModel={sortModel}
-                                    onPaginationModelChange={setPaginationModel}
-                                    onSortModelChange={setSortModel}
-                                    filterModel={filterModel}              // ✅ Pass full model
-                                    onFilterModelChange={(newModel) => {
-                                        setFilterModel(newModel); // use the raw model now
-                                    }}
-                                    // ✅ Accept full model
+                                    pagination
                                     disableRowSelectionOnClick
                                     disableSelectionOnClick
                                     showToolbar
@@ -630,7 +570,7 @@ useEffect(() => {
                     setJSON_Value_Response_Log(null);
                 }}
 
-                title={`${JSON_Value_Response_Log?.type === 'log'? "Log Details" : "Message Body"}`}>
+                title={`${JSON_Value_Response_Log?.type === 'log'? "Content Sid" : "Message Body"}`}>
 
                     {JSON_Value_Response_Log?.type === 'log'? <JSONPretty data={JSON_Value_Response_Log?.value} /> :  
                     

@@ -5,72 +5,36 @@ import 'react-json-pretty/themes/monikai.css'; // optional styling
 import { IoMdOpen } from "react-icons/io";
 import { RiEditLine } from "react-icons/ri";
 import { IoTrashOutline } from "react-icons/io5";
+
 export const columns = ({ onViewJson }) => [
-    // { field: 'id', headerName: 'ID', width: 70, hide: true },
+    { field: 'id', headerName: 'ID', width: 70, hide: true },
     { field: 'metadata_createdAt', headerName: 'Created At', width: 160, filterable: true },
-    {
-        field: 'MessageStatus', headerName: 'Message Status', width: 120, renderCell: (params) => {
-            let status = '—';
-
-            try {
-                const response =
-                    typeof params.row.response === 'string'
-                        ? JSON.parse(params.row.response)
-                        : params.row.response;
-
-                status = response?.MessageStatus ?? '—';
-            } catch (e) {
-                // silently fail – do NOT break UI
-            }
-
-            return <div>{status}</div>;
-        },
-    },
+    {field: 'SmsStatus', headerName: 'Message Status', width: 120, filterable: true },
+    
     { field: 'templateFriendlyName', headerName: 'Used Template Name', width: 200, filterable: true },
     {
-        field: 'first_name', headerName: 'Full Name', width: 200, filterable: true, renderCell: (params) => {
-
-            return (
-                <div>
-
-                    {params.row.first_name} {params.row.last_name}
-                </div>
-            );
-        }
-    },
+        field: 'full_name', headerName: 'Full Name', width: 200, filterable: true},
     { field: 'phone', headerName: 'Phone Number', width: 160, filterable: true },
 
-    {
-        field: 'response',
-        headerName: 'Log',
-        width: 30,
+   
+//  {
+//         field: 'contentSid',
+//         headerName: 'Content Sid',
+//         width: 30,
+//         filterable: true,
+//         renderCell: (params) => {
+            
+//             return (
+//                 <div>
 
-        filterable: true,
-        renderCell: (params) => {
-            let json;
+//                     <IconButton onClick={() => onViewJson(params.row.contentSid, 'log')}>
+//                         <IoMdOpen />
+//                     </IconButton>
+//                 </div>
+//             );
+//         },
 
-            try {
-
-                json =
-                    typeof params.row.response === 'string'
-                        ? JSON.parse(params.row.response)
-                        : params.row.response;
-            } catch (e) {
-                // Fallback if invalid JSON
-                json = { raw: params.row.response };
-            }
-
-            return (
-                <div>
-
-                    <IconButton onClick={() => onViewJson(params.row.response, 'log')}>
-                        <IoMdOpen />
-                    </IconButton>
-                </div>
-            );
-        },
-
-    }
+//     }
 
 
 
@@ -80,11 +44,12 @@ export const columns = ({ onViewJson }) => [
 
 export const responseColumns = ({ onViewJson }) => [
   { field: 'id', headerName: 'ID', width: 70, hide: true },
-  { field: 'received_at', headerName: 'received_at', width: 160, filterable: true },
-  { field: 'payload_WaId', headerName: 'From Number', width: 160, filterable: true },
-  { field: 'payload_ProfileName', headerName: 'ProfileName', width: 200, filterable: true },
-  { field: 'payload_Body', headerName: 'Body', width: 200, filterable: true },
-  { field: 'payload_MessageType', headerName: 'Type', width: 100, filterable: true },
+  { field: 'full_name', headerName: 'Full Name', width: 160, filterable: true },
+  { field: 'received_at', headerName: 'Received ar', width: 160, filterable: true },
+  { field: 'WaId', headerName: 'From Number', width: 160, filterable: true },
+  { field: 'ProfileName', headerName: 'Profile Name', width: 200, filterable: true },
+  { field: 'MessageType', headerName: 'Type', width: 100, filterable: true },
+  { field: 'Body', headerName: 'Body', width: 200, filterable: true },
    {
         field: '_',
         headerName: 'View Body',
@@ -97,7 +62,7 @@ export const responseColumns = ({ onViewJson }) => [
             return (
                 <div>
                     
-                    <IconButton onClick={() => onViewJson(params.row, 'response')}>
+                    <IconButton onClick={() => onViewJson(JSON.parse(params.row.payload), params.row.MessageType)}>
                         <IoMdOpen />
                     </IconButton>
                 </div>

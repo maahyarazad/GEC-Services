@@ -48,7 +48,7 @@ router.post("/api/whatsapp/quick-reply", async (req, res) => {
       });
     }
 
-    if (!incoming_message?.payload_WaId) {
+    if (!incoming_message?.WaId) {
       return res.status(400).json({
         status: false,
         message: "Invalid incoming WhatsApp message",
@@ -65,7 +65,7 @@ router.post("/api/whatsapp/quick-reply", async (req, res) => {
     const _req = {
       body: {
         phoneList: [
-          { id: "99999", phone: `+${incoming_message.payload_WaId}` },
+          { id: "99999", phone: `+${incoming_message.WaId}` },
         ],
         template: simple_response,
         payload: { 1: message },
@@ -124,13 +124,29 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
     });
 
     const query = `
-                   SELECT td.response, td.metadata_createdAt, ttm.contentSid, ttm.messageSid, cb.first_name, cb.last_name, cb.phone
-                    FROM twilio_delivery td
-                    LEFT JOIN twilio_template_message ttm
-                        ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
-                    LEFT JOIN contact_book cb
-                        ON json_extract(td.response, '$.To') = 'whatsapp:' || cb.phone
-                    WHERE ttm.messageSid IS NOT NULL ORDER BY td.metadata_createdAt DESC;
+WITH ranked AS (
+    SELECT 
+        td.id,
+        td.metadata_createdAt, 
+        ttm.contentSid, 
+        json_extract(td.response, '$.SmsStatus') AS SmsStatus,  
+        ttm.messageSid, 
+        (cb.first_name || ' ' || cb.last_name) AS full_name,  
+        cb.phone,
+        ROW_NUMBER() OVER (PARTITION BY td.id ORDER BY td.metadata_createdAt DESC) AS rn
+    FROM twilio_delivery td
+    LEFT JOIN twilio_template_message ttm
+        ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+    LEFT JOIN contact_book cb
+        ON json_extract(td.response, '$.To') = 'whatsapp:' || cb.phone
+    WHERE ttm.messageSid IS NOT NULL
+)
+SELECT *
+FROM ranked
+WHERE rn = 1
+ORDER BY metadata_createdAt DESC;
+
+
                     
             `;
 
@@ -145,7 +161,7 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
     });
 
     const result = _result.map((row) => ({
-      id: crypto.randomUUID(),
+    //   id: crypto.randomUUID(),
       ...row,
       templateFriendlyName: templateMap.get(row.contentSid) ?? null,
     }));
@@ -162,21 +178,33 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
 
 router.get("/api/whatsapp/twilio-response-logs", async (req, res) => {
   try {
-    const table_name = "twilio_responses";
-    const { filters, jsonFilters, data } = await dbService.QuerySqlConverter(req.query, table_name);
+    
+      const query = `
+SELECT 
+tr.id,
+tr.received_at,
+  (cb.first_name || ' ' || cb.last_name) AS full_name,  
+  json_extract(tr.payload, '$.WaId') AS WaId,   json_extract(tr.payload, '$.ProfileName') 
+  AS ProfileName,  json_extract(tr.payload, '$.MessageType') AS MessageType,  json_extract(tr.payload, '$.Body') AS Body, tr.payload
+FROM twilio_responses tr
+LEFT JOIN contact_book cb
+  ON cb.phone = '+' || json_extract(tr.payload, '$.WaId')
+ORDER BY tr.id DESC;
+            `;
 
-    const flatData = data.map(normalizeRow);
-
-    const total = await dbService.getTotalCount(
-      table_name,
-      filters,
-      jsonFilters
-    );
+    const _result = await new Promise((resolve, reject) => {
+      db.all(query, [], (err, rows) => {
+        if (err) {
+          console.error("DB error:", err);
+          return reject(err);
+        }
+        resolve(rows);
+      });
+    });
 
     return res.json({
       status: true,
-      data: flatData,
-      total,
+      data: _result,
     });
   } catch (error) {
     console.error("Error in /member:", error);
@@ -229,6 +257,7 @@ router.get("/api/whatsapp/insight", async (req, res) => {
                         `;
 
     const contentSid = "HX01112eac1bf320e6213b4e2ff6ff060f";
+    const contentSidEnglish = "HX40c31821495f0b6df95dfe383e60196d";
     const simpleMessageContentSid = "HXb1ce9479f3d42819bef456f00448afcc";
 
     
@@ -243,11 +272,13 @@ router.get("/api/whatsapp/insight", async (req, res) => {
             });
         });
         
-        const [undelivered, delivered, read, simpleMessageDelivered, simpleMessageUndelivered ,notAttend, attend] = await Promise.all(
+        const [undelivered, delivered,deliveredEnglish ,read, readEnglish , simpleMessageDelivered, simpleMessageUndelivered ,notAttend, attend] = await Promise.all(
           [
             runQuery(db, deliveryCountQuery, ["undelivered", contentSid]),
             runQuery(db, deliveryCountQuery, ["delivered", contentSid]),
+            runQuery(db, deliveryCountQuery, ["delivered", contentSidEnglish]),
             runQuery(db, deliveryCountQuery, ["read", contentSid]),
+            runQuery(db, deliveryCountQuery, ["read", contentSidEnglish]),
             runQuery(db, deliveryCountQuery, ["delivered", simpleMessageContentSid]),
             runQuery(db, deliveryCountQuery, ["undelivered", simpleMessageContentSid]),
             runQuery(db, buttonCountQuery, ["NOT_ATTEND"]),
@@ -258,7 +289,9 @@ router.get("/api/whatsapp/insight", async (req, res) => {
     const stats = {
       undelivered: undelivered[0]?.to_number ?? 0,
       delivered: delivered[0]?.to_number ?? 0,
+      deliveredEnglish: deliveredEnglish[0]?.to_number ?? 0,
       read: read[0]?.to_number ?? 0,
+      readEnglish: readEnglish[0]?.to_number ?? 0,
       simpleMessageDelivered: simpleMessageDelivered[0]?.to_number ?? 0,
       simpleMessageUndelivered: simpleMessageUndelivered[0]?.to_number ?? 0,
       attend: attend[0]?.to_number ?? 0,
