@@ -1,145 +1,185 @@
-import { Pie, PieChart, TooltipIndex } from 'recharts';
-import { RechartsDevtools } from '@recharts/devtools';
-import { useState, useEffect, useCallback } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LabelList } from "recharts";
-import customLegend from './CustomLegend';
-import renderPercentLabel from './CustomLabel';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+import { Bar } from "react-chartjs-2";
+import { useState, useEffect, useCallback } from "react";
 
-// #endregion
-export default function WhastAppReport({
-    isAnimationActive = true,
-    defaultIndex,
-}: {
-    isAnimationActive?: boolean;
-    defaultIndex?: TooltipIndex;
-}) {
+/**
+ * 🔴 IMPORTANT
+ * ChartDataLabels MUST be registered
+ */
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+  ChartDataLabels
+);
 
+export default function WhastAppReport() {
+  const [loading, setLoading] = useState(true);
+  const [panelData, setPanelData] = useState<any>(null);
 
-    const [loading, setLoading] = useState(true);
-    const [panelData, setPanelData] = useState(null);
+  const fetchReport = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SERVERURL}/api/whatsapp/insight`,
+        { credentials: "include" }
+      );
 
-
-    const fetchReport = useCallback(async () => {
-        try {
-
-
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/insight`, { credentials: "include" });
-
-            if (response.status === 200) {
-                const response_data = await response.json();
-
-                setPanelData(response_data.data);
-
-            }
-        } catch (err) {
-            console.error('Failed to fetch:', err);
-        } finally {
-            setLoading(false);
-        }
-    },
-
-        []
-    );
-
-    useEffect(() => {
-
-        fetchReport();
-    }, [fetchReport]);
-
-      const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 600);
-    handleResize(); // initial check
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+      if (response.ok) {
+        const json = await response.json();
+        setPanelData(json.data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    fetchReport();
+  }, [fetchReport]);
 
+  if (loading) return <div>Loading report…</div>;
+  if (!panelData) return <div>No data</div>;
 
+  // ─────────────────────────────
+  // DATA
+  // ─────────────────────────────
+  const data = {
+    labels: ["Deliveries", "User Responses", "Sylvia Responses"],
+    datasets: [
+      // Deliveries
+      {
+        label: "Delivered",
+        data: [
+          (panelData.delivered ?? 0) + (panelData.deliveredEnglish ?? 0),
+          0,
+          0,
+        ],
+        backgroundColor: "#2563eb",
+        stack: "deliveries",
+      },
+      {
+        label: "Read",
+        data: [
+          (panelData.read ?? 0) + (panelData.readEnglish ?? 0),
+          0,
+          0,
+        ],
+        backgroundColor: "#0ce8d9",
+        stack: "read",
+      },
 
-    if (loading) return <div>Loading report…</div>;
-    if (!panelData) return <div>No data available</div>;
+      // User Responses
+      {
+        label: "Attend",
+        data: [0, panelData.attend ?? 0, 0],
+        backgroundColor: "#44e00b",
+        stack: "responses",
+      },
+      {
+        label: "Not Attend",
+        data: [0, panelData.notAttend ?? 0, 0],
+        backgroundColor: "#dc2626",
+        stack: "responses",
+      },
+      {
+        label: "Viewed, No Reply",
+        data: [
+          0,
+          (panelData.read ?? 0) -
+            ((panelData.attend ?? 0) + (panelData.notAttend ?? 0)),
+          0,
+        ],
+        backgroundColor: "#8f8d8d",
+        stack: "responses",
+      },
 
+      // Sylvia Responses
+      {
+        label: "Sylvia Delivered",
+        data: [0, 0, panelData.simpleMessageDelivered ?? 0],
+        backgroundColor: "#2563eb",
+        stack: "sylvia",
+      },
+      {
+        label: "Sylvia Undelivered",
+        data: [0, 0, panelData.simpleMessageUndelivered ?? 0],
+        backgroundColor: "#000",
+        stack: "sylvia",
+      },
+    ],
+  };
 
-    const chartData = [
-        {
-            name: "Deliveries",
-            deliveryCount: panelData.delivered ?? 0,
-            readCount: panelData.read ?? 0,
+  // ─────────────────────────────
+  // OPTIONS
+  // ─────────────────────────────
+  const options = {
+    interaction: {
+    mode: null,
+  },
+  hover: {
+    mode: null,
+  },
 
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      tooltip: {
+         enabled: false,
+        mode: "index" as const,
+        intersect: false,
+      },
+
+      // ✅ DATA LABELS (NUMBERS ON BARS)
+      datalabels: {
+        color: "#fff",
+        font: {
+          weight: "bold" as const,
+          size: 12,
         },
-        {
-            name: "User Responses",
-            responseAttend: panelData.attend ?? 0,
-            responseNotAttend: panelData.notAttend ?? 0,
-            stall: panelData.read - (panelData.attend + panelData.notAttend) ,
+        formatter: (value: number) => (value > 0 ? value : ""),
+        anchor: "center" as const,
+        align: "center" as const,
+        clamp: true,
+      },
+    },
+    scales: {
+      x: {
+        stacked: true,
+        grid: {
+          display: false,
         },
-        {
-            name: "Sylvia Responses",
-            simpleResponseCount: panelData.simpleMessageDelivered ?? 0,
-            simpleUndeliveredCount: panelData.simpleMessageUndelivered ?? 0,
+      },
+      y: {
+        stacked: true,
+        beginAtZero: true,
+      },
+    },
+    datasets: {
+      bar: {
+        barPercentage: 1,
+        categoryPercentage: 1,
+      },
+    },
+  };
 
-        },
-    ];
-
-
-const bars = [
-  { dataKey: "deliveryCount", fill: "#2563eb", name: "Delivered", stackId: undefined },         // Indigo 600
-  { dataKey: "readCount", fill: "#0ce8d9", name: "Read", stackId: undefined },                  // Blue 600
-  { dataKey: "responseAttend", fill: "#44e00b", name: "Attend", stackId: "a" },                // Green 600
-  { dataKey: "responseNotAttend", fill: "#dc2626", name: "Not Attend", stackId: "a" },         // Red 600
-  { dataKey: "stall", fill: "#8f8d8d", name: "Viewed, No Reply", stackId: "a" },         // Red 600
-  { dataKey: "simpleResponseCount", fill: "#2563eb", name: "Sylvia Responses (Delivered)", stackId: "b" }, // Sky 500
-  { dataKey: "simpleUndeliveredCount", fill: "#000", name: "Sylvia Responses (Undelivered)", stackId: "b" }, // Purple 700
-];
-
-    return (
-        <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-            <BarChart width={700} height={400} data={chartData} responsive margin={{ bottom: isMobile ? 0 : 80, right: 30, left: 20, top: 20 }}
-                style={{ width: '100%', maxWidth: '700px', maxHeight: '70vh', aspectRatio: 1.618, }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                    dataKey="name"
-                    interval={0}
-                    tick={isMobile ? null : { angle: 45, textAnchor: 'end', dy: 80 }}
-                />
-                <YAxis width="auto" />
-                <Legend
-          layout={isMobile ? "horizontal" : "vertical"}
-          align={isMobile ? "center" : "left"}
-          verticalAlign={isMobile ? "bottom" : "top"}
-          content={customLegend}
-        />
-                <>
-                    {bars.map(({ dataKey, fill, name, stackId }) => (
-                        <Bar
-                            key={dataKey}
-                            dataKey={dataKey}
-                            fill={fill}
-                            name={name}
-                            stackId={stackId}
-                            barSize={stackId ? 80 : undefined} // only set barSize for stacked bars if you want
-                            isAnimationActive={isAnimationActive}
-                        >
-                            {/* <LabelList content={renderPercentLabel} /> */}
-                            <LabelList
-                                dataKey={dataKey}
-                                style={{ fill: "#000", fontWeight: "bold", fontSize: 12 }}
-                                position="middle"
-                            />
-                        </Bar>
-                    ))}
-                </>
-                <RechartsDevtools />
-            </BarChart>
-
-        </div>
-    );
-
-
-
-
-
-
+  return (
+    <div style={{ height: 400, width: '100%', margin: "0 auto" }}>
+      <Bar data={data} options={options} />
+    </div>
+  );
 }
