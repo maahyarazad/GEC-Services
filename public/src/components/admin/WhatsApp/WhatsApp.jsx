@@ -480,6 +480,7 @@ useEffect(() => {
                                     rows={responses}
                                     columns={responseColumns({ onViewJson })}
                                      paginationModel={_paginationModel}
+                                         onPaginationModelChange={_setPaginationModel}
                                     rowsPerPageOptions={[25, 50, 100]}
                                     pagination
                                     disableRowSelectionOnClick

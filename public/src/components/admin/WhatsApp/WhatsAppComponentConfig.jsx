@@ -44,8 +44,8 @@ export const columns = ({ onViewJson }) => [
 
 export const responseColumns = ({ onViewJson }) => [
   { field: 'id', headerName: 'ID', width: 70, hide: true },
-  { field: 'full_name', headerName: 'Full Name', width: 160, filterable: true },
   { field: 'received_at', headerName: 'Received ar', width: 160, filterable: true },
+  { field: 'full_name', headerName: 'Full Name', width: 160, filterable: true },
   { field: 'WaId', headerName: 'From Number', width: 160, filterable: true },
   { field: 'ProfileName', headerName: 'Profile Name', width: 200, filterable: true },
   { field: 'MessageType', headerName: 'Type', width: 100, filterable: true },
