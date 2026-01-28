@@ -58,7 +58,7 @@ function hasPlaceholders(text) {
   return /{{\s*[^}]+\s*}}/.test(text);
 }
 
-const contactBookData = async (conditions) => {
+const contactBookData = (conditions) => {
   const query = `
       SELECT *
       FROM contact_book
@@ -71,15 +71,10 @@ const contactBookData = async (conditions) => {
       GROUP BY phone order by id DESC
     `;
 
-  const result = await new Promise((resolve, reject) => {
-    db.all(query, [], (err, rows) => {
-      if (err) {
-        console.error("DB error:", err);
-        return reject(err);
-      }
-      resolve(rows);
-    });
-  });
+     const stmt = db.prepare(query);
+  const result = stmt.all();
+
+
 
   return result;
 };
@@ -120,7 +115,7 @@ const messageSender = async (req) => {
         conditions.language = template.language;
       }
 
-      const contactBook = await contactBookData(conditions);
+      const contactBook = contactBookData(conditions);
       const randomContacts = getRandomItems(contactBook, 350);
 
       const batchSize = 20; // safe batch size below max throughput
@@ -408,15 +403,8 @@ async function handleAutoResponse(From, ButtonPayload) {
         WHERE cb.phone = '${from}'
     `;
 
-    const contactInfo = await new Promise((resolve, reject) => {
-      db.all(query, [], (err, rows) => {
-        if (err) {
-          console.error("DB error:", err);
-          return reject(err);
-        }
-        resolve(rows);
-      });
-    });
+    const stmt = db.prepare(query);
+    const contactInfo = stmt.all(); // synchronous, returns rows array
 
     const phoneList = [{ id: "8176278162873", phone: contactInfo[0].phone }];
     // const media_template = contactInfo[0].type === 'club_member' ? "HX4974a2a0c07f4b9d7b31db0737e87d50" : "HX6b3e75b231d4e0a205d575c3f90b27d3";
