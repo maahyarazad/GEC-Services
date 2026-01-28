@@ -223,7 +223,7 @@ router.post(
       await handleAutoResponse(From, ButtonPayload);
 
       // Fire and forget: save raw payload + log message to DB
-      await dbService.createSafe("twilio_responses", {
+        dbService.create("twilio_responses", {
         source: "twilio",
         event_type: "whatsapp.message.received",
         payload: JSON.stringify(req.body),

@@ -414,7 +414,7 @@ const RegistrationList = () => {
     const getMemberCount = useCallback(async () => {
         try {
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-get-count/`, {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-count/`, {
                 method: 'GET',
                 credentials: "include"
             });
@@ -428,7 +428,7 @@ const RegistrationList = () => {
             }
 
 
-            setMemberCount(respnse_data.total.count)
+            setMemberCount(respnse_data.total)
 
         } catch (err) {
             console.error('Error fetching data:', err);

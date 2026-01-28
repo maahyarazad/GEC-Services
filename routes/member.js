@@ -75,7 +75,7 @@ router.get('/api/member', async (req, res) => {
     }
 });
 
-router.get('/api/member-get-count', async (req, res) => {
+router.get('/api/member-count', async (req, res) => {
     try {
 
         const total = await dbService.countExact("member", "active_member", true);
@@ -112,7 +112,7 @@ router.post("/api/member",  upload.single('attachment_file'), async (req, res) =
             data.attachment_file = file.originalname
         }
 
-        const create_result = await dbService.createSafe(table_name, data);
+        const create_result = dbService.create(table_name, data);
 
         if (create_result.status) {
             // Todo: send email

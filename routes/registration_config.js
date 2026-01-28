@@ -85,7 +85,7 @@ router.post(
         );
         console.log("check duplicate record");
 
-        if (duplicate_record && duplicate_record.id !== existing.id) {
+        if (duplicate_record.length > 0 && duplicate_record[0].id !== existing.id) {
           return res.status(400).json({
             status: false,
             message: "A duplicate record with the same page URL was found.",

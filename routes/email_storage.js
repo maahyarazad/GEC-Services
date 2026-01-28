@@ -17,7 +17,7 @@ router.post('/news-letter-email/', async (req, res) => {
     const userAgent = req.get('User-Agent');
 
     // Save to DB (include metadata)
-    const response = await dbService.createSafe("news_letter_emails", {
+    const response = dbService.create("news_letter_emails", {
       email,
       request_source: fullUrl,
     });

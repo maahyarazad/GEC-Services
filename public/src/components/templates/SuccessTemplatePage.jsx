@@ -15,9 +15,11 @@ const SuccessTemplatePage = ({}) => {
     const currentYear = new Date().getFullYear();
 
     const fetchPaymentStatus = async (checkoutId) => {
+
         if (!checkoutId) return;
 
         try {
+            
             const response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/payment/status/${checkoutId}`, {
                 method: 'GET',
@@ -88,6 +90,7 @@ const SuccessTemplatePage = ({}) => {
 
     const fetchData = useCallback(async () => {
         try {
+
             setLoading(true);
 
             // const value = location.pathname;
@@ -106,11 +109,11 @@ const SuccessTemplatePage = ({}) => {
             }
             const queryParams = new URLSearchParams(window.location.search);
             const values = await response.json();
-
+            debugger;
             if (values) {
                 values.rows.map(async (x) => {
 
-                    if (x.loginRequired === "false") {
+                    if (x.paymentRequired === "true") {
 
                         const reference = queryParams.get("reference");
                         const checkout = queryParams.get("checkout");

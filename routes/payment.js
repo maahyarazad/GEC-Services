@@ -111,7 +111,7 @@ router.post("/payment/create-record", upload.none(), async (req, res) => {
 
     try {
 
-        create_result = await dbService.createSafe(table_name, sanitized);
+        create_result = dbService.create(table_name, sanitized);
 
         const order = await prepareOrder(data, userTimezone);
 
@@ -413,7 +413,7 @@ async function handleRegistration(data, sanitized) {
 
 
         // Check registration key and max tokens
-        const key = await dbService.findExact("registration_keys", "key", data.registration_code);
+        //const key = await dbService.findExact("registration_keys", "key", data.registration_code);
 
         // if (!file) {
         //     const max_token_value = await dbService.findExact("registration_config", "page", data.event);
@@ -466,7 +466,7 @@ async function handleRegistration(data, sanitized) {
             company_data__.event = event;
             company_data__.event_id = event_id;
 
-            create_result = await dbService.createSafe(table_name, company_data__);
+            create_result = dbService.create(table_name, company_data__);
             await company_data_confirmation_email(data);
         } else if (data.gic_data) {
             table_name = "GIC_Users";
@@ -508,7 +508,7 @@ async function handleRegistration(data, sanitized) {
                 data.metadata_json = JSON.stringify(metadata);
              }
 
-            create_result = await dbService.createSafe(table_name, data);
+            create_result = dbService.create(table_name, data);
         }
 
     } catch (error) {

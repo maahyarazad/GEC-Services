@@ -61,16 +61,29 @@ const dbService = {
         return { lastID: info.lastInsertRowid, changes: info.changes };
     },
 
-    create: (table, data) => {
-        const keys = Object.keys(data);
-        const values = Object.values(data);
-        const placeholders = keys.map(() => "?").join(", ");
-        const sql = `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${placeholders})`;
+create: (table, data) => {
+  try {
+    const keys = Object.keys(data);
+    const values = Object.values(data).map(value => {
+      if (typeof value === "boolean") {
+        return value ? 1 : 0;
+      }
+      return value;
+    });
+    const placeholders = keys.map(() => "?").join(", ");
+    const sql = `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${placeholders})`;
 
-        const stmt = db.prepare(sql);
-        const info = stmt.run(...values);
-        return { id: info.lastInsertRowid };
-    },
+    const stmt = db.prepare(sql);
+    const info = stmt.run(...values);
+
+    return { id: info.lastInsertRowid, status: true };
+  } catch (error) {
+    // You can log the error here if you want
+    console.error("DB insert error:", error);
+    return { status: false, error: error.message || error.toString() };
+  }
+},
+
 
     findAll: (table) => {
         const sql = `SELECT * FROM ${table}`;
@@ -103,7 +116,13 @@ const dbService = {
         }
 
         const setClause = Object.keys(updates).map(key => `${key} = ?`).join(", ");
-        const setValues = Object.values(updates);
+        
+        const setValues = Object.values(updates).map(value => {
+            if (typeof value === "boolean") {
+                return value ? 1 : 0;
+            }
+            return value;
+            });
 
         const whereClause = Object.keys(where).map(key => `${key} = ?`).join(" AND ");
         const whereValues = Object.values(where);
@@ -117,7 +136,12 @@ const dbService = {
 
     update: (table, id, data) => {
         const keys = Object.keys(data);
-        const values = Object.values(data);
+       const values = Object.values(data).map(value => {
+      if (typeof value === "boolean") {
+        return value ? 1 : 0;
+      }
+      return value;
+    });
         const setClause = keys.map(key => `${key} = ?`).join(", ");
         const sql = `UPDATE ${table} SET ${setClause} WHERE id = ?`;
 
@@ -143,7 +167,7 @@ const dbService = {
     findByColumn: (table, column, pattern) => {
         const sql = `SELECT * FROM ${table} WHERE ${column} LIKE ?`;
         const param = `%${pattern}%`;
-        return db.prepare(sql).get(param);
+        return db.prepare(sql).all(param);
     },
 
     findExactWithConditions: (table, conditions) => {
@@ -160,12 +184,26 @@ const dbService = {
         }).join(" AND ");
 
         const sql = `SELECT * FROM ${table} WHERE ${whereClause}`;
-        return db.prepare(sql).get(...values);
+        return db.prepare(sql).all(...values);
     },
 
     findExact: (table, column, pattern) => {
+         if (pattern === undefined || pattern === null) {
+        throw new Error("Pattern must be defined");
+    }
+
+    if (typeof pattern === 'boolean') {
         const sql = `SELECT * FROM ${table} WHERE ${column} = ?`;
-        return db.prepare(sql).get(pattern);
+        return db.prepare(sql).all(pattern ?1 : 0 );
+    }
+
+    // Handle other types (string, number, bigint, buffer)
+    if (typeof pattern !== 'string' && typeof pattern !== 'number' && typeof pattern !== 'bigint' && !Buffer.isBuffer(pattern)) {
+        throw new Error("Invalid pattern type passed to countExact");
+    }
+
+        const sql = `SELECT * FROM ${table} WHERE ${column} = ?`;
+        return db.prepare(sql).all(pattern);
     },
 
 countExact: (table, column, pattern) => {
@@ -326,7 +364,15 @@ countExact: (table, column, pattern) => {
     insertWithKeys: (table_name, registration_data, code_list) => {
         const insertTransaction = db.transaction(() => {
             const keys = Object.keys(registration_data);
-            const values = Object.values(registration_data);
+            
+            const values = Object.values(registration_data).map(value => {
+                if (typeof value === "boolean") {
+                    return value ? 1 : 0;
+                }
+                return value;
+                });
+
+
             const placeholders = keys.map(() => "?").join(", ");
             const sql = `INSERT INTO ${table_name} (${keys.join(", ")}) VALUES (${placeholders})`;
 
@@ -357,7 +403,14 @@ countExact: (table, column, pattern) => {
 
     findByConditions: (table, conditions) => {
         const keys = Object.keys(conditions);
-        const values = Object.values(conditions);
+      
+            const values = Object.values(conditions).map(value => {
+                if (typeof value === "boolean") {
+                    return value ? 1 : 0;
+                }
+                return value;
+                });
+
 
         if (keys.length === 0) {
             throw new Error("At least one condition is required.");

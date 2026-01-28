@@ -126,7 +126,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
             company_data__.event = event;
             company_data__.event_id = event_id;
 
-            create_result = await dbService.createSafe(table_name, company_data__);
+            create_result = dbService.create(table_name, company_data__);
         } else if (data.gic_data) {
 
             table_name = "GIC_Users";
@@ -148,7 +148,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
             const initialPassword = generatePassword();
             gic_data__.password_hash = await hashPassword(initialPassword);
             gic_data__.change_password_required = "true";
-            const create_result = await dbService.createSafe(table_name, gic_data__);
+            const create_result = dbService.create(table_name, gic_data__);
 
             if (create_result.status) {
                 await gic__reset_password({ email: gic_data__.email, password: initialPassword });
@@ -222,7 +222,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                 });
             }
 
-            create_result = await dbService.createSafe(table_name, data);
+            create_result = dbService.create(table_name, data);
         }
 
         if (create_result.status) {
@@ -443,7 +443,7 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
 
         
             
-            const create_result = await dbService.createSafe("registration", registerant);
+            const create_result = dbService.create("registration", registerant);
  
 
             if (create_result.status) {

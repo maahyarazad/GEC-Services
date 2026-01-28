@@ -15,7 +15,7 @@ const QuickReply = ({ CloseModal, incoming_message }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        debugger;
+        // debugger;
         try {
             if (!message.trim()) {
                 showSnackbar("Cannot send empty message", "warning");
