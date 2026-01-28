@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs").promises;
-const sqlite3 = require("sqlite3").verbose();
+
 const app = express();
 const PORT = process.env.PORT || 5500;
 const session = require('express-session');
@@ -30,31 +30,28 @@ const authorize = require("./middleware/auth");
 const { createWebSocketServer } = require("./websocket/admin.js");
 const cron = require('node-cron');
 // Setup DB connection
-const db = new sqlite3.Database("./app.db", (err) => {
-    if (err) {
-        console.error("Failed to connect to database:", err.message);
-    } else {
-        console.log("Connected to SQLite database.");
-    }
-});
+const betterSqlite3 = require('better-sqlite3');
 
 
 
+let db;
 
+try {
+    db = new betterSqlite3(path.resolve(__dirname, 'app.db'));
+    console.log("Connected to SQLite database (better-sqlite3).");
+} catch (err) {
+    console.error("Failed to connect to database:", err.message);
+    process.exit(1);
+}
 
-// Read and apply SQL schema from app_tables.sql
+// Read and apply SQL schema from create_tables.sql
 (async () => {
     try {
-        const sql = await fs.readFile("./create_tables.sql", "utf8");
-        db.exec(sql, (err) => {
-            if (err) {
-                console.error("Failed to create tables:", err.message);
-            } else {
-                console.log("Tables created or already exist.");
-            }
-        });
+        const sql = await fs.readFile(path.resolve(__dirname, 'create_tables.sql'), 'utf8');
+        db.exec(sql);
+        console.log("Tables created or already exist.");
     } catch (err) {
-        console.error("Error reading SQL file:", err.message);
+        console.error("Failed to create tables or read SQL file:", err.message);
     }
 })();
 

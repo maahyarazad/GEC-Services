@@ -3,40 +3,45 @@ const router = express.Router();
 const dbService = require("../services/dbService");
 const db = dbService.getDB();
 
-router.post("/api/contacts/create", async (req, res) => {
+router.post("/api/contacts/create", (req, res) => {
   try {
     const contactData = req.body;
 
-    const duplicate = await dbService.findByColumn(
-      "contact_book",
-      "phone",
-      contactData.phone
-    );
+    // Check if phone already exists (returns array)
+    const duplicates = dbService.findByColumn("contact_book", "phone", contactData.phone);
 
-    if (duplicate)
+    if (duplicates.length > 0) {
       return res.status(409).json({
         status: "error",
         message: "Contact already exists",
       });
+    }
 
-    const result = await dbService.createSafe("contact_book", contactData);
+    const result = dbService.create("contact_book", contactData);
 
-    res
-      .status(200)
-      .json({ status: result.status, message: "Contact created successfully" });
+    res.status(200).json({
+      status: true,
+      message: "Contact created successfully",
+      id: result.id,
+    });
   } catch (error) {
     console.error("Failed to create contact:", error.message);
-    res
-      .status(500)
-      .json({ status: false, message: "Failed to create contact" });
+    res.status(500).json({ status: false, message: "Failed to create contact" });
   }
 });
 
-router.delete("/api/contacts", async (req, res) => {
+router.delete("/api/contacts", (req, res) => {
   try {
     const { id } = req.body;
+    if (!id) {
+      return res.status(400).json({ status: false, message: "ID is required" });
+    }
 
-    const result = await dbService.remove("contact_book", id);
+    const result = dbService.remove("contact_book", id);
+
+    if (result.changes === 0) {
+      return res.status(404).json({ status: false, message: "Contact not found" });
+    }
 
     res.status(200).json({
       status: true,
@@ -44,70 +49,61 @@ router.delete("/api/contacts", async (req, res) => {
     });
   } catch (error) {
     console.error("Failed to delete contact:", error.message);
-    res.status(500).json({
-      status: false,
-      message: "Failed to delete contact",
-    });
+    res.status(500).json({ status: false, message: "Failed to delete contact" });
   }
 });
 
-router.put("/api/contacts/modify", async (req, res) => {
+router.put("/api/contacts/modify", (req, res) => {
   try {
     const contactData = req.body;
+    if (!contactData.id) {
+      return res.status(400).json({ status: false, message: "ID is required" });
+    }
 
-    const duplicate = await dbService.findByColumn(
-      "contact_book",
-      "phone",
-      contactData.phone
-    );
+    // Check for duplicates excluding current contact id
+    const duplicates = dbService.findByColumn("contact_book", "phone", contactData.phone);
+    const duplicateExists = duplicates.some(d => d.id !== contactData.id);
 
-    if (duplicate && duplicate.id !== contactData.id) {
+    if (duplicateExists) {
       return res.status(409).json({
         status: "error",
         message: "Contact with this phone number already exists",
       });
     }
 
-    const result = await dbService.update(
-      "contact_book",
-      contactData.id,
-      contactData
-    );
+    const result = dbService.update("contact_book", contactData.id, contactData);
+
+    if (result.changes === 0) {
+      return res.status(404).json({ status: false, message: "Contact not found" });
+    }
+
     res.status(200).json({
-      status: result.status,
+      status: true,
       message: "Contact updated successfully",
     });
   } catch (error) {
     console.error("Failed to update contact:", error.message);
-    res.status(500).json({
-      status: false,
-      message: "Failed to update contact",
-    });
+    res.status(500).json({ status: false, message: "Failed to update contact" });
   }
 });
 
-router.get("/api/contacts", async (req, res) => {
+router.get("/api/contacts", (req, res) => {
   try {
-    
+    const blacklistFilter = req.query.blacklist;
+    // Convert query param to integer, default to 0 if undefined
+    const blacklist = blacklistFilter === undefined ? 0 : (blacklistFilter === '1' || blacklistFilter === 'true' ? 1 : 0);
 
-    const { blacklist } = req.query;
-
+    // Use parameterized query to avoid injection
     const query = `
       SELECT *
       FROM contact_book
-      WHERE phone IS NOT NULL AND blacklist = ${blacklist === undefined ? 0 : 1}
-      GROUP BY phone order by id DESC
+      WHERE phone IS NOT NULL AND blacklist = ?
+      GROUP BY phone
+      ORDER BY id DESC
     `;
 
-    const result = await new Promise((resolve, reject) => {
-      db.all(query, [], (err, rows) => {
-        if (err) {
-          console.error("DB error:", err);
-          return reject(err);
-        }
-        resolve(rows);
-      });
-    });
+    const stmt = db.prepare(query);
+    const result = stmt.all(blacklist);
 
     res.status(200).json({
       status: true,
@@ -121,28 +117,5 @@ router.get("/api/contacts", async (req, res) => {
     });
   }
 });
-
-// router.get('/api/contacts', async (req, res) => {
-//   try {
-//     const db = dbService.getDB();
-
-//     const query = `
-//       SELECT COUNT(DISTINCT phone) AS total_contacts
-//       FROM contact_book
-//     `;
-
-//       res.status(200).json({
-//         status: true,
-//         contacts: result,
-//       });
-
-//   } catch (error) {
-//     console.error('Failed to fetch contacts:', error);
-//     res.status(500).json({
-//       status: false,
-//       message: 'Failed to fetch contacts',
-//     });
-//   }
-// });
 
 module.exports = router;

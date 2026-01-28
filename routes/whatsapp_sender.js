@@ -11,12 +11,12 @@ const crypto = require("crypto");
 
 const dbService = require("../services/dbService");
 const db = dbService.getDB();
-const fs = require('fs');
-const path = require('path');
-const { pipeline, Readable } = require('stream');
-const { promisify } = require('util');
+const fs = require("fs");
+const path = require("path");
+const { pipeline, Readable } = require("stream");
+const { promisify } = require("util");
 const streamPipeline = promisify(pipeline);
-const fetch = require('node-fetch'); 
+const fetch = require("node-fetch");
 
 const MessagingResponse = require("twilio").twiml.MessagingResponse;
 
@@ -64,9 +64,7 @@ router.post("/api/whatsapp/quick-reply", async (req, res) => {
 
     const _req = {
       body: {
-        phoneList: [
-          { id: "99999", phone: `+${incoming_message.WaId}` },
-        ],
+        phoneList: [{ id: "99999", phone: `+${incoming_message.WaId}` }],
         template: simple_response,
         payload: { 1: message },
       },
@@ -150,18 +148,11 @@ ORDER BY metadata_createdAt DESC;
                     
             `;
 
-    const _result = await new Promise((resolve, reject) => {
-      db.all(query, [], (err, rows) => {
-        if (err) {
-          console.error("DB error:", err);
-          return reject(err);
-        }
-        resolve(rows);
-      });
-    });
+    const stmt = db.prepare(query);
+    const rows = stmt.all();
 
-    const result = _result.map((row) => ({
-    //   id: crypto.randomUUID(),
+    const result = rows.map((row) => ({
+      // id: crypto.randomUUID(), // uncomment if you want unique IDs
       ...row,
       templateFriendlyName: templateMap.get(row.contentSid) ?? null,
     }));
@@ -178,8 +169,7 @@ ORDER BY metadata_createdAt DESC;
 
 router.get("/api/whatsapp/twilio-response-logs", async (req, res) => {
   try {
-    
-      const query = `
+    const query = `
 WITH ranked AS (
   SELECT 
     tr.id,
@@ -205,15 +195,8 @@ ORDER BY id DESC;
 
             `;
 
-    const _result = await new Promise((resolve, reject) => {
-      db.all(query, [], (err, rows) => {
-        if (err) {
-          console.error("DB error:", err);
-          return reject(err);
-        }
-        resolve(rows);
-      });
-    });
+    const stmt = db.prepare(query);
+    const _result = stmt.all();
 
     return res.json({
       status: true,
@@ -252,76 +235,117 @@ router.post(
 );
 
 router.get("/api/whatsapp/insight", async (req, res) => {
-  try {
-    const deliveryCountQuery = `
-                            SELECT 
-                                COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
-                            FROM twilio_delivery td
-                            LEFT JOIN twilio_template_message ttm
-                                ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
-                            WHERE json_extract(td.response, '$.MessageStatus') = ?
-                                AND ttm.contentSid = ?
-                            `;
+try {
+  
+  const combinedQuery = `
+    SELECT 'undelivered' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
+    FROM twilio_delivery td
+    LEFT JOIN twilio_template_message ttm
+      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+    WHERE json_extract(td.response, '$.MessageStatus') = 'undelivered'
+      AND ttm.contentSid = ?
 
-    const buttonCountQuery = `
-                        SELECT COUNT(*) AS to_number
-                        FROM twilio_responses
-                        WHERE json_extract(payload, '$.ButtonPayload') = ?
-                        `;
+    UNION ALL
 
-    const contentSid = "HX01112eac1bf320e6213b4e2ff6ff060f";
-    const contentSidEnglish = "HX40c31821495f0b6df95dfe383e60196d";
-    const simpleMessageContentSid = "HXb1ce9479f3d42819bef456f00448afcc";
+    SELECT 'delivered' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
+    FROM twilio_delivery td
+    LEFT JOIN twilio_template_message ttm
+      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+    WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
+      AND ttm.contentSid = ?
 
-    
-    const runQuery = (db, query, params = []) =>
-        new Promise((resolve, reject) => {
-            db.all(query, params, (err, rows) => {
-                if (err) {
-                    console.error("DB error:", err);
-                    return reject(err);
-                }
-                resolve(rows);
-            });
-        });
-        
-        const [undelivered, delivered,deliveredEnglish ,read, readEnglish , simpleMessageDelivered, simpleMessageUndelivered ,notAttend, attend] = await Promise.all(
-          [
-            runQuery(db, deliveryCountQuery, ["undelivered", contentSid]),
-            runQuery(db, deliveryCountQuery, ["delivered", contentSid]),
-            runQuery(db, deliveryCountQuery, ["delivered", contentSidEnglish]),
-            runQuery(db, deliveryCountQuery, ["read", contentSid]),
-            runQuery(db, deliveryCountQuery, ["read", contentSidEnglish]),
-            runQuery(db, deliveryCountQuery, ["delivered", simpleMessageContentSid]),
-            runQuery(db, deliveryCountQuery, ["undelivered", simpleMessageContentSid]),
-            runQuery(db, buttonCountQuery, ["NOT_ATTEND"]),
-            runQuery(db, buttonCountQuery, ["ATTEND"]),
-          ]
-        );
-        
-    const stats = {
-      undelivered: undelivered[0]?.to_number ?? 0,
-      delivered: delivered[0]?.to_number ?? 0,
-      deliveredEnglish: deliveredEnglish[0]?.to_number ?? 0,
-      read: read[0]?.to_number ?? 0,
-      readEnglish: readEnglish[0]?.to_number ?? 0,
-      simpleMessageDelivered: simpleMessageDelivered[0]?.to_number ?? 0,
-      simpleMessageUndelivered: simpleMessageUndelivered[0]?.to_number ?? 0,
-      attend: attend[0]?.to_number ?? 0,
-      notAttend: notAttend[0]?.to_number ?? 0,
-    };
+    UNION ALL
 
-    return  res
-      .status(200)
-      .json({ status: true, data:stats });
+    SELECT 'deliveredEnglish' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
+    FROM twilio_delivery td
+    LEFT JOIN twilio_template_message ttm
+      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+    WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
+      AND ttm.contentSid = ?
 
-  } catch (err) {
-    console.error("Failed to fetch insights", err);
-    
-    res.status(500).json({ status: false, message: "Server error" });
-  }
+    UNION ALL
+
+    SELECT 'read' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
+    FROM twilio_delivery td
+    LEFT JOIN twilio_template_message ttm
+      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+    WHERE json_extract(td.response, '$.MessageStatus') = 'read'
+      AND ttm.contentSid = ?
+
+    UNION ALL
+
+    SELECT 'readEnglish' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
+    FROM twilio_delivery td
+    LEFT JOIN twilio_template_message ttm
+      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+    WHERE json_extract(td.response, '$.MessageStatus') = 'read'
+      AND ttm.contentSid = ?
+
+    UNION ALL
+
+    SELECT 'simpleMessageDelivered' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
+    FROM twilio_delivery td
+    LEFT JOIN twilio_template_message ttm
+      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+    WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
+      AND ttm.contentSid = ?
+
+    UNION ALL
+
+    SELECT 'simpleMessageUndelivered' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
+    FROM twilio_delivery td
+    LEFT JOIN twilio_template_message ttm
+      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+    WHERE json_extract(td.response, '$.MessageStatus') = 'undelivered'
+      AND ttm.contentSid = ?
+
+    UNION ALL
+
+    SELECT 'notAttend' AS type, COUNT(*) AS to_number
+    FROM twilio_responses
+    WHERE json_extract(payload, '$.ButtonPayload') = ?
+
+    UNION ALL
+
+    SELECT 'attend' AS type, COUNT(*) AS to_number
+    FROM twilio_responses
+    WHERE json_extract(payload, '$.ButtonPayload') = ?
+  `;
+
+  // Your content SIDs and button payloads
+  const contentSid = "HX01112eac1bf320e6213b4e2ff6ff060f";
+  const contentSidEnglish = "HX40c31821495f0b6df95dfe383e60196d";
+  const simpleMessageContentSid = "HXb1ce9479f3d42819bef456f00448afcc";
+
+  // Prepare statement and execute with all params
+  const stmt = db.prepare(combinedQuery);
+  const rows = stmt.all(
+    contentSid,           // undelivered
+    contentSid,           // delivered
+    contentSidEnglish,    // deliveredEnglish
+    contentSid,           // read
+    contentSidEnglish,    // readEnglish
+    simpleMessageContentSid, // simpleMessageDelivered
+    simpleMessageContentSid, // simpleMessageUndelivered
+    "NOT_ATTEND",         // notAttend
+    "ATTEND"              // attend
+  );
+
+  // Map rows to a key-value object
+  const stats = {};
+  rows.forEach(({ type, to_number }) => {
+    stats[type] = to_number ?? 0;
+  });
+
+  // Return your JSON response
+  return res.status(200).json({ status: true, data: stats });
+
+} catch (err) {
+  console.error("Failed to fetch insights", err);
+  return res.status(500).json({ status: false, message: "Server error" });
+}
+
 });
-
 
 router.get("/api/whatsapp/download-media", async (req, res) => {
   try {
@@ -337,7 +361,8 @@ router.get("/api/whatsapp/download-media", async (req, res) => {
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
 
-    const authHeader = "Basic " + Buffer.from(`${accountSid}:${authToken}`).toString("base64");
+    const authHeader =
+      "Basic " + Buffer.from(`${accountSid}:${authToken}`).toString("base64");
 
     const response = await fetch(mediaUrl, {
       headers: {

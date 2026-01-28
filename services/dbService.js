@@ -1,110 +1,65 @@
-const sqlite3 = require("sqlite3").verbose();
-const path = require("path");
+const Database = require('better-sqlite3');
+const path = require('path');
+
 const dbPath = path.resolve(__dirname, "../app.db");
-const db = new sqlite3.Database(dbPath);
+const db = new Database(dbPath, process.env.ENVIRONMENT === 'PRODUCTION' ? {} : { verbose: console.log });
 
-const safeWrite = async (query, params = []) => {
-    const maxAttempts = 5;
-    let attempt = 0;
+const paramBuilder = (filters) => {
+    const filterKeys = Object.keys(filters);
+    const whereParts = [];
+    const params = [];
 
-    while (attempt < maxAttempts) {
-        try {
-            const result = await new Promise((resolve, reject) => {
-                db.run(query, params, function (err) {
-                    if (err) return reject(err);
-                    resolve({ id: this.lastID });
-                });
-            });
-            return result; // ✅ Exit loop and function on success
-        } catch (err) {
-            if (err.code === 'SQLITE_BUSY') {
-                attempt++;
-                await new Promise(resolve => setTimeout(resolve, 50));
-            } else {
-                throw err; // Don't retry other errors
-            }
+    filterKeys.forEach(key => {
+        const filterValue = filters[key];
+        const isNumeric =
+            filterValue !== null &&
+            filterValue !== '' &&
+            !isNaN(filterValue) &&
+            !isNaN(parseFloat(filterValue));
+
+        switch (true) {
+            case key === 'r.event':
+                whereParts.push(`${key} = ?`);
+                params.push(`${filterValue}`);
+                break;
+            case filterValue === 'isEmpty':
+                whereParts.push(`(${key} = '' OR ${key} IS NULL)`);
+                break;
+            case filterValue === 'isNotEmpty':
+                whereParts.push(`(${key} <> '' AND ${key} IS NOT NULL)`);
+                break;
+            case isNumeric:
+                whereParts.push(`${key} = ?`);
+                params.push(Number(filterValue));
+                break;
+            case filterValue != null && filterValue !== '':
+                whereParts.push(`${key} LIKE ?`);
+                params.push(`%${filterValue}%`);
+                break;
+            default:
+                break;
         }
-    }
+    });
 
-    throw new Error("Failed to write after retries");
+    return [whereParts, params];
 };
-
-
-const paramBuilder = (filters) =>  {
-            const filterKeys = Object.keys(filters);
-        const whereParts = [];
-        const params = [];
-
-
-        filterKeys.forEach(key => {
-            const filterValue = filters[key];
-
-            // Check if the value is numeric
-            const isNumeric =
-                filterValue !== null &&
-                filterValue !== '' &&
-                !isNaN(filterValue) &&
-                !isNaN(parseFloat(filterValue));
-
-                switch (true) {
-                    case key === 'r.event':
-                        whereParts.push(`${key} = ?`);
-                        params.push(`${filterValue}`);
-                        break;
-                    case filterValue === 'isEmpty':
-                    whereParts.push(`(${key} = '' OR ${key} IS NULL)`);
-                    break;
-
-                case filterValue === 'isNotEmpty':
-                    whereParts.push(`(${key} <> '' AND ${key} IS NOT NULL)`);
-                    break;
-
-                case isNumeric:
-                    whereParts.push(`${key} = ?`);
-                    params.push(Number(filterValue));
-                    break;
-
-                case filterValue != null && filterValue !== '':
-                    whereParts.push(`${key} LIKE ?`);
-                    params.push(`%${filterValue}%`);
-                    break;
-
-
-                default:
-                    // no filter condition
-                    break;
-            }
-        });
-
-
-        return [whereParts, params]
-    }
-    
 
 const dbService = {
 
-    getDB : () => {
-        return db
-    },
-    createBulk: (table, rows) => {
-        if (!Array.isArray(rows) || rows.length === 0) {
-            return Promise.resolve([]);
-        }
+    getDB: () => db,
 
-        const keys = Object.keys(rows[0]); // assume all rows have same keys
+    createBulk: (table, rows) => {
+        if (!Array.isArray(rows) || rows.length === 0) return [];
+
+        const keys = Object.keys(rows[0]);
         const placeholders = "(" + keys.map(() => "?").join(", ") + ")";
         const sql = `INSERT INTO ${table} (${keys.join(", ")}) VALUES ${rows.map(() => placeholders).join(", ")}`;
         const values = rows.flatMap(Object.values);
 
-        return new Promise((resolve, reject) => {
-            db.run(sql, values, function (err) {
-                if (err) return reject(err);
-                // this.lastID gives last inserted row, but SQLite doesn't give all IDs
-                resolve({ lastID: this.lastID, changes: this.changes });
-            });
-        });
+        const stmt = db.prepare(sql);
+        const info = stmt.run(...values);
+        return { lastID: info.lastInsertRowid, changes: info.changes };
     },
-
 
     create: (table, data) => {
         const keys = Object.keys(data);
@@ -112,90 +67,53 @@ const dbService = {
         const placeholders = keys.map(() => "?").join(", ");
         const sql = `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${placeholders})`;
 
-        return new Promise((resolve, reject) => {
-            db.run(sql, values, function (err) {
-                if (err) return reject(err);
-                resolve({ id: this.lastID });
-            });
-        });
+        const stmt = db.prepare(sql);
+        const info = stmt.run(...values);
+        return { id: info.lastInsertRowid };
     },
 
     findAll: (table) => {
         const sql = `SELECT * FROM ${table}`;
-        return new Promise((resolve, reject) => {
-            db.all(sql, [], (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows);
-            });
-        });
+        const stmt = db.prepare(sql);
+        return stmt.all();
     },
-
 
     findAllQueryFilter: (table) => {
-        return new Promise((resolve, reject) => {
-            // Step 1: get table schema
-            const pragmaSql = `PRAGMA table_info(${table});`;
+        const pragmaSql = `PRAGMA table_info(${table});`;
+        const columns = db.prepare(pragmaSql).all();
 
-            db.all(pragmaSql, [], (err, columns) => {
-                if (err) return reject(err);
+        const softDeleteColumns = ["isDeleted", "archive", "archived", "deleted"];
+        const foundColumn = columns.find(col => softDeleteColumns.includes(col.name));
 
-                // Step 2: possible soft-delete column names
-                const softDeleteColumns = ["isDeleted", "archive", "archived", "deleted"];
+        const sql = foundColumn
+            ? `SELECT * FROM ${table} WHERE ${foundColumn.name} != 1 OR ${foundColumn.name} IS NULL`
+            : `SELECT * FROM ${table}`;
 
-                // Find if any soft-delete column exists in this table
-                const foundColumn = columns.find(col =>
-                    softDeleteColumns.includes(col.name)
-                );
-
-                // Step 3: build query
-                const sql = foundColumn
-                    ? `SELECT * FROM ${table} WHERE ${foundColumn.name} != 1 OR ${foundColumn.name} IS NULL`
-                    : `SELECT * FROM ${table}`;
-
-                // Step 4: run the query
-                db.all(sql, [], (err, rows) => {
-                    if (err) return reject(err);
-                    resolve(rows);
-                });
-            });
-        });
+        return db.prepare(sql).all();
     },
-
 
     findById: (table, id) => {
         const sql = `SELECT * FROM ${table} WHERE id = ?`;
-        return new Promise((resolve, reject) => {
-            db.get(sql, [id], (err, row) => {
-                if (err) return reject(err);
-                resolve(row);
-            });
-        });
+        return db.prepare(sql).get(id);
     },
 
     updateWhere: (table, updates, where) => {
-        return new Promise((resolve, reject) => {
-            if (!updates || Object.keys(updates).length === 0) {
-                return reject(new Error("No update fields provided"));
-            }
+        if (!updates || Object.keys(updates).length === 0) {
+            throw new Error("No update fields provided");
+        }
 
-            // Build SET clause
-            const setClause = Object.keys(updates).map(key => `${key} = ?`).join(", ");
-            const setValues = Object.values(updates);
+        const setClause = Object.keys(updates).map(key => `${key} = ?`).join(", ");
+        const setValues = Object.values(updates);
 
-            // Build WHERE clause
-            const whereClause = Object.keys(where).map(key => `${key} = ?`).join(" AND ");
-            const whereValues = Object.values(where);
+        const whereClause = Object.keys(where).map(key => `${key} = ?`).join(" AND ");
+        const whereValues = Object.values(where);
 
-            const sql = `UPDATE ${table} SET ${setClause} WHERE ${whereClause}`;
+        const sql = `UPDATE ${table} SET ${setClause} WHERE ${whereClause}`;
+        const stmt = db.prepare(sql);
 
-            db.run(sql, [...setValues, ...whereValues], function (err) {
-                if (err) return reject(err);
-                resolve({ changes: this.changes }); // number of rows updated
-            });
-        });
+        const info = stmt.run(...setValues, ...whereValues);
+        return { changes: info.changes };
     },
-
-
 
     update: (table, id, data) => {
         const keys = Object.keys(data);
@@ -203,46 +121,29 @@ const dbService = {
         const setClause = keys.map(key => `${key} = ?`).join(", ");
         const sql = `UPDATE ${table} SET ${setClause} WHERE id = ?`;
 
-        return new Promise((resolve, reject) => {
-            db.run(sql, [...values, id], function (err) {
-                if (err) return reject(err);
-                resolve({ changes: this.changes });
-            });
-        });
+        const stmt = db.prepare(sql);
+        const info = stmt.run(...values, id);
+        return { changes: info.changes };
     },
 
     remove: (table, id) => {
         const sql = `DELETE FROM ${table} WHERE id = ?`;
-        return new Promise((resolve, reject) => {
-            db.run(sql, [id], function (err) {
-                if (err) return reject(err);
-                resolve({ changes: this.changes });
-            });
-        });
+        const stmt = db.prepare(sql);
+        const info = stmt.run(id);
+        return { changes: info.changes };
     },
 
     any: (table, column, pattern) => {
         const sql = `SELECT COUNT(*) as count FROM ${table} WHERE ${column} LIKE ?`;
         const param = `%${pattern}%`;
-
-        return new Promise((resolve, reject) => {
-            db.get(sql, [param], (err, row) => {
-                if (err) return reject(err);
-                resolve(row.count);
-            });
-        });
+        const row = db.prepare(sql).get(param);
+        return row.count;
     },
 
     findByColumn: (table, column, pattern) => {
         const sql = `SELECT * FROM ${table} WHERE ${column} LIKE ?`;
         const param = `%${pattern}%`;
-
-        return new Promise((resolve, reject) => {
-            db.get(sql, [param], (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows);
-            });
-        });
+        return db.prepare(sql).get(param);
     },
 
     findExactWithConditions: (table, conditions) => {
@@ -259,153 +160,90 @@ const dbService = {
         }).join(" AND ");
 
         const sql = `SELECT * FROM ${table} WHERE ${whereClause}`;
-
-        return new Promise((resolve, reject) => {
-            db.all(sql, values, (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows);
-            });
-        });
+        return db.prepare(sql).get(...values);
     },
 
     findExact: (table, column, pattern) => {
         const sql = `SELECT * FROM ${table} WHERE ${column} = ?`;
-        const param = `${pattern}`;
-
-        return new Promise((resolve, reject) => {
-            db.all(sql, [param], (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows);
-            });
-        });
+        return db.prepare(sql).get(pattern);
     },
 
-    countExact: (table, column, pattern) => {
+countExact: (table, column, pattern) => {
+    if (pattern === undefined || pattern === null) {
+        throw new Error("Pattern must be defined");
+    }
+
+    if (typeof pattern === 'boolean') {
         const sql = `SELECT COUNT(*) AS count FROM ${table} WHERE ${column} = ?`;
-        const param = `${pattern}`;
+        const row = db.prepare(sql).get(pattern ? 1 : 0);
+        return row.count;
+    }
 
-        return new Promise((resolve, reject) => {
-            db.get(sql, [param], (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows);
-            });
-        });
-    },
+    // Handle other types (string, number, bigint, buffer)
+    if (typeof pattern !== 'string' && typeof pattern !== 'number' && typeof pattern !== 'bigint' && !Buffer.isBuffer(pattern)) {
+        throw new Error("Invalid pattern type passed to countExact");
+    }
+
+    const sql = `SELECT COUNT(*) AS count FROM ${table} WHERE ${column} = ?`;
+    const row = db.prepare(sql).get(pattern);
+    return row.count;
+},
+
+
 
     selectDistinctColumnQuery: (table, column) => {
         if (!/^[a-zA-Z0-9_]+$/.test(column)) {
-            return Promise.reject(new Error("Invalid column name"));
+            throw new Error("Invalid column name");
         }
-
         const sql = `SELECT DISTINCT ${column} FROM ${table}`;
-
-        return new Promise((resolve, reject) => {
-            db.all(sql, (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows.map(r => r[column])); // return array of values
-            });
-        });
-    },
-
-
-
-    // Optional: alternative version using safeWrite for sync writes
-    createSafe: async (table, data) => {
-        const keys = Object.keys(data);
-        const values = Object.values(data);
-        const placeholders = keys.map(() => "?").join(", ");
-        const sql = `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${placeholders})`;
-
-        try {
-            await safeWrite(sql, values);
-            return { status: true };
-        } catch (err) {
-            return { status: false, error: err.message };
-        }
+        const rows = db.prepare(sql).all();
+        return rows.map(r => r[column]);
     },
 
     getTotalCount: (table, filters = {}) => {
-        
-        const [whereParts, params ]=  paramBuilder(filters);
-
+        const [whereParts, params] = paramBuilder(filters);
         const whereClause = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : "";
         const sql = `SELECT COUNT(*) AS count FROM ${table} ${whereClause}`;
-        return new Promise((resolve, reject) => {
+        const row = db.prepare(sql).get(...params);
+        return row.count;
+    },
 
-
-
-            db.get(sql, params, (err, row) => {
-                if (err) return reject(err);
-                resolve(row.count);
-            });
-        });
-    }
-
-    ,
     getPaginatedFilteredData: (
         table,
         filters = {},
-         jsonFilters = [],
+        jsonFilters = [],
         page = 0,
         pageSize = 10,
         sortField = null,
-        sortOrder = 'ASC', // 'ASC' or 'DESC',
-        leftJoin,
+        sortOrder = 'ASC',
+        leftJoin = {},
         columns = ["*"]
     ) => {
         const offset = page * pageSize;
+        const [whereParts, params] = paramBuilder(filters);
 
-        const [whereParts, params ]=  paramBuilder(filters);
+        jsonFilters.forEach(f => {
+            whereParts.push(`json_extract(${f.column}, ?) LIKE ?`);
+            params.push(f.path, `%${f.value}%`);
+        });
 
+        const whereClause = whereParts.length ? `WHERE ${whereParts.join(" AND ")}` : "";
 
-        
-
-// 🔥 Add JSON filters
-    jsonFilters.forEach(f => {
-        whereParts.push(
-            `json_extract(${f.column}, ?) LIKE ?`
-        );
-        params.push(f.path);
-        params.push(`%${f.value}%`);
-    });
-
-    const whereClause = whereParts.length
-        ? `WHERE ${whereParts.join(" AND ")}`
-        : "";
-
-    // 🔥 JSON sorting support
-    let orderClause = "";
-    if (sortField) {
-        if (sortField.startsWith("payload_")) {
-            const jsonPath = sortField
-                .replace("payload_", "")
-                .split("_")
-                .join(".");
-
-            orderClause = `
-                ORDER BY json_extract(payload, '$.${jsonPath}') ${sortOrder.toUpperCase()}
-            `;
-        } else if (
-            /^[a-zA-Z0-9_]+$/.test(sortField) &&
-            /^(ASC|DESC)$/i.test(sortOrder)
-        ) {
-            orderClause = `ORDER BY ${sortField} ${sortOrder.toUpperCase()}`;
-        }
-    }
-
-        // Optional LEFT JOIN
-        let joinClause = "";
-        if (Object.keys(leftJoin).length !== 0) {
-            joinClause = leftJoin
-                ? `LEFT JOIN ${leftJoin.table} ON ${leftJoin.on}`
-                : "";
+        let orderClause = "";
+        if (sortField) {
+            if (sortField.startsWith("payload_")) {
+                const jsonPath = sortField.replace("payload_", "").split("_").join(".");
+                orderClause = `ORDER BY json_extract(payload, '$.${jsonPath}') ${sortOrder.toUpperCase()}`;
+            } else if (/^[a-zA-Z0-9_]+$/.test(sortField) && /^(ASC|DESC)$/i.test(sortOrder)) {
+                orderClause = `ORDER BY ${sortField} ${sortOrder.toUpperCase()}`;
+            }
         }
 
+        const joinClause = Object.keys(leftJoin).length
+            ? `LEFT JOIN ${leftJoin.table} ON ${leftJoin.on}`
+            : "";
 
-        // Build SELECT columns string
-        const columnsClause = Array.isArray(columns) && columns.length > 0
-            ? columns.join(", ")
-            : "*";
+        const columnsClause = Array.isArray(columns) && columns.length > 0 ? columns.join(", ") : "*";
 
         const sql = `
             SELECT ${columnsClause} FROM ${table}
@@ -415,15 +253,11 @@ const dbService = {
             LIMIT ? OFFSET ?
         `;
 
-        return new Promise((resolve, reject) => {
-            db.all(sql, [...params, pageSize, offset], (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows);
-            });
-        });
+        const stmt = db.prepare(sql);
+        return stmt.all(...params, pageSize, offset);
     },
 
-    QuerySqlConverter: async (query, table_name, leftJoin = {}, columns) => {
+    QuerySqlConverter: (query, table_name, leftJoin = {}, columns) => {
         const {
             page = "1", pageSize = "10", sortField, sortOrder, ...queryFilters
         } = query;
@@ -431,46 +265,34 @@ const dbService = {
         const pageNumber = Math.max(0, parseInt(page, 10) - 1);
         const limit = parseInt(pageSize, 10);
 
-        // Extract filters sent as filter_<field>=value
         const filters = {};
         const jsonFilters = [];
-        
+
         Object.entries(queryFilters).forEach(([key, value]) => {
             if (!key.startsWith("filter_")) return;
 
             let field = key.replace("filter_", "");
 
-
             if (field.startsWith("payload_")) {
-                const jsonPath = field
-                    .replace("payload_", "")
-                    .split("_")
-                    .join(".");
-
+                const jsonPath = field.replace("payload_", "").split("_").join(".");
                 jsonFilters.push({
                     column: "payload",
                     path: `$.${jsonPath}`,
                     value,
                 });
             } else {
-                // Normal column
-                 if (value === undefined || value === "") return;
+                if (value === undefined || value === "") return;
 
                 if (Object.keys(leftJoin).length !== 0) {
                     const alias = table_name[table_name.length - 1];
                     filters[`${alias}.${field}`] = value;
                 } else {
-
                     filters[field] = value;
                 }
             }
-
-
-           
-
         });
 
-        const data = await dbService.getPaginatedFilteredData(
+        const data = dbService.getPaginatedFilteredData(
             table_name,
             filters,
             jsonFilters,
@@ -482,13 +304,11 @@ const dbService = {
             columns
         );
 
-        return { filters,jsonFilters ,data };
+        return { filters, jsonFilters, data };
     },
 
     createRegistrationKeys: (registration_config_id, keys) => {
-        if (!Array.isArray(keys) || keys.length === 0) {
-            return Promise.resolve([]); // return empty if no keys
-        }
+        if (!Array.isArray(keys) || keys.length === 0) return [];
 
         const placeholders = keys.map(() => '(?, ?)').join(', ');
         const values = keys.flatMap(key => [registration_config_id, key]);
@@ -498,63 +318,41 @@ const dbService = {
             VALUES ${placeholders}
         `;
 
-        return new Promise((resolve, reject) => {
-            db.run(sql, values, function (err) {
-                if (err) return reject(err);
-                resolve({ inserted: keys.length });
-            });
-        });
+        const stmt = db.prepare(sql);
+        const info = stmt.run(...values);
+        return { inserted: keys.length };
     },
 
-    insertWithKeys: async (table_name, registration_data, code_list) => {
-        return new Promise((resolve, reject) => {
-            db.serialize(() => {
-                db.run('BEGIN TRANSACTION');
+    insertWithKeys: (table_name, registration_data, code_list) => {
+        const insertTransaction = db.transaction(() => {
+            const keys = Object.keys(registration_data);
+            const values = Object.values(registration_data);
+            const placeholders = keys.map(() => "?").join(", ");
+            const sql = `INSERT INTO ${table_name} (${keys.join(", ")}) VALUES (${placeholders})`;
 
-                // Insert the main registration_config
-                const keys = Object.keys(registration_data);
-                const values = Object.values(registration_data);
-                const placeholders = keys.map(() => "?").join(", ");
-                const sql = `INSERT INTO ${table_name} (${keys.join(", ")}) VALUES (${placeholders})`;
+            const info = db.prepare(sql).run(...values);
+            const registration_config_id = info.lastInsertRowid;
 
-                db.run(sql, values, function (err) {
-                    if (err) {
-                        db.run('ROLLBACK');
-                        return reject(err);
-                    }
+            if (code_list.length > 0) {
+                const stmt = db.prepare(`
+                    INSERT INTO registration_keys (registration_config_id, key, memberId) 
+                    VALUES (?, ?, ?)
+                `);
 
-                    const registration_config_id = this.lastID;
+                for (const item of code_list) {
+                    stmt.run(registration_config_id, item.key, item.memberId);
+                }
+            }
 
-                    if (code_list.length > 0) {
-                        const stmt = db.prepare(`
-                        INSERT INTO registration_keys (registration_config_id, key, memberId) 
-                        VALUES (?, ?, ?)
-                    `);
-
-                        try {
-                            for (const item of code_list) {
-                                stmt.run(registration_config_id, item.key, item.memberId);
-                            }
-
-                            stmt.finalize((finalizeErr) => {
-                                if (finalizeErr) {
-                                    db.run('ROLLBACK');
-                                    return reject(finalizeErr);
-                                }
-                                db.run('COMMIT');
-                                resolve({ id: registration_config_id });
-                            });
-                        } catch (insertErr) {
-                            db.run('ROLLBACK');
-                            return reject(insertErr);
-                        }
-                    } else {
-                        db.run('COMMIT');
-                        resolve({ id: registration_config_id });
-                    }
-                });
-            });
+            return registration_config_id;
         });
+
+        try {
+            const id = insertTransaction();
+            return { id };
+        } catch (err) {
+            throw err;
+        }
     },
 
     findByConditions: (table, conditions) => {
@@ -562,71 +360,44 @@ const dbService = {
         const values = Object.values(conditions);
 
         if (keys.length === 0) {
-            return Promise.reject(new Error("At least one condition is required."));
+            throw new Error("At least one condition is required.");
         }
 
         const whereClause = keys.map(key => `${key} = ?`).join(" AND ");
         const sql = `SELECT * FROM ${table} WHERE ${whereClause}`;
 
-        return new Promise((resolve, reject) => {
-            db.all(sql, values, (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows);
-            });
-        });
+        return db.prepare(sql).all(...values);
     },
-
 
     registration_stat: () => {
         const query = `
-    SELECT 
-    event,
-    COUNT(*) AS total_count,
-    SUM(CASE WHEN metadata_modifiedAt IS NOT NULL THEN 1 ELSE 0 END) AS modified_count,
-    SUM(CASE WHEN metadata_modifiedAt IS NULL THEN 1 ELSE 0 END) AS null_count
-    FROM registration
-    GROUP BY event;
-
+            SELECT 
+                event,
+                COUNT(*) AS total_count,
+                SUM(CASE WHEN metadata_modifiedAt IS NOT NULL THEN 1 ELSE 0 END) AS modified_count,
+                SUM(CASE WHEN metadata_modifiedAt IS NULL THEN 1 ELSE 0 END) AS null_count
+            FROM registration
+            GROUP BY event;
         `;
 
-        return new Promise((resolve, reject) => {
-            db.all(query, [], (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows);
-            });
-        });
+        return db.prepare(query).all();
     },
 
     registration_config_list: () => {
-        const query = `SELECT page, title FROM registration_config where archived = 0`;
-
-        return new Promise((resolve, reject) => {
-            db.all(query, [], (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows);
-            });
-        });
+        const query = `SELECT page, title FROM registration_config WHERE archived = 0`;
+        return db.prepare(query).all();
     },
 
     registration_config_auto_register: () => {
-        const query = `select * from registration_config where event_date is not null and event_date = date('now');`;
-
-        return new Promise((resolve, reject) => {
-            db.all(query, [], (err, rows) => {
-                if (err) return reject(err);
-                resolve(rows);
-            });
-        });
+        const query = `SELECT * FROM registration_config WHERE event_date IS NOT NULL AND event_date = date('now');`;
+        return db.prepare(query).all();
     },
-
-
-
 
     countExactWithConditions: (table, conditions) => {
         const keys = Object.keys(conditions);
 
         if (keys.length === 0) {
-            return Promise.reject(new Error("At least one condition is required."));
+            throw new Error("At least one condition is required.");
         }
 
         const whereParts = [];
@@ -634,8 +405,6 @@ const dbService = {
 
         for (const [key, condition] of Object.entries(conditions)) {
             if (typeof condition === "object" && condition.op) {
-
-
                 if (condition.op.toUpperCase() === "BETWEEN") {
                     if (!Array.isArray(condition.value) || condition.value.length !== 2) {
                         throw new Error(`BETWEEN requires an array with 2 values for ${key}`);
@@ -647,7 +416,6 @@ const dbService = {
                     values.push(condition.value);
                 }
             } else {
-                // fallback: equals
                 whereParts.push(`${key} = ?`);
                 values.push(condition);
             }
@@ -656,14 +424,9 @@ const dbService = {
         const whereClause = whereParts.join(" AND ");
         const sql = `SELECT count(*) as count FROM ${table} WHERE ${whereClause}`;
 
-        return new Promise((resolve, reject) => {
-            db.get(sql, values, (err, row) => {
-                if (err) return reject(err);
-                resolve(row.count);
-            });
-        });
+        const row = db.prepare(sql).get(...values);
+        return row.count;
     }
-
 
 };
 
