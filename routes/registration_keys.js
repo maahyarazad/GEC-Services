@@ -7,7 +7,7 @@ router.post("/api/registration-keys",async (req, res) => {
         const table_name = "registration_keys";
         const data = req.body;
 
-        const result = await dbService.findExact(table_name, "registration_config_id", Number(data.id));
+        const result = dbService.findExact(table_name, "registration_config_id", Number(data.id));
         
         if (result) {
             return res.status(200).json({ status: true, data: result });

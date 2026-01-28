@@ -470,7 +470,7 @@ const dbService = {
 
         });
 
-        const data = await dbService.getPaginatedFilteredData(
+        const data = dbService.getPaginatedFilteredData(
             table_name,
             filters,
             jsonFilters,

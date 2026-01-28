@@ -92,7 +92,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 })
             });
 
-
+            
             if (!response.ok) {
                 throw new Error('Failed to fetch');
             }
@@ -105,6 +105,8 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 setShowOtpInput(true);
             }
             else {
+                setWizardState((prev) => ({ ...prev, member: null }));
+                setShowOtpInput(false);
                 showMessage("No account found with this email address", 10000);
             }
         } catch (err) {
@@ -232,7 +234,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
         try {
             setShowOtpInput(true);
 
-
+debugger;
             const otp_response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/send-otp`,
                 {

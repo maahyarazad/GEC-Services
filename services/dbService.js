@@ -61,28 +61,28 @@ const dbService = {
         return { lastID: info.lastInsertRowid, changes: info.changes };
     },
 
-create: (table, data) => {
-  try {
-    const keys = Object.keys(data);
-    const values = Object.values(data).map(value => {
-      if (typeof value === "boolean") {
-        return value ? 1 : 0;
-      }
-      return value;
-    });
-    const placeholders = keys.map(() => "?").join(", ");
-    const sql = `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${placeholders})`;
+    create: (table, data) => {
+    try {
+        const keys = Object.keys(data);
+        const values = Object.values(data).map(value => {
+        if (typeof value === "boolean") {
+            return value ? 1 : 0;
+        }
+        return value;
+        });
+        const placeholders = keys.map(() => "?").join(", ");
+        const sql = `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${placeholders})`;
 
-    const stmt = db.prepare(sql);
-    const info = stmt.run(...values);
+        const stmt = db.prepare(sql);
+        const info = stmt.run(...values);
 
-    return { id: info.lastInsertRowid, status: true };
-  } catch (error) {
-    // You can log the error here if you want
-    console.error("DB insert error:", error);
-    return { status: false, error: error.message || error.toString() };
-  }
-},
+        return { id: info.lastInsertRowid, status: true };
+    } catch (error) {
+        // You can log the error here if you want
+        console.error("DB insert error:", error);
+        return { status: false, error: error.message || error.toString() };
+    }
+    },
 
 
     findAll: (table) => {

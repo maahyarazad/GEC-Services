@@ -37,7 +37,7 @@ const upload = multer({ storage: storage });
 
 router.get('/api/member-csv-data', async (req, res) => {
     try {
-        const data = await dbService.findAll("member");
+        const data = dbService.findAll("member");
 
         const csv = await exportTableAsCSV(data); // Await CSV generation
 
@@ -59,9 +59,9 @@ router.get('/api/member-csv-data', async (req, res) => {
 router.get('/api/member', async (req, res) => {
     try {
 
-        const { filters, data } = await dbService.QuerySqlConverter(req.query, "member");
+        const { filters, data } = dbService.QuerySqlConverter(req.query, "member");
 
-        const total = await dbService.getTotalCount("member", filters);
+        const total = dbService.getTotalCount("member", filters);
 
         return res.json({
             status: true,
@@ -78,7 +78,7 @@ router.get('/api/member', async (req, res) => {
 router.get('/api/member-count', async (req, res) => {
     try {
 
-        const total = await dbService.countExact("member", "active_member", true);
+        const total = dbService.countExact("member", "active_member", true);
 
         return res.json({
             status: true,
@@ -99,7 +99,7 @@ router.post("/api/member",  upload.single('attachment_file'), async (req, res) =
 
         // Edit Mode
         if (data.id) {
-            const edit_member = await dbService.findById("member", data.id);
+            const edit_member = dbService.findById("member", data.id);
             if (edit_member) {
                 dbService.update(table_name, edit_member.id, data);
             }
@@ -137,12 +137,12 @@ router.post("/api/active-member-switch",  upload.none(), async (req, res) => {
 
         // Edit Mode
         if (data.id) {
-            const edit_member = await dbService.findById("member", data.id);
+            const edit_member = dbService.findById("member", data.id);
             if (edit_member) {
             }
             data.active_member = String(!(data.active_member === "true"));
 
-            const result = await dbService.update(table_name, data.id, {active_member : data.active_member});
+            const result = dbService.update(table_name, data.id, {active_member : data.active_member});
             return res.json({ status: true, message: "Your request has been successfully processed." , result});
 
         }

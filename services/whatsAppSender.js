@@ -94,13 +94,9 @@ const messageSender = async (req) => {
         return await sendMessageToPhone(el.phone, template, payload, el);
       } catch (error) {
         console.error(`Error sending message to ${el.phone}:`, error);
-        dbService
-            .createSafe("error_log", {
-                error: error.toString(),         
-                origin_function: "sendMessageToPhone"  
-            })
-            .catch((err) => {
-                console.error("Failed to store error log:", err);
+         dbService.create("error_log", {
+            error: error.toString(),
+            origin_function: "sendMessageToPhone"
             });
         return null;
       }
@@ -112,7 +108,7 @@ const messageSender = async (req) => {
         conditions.language = template.language;
       }
 
-      const testBook = await dbService.findExactWithConditions("contact_book", conditions);
+      const testBook = dbService.findExactWithConditions("contact_book", conditions);
       await Promise.all(testBook.map(safeSendMessage));
 
       return { status: true };

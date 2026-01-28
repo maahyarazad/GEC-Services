@@ -17,7 +17,7 @@ const GSheetService = {
         try {
 
             const table_name = "member_card";
-            const currentRecords = await dbService.selectDistinctColumnQuery(table_name, "card_number", "> 0")
+            const currentRecords = dbService.selectDistinctColumnQuery(table_name, "card_number", "> 0")
 
 
 
@@ -87,7 +87,7 @@ const GSheetService = {
             });
 
 
-            await dbService.createBulk(table_name, newObject);
+            dbService.createBulk(table_name, newObject);
             console.log("G-sheet data successfully fetched and processed.");
 
 
@@ -116,7 +116,7 @@ const GSheetService = {
             });
 
             
-            const reg_config = await dbService.findExact("registration_config", "page", event);
+            const reg_config = dbService.findExact("registration_config", "page", event);
             const event_date = reg_config[0].event_date;
             const title = reg_config[0].title;
             let register_list = [];

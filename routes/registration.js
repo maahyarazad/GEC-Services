@@ -48,7 +48,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
         let table_name = "registration";
 
         const { registration_code, title, event_date, ...data } = req.body;
-        const reg_config = await dbService.findExact("registration_config", "page", data.event);
+        const reg_config = dbService.findExact("registration_config", "page", data.event);
         const file = req.file;
         let uniqueFileName = null;
         // Validate file type
@@ -65,7 +65,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
         }
 
 
-        const key = await dbService.findExact("registration_keys", "key", registration_code);
+        const key = dbService.findExact("registration_keys", "key", registration_code);
         const event_time = reg_config[0]?.event_time;
         const event_location = reg_config[0]?.event_location;
         const event_location_name = reg_config[0]?.event_location_name;
@@ -80,7 +80,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
             if (key && key.length > 0) {
                 currentCount = Number(key[0].tokenCount);
             } else {
-                const count_token = await dbService.findByConditions("registration", {
+                const count_token = dbService.findByConditions("registration", {
                     email: data.email,
                     event: data.event
                 });
@@ -137,7 +137,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
             );
 
 
-            const duplicateRecord = await dbService.countExact(table_name, 'email', gic_data__.email);
+            const duplicateRecord = dbService.countExact(table_name, 'email', gic_data__.email);
             if (duplicateRecord.count > 0) {
                 return res.json({
                     status: false,
@@ -209,7 +209,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
                 data.metadata_json =  JSON.stringify(metadata);
                 reg_config[0].metadata_json = JSON.stringify(config_metadata);
                 try{
-                    await dbService.update("registration_config", reg_config[0].id, reg_config[0]);
+                    dbService.update("registration_config", reg_config[0].id, reg_config[0]);
 
                 }catch(err){
                     return res.status(400).json({ status: false, message: 'This slot has already been reserved. Please clear the cache using the Clear Cache button and try again.' });
@@ -289,7 +289,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
 router.get('/api/registration',  async (req, res) => {
     try {
 
-        const { filters, data } = await dbService.QuerySqlConverter(req.query, "registration AS r", {
+        const { filters, data } = dbService.QuerySqlConverter(req.query, "registration AS r", {
             table: "event_proforma_invoice AS e",
             on: "r.event_id = e.userId",
 
@@ -311,7 +311,7 @@ router.get('/api/registration',  async (req, res) => {
             }
         }
 
-        const total = await dbService.getTotalCount("registration", _filters);
+        const total = dbService.getTotalCount("registration", _filters);
 
         return res.     json({
             status: true,
@@ -328,7 +328,7 @@ router.get('/api/registration',  async (req, res) => {
 router.get('/api/registration-csv-data',  async (req, res) => {
     try {
 
-        const data = await dbService.findAll("registration");
+        const data = dbService.findAll("registration");
 
         if(data){
             data.forEach(x=>{
@@ -365,8 +365,8 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
     try {
         let table_name = "registration";
         const data = req.body;
-        const result = await dbService.findExact(table_name, "event_id", data.event_id);
-        const membershipResult = await dbService.findExact("member_card", "serial_number", data.event_id);
+        const result = dbService.findExact(table_name, "event_id", data.event_id);
+        const membershipResult = dbService.findExact("member_card", "serial_number", data.event_id);
 
         if (result && result.length > 0) {
             const record = result[0];
@@ -397,7 +397,7 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
             // 3 - NOTIFY THEM WITH EMAIL LIKE WELCOME AND THANKS FOR USING OUR MEMBERSHIP
             // 4 - CHECK IF ALREADY THE RECORD CREATED
 
-            const registration_config_query = await dbService.registration_config_auto_register();
+            const registration_config_query = dbService.registration_config_auto_register();
             if(registration_config_query.length === 0){
         
                 return res.status(404).json({
@@ -411,7 +411,7 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
             const member = membershipResult[0];
             
 
-            const alreadyCompleted = await dbService.findByConditions("registration", {
+            const alreadyCompleted = dbService.findByConditions("registration", {
                 event: registration_config.page,
                 email : member.email,
                 message : "AUTO_MEMBERSHIP_REGISTER"
@@ -543,7 +543,7 @@ router.get("/registration-data/:id", upload.none(), async (req, res) => {
      try {
         
         const { id } = req.params;
-        const data = await dbService.findByColumn("registration", "event_id", id)
+        const data = dbService.findByColumn("registration", "event_id", id)
     
         return res.status(200).send(data);
         

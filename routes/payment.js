@@ -60,9 +60,9 @@ router.get('/payment', async (req, res) => {
     try {
 
         const table_name = "event_proforma_invoice";
-        const { filters, data } = await dbService.QuerySqlConverter(req.query, table_name);
+        const { filters, data } = dbService.QuerySqlConverter(req.query, table_name);
 
-        const total = await dbService.getTotalCount(table_name, filters);
+        const total = dbService.getTotalCount(table_name, filters);
 
         return res.json({
             status: true,
@@ -208,15 +208,15 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
         //http://localhost:5175/registration/wirtschaftswunder-middle-east-wachstum-und-profitabilitat-fur-ihr-unternehmen-the/success?reference=ordexc-PI-gec-wmewupfiut-17581835476538241&checkout=1843589075646491537
         if (data.result.status === "PAID") {
 
-            const performa_invoice_data = await dbService.findById("event_proforma_invoice", data.result.orderId);
+            const performa_invoice_data = dbService.findById("event_proforma_invoice", data.result.orderId);
             
-            const registration_config = await dbService.findById("registration_config", performa_invoice_data.sourceId);
+            const registration_config = dbService.findById("registration_config", performa_invoice_data.sourceId);
             
             let selected_time_for_email = "";
 
             if (registration_config.metadata_json !== "") {
               
-               const _data = await dbService.findExact("registration", "event_id", performa_invoice_data.userId);
+               const _data = dbService.findExact("registration", "event_id", performa_invoice_data.userId);
                const config_metadata = JSON.parse(registration_config.metadata_json);
 
                if (_data.length > 0) {
@@ -245,7 +245,7 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
 
                registration_config.metadata_json = JSON.stringify(config_metadata);
                try{
-                    await dbService.update("registration_config", registration_config.id, registration_config);
+                    dbService.update("registration_config", registration_config.id, registration_config);
 
                 }catch(err){
                     return res.status(400).json({ status: false, message: 'This slot has already been reserved. Please clear the cache using the Clear Cache button and try again.' });
@@ -310,7 +310,7 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
             if (performa_invoice_data) {
                 performa_invoice_data.status = true;
 
-                await dbService.update("event_proforma_invoice", performa_invoice_data.id, performa_invoice_data);
+                dbService.update("event_proforma_invoice", performa_invoice_data.id, performa_invoice_data);
 
                 return res.status(200).json({
                     message: "Payment status retrieved successfully",
@@ -413,10 +413,10 @@ async function handleRegistration(data, sanitized) {
 
 
         // Check registration key and max tokens
-        //const key = await dbService.findExact("registration_keys", "key", data.registration_code);
+        //const key = dbService.findExact("registration_keys", "key", data.registration_code);
 
         // if (!file) {
-        //     const max_token_value = await dbService.findExact("registration_config", "page", data.event);
+        //     const max_token_value = dbService.findExact("registration_config", "page", data.event);
         //     event_time = max_token_value[0]?.event_time;
         //     event_location = max_token_value[0]?.event_location;
         //     event_location_name = max_token_value[0]?.event_location_name;
@@ -427,7 +427,7 @@ async function handleRegistration(data, sanitized) {
         //     if (key && key.length > 0) {
         //         currentCount = Number(key[0].tokenCount);
         //     } else {
-        //         const count_token = await dbService.findByConditions("registration", {
+        //         const count_token = dbService.findByConditions("registration", {
         //             phone: data.phone,
         //             event: data.event,
         //         });
@@ -475,7 +475,7 @@ async function handleRegistration(data, sanitized) {
                 Object.entries(gic_data_).map(([key, value]) => [key.replace(/^gic_/, ""), value])
             );
 
-            const duplicateRecord = await dbService.countExact(table_name, "email", gic_data__.email);
+            const duplicateRecord = dbService.countExact(table_name, "email", gic_data__.email);
 
         } else {
             table_name = "registration";
