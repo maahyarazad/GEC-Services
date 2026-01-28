@@ -12,7 +12,8 @@ pnpm-debug.log*
 .env.local
 .env.*.local
 google-wallet.json
-
+package-lock.json
+yarn.lock
 # logs
 logs/
 *.log
