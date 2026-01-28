@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSnackbar } from '../../Providers/Snackbar';
 import { Button, CircularProgress } from '@mui/material';
 import {normalizePhone} from './WhatsAppComponentConfig';
-
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 const defaultFormData = {
     title: '',
     first_name: '',
@@ -61,7 +61,15 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
                 return;
             }
 
+            const phoneNumber = parsePhoneNumberFromString(formData.phone);
+            const validPhone = phoneNumber.isValid();
+            if (!validPhone) {
+                showSnackbar("Invalid phone number", "warning");
+                setLoading(false);
+                return;
+            } 
             
+            debugger;
             const response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/api/contacts/${initialValues ? 'modify' : 'create'}`,
                 {
