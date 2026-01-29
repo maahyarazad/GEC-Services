@@ -244,14 +244,11 @@ async function sendMessageToPhone(
   }
 
   const result = await twilioClient.messages.create(messageOptions);
-  dbService
-    .createSafe("twilio_template_message", {
+  dbService.create("twilio_template_message", {
       messageSid: result.sid,
       contentSid: messageOptions.contentSid,
     })
-    .catch((err) => {
-      console.error("Failed to store Twilio callback:", err);
-    });
+   
 
   return result;
     }catch (error) {

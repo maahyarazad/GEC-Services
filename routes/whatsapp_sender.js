@@ -99,13 +99,12 @@ router.get("/api/whatsapp/list", async (req, res) => {
 
 router.post("/whatsapp/twilio-callback", (req, res) => {
   try {
+      
     res.sendStatus(202);
-
-    dbService
-      .createSafe("twilio_delivery", { response: JSON.stringify(req.body) })
-      .catch((err) => {
-        console.error("Failed to store Twilio callback:", err);
-      });
+        dbService.create("twilio_delivery", {
+      response: JSON.stringify(req.body)
+    });
+     
   } catch (error) {
     console.error("Twilio callback error:", error);
     res.sendStatus(200); // still 2xx
