@@ -10,39 +10,46 @@ const MyDocument = ({ formData, objectChanged }) => {
 
     // Runs whenever formData changes
     const subtotal = formData.items.reduce(
-        (total, item) => total + (parseFloat(item.amount) || 0),
-        0
-    );
+    (total, item) => total + (parseFloat(item.amount) || 0),
+    0
+);
+
+const { positiveTotal, negativeTotal } = formData.items.reduce(
+  (totals, item) => {
+    if (item.deleted) return totals; // skip deleted items
+
+    const amount = parseFloat(item.amount.replace(/,/g, '')) || 0;
+    if (amount >= 0) {
+      totals.positiveTotal += amount;
+    } else {
+      totals.negativeTotal += amount;
+    }
+    return totals;
+  },
+  { positiveTotal: 0, negativeTotal: 0 }
+);
 
 
 
-    const { positiveTotal, negativeTotal } = formData.items.reduce(
-        (totals, item) => {
-            const amount = parseFloat(item.amount) || 0;
-            if (amount >= 0) {
-                totals.positiveTotal += amount;
-            } else {
-                totals.negativeTotal += amount;
-            }
-            return totals;
-        },
-        { positiveTotal: 0, negativeTotal: 0 }
-    );
+const { positiveTotalExchange, negativeTotalExchange } = formData.items.reduce(
+    (totals, item) => {
+        // Skip deleted items
+        if (item.deleted) return totals;
 
-    const { positiveTotalExchange, negativeTotalExchange } = formData.items.reduce(
-        (totals, item) => {
-            const amount = parseFloat(item.amount * formData.currency?.currency_rate) || 0;
+        // Parse amount first, then multiply by currency rate
+        const rawAmount = parseFloat(item.amount.replace(/,/g, '')) || 0;
+        const amount = rawAmount * (formData.currency?.currency_rate || 1);
 
-            if (amount >= 0) {
-                totals.positiveTotalExchange += amount;
-            } else {
-                totals.negativeTotalExchange += amount;
-            }
+        if (amount >= 0) {
+            totals.positiveTotalExchange += amount;
+        } else {
+            totals.negativeTotalExchange += amount;
+        }
 
-            return totals;
-        },
-        { positiveTotalExchange: 0, negativeTotalExchange: 0 }
-    );
+        return totals;
+    },
+    { positiveTotalExchange: 0, negativeTotalExchange: 0 }
+);
 
 
     return (
