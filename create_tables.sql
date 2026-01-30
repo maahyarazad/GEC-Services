@@ -46,17 +46,20 @@ CREATE TABLE IF NOT EXISTS twilio_delivery (
 
 
 
+
+
 CREATE TABLE IF NOT EXISTS contact_book (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title VARCHAR(10),
-  first_name VARCHAR(255),
+  first_name VARCHAR(255) NOT NULL,
   last_name VARCHAR(255),
   gender VARCHAR(8),
-  phone VARCHAR(50),
+  phone VARCHAR(50) NOT NULL,
   language VARCHAR(2) NOT NULL,
-  type VARCHAR(20) NOT NULL CHECK (type IN ('club_member', 'club_partner', 'expert', 'gec_staff')),
+  type VARCHAR(20) NOT NULL CHECK (type IN ('club_member', 'club_partner', 'expert', 'gec_staff', 'difa', 'expert_guest', 'only_guest')),
   club_partner_name VARCHAR(255),
-  blacklist BOOLEAN DEFAULT FALSE
+  blacklist BOOLEAN DEFAULT FALSE,
+  contentSid VARCHAR(255)
 );
 
 

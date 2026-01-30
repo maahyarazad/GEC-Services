@@ -193,6 +193,7 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
                             <option value="expert">Expert</option>
                             <option value="expert_guest">Expert Guest</option>
                             <option value="difa">Difa</option>
+                            <option value="only_guest">Guest</option>
                         </select>
                     </div>
                 </div>

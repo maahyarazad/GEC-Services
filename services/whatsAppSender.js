@@ -68,31 +68,38 @@ const contactBookData = (conditions) => {
           ? ``
           : `AND language = '${conditions?.language}'`
       }
-      GROUP BY phone order by id DESC
+      AND contentSid IS NULL
+      GROUP BY phone order by id DESC LIMIT 300
     `;
 
-     const stmt = db.prepare(query);
+  const stmt = db.prepare(query);
   const result = stmt.all();
-
-
 
   return result;
 };
 
 const messageSender = async (req) => {
   try {
-    const { phoneList, useContactBook, useTestBook, useLanguage, template, payload } = req.body;
+    const {
+      phoneList,
+      useContactBook,
+      useTestBook,
+      useLanguage,
+      template,
+      payload,
+    } = req.body;
 
     // Helper function to safely send message and swallow errors
+
     const safeSendMessage = async (el) => {
       try {
         return await sendMessageToPhone(el.phone, template, payload, el);
       } catch (error) {
         console.error(`Error sending message to ${el.phone}:`, error);
-         dbService.create("error_log", {
-            error: error.toString(),
-            origin_function: "sendMessageToPhone"
-            });
+        dbService.create("error_log", {
+          error: error.toString(),
+          origin_function: "sendMessageToPhone",
+        });
         return null;
       }
     };
@@ -103,7 +110,10 @@ const messageSender = async (req) => {
         conditions.language = template.language;
       }
 
-      const testBook = dbService.findExactWithConditions("contact_book", conditions);
+      const testBook = dbService.findExactWithConditions(
+        "contact_book",
+        conditions
+      );
       await Promise.all(testBook.map(safeSendMessage));
 
       return { status: true };
@@ -116,12 +126,11 @@ const messageSender = async (req) => {
       }
 
       const contactBook = contactBookData(conditions);
-      const randomContacts = getRandomItems(contactBook, 350);
 
-      const batchSize = 20; // safe batch size below max throughput
-      const delayMs = 15 * 60 * 1000; // 15 minutes
+      const batchSize = 10; // safe batch size below max throughput
+      const delayMs = 1 * 60 * 1000; // 1 minute
 
-      const batches = chunkArray(randomContacts, batchSize);
+      const batches = chunkArray(contactBook, batchSize);
 
       for (let i = 0; i < batches.length; i++) {
         const batch = batches[i];
@@ -132,7 +141,9 @@ const messageSender = async (req) => {
 
         // Delay before sending next batch except after last batch
         if (i < batches.length - 1) {
-          console.log(`Waiting ${delayMs / 60000} minutes before next batch...`);
+          console.log(
+            `Waiting ${delayMs / 60000} minutes before next batch...`
+          );
           await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
       }
@@ -147,116 +158,117 @@ const messageSender = async (req) => {
   }
 };
 
-
 async function sendMessageToPhone(
   phone,
   template,
   payload,
   contactPayload = null
 ) {
-    try{
+  try {
+    // Determine template type key (e.g., "twilio/text", "twilio/media", etc.)
+    const templateType = Object.keys(template.types)[0];
+    const data = template.types[templateType];
 
-        // Determine template type key (e.g., "twilio/text", "twilio/media", etc.)
-  const templateType = Object.keys(template.types)[0];
-  const data = template.types[templateType];
+    // Base message options
+    const messageOptions = {
+      from: "whatsapp:+971521160991",
+      to: `whatsapp:${phone}`,
+      contentSid: template.sid,
+      messagingServiceSid: process.env.TWILIO_SERVICE_SID,
+    };
 
-  // Base message options
-  const messageOptions = {
-    from: "whatsapp:+971521160991",
-    to: `whatsapp:${phone}`,
-    contentSid: template.sid,
-    messagingServiceSid: process.env.TWILIO_SERVICE_SID,
-  };
+    if (payload !== null && Object.keys(payload).length > 0) {
+      const contentVariables = {};
+      const valid_requested_variables = [
+        "id",
+        "title",
+        "first_name",
+        "last_name",
+        "gender",
+        "phone",
+        "type",
+        "club_partner_name",
+        "blacklist",
+      ];
 
-  if (payload !== null && Object.keys(payload).length > 0) {
-    const contentVariables = {};
-    const valid_requested_variables = [
-      "id",
-      "title",
-      "first_name",
-      "last_name",
-      "gender",
-      "phone",
-      "type",
-      "club_partner_name",
-      "blacklist",
-    ];
+      Object.keys(payload).forEach((key) => {
+        if (payload[key] !== undefined) {
+          if (contactPayload) {
+            const contactBook_requested_variables = payload[key];
 
-    Object.keys(payload).forEach((key) => {
-      if (payload[key] !== undefined) {
-        if (contactPayload) {
-          const contactBook_requested_variables = payload[key];
+            const splitted = contactBook_requested_variables.split(" ");
 
-          const splitted = contactBook_requested_variables.split(" ");
+            let stringBuilder = "";
+            splitted.map((item) => {
+              if (valid_requested_variables.includes(item))
+                stringBuilder += `${contactPayload[item]} `;
+            });
 
-          let stringBuilder = "";
-          splitted.map((item) => {
-            if (valid_requested_variables.includes(item))
-              stringBuilder += `${contactPayload[item]} `;
-          });
-
-          if (stringBuilder === "") {
-            contentVariables[key] = payload[key];
+            if (stringBuilder === "") {
+              contentVariables[key] = payload[key];
+            } else {
+              contentVariables[key] = stringBuilder.trimEnd();
+            }
           } else {
-            contentVariables[key] = stringBuilder.trimEnd();
+            contentVariables[key] = payload[key];
           }
-        } else {
-          contentVariables[key] = payload[key];
         }
-      }
-    });
+      });
 
-    if (Object.keys(contentVariables).length > 0) {
-      messageOptions.contentVariables = JSON.stringify(contentVariables);
+      if (Object.keys(contentVariables).length > 0) {
+        messageOptions.contentVariables = JSON.stringify(contentVariables);
+      }
     }
-  }
 
-  switch (templateType) {
-    case "whatsapp/authentication":
-      break;
-    case "twilio/text":
-      break;
-    case "twilio/call-to-action":
-      if (data.body && hasPlaceholders(data.body)) {
-        messageOptions.contentVariables = JSON.stringify({
-          1: "Your dynamic content here",
-          first_name: "John",
-        });
-      }
-      break;
-    case "twilio/media":
-      messageOptions.body = data.body || "";
-      if (Array.isArray(data.media)) {
-        messageOptions.mediaUrls = data.media;
-      } else if (typeof data.media === "string") {
-        messageOptions.mediaUrl = data.media;
-      }
-      break;
-    case "twilio/list-picker":
-      break;
-    case "twilio/quick-reply":
-      break;
-    case "twilio/card":
-      messageOptions.interactive = buildInteractiveMessage(templateType, data);
-      break;
-    default:
-      throw new Error(`Unsupported template type: ${templateType}`);
-  }
+    switch (templateType) {
+      case "whatsapp/authentication":
+        break;
+      case "twilio/text":
+        break;
+      case "twilio/call-to-action":
+        if (data.body && hasPlaceholders(data.body)) {
+          messageOptions.contentVariables = JSON.stringify({
+            1: "Your dynamic content here",
+            first_name: "John",
+          });
+        }
+        break;
+      case "twilio/media":
+        messageOptions.body = data.body || "";
+        if (Array.isArray(data.media)) {
+          messageOptions.mediaUrls = data.media;
+        } else if (typeof data.media === "string") {
+          messageOptions.mediaUrl = data.media;
+        }
+        break;
+      case "twilio/list-picker":
+        break;
+      case "twilio/quick-reply":
+        break;
+      case "twilio/card":
+        messageOptions.interactive = buildInteractiveMessage(
+          templateType,
+          data
+        );
+        break;
+      default:
+        throw new Error(`Unsupported template type: ${templateType}`);
+    }
 
-  const result = await twilioClient.messages.create(messageOptions);
-  dbService.create("twilio_template_message", {
+    const result = await twilioClient.messages.create(messageOptions);
+    dbService.create("twilio_template_message", {
       messageSid: result.sid,
       contentSid: messageOptions.contentSid,
-    })
-   
+    });
 
-  return result;
-    }catch (error) {
+
+
+    return result;
+  } catch (error) {
     console.error(`Failed to send message to ${phone}:`, error);
     // swallow error so caller can continue
     return null;
   }
-  
 }
 
 // Helper function to build interactive object for WhatsApp interactive messages
@@ -388,12 +400,17 @@ async function handleAutoResponse(From, ButtonPayload) {
 
   if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
     const templates = await fetchContentTemplates();
-    const second_response_message__en_sid = 'HX3730fd2ee94eb7379fcad84fd41830b6';
-    const second_response_message__de_sid = 'HXccdd9e3ca743d83e248cc162fbfcf235';
+    const second_response_message__en_sid =
+      "HX3730fd2ee94eb7379fcad84fd41830b6";
+    const second_response_message__de_sid =
+      "HXccdd9e3ca743d83e248cc162fbfcf235";
 
-     const en_template = templates.result.find((x) => x.sid === second_response_message__en_sid);
-     const de_template = templates.result.find((x) => x.sid === second_response_message__de_sid);
-
+    const en_template = templates.result.find(
+      (x) => x.sid === second_response_message__en_sid
+    );
+    const de_template = templates.result.find(
+      (x) => x.sid === second_response_message__de_sid
+    );
 
     const query = `
         SELECT * FROM contact_book cb
@@ -405,10 +422,10 @@ async function handleAutoResponse(From, ButtonPayload) {
 
     const phoneList = [{ id: "8176278162873", phone: contactInfo[0].phone }];
     // const media_template = contactInfo[0].type === 'club_member' ? "HX4974a2a0c07f4b9d7b31db0737e87d50" : "HX6b3e75b231d4e0a205d575c3f90b27d3";
-    const template = contactInfo[0].language === 'de' ? de_template: en_template
-   
+    const template =
+      contactInfo[0].language === "de" ? de_template : en_template;
 
-    const payload = {1: `https://maps.app.goo.gl/m53EBxwzYHD3CotY7?g_st=awb`};
+    const payload = { 1: `https://maps.app.goo.gl/gJVtJxViUHPPkZdU9` };
 
     const result = await messageSender({
       body: { template, phoneList, payload },
@@ -416,8 +433,6 @@ async function handleAutoResponse(From, ButtonPayload) {
   } else {
   }
 }
-
-
 
 const flattenObject = (obj, parentKey = "", result = {}) => {
   for (const key in obj) {

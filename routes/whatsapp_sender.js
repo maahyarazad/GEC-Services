@@ -99,12 +99,34 @@ router.get("/api/whatsapp/list", async (req, res) => {
 
 router.post("/whatsapp/twilio-callback", (req, res) => {
   try {
-      
     res.sendStatus(202);
-        dbService.create("twilio_delivery", {
-      response: JSON.stringify(req.body)
+    dbService.create("twilio_delivery", {
+      response: JSON.stringify(req.body),
     });
-     
+
+    const query = `
+        SELECT ttm.contentSid
+            FROM twilio_template_message ttm
+            LEFT JOIN twilio_delivery td
+            ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+            WHERE json_extract(td.response, '$.MessageStatus') = 'delivered';
+
+        `;
+
+    const stmt = db.prepare(query);
+    const row = stmt.get();
+
+    let toNumber = req.body?.To || null;
+
+    if (toNumber) {
+      const phone = toNumber.replace(/^whatsapp:/, "");
+
+      dbService.updateWhere(
+        "contact_book",
+        { contentSid: row.contentSid },
+        { phone: phone }
+      );
+    }
   } catch (error) {
     console.error("Twilio callback error:", error);
     res.sendStatus(200); // still 2xx
@@ -222,7 +244,7 @@ router.post(
       await handleAutoResponse(From, ButtonPayload);
 
       // Fire and forget: save raw payload + log message to DB
-        dbService.create("twilio_responses", {
+      dbService.create("twilio_responses", {
         source: "twilio",
         event_type: "whatsapp.message.received",
         payload: JSON.stringify(req.body),
@@ -234,9 +256,8 @@ router.post(
 );
 
 router.get("/api/whatsapp/insight", async (req, res) => {
-try {
-  
-  const combinedQuery = `
+  try {
+    const combinedQuery = `
     SELECT 'undelivered' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
     FROM twilio_delivery td
     LEFT JOIN twilio_template_message ttm
@@ -311,39 +332,37 @@ try {
     WHERE json_extract(payload, '$.ButtonPayload') = ?
   `;
 
-  // Your content SIDs and button payloads
-  const contentSid = "HX01112eac1bf320e6213b4e2ff6ff060f";
-  const contentSidEnglish = "HX40c31821495f0b6df95dfe383e60196d";
-  const simpleMessageContentSid = "HXb1ce9479f3d42819bef456f00448afcc";
+    // Your content SIDs and button payloads
+    const contentSid = "HX01112eac1bf320e6213b4e2ff6ff060f";
+    const contentSidEnglish = "HX40c31821495f0b6df95dfe383e60196d";
+    const simpleMessageContentSid = "HXb1ce9479f3d42819bef456f00448afcc";
 
-  // Prepare statement and execute with all params
-  const stmt = db.prepare(combinedQuery);
-  const rows = stmt.all(
-    contentSid,           // undelivered
-    contentSid,           // delivered
-    contentSidEnglish,    // deliveredEnglish
-    contentSid,           // read
-    contentSidEnglish,    // readEnglish
-    simpleMessageContentSid, // simpleMessageDelivered
-    simpleMessageContentSid, // simpleMessageUndelivered
-    "NOT_ATTEND",         // notAttend
-    "ATTEND"              // attend
-  );
+    // Prepare statement and execute with all params
+    const stmt = db.prepare(combinedQuery);
+    const rows = stmt.all(
+      contentSid, // undelivered
+      contentSid, // delivered
+      contentSidEnglish, // deliveredEnglish
+      contentSid, // read
+      contentSidEnglish, // readEnglish
+      simpleMessageContentSid, // simpleMessageDelivered
+      simpleMessageContentSid, // simpleMessageUndelivered
+      "NOT_ATTEND", // notAttend
+      "ATTEND" // attend
+    );
 
-  // Map rows to a key-value object
-  const stats = {};
-  rows.forEach(({ type, to_number }) => {
-    stats[type] = to_number ?? 0;
-  });
+    // Map rows to a key-value object
+    const stats = {};
+    rows.forEach(({ type, to_number }) => {
+      stats[type] = to_number ?? 0;
+    });
 
-  // Return your JSON response
-  return res.status(200).json({ status: true, data: stats });
-
-} catch (err) {
-  console.error("Failed to fetch insights", err);
-  return res.status(500).json({ status: false, message: "Server error" });
-}
-
+    // Return your JSON response
+    return res.status(200).json({ status: true, data: stats });
+  } catch (err) {
+    console.error("Failed to fetch insights", err);
+    return res.status(500).json({ status: false, message: "Server error" });
+  }
 });
 
 router.get("/api/whatsapp/download-media", async (req, res) => {
