@@ -97,8 +97,7 @@ router.get("/api/contacts", (req, res) => {
     const query = `
       SELECT *
       FROM contact_book
-      WHERE phone IS NOT NULL AND blacklist = ?
-      GROUP BY phone
+      WHERE phone IS NOT NULL AND blacklist = ? 
       ORDER BY id DESC
     `;
 
