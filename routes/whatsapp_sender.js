@@ -257,49 +257,55 @@ router.post(
 
 router.get("/api/whatsapp/insight", async (req, res) => {
   try {
+
+    const {startDate, endDate} = req.query;
+
+    // const start = new Date(startDate).toISOString().slice(0, 19).replace('T', ' ');
+    // const end = new Date(endDate).toISOString().slice(0, 19).replace('T', ' ');
+
+
+    const start = new Date(startDate).toISOString().slice(0, 10);
+const end = new Date(endDate).toISOString().slice(0, 10);
+
+// LEFT JOIN twilio_template_message ttm
+//   ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+
     const combinedQuery = `
     SELECT 'undelivered' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
     FROM twilio_delivery td
-    LEFT JOIN twilio_template_message ttm
-      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
     WHERE json_extract(td.response, '$.MessageStatus') = 'undelivered'
-      AND ttm.contentSid = ?
+      AND td.metadata_createdAt BETWEEN ? AND ? 
 
     UNION ALL
 
     SELECT 'delivered' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
     FROM twilio_delivery td
-    LEFT JOIN twilio_template_message ttm
-      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+   
     WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
-      AND ttm.contentSid = ?
+      AND td.metadata_createdAt BETWEEN ? AND ? 
 
     UNION ALL
 
     SELECT 'deliveredEnglish' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
     FROM twilio_delivery td
-    LEFT JOIN twilio_template_message ttm
-      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+   
     WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
-      AND ttm.contentSid = ?
+      AND td.metadata_createdAt BETWEEN ? AND ? 
 
     UNION ALL
 
     SELECT 'read' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
     FROM twilio_delivery td
-    LEFT JOIN twilio_template_message ttm
-      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+
     WHERE json_extract(td.response, '$.MessageStatus') = 'read'
-      AND ttm.contentSid = ?
+      AND td.metadata_createdAt BETWEEN ? AND ? 
 
     UNION ALL
 
     SELECT 'readEnglish' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
     FROM twilio_delivery td
-    LEFT JOIN twilio_template_message ttm
-      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
     WHERE json_extract(td.response, '$.MessageStatus') = 'read'
-      AND ttm.contentSid = ?
+      AND td.metadata_createdAt BETWEEN ? AND ? 
 
     UNION ALL
 
@@ -308,7 +314,8 @@ router.get("/api/whatsapp/insight", async (req, res) => {
     LEFT JOIN twilio_template_message ttm
       ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
     WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
-      AND ttm.contentSid = ?
+    AND ttm.contentSid = ?
+      AND td.metadata_createdAt BETWEEN ? AND ? 
 
     UNION ALL
 
@@ -317,38 +324,40 @@ router.get("/api/whatsapp/insight", async (req, res) => {
     LEFT JOIN twilio_template_message ttm
       ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
     WHERE json_extract(td.response, '$.MessageStatus') = 'undelivered'
-      AND ttm.contentSid = ?
+    AND ttm.contentSid = ?
+      AND td.metadata_createdAt BETWEEN ? AND ? 
 
     UNION ALL
 
     SELECT 'notAttend' AS type, COUNT(*) AS to_number
-    FROM twilio_responses
+    FROM twilio_responses as tr
     WHERE json_extract(payload, '$.ButtonPayload') = ?
-
+        AND tr.received_at BETWEEN ? AND ? 
     UNION ALL
 
     SELECT 'attend' AS type, COUNT(*) AS to_number
-    FROM twilio_responses
+    FROM twilio_responses as tr
     WHERE json_extract(payload, '$.ButtonPayload') = ?
+            AND tr.received_at BETWEEN ? AND ? 
   `;
 
     // Your content SIDs and button payloads
-    const contentSid = "HX01112eac1bf320e6213b4e2ff6ff060f";
-    const contentSidEnglish = "HX40c31821495f0b6df95dfe383e60196d";
+    // const contentSid = "HX01112eac1bf320e6213b4e2ff6ff060f";
+    // const contentSidEnglish = "HX40c31821495f0b6df95dfe383e60196d";
     const simpleMessageContentSid = "HXb1ce9479f3d42819bef456f00448afcc";
 
     // Prepare statement and execute with all params
     const stmt = db.prepare(combinedQuery);
     const rows = stmt.all(
-      contentSid, // undelivered
-      contentSid, // delivered
-      contentSidEnglish, // deliveredEnglish
-      contentSid, // read
-      contentSidEnglish, // readEnglish
-      simpleMessageContentSid, // simpleMessageDelivered
-      simpleMessageContentSid, // simpleMessageUndelivered
-      "NOT_ATTEND", // notAttend
-      "ATTEND" // attend
+      start, end, // undelivered
+      start, end, // delivered
+      start, end, // deliveredEnglish
+      start, end, // read
+      start, end, // readEnglish
+      simpleMessageContentSid,start, end, // simpleMessageDelivered
+      simpleMessageContentSid,start, end, // simpleMessageUndelivered
+      "NOT_ATTEND",start, end, // notAttend
+      "ATTEND",start, end, // attend
     );
 
     // Map rows to a key-value object
