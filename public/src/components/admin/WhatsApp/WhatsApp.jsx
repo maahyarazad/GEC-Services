@@ -105,10 +105,10 @@ const WhatsappBroadcast = () => {
 
 
 
-    const onViewJson = (value, type) => {
+    const onViewJson = (value, type,full_name) => {
 
         setViewJsonModal(true);
-        setJSON_Value_Response_Log({value, type});
+        setJSON_Value_Response_Log({value, type, full_name});
     }
 
     const onViewHistory = (value, type) => {
@@ -393,21 +393,28 @@ useEffect(() => {
     const params = new URLSearchParams(location.search);
     const modalView = params.get("view");
     if (modalView === "report") {
-      setViewStatus(true);
-    }
+    setViewStatus(true);
+    setOpenResponses(false);
+  }
+
+  if (modalView === "response_logs") {
+    setOpenResponses(true);
+    setViewStatus(false);
+  }
   }, [location.search]);
 
   // When viewStatus changes, update the URL query params accordingly
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-
-    if (viewStatus) {
-      // Add or keep view=report
-      params.set("view", "report");
-    } else {
-      // Remove the view param
-      params.delete("view");
-    }
+    
+if (viewStatus) {
+    params.set("view", "report");
+    setOpenResponses(false);
+  } else if (openResponses) {
+    params.set("view", "response_logs");
+  } else {
+    params.delete("view");
+  }
 
     // Update URL without reloading page
     navigate({
@@ -415,7 +422,7 @@ useEffect(() => {
       search: params.toString() ? `?${params.toString()}` : "",
     }, { replace: true }); // replace to avoid history stack pollution
 
-  }, [viewStatus, navigate, location.pathname, location.search]);
+  }, [viewStatus, navigate, location.pathname, location.search, openResponses]);
 
 
 const modalTitle = (() => {
@@ -446,6 +453,7 @@ const renderModalContent = () => {
         case "instant_reply":
             return (
                 <QuickReply
+                    contact_name={JSON_Value_Response_Log?.full_name}
                     incoming_message={JSON_Value_Response_Log?.value}
                     CloseModal={() => {
                         setViewJsonModal(false);
@@ -492,7 +500,7 @@ const renderModalContent = () => {
                     setOpenResponses(false);
 
                 }}
-                headerTitle={openLogs ? 'Delivery Logs' : 'Responses Logs'}
+                headerTitle={openLogs ? 'Delivery Logs' : 'Response Logs'}
             >
 
 

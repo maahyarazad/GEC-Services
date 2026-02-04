@@ -4,7 +4,8 @@ import { Button, CircularProgress, IconButton } from '@mui/material';
 import { IoPlayCircle } from "react-icons/io5";
 import { MdPauseCircleFilled } from "react-icons/md";
 import ChatView from './ChatView';
-const QuickReply = ({ CloseModal, incoming_message }) => {
+import './QuickReply.css';
+const QuickReply = ({ CloseModal, incoming_message, contact_name }) => {
     const { showSnackbar } = useSnackbar();
     const [loading, setLoading] = useState(false);
     const [history, setHistory] = useState([]);
@@ -120,9 +121,17 @@ useEffect(()=> {
     return (
         <form onSubmit={handleSubmit}>
             <div className="container pt-2">
+                <div className="container pt-2 d-flex align-items-center gap-2">
+                <div className="avatar-circle">
+                    {contact_name?.charAt(0).toUpperCase()}
+                </div>
+                <span className="contact-name">{contact_name}</span>
+                </div>
+
                 <div className="py-2 d-flex justify-content-start align-items-center">
                     <ChatView messages={history}/>
 
+                </div>
                     {hasMedia && (
                         <div >
                             <IconButton onClick={toggleAudio} style={{ fontSize: 16 }}>
@@ -136,7 +145,6 @@ useEffect(()=> {
                             <audio ref={audioRef} src={audioUrl} preload="auto" />
                         </div>
                     )}
-                </div>
 
                 <div className="row">
                     <div className="col mb-3">

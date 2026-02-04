@@ -10,6 +10,31 @@
   font-family: Arial, sans-serif;
   /* Common message wrapper */
 }
+.chat-container .whatsapp-green-overlay {
+  position: relative;
+}
+.chat-container .whatsapp-green-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(18, 140, 126, 0.08);
+  pointer-events: none;
+  z-index: 1;
+}
+.chat-container .whatsapp-green-overlay > * {
+  position: relative;
+  z-index: 2;
+}
+.chat-container .date-separator {
+  align-self: center;
+  background: #d9d9d9;
+  color: #555;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 1px 10px;
+  border-radius: 20px;
+  margin: 10px 0;
+}
 .chat-container .chat-message {
   display: flex;
   width: 100%;

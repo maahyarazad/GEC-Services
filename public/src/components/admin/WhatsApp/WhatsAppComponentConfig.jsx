@@ -62,7 +62,7 @@ export const responseColumns = ({ onViewJson, onViewHistory }) => [
             return (
                 <div>
                     
-                    <IconButton onClick={() => onViewJson(JSON.parse(params.row.payload), 'instant_reply')} title="Open Instant Resopne">
+                    <IconButton onClick={() => onViewJson(JSON.parse(params.row.payload), 'instant_reply', params.row.full_name)} title="Open Instant Resopne">
                         <IoMdOpen />
                     </IconButton>
 

@@ -9,6 +9,39 @@
   overflow-y: auto;
   font-family: Arial, sans-serif;
 
+  .whatsapp-green-overlay {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(18, 140, 126, 0.08); // WhatsApp green tint
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  > * {
+    position: relative;
+    z-index: 2;
+  }
+}
+
+
+
+  .date-separator {
+    align-self: center;
+    background: #d9d9d9;
+    color: #555;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 1px 10px;
+    border-radius: 20px;
+    margin: 10px 0;
+    }
+
+
+
   /* Common message wrapper */
   .chat-message {
     display: flex;
