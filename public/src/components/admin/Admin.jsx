@@ -85,7 +85,7 @@ const Admin = ({ data }) => {
                 method: "GET",
                 credentials: "include",
             });
-
+            debugger;
             if (res.status === 401) {
 
                 console.warn("Unauthorized");
@@ -115,8 +115,8 @@ const Admin = ({ data }) => {
     }, [checkAuth]);
 
 
-    
-   
+
+
 
 
     const handleLoginSubmit = async (values, { setSubmitting, resetForm }) => {
@@ -155,18 +155,28 @@ const Admin = ({ data }) => {
                 const data = await res.json();
 
                 if (data.success) {
+                    const params = new URLSearchParams(location.search);
+
+                    // Ensure tab exists, but keep all other params (e.g. view)
+                    if (!params.get("tab")) {
+                        params.set("tab", "registration-config");
+                    }
+
                     // backend sets secure cookie, you just store a flag in state
                     setAdminUser(true);
                     resetForm();
 
-                    navigate(`/admin?tab=registration-config`, {
-                        state: { tab: 'registration-config' },
+                    navigate(`/admin?${params.toString()}`, {
+                    state: { tab: params.get("tab") },
                     });
-                    return setStatus("Login successful!", "dark");
+
+                    setStatus("Login successful!", "dark");
+                    return;
 
                 } else {
                     if (statusRef.current) {
-                        return setStatus("Invalid Password!");
+                        setStatus("Invalid Password!");
+                        return;
                     }
                 }
             } else {
@@ -249,23 +259,23 @@ const Admin = ({ data }) => {
     const slugify = (text) =>
         text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
 
-useEffect(() => {
-    const tabSlug = slugify(tabConfig[0].label);
+    useEffect(() => {
+        const tabSlug = slugify(tabConfig[0].label);
 
-    if (location.search) {
-        const params = new URLSearchParams(location.search);
-        const tab = params.get("tab");
-        const index = tabConfig.findIndex(tabItem => slugify(tabItem.label) === tab);
-        
-        // If index is invalid, fallback to 0
-        setTabValue(index >= 0 ? index : 0);
-    } else {
-        navigate(`/admin?tab=${tabSlug}`, {
-            state: { tab: tabSlug },
-        });
-        setTabValue(0);
-    }
-}, []);
+        if (location.search) {
+            const params = new URLSearchParams(location.search);
+            const tab = params.get("tab");
+            const index = tabConfig.findIndex(tabItem => slugify(tabItem.label) === tab);
+
+            // If index is invalid, fallback to 0
+            setTabValue(index >= 0 ? index : 0);
+        } else {
+            navigate(`/admin?tab=${tabSlug}`, {
+                state: { tab: tabSlug },
+            });
+            setTabValue(0);
+        }
+    }, []);
 
     const handletabChange = (event, newValue) => {
 
@@ -294,10 +304,10 @@ useEffect(() => {
         return () => window.removeEventListener("popstate", onPopState);
     }, []);
 
-    useEffect(()=>{
+    useEffect(() => {
         if (_data && !_data.Auth) {
-                           setAdminUser(null);
-                       }
+            setAdminUser(null);
+        }
     }, [])
 
 
@@ -333,17 +343,17 @@ useEffect(() => {
     }
 
 
-const FallBackLoader = () => (
-  <div
-    className="d-flex justify-content-center align-items-center flex-column"
-    style={{ height: "100vh", width: "100vw" }}
-  >
-    <CircularProgress />
-  </div>
-);
+    const FallBackLoader = () => (
+        <div
+            className="d-flex justify-content-center align-items-center flex-column"
+            style={{ height: "100vh", width: "100vw" }}
+        >
+            <CircularProgress />
+        </div>
+    );
 
     return isCheckingAuth ? (
-       <FallBackLoader/>
+        <FallBackLoader />
     ) : adminUser ? (
         <>
             <Header adminUser={adminUser} setAdminUser={setAdminUser} showMenu={showMenu} burgerActive={burgerActive} setBurgerActive={setBurgerActive} />
@@ -353,7 +363,7 @@ const FallBackLoader = () => (
 
                         sx={{ flexGrow: 1, bgcolor: 'background.paper', display: 'flex' }}
                     >
-                        
+
                         <Tabs
                             orientation="vertical"
                             variant="scrollable"
@@ -388,7 +398,7 @@ const FallBackLoader = () => (
                         </Tabs>
                     </Box>
                 </div>
-                <React.Suspense fallback={   <FallBackLoader/>}>
+                <React.Suspense fallback={<FallBackLoader />}>
                     <div >{content}</div>
                 </React.Suspense>
             </div>
