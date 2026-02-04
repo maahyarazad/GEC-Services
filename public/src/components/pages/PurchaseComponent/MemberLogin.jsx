@@ -234,7 +234,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
         try {
             setShowOtpInput(true);
 
-debugger;
+
             const otp_response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/send-otp`,
                 {

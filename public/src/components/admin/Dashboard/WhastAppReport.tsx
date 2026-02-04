@@ -80,7 +80,7 @@ export default function WhastAppReport() {
             {
                 label: "Delivered",
                 data: [
-                    (panelData.delivered ?? 0) + (panelData.deliveredEnglish ?? 0),
+                    (panelData.delivered ?? 0),
                     0,
                     0,
                 ],
@@ -90,7 +90,7 @@ export default function WhastAppReport() {
             {
                 label: "Read",
                 data: [
-                    (panelData.read ?? 0) + (panelData.readEnglish ?? 0),
+                    (panelData.read ?? 0),
                     0,
                     0,
                 ],

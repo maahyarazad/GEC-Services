@@ -31,7 +31,7 @@ import { useAlertDialog } from "../../Providers/AlertProvider";
 import QuickReply from "./QuickReply";
 import { IoStatsChartSharp } from "react-icons/io5";
 import WhastAppReport from '../Dashboard/WhastAppReport';
-import {   useNavigate, useLocation } from "react-router-dom";
+import {  useNavigate, useLocation } from "react-router-dom";
 
 const WhatsappBroadcast = () => {
     
@@ -85,7 +85,6 @@ const WhatsappBroadcast = () => {
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts${viewBlackList ? '?blacklist=1' : ''}`, { credentials: "include" });
 
-
             if (response.status === 200) {
                 const response_data = await response.json();
 
@@ -106,9 +105,14 @@ const WhatsappBroadcast = () => {
 
 
 
-
     const onViewJson = (value, type) => {
 
+        setViewJsonModal(true);
+        setJSON_Value_Response_Log({value, type});
+    }
+
+    const onViewHistory = (value, type) => {
+        
         setViewJsonModal(true);
         setJSON_Value_Response_Log({value, type});
     }
@@ -345,7 +349,7 @@ const onSwitchBlacklist = (row, val) => {
 
                 const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-delivery-logs`, { credentials: "include" });
                 const data = await response.json();
-                debugger;
+                
                 setLogs(data.result || []);
                 setRowCount(data.result.length || 0);
             } catch (err) {
@@ -414,6 +418,46 @@ useEffect(() => {
   }, [viewStatus, navigate, location.pathname, location.search]);
 
 
+const modalTitle = (() => {
+    switch (JSON_Value_Response_Log?.type) {
+        case "log":
+            return "Content SID";
+
+        case "history":
+            return "History";
+
+        case "instant_reply":
+            return "Instant Reply";
+
+        default:
+            return "";
+    }
+})();
+
+
+const renderModalContent = () => {
+    switch (JSON_Value_Response_Log?.type) {
+        case "log":
+            return <JSONPretty data={JSON_Value_Response_Log?.value} />;
+
+        case "history":
+            return <JSONPretty data={JSON_Value_Response_Log?.value} />;
+
+        case "instant_reply":
+            return (
+                <QuickReply
+                    incoming_message={JSON_Value_Response_Log?.value}
+                    CloseModal={() => {
+                        setViewJsonModal(false);
+                        setJSON_Value_Response_Log(null);
+                    }}
+                />
+            );
+
+        default:
+            return null;
+    }
+};
 
 
     if (loading) {
@@ -478,7 +522,7 @@ useEffect(() => {
                             <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
                                 <DataGrid
                                     rows={responses}
-                                    columns={responseColumns({ onViewJson })}
+                                    columns={responseColumns({ onViewJson, onViewHistory })}
                                      paginationModel={_paginationModel}
                                          onPaginationModelChange={_setPaginationModel}
                                     rowsPerPageOptions={[25, 50, 100]}
@@ -565,27 +609,17 @@ useEffect(() => {
             </SlideMenu>
 
 
-            <Modal isOpen={viewJsonModal}
-                onRequestClose={() => {
-                    setViewJsonModal(false);
-                    setJSON_Value_Response_Log(null);
-                }}
+           <Modal
+    isOpen={viewJsonModal}
+    onRequestClose={() => {
+        setViewJsonModal(false);
+        setJSON_Value_Response_Log(null);
+    }}
+    title={modalTitle}
+>
+    {renderModalContent()}
+</Modal>
 
-                title={`${JSON_Value_Response_Log?.type === 'log'? "Content Sid" : "Message Body"}`}>
-
-                    {JSON_Value_Response_Log?.type === 'log'? <JSONPretty data={JSON_Value_Response_Log?.value} /> :  
-                    
-                    
-                    <div className=""> 
-                        <QuickReply incoming_message={JSON_Value_Response_Log?.value} CloseModal={()=> {setViewJsonModal(false);
-                        setJSON_Value_Response_Log(null);}}/>
-                    </div>
-                    
-                    
-                    }
-
-                
-            </Modal>
 
 
             <div className="pb-2 border-bottom border-1">

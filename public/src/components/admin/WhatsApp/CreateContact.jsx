@@ -69,7 +69,7 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
                 return;
             } 
             
-            debugger;
+            
             const response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/api/contacts/${initialValues ? 'modify' : 'create'}`,
                 {

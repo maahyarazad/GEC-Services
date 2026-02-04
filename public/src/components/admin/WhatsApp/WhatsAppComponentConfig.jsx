@@ -5,7 +5,7 @@ import 'react-json-pretty/themes/monikai.css'; // optional styling
 import { IoMdOpen } from "react-icons/io";
 import { RiEditLine } from "react-icons/ri";
 import { IoTrashOutline } from "react-icons/io5";
-
+import { FaHistory } from "react-icons/fa";
 export const columns = ({ onViewJson }) => [
     { field: 'id', headerName: 'ID', width: 70, hide: true },
     { field: 'metadata_createdAt', headerName: 'Created At', width: 160, filterable: true },
@@ -42,7 +42,7 @@ export const columns = ({ onViewJson }) => [
 ];
 
 
-export const responseColumns = ({ onViewJson }) => [
+export const responseColumns = ({ onViewJson, onViewHistory }) => [
   { field: 'id', headerName: 'ID', width: 70, hide: true },
   { field: 'received_at', headerName: 'Received ar', width: 160, filterable: true },
   { field: 'full_name', headerName: 'Full Name', width: 160, filterable: true },
@@ -52,7 +52,7 @@ export const responseColumns = ({ onViewJson }) => [
   { field: 'Body', headerName: 'Body', width: 200, filterable: true },
    {
         field: '_',
-        headerName: 'View Body',
+        headerName: 'Actions',
         width: 90,
 
         filterable: false,
@@ -62,14 +62,20 @@ export const responseColumns = ({ onViewJson }) => [
             return (
                 <div>
                     
-                    <IconButton onClick={() => onViewJson(JSON.parse(params.row.payload), params.row.MessageType)}>
+                    <IconButton onClick={() => onViewJson(JSON.parse(params.row.payload), 'instant_reply')} title="Open Instant Resopne">
                         <IoMdOpen />
                     </IconButton>
+
+                     <IconButton onClick={() => onViewHistory(JSON.parse(params.row.payload), 'history')}>
+                        <FaHistory />
+                    </IconButton>
+
                 </div>
             );
         },
 
-    }
+    },
+  
 ];
 
 export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBlacklist }) => [

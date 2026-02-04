@@ -1,11 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef , useCallback} from 'react';
 import { useSnackbar } from '../../Providers/Snackbar';
 import { Button, CircularProgress, IconButton } from '@mui/material';
 import { IoPlayCircle } from "react-icons/io5";
 import { MdPauseCircleFilled } from "react-icons/md";
+import ChatView from './ChatView';
 const QuickReply = ({ CloseModal, incoming_message }) => {
     const { showSnackbar } = useSnackbar();
     const [loading, setLoading] = useState(false);
+    const [history, setHistory] = useState([]);
     const [message, setMessage] = useState('');
     console.log(incoming_message)
     // Audio playback state
@@ -50,6 +52,38 @@ const QuickReply = ({ CloseModal, incoming_message }) => {
         }
     };
 
+    const fetchHistory = useCallback(async (e) => {
+       
+        setLoading(true);
+        try {
+            const response = await fetch(
+            `${import.meta.env.VITE_SERVERURL}/api/whatsapp/history/${incoming_message.WaId}`,
+            {
+                method: "GET",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+            }
+            );
+            const responseData = await response.json();
+             
+            if (!response.ok) {
+                console.error(responseData.error);
+                showSnackbar(responseData.message, "error");
+            } else {
+               
+               setHistory(responseData.result);
+            }
+        } catch (error) {
+            console.error(error);
+            showSnackbar(error.message || "Unexpected error occurred", "error");
+        } finally {
+            setLoading(false);
+        }
+    },[]);
+
+useEffect(()=> {
+    fetchHistory();
+}, [fetchHistory])
     const hasMedia =
         Number(incoming_message?.NumMedia) > 0 &&
         incoming_message?.MediaUrl0;
@@ -87,7 +121,7 @@ const QuickReply = ({ CloseModal, incoming_message }) => {
         <form onSubmit={handleSubmit}>
             <div className="container pt-2">
                 <div className="py-2 d-flex justify-content-start align-items-center">
-                    Reply to: <strong className='ps-2'>{incoming_message?.Body}</strong>
+                    <ChatView messages={history}/>
 
                     {hasMedia && (
                         <div >

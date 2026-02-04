@@ -261,8 +261,6 @@ async function sendMessageToPhone(
       contentSid: messageOptions.contentSid,
     });
 
-
-
     return result;
   } catch (error) {
     console.error(`Failed to send message to ${phone}:`, error);
@@ -378,21 +376,109 @@ const deleteContent = async (req, res) => {
   }
 };
 
-function getRandomItems(array, count) {
-  const arrCopy = [...array]; // copy to avoid mutating original
-  for (let i = arrCopy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arrCopy[i], arrCopy[j]] = [arrCopy[j], arrCopy[i]];
+async function getMessageBody(messageSid) {
+  try {
+    const message = await twilioClient.messages(messageSid).fetch();
+    console.log("Message Body:", message.body);
+    return message.body;
+  } catch (error) {
+    console.error("Failed to fetch message:", error);
+    throw error;
   }
-  return arrCopy.slice(0, count);
+}
+async function fetchHistory(phone) {
+  try {
+    const receivedQuery = `
+           SELECT
+                json_extract(tr.payload, '$.Body') AS body,
+                tr.received_at,
+                'r' AS type
+            FROM twilio_responses tr
+            WHERE json_extract(tr.payload, '$.WaId') = ?;
+            `;
+
+    const sentQuery = `
+            SELECT
+                td.*,
+                ttm.*
+            FROM twilio_delivery td
+            LEFT JOIN twilio_template_message ttm
+                ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+            WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
+                AND json_extract(td.response, '$.To') = ?
+                AND ttm.contentSid = ?;
+            `;
+
+    const receivedStmt = db.prepare(receivedQuery);
+    const sentStmt = db.prepare(sentQuery);
+
+    const receivedMessages = receivedStmt.all(phone);
+    const sentMessages = sentStmt.all(
+      `whatsapp:+${phone}`,
+      "HXb1ce9479f3d42819bef456f00448afcc"
+    );
+
+        const detailedBodies = [];
+        if (sentMessages && sentMessages.length > 0) {
+            const detailedMessages = await fetchTwilioMessagesDetails(
+            sentMessages
+            );
+
+            for (const item of detailedMessages) {
+            const twilioMessage = item.twilioMessage;
+            if (twilioMessage) {
+                detailedBodies.push({
+                body: twilioMessage.body,
+                received_at: twilioMessage.dateSent, 
+                type: 's'
+                });
+            }
+            }
+        }
+
+        const combined = [
+            ...receivedMessages,
+            ...detailedBodies  
+            ];
+
+            // Sort by received_at (date string)
+            combined.sort((a, b) => new Date(a.received_at) - new Date(b.received_at));
+
+
+    return combined;
+  } catch (error) {
+    console.error("Failed to fetch message:", error);
+    throw error;
+  }
 }
 
-function chunkArray(arr, size) {
-  const chunks = [];
-  for (let i = 0; i < arr.length; i += size) {
-    chunks.push(arr.slice(i, i + size));
-  }
-  return chunks;
+async function fetchTwilioMessagesDetails(sentMessages) {
+  // Map each messageSid to a fetch Promise
+  const fetchPromises = sentMessages.map(async (msg) => {
+    try {
+      // messageSid is in your local record as `msg.messageSid`
+      const twilioMessage = await twilioClient.messages(msg.messageSid).fetch();
+      return {
+        localRecord: msg,
+        twilioMessage, // full details from Twilio
+      };
+    } catch (error) {
+      console.error(
+        `Failed to fetch Twilio message for SID ${msg.messageSid}:`,
+        error
+      );
+      return {
+        localRecord: msg,
+        twilioMessage: null,
+        error,
+      };
+    }
+  });
+
+  // Wait for all to resolve
+  const results = await Promise.all(fetchPromises);
+
+  return results;
 }
 
 async function handleAutoResponse(From, ButtonPayload) {
@@ -473,6 +559,7 @@ const normalizeRow = (row) => {
 };
 
 module.exports = {
+  fetchHistory,
   otpSender,
   messageSender,
   fetchContentTemplates,

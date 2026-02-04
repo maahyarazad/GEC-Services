@@ -1,0 +1,61 @@
+.chat-container {
+  height: 40vh;
+  width: 100%;
+  padding: 16px;
+  background: #e5ddd5;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  font-family: Arial, sans-serif;
+  /* Common message wrapper */
+}
+.chat-container .chat-message {
+  display: flex;
+  width: 100%;
+  /* LEFT (received) */
+  /* RIGHT (sent) */
+  /* Bubble */
+}
+.chat-container .chat-message.received {
+  justify-content: flex-start;
+}
+.chat-container .chat-message.received .bubble {
+  background: #ffffff;
+  border-top-left-radius: 0;
+}
+.chat-container .chat-message.sent {
+  justify-content: flex-end;
+}
+.chat-container .chat-message.sent .bubble {
+  background: #dcf8c6;
+  border-top-right-radius: 0;
+}
+.chat-container .chat-message .bubble {
+  max-width: 70%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  position: relative;
+  word-wrap: break-word;
+  /* Text */
+  /* Meta (time + ticks) */
+}
+.chat-container .chat-message .bubble .text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.chat-container .chat-message .bubble .meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #666;
+  /* Double tick */
+}
+.chat-container .chat-message .bubble .meta .ticks {
+  color: #4fc3f7;
+  font-size: 12px;
+}/*# sourceMappingURL=ChatView.css.map */

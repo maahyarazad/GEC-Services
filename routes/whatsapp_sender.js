@@ -4,8 +4,7 @@ const {
   messageSender,
   fetchContentTemplates,
   handleAutoResponse,
-  flattenObject,
-  normalizeRow,
+  fetchHistory,
 } = require("../services/whatsAppSender");
 const crypto = require("crypto");
 
@@ -88,6 +87,25 @@ router.get("/api/whatsapp/list", async (req, res) => {
       res.status(200).json({ status: true, templates: result.result });
     } else {
       res.status(500).json({ status: false, error: result.result });
+    }
+  } catch (error) {
+    console.error("Failed to send message", error);
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to fetch WhatsApp templates" });
+  }
+});
+
+
+router.get("/api/whatsapp/history/:phone", async (req, res) => {
+  try {
+    const { phone } = req.params;
+    const result = await fetchHistory(phone);
+    
+    if (result) {
+      res.status(200).json({ status: true, result });
+    } else {
+      res.status(500).json({ status: false, error: result });
     }
   } catch (error) {
     console.error("Failed to send message", error);
@@ -280,34 +298,19 @@ const end = new Date(endDate).toISOString().slice(0, 10);
 
     SELECT 'delivered' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
     FROM twilio_delivery td
-   
     WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
       AND td.metadata_createdAt BETWEEN ? AND ? 
 
     UNION ALL
 
-    SELECT 'deliveredEnglish' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
-    FROM twilio_delivery td
-   
-    WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
-      AND td.metadata_createdAt BETWEEN ? AND ? 
-
-    UNION ALL
 
     SELECT 'read' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
     FROM twilio_delivery td
-
     WHERE json_extract(td.response, '$.MessageStatus') = 'read'
       AND td.metadata_createdAt BETWEEN ? AND ? 
 
     UNION ALL
 
-    SELECT 'readEnglish' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
-    FROM twilio_delivery td
-    WHERE json_extract(td.response, '$.MessageStatus') = 'read'
-      AND td.metadata_createdAt BETWEEN ? AND ? 
-
-    UNION ALL
 
     SELECT 'simpleMessageDelivered' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
     FROM twilio_delivery td
@@ -351,9 +354,7 @@ const end = new Date(endDate).toISOString().slice(0, 10);
     const rows = stmt.all(
       start, end, // undelivered
       start, end, // delivered
-      start, end, // deliveredEnglish
       start, end, // read
-      start, end, // readEnglish
       simpleMessageContentSid,start, end, // simpleMessageDelivered
       simpleMessageContentSid,start, end, // simpleMessageUndelivered
       "NOT_ATTEND",start, end, // notAttend

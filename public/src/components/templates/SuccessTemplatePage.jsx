@@ -109,7 +109,7 @@ const SuccessTemplatePage = ({}) => {
             }
             const queryParams = new URLSearchParams(window.location.search);
             const values = await response.json();
-            debugger;
+            
             if (values) {
                 values.rows.map(async (x) => {
 

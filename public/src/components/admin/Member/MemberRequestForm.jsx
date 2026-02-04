@@ -57,7 +57,7 @@ export default function MemberNewForm({ initialData = null, modalSwitch }) {
       formData.append('language', values.language);
       if (values.avatar) formData.append('avatar', values.avatar);
 
-      debugger;
+      
       const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member`, {
         method: 'POST',
         body: formData,
