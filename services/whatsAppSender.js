@@ -90,6 +90,40 @@ const contactBookData = (conditions) => {
   return result;
 };
 
+
+const corruptedContactBookData = (conditions) => {
+  const query = `
+      SELECT *
+      FROM contact_book
+    `;
+
+  const stmt = db.prepare(query);
+  const result = stmt.all();
+
+  result.forEach(el => {
+    try {
+      const phoneNumber = parsePhoneNumberFromString(el.phone);
+
+      if (!phoneNumber) {
+        el.phone_validation = false;
+        el.phone_invalid_reason = 'Parsing failed';
+      } else if (!phoneNumber.isValid()) {
+        el.phone_validation = false;
+        el.phone_invalid_reason = 'Number format invalid';
+      } else {
+        el.phone_validation = true;
+        el.phone_invalid_reason = null;
+      }
+    } catch (error) {
+      el.phone_validation = false;
+      el.phone_invalid_reason = 'Exception: ' + error.message;
+    }
+  });
+
+  return result.filter(el => el.phone_validation === false);
+};
+
+
 const messageSender = async (req) => {
   try {
     const {
@@ -119,7 +153,7 @@ const messageSender = async (req) => {
         }
         
         return await sendMessageToPhone(el.phone, template, payload, el);
-        
+
       } catch (error) {
         console.error(`Error sending message to ${el.phone}:`, error);
         dbService.create("error_log", {
@@ -600,4 +634,5 @@ module.exports = {
   handleAutoResponse,
   flattenObject,
   normalizeRow,
+  corruptedContactBookData
 };

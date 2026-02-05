@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const dbService = require("../services/dbService");
 const db = dbService.getDB();
+const {corruptedContactBookData} = require("../services/whatsAppSender");
 
 router.post("/api/contacts/create", (req, res) => {
   try {
@@ -116,5 +117,20 @@ router.get("/api/contacts", (req, res) => {
     });
   }
 });
+
+
+router.get("/api/contacts/corrupted-contact-book", async (req, res) => {
+  try {
+    const result = corruptedContactBookData();
+    res.status(200).json({ status: true, data: result });
+    
+  } catch (error) {
+    console.error("Failed to fetch data", error);
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to fetch data" });
+  }
+});
+
 
 module.exports = router;

@@ -25,7 +25,7 @@ import { RiUserReceivedFill } from "react-icons/ri";
 import { RiCheckDoubleFill } from "react-icons/ri";
 import CreateContact from "./CreateContact";
 import { IoAddCircleOutline } from "react-icons/io5";
-import { columns, responseColumns, contactBookColumn, tabstyle, normalizePhone } from './WhatsAppComponentConfig'
+import { columns, responseColumns, contactBookColumn, tabstyle, normalizePhone, corruptedContactBookColumn } from './WhatsAppComponentConfig'
 import MessageModal from "./MessageModal";
 import { useAlertDialog } from "../../Providers/AlertProvider";
 import QuickReply from "./QuickReply";
@@ -60,6 +60,7 @@ const WhatsappBroadcast = () => {
     const [useLanguage, setUseLanguage] = useState(true);
     const [useTestBook, setUseTestBook] = useState(false);
     const [viewBlackList, setViewBlackList] = useState(false);
+    const [viewCorruptedList, setViewCorruptedList] = useState(false);
 
     const { showSnackbar } = useSnackbar();
 
@@ -97,7 +98,28 @@ const WhatsappBroadcast = () => {
         }
     }, [viewBlackList]);
 
+    const fetchCorruptedContactData = useCallback(async () => {
+        try {
+            setloading_logs(true)
 
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts/corrupted-contact-book`,{method: "GET",credentials: "include"});
+            debugger;
+
+            if (response.status === 200) {
+                const response_data = await response.json();
+                setContactList(response_data.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch:', err);
+        } finally {
+            setloading_logs(false)
+        }
+    }, [])
+
+
+    useEffect(() => {
+        if (viewCorruptedList) fetchCorruptedContactData();
+    }, [viewCorruptedList]);
 
     useEffect(() => {
         fetchData();
@@ -177,14 +199,14 @@ const WhatsappBroadcast = () => {
     };
 
 
-const onSwitchBlacklist = (row, val) => {
-    const updatedRow = {
-        ...row,
-        blacklist: val ? 1 : 0
-    };
+    const onSwitchBlacklist = (row, val) => {
+        const updatedRow = {
+            ...row,
+            blacklist: val ? 1 : 0
+        };
 
-    handleSwitchBlacklist(updatedRow);
-};
+        handleSwitchBlacklist(updatedRow);
+    };
 
     const handleSwitchBlacklist = async (row) => {
         try {
@@ -369,8 +391,8 @@ const onSwitchBlacklist = (row, val) => {
     }, [openLogs, openResponses]);
 
     useEffect(() => {
-        if (openContactBook) fetchContactData();
-    }, [openContactBook, viewBlackList]);
+        if (openContactBook && !viewCorruptedList) fetchContactData();
+    }, [openContactBook, viewBlackList, viewCorruptedList]);
 
 
 
@@ -594,9 +616,35 @@ const renderModalContent = () => {
                                             />
                                         </div>
                                     </div>
-                                </div>
+                                        <div className="">
+                                        <div className="">
 
-                                <DataGrid
+                                            <label htmlFor="test-input">View Corrupted Contacts</label>
+
+                                            <Switch
+                                                size="small"
+                                                title="Use Contact Book"
+                                                checked={viewCorruptedList}
+                                                onChange={(e) => setViewCorruptedList(e.target.checked)}
+                                                color="primary"
+                                            />
+                                        </div>
+                                        </div>
+                                </div>
+{viewCorruptedList ? (
+    <DataGrid
+                                    rows={contactList}
+                                    columns={corruptedContactBookColumn({ onModifyContact, onDeleteContact, onSwitchBlacklist })}
+                                    paginationModel={_paginationModel}
+                                    onPaginationModelChange={_setPaginationModel}
+                                    pageSizeOptions={[25, 50, 100]}
+                                    pagination
+                                    disableRowSelectionOnClick
+                                    disableSelectionOnClick
+                                    showToolbar
+                                />
+) : (
+    <DataGrid
                                     rows={contactList}
                                     columns={contactBookColumn({ onModifyContact, onDeleteContact, onSwitchBlacklist })}
                                     paginationModel={_paginationModel}
@@ -607,6 +655,8 @@ const renderModalContent = () => {
                                     disableSelectionOnClick
                                     showToolbar
                                 />
+)}
+                                
                             </div>
                         )}
                     </>

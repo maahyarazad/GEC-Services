@@ -78,6 +78,53 @@ export const responseColumns = ({ onViewJson, onViewHistory }) => [
   
 ];
 
+export const corruptedContactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBlacklist }) => [
+    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'type', headerName: 'Type', width: 110, filterable: true },
+    { field: 'title', headerName: 'Title', width: 70, filterable: true },
+    { field: 'language', headerName: 'language', width: 80, filterable: true },
+    { field: 'first_name', headerName: 'First Name', width: 160, filterable: true },
+    { field: 'last_name', headerName: 'Last Name', width: 160, filterable: true },
+    { field: 'phone', headerName: 'Phone Number', width: 160, filterable: true },
+    { field: 'phone_invalid_reason', headerName: 'Reason', width: 160, filterable: true },
+
+    { field: 'club_partner_name', headerName: 'Club Patner Name', width: 160, filterable: true },
+    { field: 'gender', headerName: 'Gender', width: 90, filterable: true },
+    {
+        field: '_',
+        headerName: 'Actions',
+        width: 130,
+
+        filterable: true,
+        renderCell: (params) => {
+
+
+            return (
+                <div>
+                    
+                    <IconButton onClick={() => onModifyContact(params.row)}>
+                        <RiEditLine />
+                    </IconButton>
+                    <IconButton onClick={() => onDeleteContact(params.row)}>
+                        <IoTrashOutline color="red" />
+                    </IconButton>
+                   
+                    <Switch
+                                                                size="small"
+                                                                title="Move to Blacklist"
+                                                                checked={params.row.blacklist}
+                                                                onChange={(e) => onSwitchBlacklist(params.row, e.target.checked)}
+                                                                color="primary"
+                                                            />
+                   
+                    
+                </div>
+            );
+        },
+
+    }
+
+];
 export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBlacklist }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'type', headerName: 'Type', width: 110, filterable: true },

@@ -4,7 +4,7 @@ const {
   messageSender,
   fetchContentTemplates,
   handleAutoResponse,
-  fetchHistory,
+  fetchHistory
 } = require("../services/whatsAppSender");
 const crypto = require("crypto");
 
@@ -95,6 +95,7 @@ router.get("/api/whatsapp/list", async (req, res) => {
       .json({ status: false, message: "Failed to fetch WhatsApp templates" });
   }
 });
+
 
 
 router.get("/api/whatsapp/history/:phone", async (req, res) => {
