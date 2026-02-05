@@ -2,7 +2,7 @@ const twilioClient = require("twilio")(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
-
+const { parsePhoneNumberFromString } = require('libphonenumber-js');
 const dbService = require("../services/dbService");
 const db = dbService.getDB();
 
@@ -69,12 +69,24 @@ const contactBookData = (conditions) => {
           : `AND language = '${conditions?.language}'`
       }
       AND contentSid IS NULL
-      GROUP BY phone order by id DESC LIMIT 300
+      GROUP BY phone 
+        ORDER BY
+            CASE type
+                WHEN 'gec_staff' THEN 1
+                WHEN 'club_partner' THEN 2
+                WHEN 'club_member' THEN 3
+                WHEN 'expert' THEN 4
+                WHEN 'difa' THEN 5
+                WHEN 'expert_guest' THEN 6
+                WHEN 'only_guest' THEN 7
+                ELSE 8
+            END
+       LIMIT 300
     `;
 
   const stmt = db.prepare(query);
   const result = stmt.all();
-
+    
   return result;
 };
 
@@ -93,7 +105,21 @@ const messageSender = async (req) => {
 
     const safeSendMessage = async (el) => {
       try {
+
+
+        const phoneNumber = parsePhoneNumberFromString(el.phone);
+
+        if (!phoneNumber || !phoneNumber.isValid()) {
+            console.error(`Error sending message to ${el.phone}:`, error);
+            dbService.create("error_log", {
+                error: error.toString(),
+                origin_function: "sendMessageToPhone",
+            });
+            return null;
+        }
+        
         return await sendMessageToPhone(el.phone, template, payload, el);
+        
       } catch (error) {
         console.error(`Error sending message to ${el.phone}:`, error);
         dbService.create("error_log", {
@@ -557,6 +583,14 @@ const normalizeRow = (row) => {
     payload,
   });
 };
+
+function chunkArray(arr, size) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
 
 module.exports = {
   fetchHistory,

@@ -85,7 +85,7 @@ const Admin = ({ data }) => {
                 method: "GET",
                 credentials: "include",
             });
-            debugger;
+            
             if (res.status === 401) {
 
                 console.warn("Unauthorized");
