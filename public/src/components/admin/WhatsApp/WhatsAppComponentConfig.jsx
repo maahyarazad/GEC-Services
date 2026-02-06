@@ -87,7 +87,6 @@ export const corruptedContactBookColumn = ({ onModifyContact, onDeleteContact, o
     { field: 'last_name', headerName: 'Last Name', width: 160, filterable: true },
     { field: 'phone', headerName: 'Phone Number', width: 160, filterable: true },
     { field: 'phone_invalid_reason', headerName: 'Reason', width: 160, filterable: true },
-
     { field: 'club_partner_name', headerName: 'Club Patner Name', width: 160, filterable: true },
     { field: 'gender', headerName: 'Gender', width: 90, filterable: true },
     {

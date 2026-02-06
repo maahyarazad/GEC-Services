@@ -103,7 +103,7 @@ const WhatsappBroadcast = () => {
             setloading_logs(true)
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts/corrupted-contact-book`,{method: "GET",credentials: "include"});
-            debugger;
+            
 
             if (response.status === 200) {
                 const response_data = await response.json();

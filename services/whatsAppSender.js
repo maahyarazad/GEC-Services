@@ -160,6 +160,7 @@ const messageSender = async (req) => {
           error: error.toString(),
           origin_function: "sendMessageToPhone",
         });
+        
         return null;
       }
     };

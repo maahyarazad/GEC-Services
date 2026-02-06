@@ -123,22 +123,35 @@ router.post("/whatsapp/twilio-callback", (req, res) => {
       response: JSON.stringify(req.body),
     });
 
-    const query = `
-        SELECT ttm.contentSid
-            FROM twilio_template_message ttm
-            LEFT JOIN twilio_delivery td
-            ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
-            WHERE json_extract(td.response, '$.MessageStatus') = 'delivered';
+    const messageStatus = req.body?.MessageStatus;
+    const messageSid = req.body?.MessageSid;
 
-        `;
+    if (messageStatus && messageStatus === "delivered") {
+      const query = `
+                SELECT ttm.contentSid
+                    FROM twilio_template_message ttm
+                    WHERE  ttm.messageSid = messageSid;
+                `;
 
-    const stmt = db.prepare(query);
-    const row = stmt.get();
+      const row = db
+        .prepare(
+          `
+                        SELECT contentSid
+                        FROM twilio_template_message
+                        WHERE messageSid = ?
+                    `
+        )
+        .get(messageSid);
 
-    let toNumber = req.body?.To || null;
+      if (!row?.contentSid) {
+        dbService.create("error_log", {
+          error: "CRITICAL ERROR - Cannot fetch the contentSid for auto check",
+          origin_function: "sendMessageToPhone",
+        });
+        return;
+      }
 
-    if (toNumber) {
-      const phone = toNumber.replace(/^whatsapp:/, "");
+      const phone = req.body?.To.replace(/^whatsapp:/, "");
 
       dbService.updateWhere(
         "contact_book",
