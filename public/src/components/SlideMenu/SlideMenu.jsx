@@ -1,4 +1,4 @@
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import "./SlideMenu.css";
 
 
@@ -17,6 +17,21 @@ const SlideMenu = ({ isOpen, onClose, children, headerTitle }) => {
         }, [isOpen, onClose]);
 
 
+         const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+        
+          useEffect(() => {
+            
+            const handleResize = () => {
+              setIsMobile(window.innerWidth <= 768);
+            };
+        
+            window.addEventListener("resize", handleResize);
+        
+            
+            return () => window.removeEventListener("resize", handleResize);
+          }, []);
+        
+
   return (
     <>
       {/* Backdrop */}
@@ -28,7 +43,7 @@ const SlideMenu = ({ isOpen, onClose, children, headerTitle }) => {
 
 
       {/* Sliding menu */}
-      <div className={`slide-menu ${isOpen ? "open" : ""}`} role="dialog" aria-modal="true">
+      <div className={`slide-menu ${isOpen ? "open" : ""}`} style={{ width: isMobile ? "100%" : "85%" }} role="dialog" aria-modal="true">
         {/* Sticky header */}
         <div className="slide-menu__header">
 

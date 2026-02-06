@@ -127,12 +127,6 @@ router.post("/whatsapp/twilio-callback", (req, res) => {
     const messageSid = req.body?.MessageSid;
 
     if (messageStatus && messageStatus === "delivered") {
-      const query = `
-                SELECT ttm.contentSid
-                    FROM twilio_template_message ttm
-                    WHERE  ttm.messageSid = messageSid;
-                `;
-
       const row = db
         .prepare(
           `
