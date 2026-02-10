@@ -4,7 +4,7 @@ const {
   messageSender,
   fetchContentTemplates,
   handleAutoResponse,
-  fetchHistory
+  fetchHistory,
 } = require("../services/whatsAppSender");
 const crypto = require("crypto");
 
@@ -96,13 +96,11 @@ router.get("/api/whatsapp/list", async (req, res) => {
   }
 });
 
-
-
 router.get("/api/whatsapp/history/:phone", async (req, res) => {
   try {
     const { phone } = req.params;
     const result = await fetchHistory(phone);
-    
+
     if (result) {
       res.status(200).json({ status: true, result });
     } else {
@@ -283,62 +281,59 @@ router.post(
 
 router.get("/api/whatsapp/insight", async (req, res) => {
   try {
+    const { startDate, endDate } = req.query;
+     const templates = await fetchContentTemplates();
+    const templateMap = new Map();
 
-    const {startDate, endDate} = req.query;
-
-    // const start = new Date(startDate).toISOString().slice(0, 19).replace('T', ' ');
-    // const end = new Date(endDate).toISOString().slice(0, 19).replace('T', ' ');
-
+    templates.result.forEach((t) => {
+      templateMap.set(t.sid, t.friendlyName);
+    });
 
     const start = new Date(startDate).toISOString().slice(0, 10);
-const end = new Date(endDate).toISOString().slice(0, 10);
-
-// LEFT JOIN twilio_template_message ttm
-//   ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
-
-    const combinedQuery = `
-    SELECT 'undelivered' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
-    FROM twilio_delivery td
-    WHERE json_extract(td.response, '$.MessageStatus') = 'undelivered'
-      AND td.metadata_createdAt BETWEEN ? AND ? 
-
-    UNION ALL
-
-    SELECT 'delivered' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
-    FROM twilio_delivery td
-    WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
-      AND td.metadata_createdAt BETWEEN ? AND ? 
-
-    UNION ALL
+    const end = new Date(endDate).toISOString().slice(0, 10);
 
 
-    SELECT 'read' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
-    FROM twilio_delivery td
-    WHERE json_extract(td.response, '$.MessageStatus') = 'read'
-      AND td.metadata_createdAt BETWEEN ? AND ? 
 
-    UNION ALL
+    const deliveryQuery = `
 
+    SELECT
+    'undelivered' AS type,
+            ttm.contentSid,
+            COUNT(json_extract(td.response, '$.To')) AS to_number
+        FROM twilio_delivery td
+        LEFT JOIN twilio_template_message ttm
+            ON json_extract(td.response, '$.SmsSid') = ttm.messageSid
+        WHERE json_extract(td.response, '$.MessageStatus') = 'undelivered'
+        AND td.metadata_createdAt BETWEEN ? AND ? GROUP BY ttm.contentSid
 
-    SELECT 'simpleMessageDelivered' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
-    FROM twilio_delivery td
-    LEFT JOIN twilio_template_message ttm
-      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
-    WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
-    AND ttm.contentSid = ?
-      AND td.metadata_createdAt BETWEEN ? AND ? 
+      UNION ALL
+
+   SELECT
+    'delivered' AS type,
+	ttm.contentSid,
+            COUNT(json_extract(td.response, '$.To')) AS to_number
+        FROM twilio_delivery td
+        LEFT JOIN twilio_template_message ttm
+            ON json_extract(td.response, '$.SmsSid') = ttm.messageSid
+        WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
+        AND td.metadata_createdAt BETWEEN ? AND ? GROUP BY ttm.contentSid
+
 
     UNION ALL
 
-    SELECT 'simpleMessageUndelivered' AS type, COUNT(DISTINCT json_extract(td.response, '$.To')) AS to_number
-    FROM twilio_delivery td
-    LEFT JOIN twilio_template_message ttm
-      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
-    WHERE json_extract(td.response, '$.MessageStatus') = 'undelivered'
-    AND ttm.contentSid = ?
-      AND td.metadata_createdAt BETWEEN ? AND ? 
+   SELECT
+    'read' AS type,
+        ttm.contentSid,
+        COUNT(json_extract(td.response, '$.To')) AS to_number
+            FROM twilio_delivery td
+            LEFT JOIN twilio_template_message ttm
+                ON json_extract(td.response, '$.SmsSid') = ttm.messageSid
+            WHERE json_extract(td.response, '$.MessageStatus') = 'read'
+            AND td.metadata_createdAt BETWEEN ? AND ? GROUP BY ttm.contentSid
+  `;
+    const responseQuery = `
 
-    UNION ALL
+   
 
     SELECT 'notAttend' AS type, COUNT(*) AS to_number
     FROM twilio_responses as tr
@@ -352,31 +347,35 @@ const end = new Date(endDate).toISOString().slice(0, 10);
             AND tr.received_at BETWEEN ? AND ? 
   `;
 
-    // Your content SIDs and button payloads
-    // const contentSid = "HX01112eac1bf320e6213b4e2ff6ff060f";
-    // const contentSidEnglish = "HX40c31821495f0b6df95dfe383e60196d";
-    const simpleMessageContentSid = "HXb1ce9479f3d42819bef456f00448afcc";
-
-    // Prepare statement and execute with all params
-    const stmt = db.prepare(combinedQuery);
+    
+    const stmt = db.prepare(deliveryQuery);
     const rows = stmt.all(
-      start, end, // undelivered
-      start, end, // delivered
-      start, end, // read
-      simpleMessageContentSid,start, end, // simpleMessageDelivered
-      simpleMessageContentSid,start, end, // simpleMessageUndelivered
-      "NOT_ATTEND",start, end, // notAttend
-      "ATTEND",start, end, // attend
+        start,end, // undelivered
+        start,end, // delivered
+        start,end, // read
     );
 
-    // Map rows to a key-value object
-    const stats = {};
-    rows.forEach(({ type, to_number }) => {
-      stats[type] = to_number ?? 0;
+
+    const delivery_result = rows.map((e)=> ({
+        ...e, 
+        templateName: templateMap.get(e.contentSid) || null
+    }));
+
+    const _stmt = db.prepare(responseQuery);
+    const _rows = _stmt.all(
+     
+      "NOT_ATTEND", start, end, // notAttend ,
+      "ATTEND", start, end // attend
+    );
+
+    
+    const response_result = {};
+    _rows.forEach(({ type, to_number }) => {
+      response_result[type] = to_number ?? 0;
     });
 
-    // Return your JSON response
-    return res.status(200).json({ status: true, data: stats });
+    
+    return res.status(200).json({ status: true, data: {response_result, delivery_result} });
   } catch (err) {
     console.error("Failed to fetch insights", err);
     return res.status(500).json({ status: false, message: "Server error" });

@@ -10,10 +10,6 @@ import ChartDataLabels from "chartjs-plugin-datalabels";
 import { Bar } from "react-chartjs-2";
 import { useState, useEffect, useCallback } from "react";
 
-/**
- * 🔴 IMPORTANT
- * ChartDataLabels MUST be registered
- */
 ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -30,26 +26,14 @@ export default function WhastAppReport() {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 3);
 
-    const formatDateForInput = (date) => date.toISOString().slice(0, 10);
+    const formatDateForInput = (date: Date) =>
+        date.toISOString().slice(0, 10);
+
     const [startDate, setStartDate] = useState(formatDateForInput(yesterday));
-
     const [endDate, setEndDate] = useState(formatDateForInput(new Date()));
-
-
-
-    const handleStartDateChange = (e) => {
-
-        setStartDate(e.target.value);
-    };
-    const handleEndDateChange = (e) => {
-
-        setEndDate(e.target.value);
-    };
-
 
     const fetchReport = useCallback(async () => {
         try {
-
             const response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/api/whatsapp/insight?startDate=${startDate}&endDate=${endDate}`,
                 { credentials: "include" }
@@ -59,12 +43,12 @@ export default function WhastAppReport() {
                 const json = await response.json();
                 setPanelData(json.data);
             }
-        } catch (e) {
-            console.error(e);
+        } catch (err) {
+            console.error(err);
         } finally {
             setLoading(false);
         }
-    }, [endDate, startDate]);
+    }, [startDate, endDate]);
 
     useEffect(() => {
         fetchReport();
@@ -73,120 +57,141 @@ export default function WhastAppReport() {
     if (loading) return <div>Loading report…</div>;
     if (!panelData) return <div>No data</div>;
 
-    const data = {
-        labels: ["Deliveries", "User Responses", "Sylvia Responses"],
-        datasets: [
-            // Deliveries
-            {
-                label: "Delivered",
-                data: [
-                    (panelData.delivered ?? 0),
-                    0,
-                    0,
-                ],
-                backgroundColor: "#2563eb",
-                stack: "deliveries",
-            },
-            {
-                label: "Read",
-                data: [
-                    (panelData.read ?? 0),
-                    0,
-                    0,
-                ],
-                backgroundColor: "#0ce8d9",
-                stack: "read",
-            },
+/**
+ * -------------------------
+ * DELIVERY DATA
+ * -------------------------
+ */
+const deliveryByTemplate = panelData.delivery_result.reduce(
+  (acc: any, item: any) => {
+    const template = item.templateName;
 
-            // User Responses
+    if (!acc[template]) {
+      acc[template] = {
+        delivered: 0,
+        read: 0,
+        undelivered: 0,
+      };
+    }
+
+    acc[template][item.type] += item.to_number;
+    return acc;
+  },
+  {}
+);
+
+const deliveryLabels = [...Object.keys(deliveryByTemplate), "Total"]; // Add "Total" label
+
+// Compute totals for each dataset
+const deliveredData = deliveryLabels.map((t) =>
+  t === "Total"
+    ? Object.values(deliveryByTemplate ?? {}).reduce(
+        (sum: number, d: any) => sum + (d.delivered ?? 0),
+        0
+      )
+    : (deliveryByTemplate?.[t]?.delivered ?? 0)
+);
+
+const readData = deliveryLabels.map((t) =>
+  t === "Total"
+    ? Object.values(deliveryByTemplate ?? {}).reduce(
+        (sum: number, d: any) => sum + (d.read ?? 0),
+        0
+      )
+    : (deliveryByTemplate?.[t]?.read ?? 0)
+);
+
+const undeliveredData = deliveryLabels.map((t) =>
+  t === "Total"
+    ? Object.values(deliveryByTemplate ?? {}).reduce(
+        (sum: number, d: any) => sum + (d.undelivered ?? 0),
+        0
+      )
+    : (deliveryByTemplate?.[t]?.undelivered ?? 0)
+);
+
+
+const deliveryData = {
+  labels: deliveryLabels,
+  datasets: [
+    {
+      label: "Delivered",
+      backgroundColor: "#2563eb",
+      data: deliveredData,
+    },
+    {
+      label: "Read",
+      backgroundColor: "#0ce8d9",
+      data: readData,
+    },
+    {
+      label: "Undelivered",
+      backgroundColor: "#919191",
+      data: undeliveredData,
+    },
+  ],
+};
+
+
+    /**
+     * -------------------------
+     * USER RESPONSE DATA
+     * -------------------------
+     */
+    const attend = panelData.response_result?.attend ?? 0;
+    const notAttend = panelData.response_result?.notAttend ?? 0;
+
+    const totalRead = Object.values(deliveryByTemplate).reduce(
+        (sum: number, t: any) => sum + t.read,
+        0
+    );
+
+    const viewedNoReply = Math.max(
+        totalRead - (attend + notAttend),
+        0
+    );
+
+    const responseData = {
+        labels: ["Responses"],
+        datasets: [
             {
                 label: "Attend",
-                data: [0, panelData.attend ?? 0, 0],
                 backgroundColor: "#44e00b",
                 stack: "responses",
+                data: [attend],
             },
             {
                 label: "Not Attend",
-                data: [0, panelData.notAttend ?? 0, 0],
                 backgroundColor: "#dc2626",
                 stack: "responses",
+                data: [notAttend],
             },
             {
                 label: "Viewed, No Reply",
-                data: [
-                    0,
-                    (panelData.read ?? 0) -
-                    ((panelData.attend ?? 0) + (panelData.notAttend ?? 0)),
-                    0,
-                ],
                 backgroundColor: "#8f8d8d",
                 stack: "responses",
-            },
-
-            // Sylvia Responses
-            {
-                label: "Sylvia Delivered",
-                data: [0, 0, panelData.simpleMessageDelivered ?? 0],
-                backgroundColor: "#2563eb",
-                stack: "sylvia",
-            },
-            {
-                label: "Sylvia Undelivered",
-                data: [0, 0, panelData.simpleMessageUndelivered ?? 0],
-                backgroundColor: "#000",
-                stack: "sylvia",
+                data: [viewedNoReply],
             },
         ],
     };
 
-
-    const options = {
-        interaction: {
-            mode: null,
-        },
-        hover: {
-            mode: null,
-        },
-
+    const commonOptions = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: {
-                position: "top" as const,
-            },
-            tooltip: {
-                enabled: false,
-                mode: "index" as const,
-                intersect: false,
-            },
-
-            // ✅ DATA LABELS (NUMBERS ON BARS)
+            legend: { position: "top" as const },
+            tooltip: { enabled: false },
             datalabels: {
-                color: "#fff",
-                font: {
-                    weight: "bold" as const,
-                    size: 12,
-                },
-                formatter: (value: number) => (value > 0 ? value : ""),
+                color: "#000",
+                font: { weight: "default" as const, size: 11 },
+                formatter: (v: number) => (v > 0 ? v : ""),
                 anchor: "center" as const,
                 align: "center" as const,
-                clamp: true,
-            },
-        },
-        scales: {
-            x: {
-                stacked: true,
-                grid: {
-                    display: false,
-                },
-            },
-            y: {
-                stacked: true,
-                beginAtZero: true,
             },
         },
         datasets: {
             bar: {
+                barThickness: "flex" as const,
                 barPercentage: 1,
                 categoryPercentage: 1,
             },
@@ -194,24 +199,75 @@ export default function WhastAppReport() {
     };
 
     return (
-        <div className="row p-0 m-0" style={{ overflow: 'hidden' }}>
-
-            <div style={{ marginBottom: 2 }}>
+        <div className="row p-0 m-0">
+            {/* Date Filters */}
+            <div style={{ marginBottom: 12 }}>
                 <label>
-                    Start Date:{" "}
+                    Start Date{" "}
                     <input
-                        type="date" value={startDate} onChange={handleStartDateChange}
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
                     />
                 </label>{" "}
                 <label>
-                    End Date:{" "}
-                    <input type="date" value={endDate} onChange={handleEndDateChange} />
+                    End Date{" "}
+                    <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                    />
                 </label>
             </div>
-            <div style={{ height: 400, width: '100%', margin: "0 auto" }}>
 
-                <Bar data={data} options={options} />
+            {/* Charts */}
+            <div
+                style={{
+                    gap: 24,
+                    width: "100%",
+                }}
+            >
+                {/* Deliveries – 2x width */}
+                <div style={{ flex: 4, height: 400 }}>
+                    <h4 style={{ textAlign: "center" }}>Delivery Status</h4>
+                    <div style={{ width: "100%", height: "100%" }}>
+                        <Bar
+                            data={deliveryData}
+                            options={{
+                                ...commonOptions,
+                                indexAxis: "y",
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    x: { stacked: false },
+                                    y: { stacked: false },
+                                },
+                            }}
+                        />
+                    </div>
+                </div>
+
+                {/* Responses – 1x width */}
+                <div style={{ flex: 1, height: 150 }} className="pt-4">
+                    <h4 style={{ textAlign: "center" }}>User Responses</h4>
+                    <div style={{ width: "100%", height: "100%" }}>
+                        <Bar
+                            data={responseData}
+                            options={{
+                                ...commonOptions,
+                                 indexAxis: "y",
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    x: { stacked: true },
+                                    y: { stacked: true },
+                                },
+                            }}
+                        />
+                    </div>
+                </div>
             </div>
+
         </div>
     );
 }
