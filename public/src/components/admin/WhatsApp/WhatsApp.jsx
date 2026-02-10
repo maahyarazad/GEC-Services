@@ -18,7 +18,7 @@ import JSONPretty from 'react-json-pretty';
 import 'react-json-pretty/themes/monikai.css'; // optional styling
 import { useSnackbar } from '../../Providers/Snackbar';
 import { IoMdAdd } from "react-icons/io";
-import { TiDelete } from "react-icons/ti";
+import { AiOutlineClear } from "react-icons/ai";
 import { RiContactsBook2Fill } from "react-icons/ri";
 import { IoMdOpen } from "react-icons/io";
 import { RiUserReceivedFill } from "react-icons/ri";
@@ -31,10 +31,12 @@ import { useAlertDialog } from "../../Providers/AlertProvider";
 import QuickReply from "./QuickReply";
 import { IoStatsChartSharp } from "react-icons/io5";
 import WhastAppReport from '../Dashboard/WhastAppReport';
-import {  useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+
+
 
 const WhatsappBroadcast = () => {
-    
+
     const location = useLocation();
     const navigate = useNavigate();
     const { openDialog } = useAlertDialog();
@@ -102,8 +104,8 @@ const WhatsappBroadcast = () => {
         try {
             setloading_logs(true)
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts/corrupted-contact-book`,{method: "GET",credentials: "include"});
-            
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts/corrupted-contact-book`, { method: "GET", credentials: "include" });
+
 
             if (response.status === 200) {
                 const response_data = await response.json();
@@ -127,16 +129,16 @@ const WhatsappBroadcast = () => {
 
 
 
-    const onViewJson = (value, type,full_name) => {
+    const onViewJson = (value, type, full_name) => {
 
         setViewJsonModal(true);
-        setJSON_Value_Response_Log({value, type, full_name});
+        setJSON_Value_Response_Log({ value, type, full_name });
     }
 
     const onViewHistory = (value, type) => {
-        
+
         setViewJsonModal(true);
-        setJSON_Value_Response_Log({value, type});
+        setJSON_Value_Response_Log({ value, type });
     }
 
     const [contactModifyVal, setContactModifyVal] = useState(null);
@@ -199,6 +201,63 @@ const WhatsappBroadcast = () => {
     };
 
 
+    const callClearContactBook = async () => {
+        try {
+            setloading_logs(true);
+
+            const response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/contacts/clear-contact-book`,
+                {
+                    method: 'GET',
+                    credentials: 'include',
+                }
+            );
+
+            const responseData = await response.json();
+
+            if (!response.ok) {
+                showSnackbar(responseData.message, 'error');
+            } else {
+                showSnackbar(responseData.message || 'Contact book cleared', 'success');
+
+            }
+
+        } catch (err) {
+            console.error('Failed to clear contact book:', err);
+            showSnackbar(err.message, 'error');
+        } finally {
+            setloading_logs(false);
+        }
+    };
+
+
+
+    const clearContactBook = () => {
+        openDialog(
+            <>
+                <>
+                    <strong>⚠️ Warning:</strong>
+                    <br></br>
+                   This operation is irreversible. Once cleared, all contact delivery flag information will be permanently deleted.
+                    <br></br>
+                    <strong>When to use:</strong>
+                    <br></br>
+
+                    Click this button <strong>after your ClubTime invitation process is complete </strong>and you no longer need the current message records.
+
+                </>
+            </>,
+            'Clear Contact Book & Reset Flags',
+            {
+                text: 'Clear',
+                color: 'error',
+            },
+            () => { callClearContactBook()},
+            () => { }
+        );
+    };
+
+
     const onSwitchBlacklist = (row, val) => {
         const updatedRow = {
             ...row,
@@ -227,11 +286,11 @@ const WhatsappBroadcast = () => {
             if (!response.ok) {
                 console.error(responseData.error);
                 showSnackbar(responseData.message, "error");
-              
+
 
             } else {
                 showSnackbar(responseData.message, "success");
-                  await fetchContactData();
+                await fetchContactData();
             }
         } catch (error) {
             console.error(error);
@@ -344,12 +403,12 @@ const WhatsappBroadcast = () => {
         async () => {
             setloading_logs(true);
             try {
-                
+
                 const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-response-logs?`, { credentials: "include" });
 
                 const data = await response.json();
 
-                
+
                 setResponses(data.data || []);
                 setRowCount(data.length || 0);
             } catch (err) {
@@ -367,11 +426,11 @@ const WhatsappBroadcast = () => {
 
             setloading_logs(true);
             try {
-               
+
 
                 const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-delivery-logs`, { credentials: "include" });
                 const data = await response.json();
-                
+
                 setLogs(data.result || []);
                 setRowCount(data.result.length || 0);
             } catch (err) {
@@ -400,94 +459,94 @@ const WhatsappBroadcast = () => {
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
-const [showChart, setShowChart] = useState(false);
+    const [showChart, setShowChart] = useState(false);
     useEffect(() => {
-  if(viewStatus) {
-    const timer = setTimeout(() => setShowChart(true), 200);
-    return () => clearTimeout(timer);
-  } else {
-    setShowChart(false);
-  }
-}, [viewStatus]);
+        if (viewStatus) {
+            const timer = setTimeout(() => setShowChart(true), 200);
+            return () => clearTimeout(timer);
+        } else {
+            setShowChart(false);
+        }
+    }, [viewStatus]);
 
 
-useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const modalView = params.get("view");
-    if (modalView === "report") {
-    setViewStatus(true);
-    setOpenResponses(false);
-  }
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const modalView = params.get("view");
+        if (modalView === "report") {
+            setViewStatus(true);
+            setOpenResponses(false);
+        }
 
-  if (modalView === "response_logs") {
-    setOpenResponses(true);
-    setViewStatus(false);
-  }
-  }, [location.search]);
+        if (modalView === "response_logs") {
+            setOpenResponses(true);
+            setViewStatus(false);
+        }
+    }, [location.search]);
 
-  // When viewStatus changes, update the URL query params accordingly
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    
-if (viewStatus) {
-    params.set("view", "report");
-    setOpenResponses(false);
-  } else if (openResponses) {
-    params.set("view", "response_logs");
-  } else {
-    params.delete("view");
-  }
+    // When viewStatus changes, update the URL query params accordingly
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
 
-    // Update URL without reloading page
-    navigate({
-      pathname: location.pathname,
-      search: params.toString() ? `?${params.toString()}` : "",
-    }, { replace: true }); // replace to avoid history stack pollution
+        if (viewStatus) {
+            params.set("view", "report");
+            setOpenResponses(false);
+        } else if (openResponses) {
+            params.set("view", "response_logs");
+        } else {
+            params.delete("view");
+        }
 
-  }, [viewStatus, navigate, location.pathname, location.search, openResponses]);
+        // Update URL without reloading page
+        navigate({
+            pathname: location.pathname,
+            search: params.toString() ? `?${params.toString()}` : "",
+        }, { replace: true }); // replace to avoid history stack pollution
 
-
-const modalTitle = (() => {
-    switch (JSON_Value_Response_Log?.type) {
-        case "log":
-            return "Content SID";
-
-        case "history":
-            return "History";
-
-        case "instant_reply":
-            return "Instant Reply";
-
-        default:
-            return "";
-    }
-})();
+    }, [viewStatus, navigate, location.pathname, location.search, openResponses]);
 
 
-const renderModalContent = () => {
-    switch (JSON_Value_Response_Log?.type) {
-        case "log":
-            return <JSONPretty data={JSON_Value_Response_Log?.value} />;
+    const modalTitle = (() => {
+        switch (JSON_Value_Response_Log?.type) {
+            case "log":
+                return "Content SID";
 
-        case "history":
-            return <JSONPretty data={JSON_Value_Response_Log?.value} />;
+            case "history":
+                return "History";
 
-        case "instant_reply":
-            return (
-                <QuickReply
-                    contact_name={JSON_Value_Response_Log?.full_name}
-                    incoming_message={JSON_Value_Response_Log?.value}
-                    CloseModal={() => {
-                        setViewJsonModal(false);
-                        setJSON_Value_Response_Log(null);
-                    }}
-                />
-            );
+            case "instant_reply":
+                return "Instant Reply";
 
-        default:
-            return null;
-    }
-};
+            default:
+                return "";
+        }
+    })();
+
+
+    const renderModalContent = () => {
+        switch (JSON_Value_Response_Log?.type) {
+            case "log":
+                return <JSONPretty data={JSON_Value_Response_Log?.value} />;
+
+            case "history":
+                return <JSONPretty data={JSON_Value_Response_Log?.value} />;
+
+            case "instant_reply":
+                return (
+                    <QuickReply
+                        contact_name={JSON_Value_Response_Log?.full_name}
+                        incoming_message={JSON_Value_Response_Log?.value}
+                        CloseModal={() => {
+                            setViewJsonModal(false);
+                            setJSON_Value_Response_Log(null);
+                        }}
+                    />
+                );
+
+            default:
+                return null;
+        }
+    };
 
 
     if (loading) {
@@ -510,8 +569,8 @@ const renderModalContent = () => {
 
                 <div className="d-lg-flex justify-content-between align-items-center">
 
-                        {showChart && <WhastAppReport />}
-                    </div>
+                    {showChart && <WhastAppReport />}
+                </div>
             </Modal>
 
 
@@ -553,8 +612,8 @@ const renderModalContent = () => {
                                 <DataGrid
                                     rows={responses}
                                     columns={responseColumns({ onViewJson, onViewHistory })}
-                                     paginationModel={_paginationModel}
-                                         onPaginationModelChange={_setPaginationModel}
+                                    paginationModel={_paginationModel}
+                                    onPaginationModelChange={_setPaginationModel}
                                     rowsPerPageOptions={[25, 50, 100]}
                                     pagination
                                     disableRowSelectionOnClick
@@ -616,7 +675,7 @@ const renderModalContent = () => {
                                             />
                                         </div>
                                     </div>
-                                        <div className="">
+                                    <div className="">
                                         <div className="">
 
                                             <label htmlFor="test-input">View Corrupted Contacts</label>
@@ -629,34 +688,34 @@ const renderModalContent = () => {
                                                 color="primary"
                                             />
                                         </div>
-                                        </div>
+                                    </div>
                                 </div>
-{viewCorruptedList ? (
-    <DataGrid
-                                    rows={contactList}
-                                    columns={corruptedContactBookColumn({ onModifyContact, onDeleteContact, onSwitchBlacklist })}
-                                    paginationModel={_paginationModel}
-                                    onPaginationModelChange={_setPaginationModel}
-                                    pageSizeOptions={[25, 50, 100]}
-                                    pagination
-                                    disableRowSelectionOnClick
-                                    disableSelectionOnClick
-                                    showToolbar
-                                />
-) : (
-    <DataGrid
-                                    rows={contactList}
-                                    columns={contactBookColumn({ onModifyContact, onDeleteContact, onSwitchBlacklist })}
-                                    paginationModel={_paginationModel}
-                                    onPaginationModelChange={_setPaginationModel}
-                                    pageSizeOptions={[25, 50, 100]}
-                                    pagination
-                                    disableRowSelectionOnClick
-                                    disableSelectionOnClick
-                                    showToolbar
-                                />
-)}
-                                
+                                {viewCorruptedList ? (
+                                    <DataGrid
+                                        rows={contactList}
+                                        columns={corruptedContactBookColumn({ onModifyContact, onDeleteContact, onSwitchBlacklist })}
+                                        paginationModel={_paginationModel}
+                                        onPaginationModelChange={_setPaginationModel}
+                                        pageSizeOptions={[25, 50, 100]}
+                                        pagination
+                                        disableRowSelectionOnClick
+                                        disableSelectionOnClick
+                                        showToolbar
+                                    />
+                                ) : (
+                                    <DataGrid
+                                        rows={contactList}
+                                        columns={contactBookColumn({ onModifyContact, onDeleteContact, onSwitchBlacklist })}
+                                        paginationModel={_paginationModel}
+                                        onPaginationModelChange={_setPaginationModel}
+                                        pageSizeOptions={[25, 50, 100]}
+                                        pagination
+                                        disableRowSelectionOnClick
+                                        disableSelectionOnClick
+                                        showToolbar
+                                    />
+                                )}
+
                             </div>
                         )}
                     </>
@@ -667,23 +726,27 @@ const renderModalContent = () => {
             </SlideMenu>
 
 
-           <Modal
-    isOpen={viewJsonModal}
-    onRequestClose={() => {
-        setViewJsonModal(false);
-        setJSON_Value_Response_Log(null);
-    }}
-    title={modalTitle}
->
-    {renderModalContent()}
-</Modal>
+            <Modal
+                isOpen={viewJsonModal}
+                onRequestClose={() => {
+                    setViewJsonModal(false);
+                    setJSON_Value_Response_Log(null);
+                }}
+                title={modalTitle}
+            >
+                {renderModalContent()}
+            </Modal>
 
 
 
             <div className="pb-2 border-bottom border-1">
 
-                <IconButton title='View MemberShip Status' onClick={()=> setViewStatus(true)}>
-                    <IoStatsChartSharp/>
+                <IconButton title='View MemberShip Status' onClick={() => setViewStatus(true)}>
+                    <IoStatsChartSharp />
+                </IconButton>
+
+                <IconButton title='Reset ClubTime invitation data from Contact Book' onClick={clearContactBook}>
+                    <AiOutlineClear style={{ marginRight: 2 }} />
                 </IconButton>
 
                 <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { setMassAction(true); }} disabled={content === null}>
@@ -701,13 +764,14 @@ const renderModalContent = () => {
                     <RiCheckDoubleFill style={{ marginRight: 2 }} />
                     Delivery Logs
                 </Button>
+
             </div>
-            <div style={{ height: 'calc(100vh - 155px)', overflow: 'scroll' , position:'relative'}} >
+            <div style={{ height: 'calc(100vh - 155px)', overflow: 'scroll', position: 'relative' }} >
                 <div className="mt-2">
 
                     <div className="row m-0">
 
-                        <div className="col-lg-5 col-12" style={{height:'calc(100vh - 185px)', overflow: 'scroll'}}>
+                        <div className="col-lg-5 col-12" style={{ height: 'calc(100vh - 185px)', overflow: 'scroll' }}>
                             {groupedByTypeKey && Object.keys(groupedByTypeKey).length > 0 ? (
                                 Object.keys(groupedByTypeKey).map((key) => (
                                     <Accordion key={key}>
@@ -724,7 +788,7 @@ const renderModalContent = () => {
                                                 <div className="col form-control">
                                                     {Object.values(groupedByTypeKey[key]).map((item, idx) => (
                                                         <div key={idx} onClick={() => { setInputValue({}); setContent(item); }}
-                                                            style={{ border: 'solid', borderRadius: '5px', borderColor: 'gray', borderWidth: '1px', padding: '5px', marginBottom: '5px', cursor: 'pointer', overflow:'clip' }}>
+                                                            style={{ border: 'solid', borderRadius: '5px', borderColor: 'gray', borderWidth: '1px', padding: '5px', marginBottom: '5px', cursor: 'pointer', overflow: 'clip' }}>
 
                                                             <strong>{item.friendlyName}</strong> ({item.language})<br />
                                                             SID: <small style={{ fontSize: '15px' }}>{item.sid}</small><br />
@@ -743,7 +807,7 @@ const renderModalContent = () => {
                                 <Typography>No data available</Typography>
                             )}
                         </div>
-                        <div  style={{position: 'fixed' , right: 10, maxWidth: '45vw', height:'calc(100vh - 200px)', overflow: 'scroll'}}>
+                        <div style={{ position: 'fixed', right: 10, maxWidth: '45vw', height: 'calc(100vh - 200px)', overflow: 'scroll' }}>
 
                             {content && content.types ? (
                                 (() => {

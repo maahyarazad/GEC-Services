@@ -132,5 +132,29 @@ router.get("/api/contacts/corrupted-contact-book", async (req, res) => {
   }
 });
 
+router.get("/api/contacts/clear-contact-book", async (req, res) => {
+  try {
+    const query = `
+      UPDATE contact_book SET contentSid = NULL
+    `;
+
+    const stmt = db.prepare(query);
+    const result = stmt.run(); 
+
+    res.status(200).json({
+      status: true,
+      message: "Contact book cleared successfully",
+      changes: result.changes, 
+    });
+  } catch (error) {
+    console.error("Failed to clear contact book:", error);
+    res.status(500).json({
+      status: false,
+      message: "Failed to clear contact book",
+    });
+  }
+});
+
+
 
 module.exports = router;
