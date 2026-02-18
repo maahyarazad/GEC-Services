@@ -28,6 +28,9 @@ const authorization_middleware = {
               externalToken,
               process.env.GIC_JWT_SECRET
             );
+
+                    
+
           } catch (err2) {
             externalUser = undefined; // invalid token
           }
@@ -42,10 +45,10 @@ const authorization_middleware = {
                     .json({ authenticated: false, message: "Forbidden" });
         }
           
-
+        if (externalUser) req.user = externalUser;
         if (internalUser?.role === "admin") req.user = internalUser;
         
-        if (externalUser) req.user = externalUser;
+
 
         return next();
       

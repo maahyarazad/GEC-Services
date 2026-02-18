@@ -251,16 +251,6 @@ router.patch("/api/registration-config-switch",  async (req, res) => {
 router.get("/api/registration-config",  async (req, res) => {
   try {
 
-        const origin = req.headers.origin;
-    const referer = req.headers.referer;
-    const host = req.headers.host;
-
-    if(Object.keys(req?.cookies).length > 0){
-
-        const token = req?.cookies["token"];
-        const decoded = jwt.verify(token, process.env.MEDICAL_SCOIETY_JWT_SECRET);
-        console.log(decoded);
-    }
     const table_name = "registration_config";
     const rows = dbService.findAllQueryFilter(table_name);
 
