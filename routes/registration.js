@@ -43,11 +43,12 @@ const upload = multer({
 router.post("/registration", upload.single('attachment_file'), async (req, res) => {
     try {
 
+
         const userTimezone = req.get('X-User-Timezone'); 
         const langKey = req.get('X-User-Lang'); 
         let table_name = "registration";
 
-        const { registration_code, title, event_date, ...data } = req.body;
+        const { registration_code, title, event_date, external_request, ...data  } = req.body;
         const reg_config = dbService.findExact("registration_config", "page", data.event);
         const file = req.file;
         let uniqueFileName = null;
@@ -111,7 +112,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
         }
 
 
-        data.event_id = generateRecordId(data.event, false);
+        data.event_id = generateRecordId(data.event, external_request, false);
         let create_result;
         let selected_time_for_email = "";
 
@@ -429,7 +430,7 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
 
             const birthday = new Date(member.birthday);
             const registerant = {
-                event_id : generateRecordId(registration_config.page, false),
+                event_id : generateRecordId(registration_config.page,false),
                 event : registration_config.page,
                 email : member.email,
                 message : "AUTO_MEMBERSHIP_REGISTER",

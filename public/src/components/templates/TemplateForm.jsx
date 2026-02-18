@@ -1,6 +1,6 @@
 // React & Hooks
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
 
 // Third-Party Libraries
 import { Formik, Form, Field, ErrorMessage } from "formik";
@@ -21,19 +21,20 @@ import { FaPhoneAlt } from "react-icons/fa";
 
 // Utils & Helpers
 
-const Login = React.lazy(()=> import ("../utils/Login")) ;
-const CustomDateTimePicker = React.lazy(()=> import ("../utils/CustomDateTimePicker")) ;
-const OtpTimer = React.lazy(()=> import ("../utils/OtpTimer")) ;
-const OtpInput = React.lazy(()=> import ("../utils/OtpInput")) ;
-const CountDownComponent = React.lazy(()=> import ("../utils/TenDayCountdown")) ;
-const BirthdayField = React.lazy(()=> import ("../utils/BirthdayField")) ;
-const GICRegistrationForm = React.lazy(()=> import ("./GICRegistrationForm")) ;
-const WhatsAppButton = React.lazy(()=> import ("../utils/WhatsAppButton")) ;
+const Login = React.lazy(() => import("../utils/Login"));
+const CustomDateTimePicker = React.lazy(() => import("../utils/CustomDateTimePicker"));
+const OtpTimer = React.lazy(() => import("../utils/OtpTimer"));
+const OtpInput = React.lazy(() => import("../utils/OtpInput"));
+const CountDownComponent = React.lazy(() => import("../utils/TenDayCountdown"));
+const BirthdayField = React.lazy(() => import("../utils/BirthdayField"));
+const GICRegistrationForm = React.lazy(() => import("./GICRegistrationForm"));
+const WhatsAppButton = React.lazy(() => import("../utils/WhatsAppButton"));
 
 
 import {
-  getEncryptedLocalStorage,
-  removeEncryptedLocalStorage,
+    getEncryptedLocalStorage,
+    setEncryptedLocalStorage,
+    removeEncryptedLocalStorage,
 } from "../utils/cookieUtils";
 import { useSnackbar } from "../Providers/Snackbar";
 
@@ -71,8 +72,9 @@ import languageData from "../../assets/language";
 
 const TemplateForm = () => {
     //OTP
+    const [searchParams] = useSearchParams();
     const { event } = useParams();
-    const {showSnackbar} = useSnackbar();
+    const { showSnackbar } = useSnackbar();
     const location = useLocation();
     const [showOtpInput, setShowOtpInput] = useState(false);
     const otpRef = useRef();
@@ -95,14 +97,15 @@ const TemplateForm = () => {
     const [rates, setRates] = useState(null);
     const [target, setTarget] = useState(null);
     const [memberRecord, setMemberRecord] = useState(null);
-    
-    
+    const [externalRequest, setExternalRequest] = useState(null);
+
+
     const [selectedLanguage, setSelectedLanguage] = useState("german");
     const navigate = useNavigate();
 
 
     const params = new URLSearchParams(location.search);
-    
+
     const from = params.get("from");
     const login_email = params.get("email");
     const login_memberId = params.get("memberId");
@@ -113,9 +116,9 @@ const TemplateForm = () => {
 
     const fetchCurrencyData = useCallback(async (currency) => {
         try {
-            
-            
-            
+
+
+
             // const response = await fetch(`https://open.er-api.com/v6/latest/${currency}`, {
             //     method: 'GET',
             //     headers: {
@@ -136,7 +139,7 @@ const TemplateForm = () => {
             }
 
             const values = await response.json();
-            
+
             if (values) {
                 setRates(values.rates);
 
@@ -144,42 +147,44 @@ const TemplateForm = () => {
         } catch (err) {
             console.error('Error fetching data:', err);
         } finally {
-            
+
         }
-    },[]);
+    }, []);
 
 
-    const serverAPICall = useCallback(async () => {
+    const serverAPICall = useCallback(async (gecuser) => {
         try {
             
-            // const value = location.pathname;
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/optional-login`, {
+            const requestOrigin = searchParams.get("requestOrigin");
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/optional-login?referer=${requestOrigin}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     "page": event
                 })
             });
+
 
             if (!response.ok) {
                 throw new Error('Failed to fetch');
             }
 
             const values = await response.json();
-            
+
             if (values) {
-                
+
                 // Maahyar CM: Only one record return from server
                 values.rows.map(async (x) => {
-                    
-                    if(x.archived === 1){
+
+                    if (x.archived === 1) {
                         navigate("/404")
                     }
-                    
 
-                    if(x.use_member_card === "true"){
+
+                    if (x.use_member_card === "true") {
                         setEmailRequired(true);
                     }
 
@@ -187,16 +192,16 @@ const TemplateForm = () => {
 
                         setTarget(values.rows[0]);
                         setLoading(false);
-                        
-                        if(x.otp === "false"){
+
+                        if (x.otp === "false") {
                             setPhoneRegistered(true);
                         }
-                        
+
                     }
-                    
-                    if(x.paymentRequired === "true"){
-                        
-                        setInitialTargetFee(values.rows[0].recordFee === "AED" ? (Number(values.rows[0].recordFee * 1.05)) :values.rows[0].recordFee)
+
+                    if (x.paymentRequired === "true") {
+
+                        setInitialTargetFee(values.rows[0].recordFee === "AED" ? (Number(values.rows[0].recordFee * 1.05)) : values.rows[0].recordFee)
                         setInitialCurrency(values.rows[0].currency)
                         setChosenCurrency(values.rows[0].currency)
                         // await fetchCurrencyData(values.rows[0].currency);
@@ -213,23 +218,49 @@ const TemplateForm = () => {
                 });
 
             }
+
+            if (values.externalUser !== null && Object.keys(values.externalUser).length > 0) {
+                setTarget(values.rows[0]);
+                setLoading(false);
+                setPhoneRegistered(true);
+                setEmailRequired(false);
+
+                const fullName = values.externalUser.user_profile.firstName || "";
+
+                const [first, ...rest] = fullName.trim().split(" ");
+                const last = rest.join(" ");
+
+                setMemberRecord({
+                    email: values.externalUser.user_profile.email,
+                    firstname: first || "",
+                    lastname: last || "",
+                    mobile_number: values.externalUser.user_profile.phone,
+                    whatsapp: values.externalUser.user_profile.whatsapp,
+                    birthday: ""
+                });
+
+                setExternalRequest(requestOrigin);
+
+            }
+
+            
         } catch (err) {
             console.error('Error fetching data:', err);
         } finally {
-            
+
         }
-    },[]);
+    }, []);
 
     const memberAPICall = useCallback(async () => {
         try {
-            
+
             // const value = location.pathname;
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-card-login?memberId=${login_memberId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 }
-                
+
             });
 
             if (!response.ok) {
@@ -238,37 +269,37 @@ const TemplateForm = () => {
             }
 
             const values = await response.json();
-            if(values?.memberRecord.length > 0){
-                
-                
+            if (values?.memberRecord.length > 0) {
+
+
                 setMemberRecord(values?.memberRecord[0]);
                 console.log(values?.memberRecord[0])
                 setPhoneRegistered(true);
             }
-           
+
         } catch (err) {
             console.error('Error fetching data:', err);
         } finally {
-            
-        }
-    },[]);
 
-    
+        }
+    }, []);
+
+
 
     useEffect(() => {
         const init = async () => {
             const gecuser = getEncryptedLocalStorage("gec-registration");
-            await serverAPICall();
+            await serverAPICall(gecuser);
             const url = window.location.pathname; // e.g., "/users/123"
             const parts = url.split("/").filter(Boolean); // ["users", "123"]
             const lastPart = parts[parts.length - 1];
 
-            
+
             if (gecuser?.page === lastPart) {
-                
+
                 await memberAPICall();
-                if(login_memberId && login_memberId[1] === "7"){
-                   setSelectedLanguage("english");
+                if (login_memberId && login_memberId[1] === "7") {
+                    setSelectedLanguage("english");
                 }
                 setTarget(gecuser);
                 setLoading(false);
@@ -279,8 +310,8 @@ const TemplateForm = () => {
 
         init();
     }, []);
-    
-    
+
+
 
 
 
@@ -292,23 +323,23 @@ const TemplateForm = () => {
             const otp_response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/send-otp`,
                 {
-                     headers: { "Content-Type": "application/json" },
+                    headers: { "Content-Type": "application/json" },
                     method: "POST",
                     credentials: "include", // ✅ important for sessions
-                     body: JSON.stringify({ email: values.email, event: target.title  }),
-                    
+                    body: JSON.stringify({ email: values.email, event: target.title }),
+
                 }
             );
 
-            if(otp_response.status === 429){
-                
+            if (otp_response.status === 429) {
+
                 const response_data = await otp_response.json();
                 statusRef.current.innerText = response_data.error;
                 setCurrentResponseMessage(false);
                 statusRef.current.classList.add("text-danger");
                 return;
             }
-            
+
             if (otp_response.ok) {
 
                 otpRef?.current?.clear();
@@ -336,8 +367,8 @@ const TemplateForm = () => {
 
     const handlePostOTP = async (value) => {
         try {
-            
-            
+
+
             const data = {
                 otp: value,
                 userAgent: navigator.userAgent,
@@ -345,19 +376,19 @@ const TemplateForm = () => {
                 language: navigator.language,
                 registration_code: target.registration_code,
                 mobile_number: global_whatsapp,
-                };
+            };
 
-                const otpResponse = await fetch(
+            const otpResponse = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/otp-check`,
                 {
                     method: "POST",
                     headers: {
-                    "Content-Type": "application/json",
+                        "Content-Type": "application/json",
                     },
                     body: JSON.stringify(data),
-                    credentials: "include", 
+                    credentials: "include",
                 }
-                );
+            );
 
 
             if (otpResponse.status === 400 || otpResponse.status === 500) {
@@ -365,24 +396,24 @@ const TemplateForm = () => {
             }
 
             const otp_response_data = await otpResponse.json();
-            
+
             if (otp_response_data.status) {
 
                 setPhoneRegistered(true);
                 setShowOtpInput(false);
-                registrationHeader.current?.scrollIntoView({behavior:'smooth'});
+                registrationHeader.current?.scrollIntoView({ behavior: 'smooth' });
                 otpRef?.current?.blurAll();
                 registrationHeader.current?.focus();
                 showSnackbar(otp_response_data.message, "success");
             } else {
                 statusRef.current.textContent = otp_response_data.message;
                 statusRef.current.classList.add("text-danger");
-            
+
             }
         } catch (err) {
-            
+
             if (statusRef.current) {
-                
+
                 statusRef.current.textContent = `Verification failed: ${err.message}`;
                 statusRef.current.classList.add("text-danger");
             }
@@ -395,7 +426,7 @@ const TemplateForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [source, setIsSource] = useState(null);
 
-    
+
     const fileInputRef = useRef();
     const identityConsentRef = useRef();
 
@@ -403,14 +434,14 @@ const TemplateForm = () => {
 
 
     const convertCurrency = (amount, source, target) => {
-      if (source === target) return amount; // no conversion needed
-    
-      if (!rates[source] || !rates[target]) {
-        throw new Error(`Missing rate for ${source} or ${target}`);
-      }
-    
-      return Math.round(amount * (rates[target] / rates[source]));
-      
+        if (source === target) return amount; // no conversion needed
+
+        if (!rates[source] || !rates[target]) {
+            throw new Error(`Missing rate for ${source} or ${target}`);
+        }
+
+        return Math.round(amount * (rates[target] / rates[source]));
+
     }
 
     // Cookie
@@ -424,8 +455,8 @@ const TemplateForm = () => {
     // Query Param
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-       const source = params.get('source')
-        if(source){
+        const source = params.get('source')
+        if (source) {
             setIsSource(source);
         }
 
@@ -448,6 +479,7 @@ const TemplateForm = () => {
         try {
             setIsSubmitting(true);
 
+           
             const { textarea, consent, ...data } = {
                 ...values,
                 event: target.page,
@@ -457,6 +489,7 @@ const TemplateForm = () => {
             data.message = textarea;
 
             const formData = new FormData();
+            formData.append("external_request", externalRequest);
             for (const key in data) {
                 if (key === "fileUpload") continue;
                 formData.append(key, data[key]);
@@ -486,7 +519,7 @@ const TemplateForm = () => {
 
             // Start Handle SurveyFormLogic   
             const dataObj = Object.fromEntries(formData.entries());
-            
+
             const company_data = Object.fromEntries(
                 Object.entries(dataObj).filter(([key]) => key.startsWith("company_"))
             );
@@ -523,7 +556,7 @@ const TemplateForm = () => {
 
 
             const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            
+
             if (target.paymentRequired === "true") {
                 formData.append("registration_config_id", JSON.stringify(target.id));
                 formData.append("recordFee", JSON.stringify(target.recordFee));
@@ -532,34 +565,34 @@ const TemplateForm = () => {
                     `${import.meta.env.VITE_SERVERURL}/payment/create-record`,
                     {
                         method: "POST",
-                        headers:{
+                        headers: {
                             "X-User-Timezone": userTimeZone
                         },
                         body: formData,
                     }
                 );
-                
+
                 if (payment_response.status) {
                     const payment_response_data = await payment_response.json();
-                    
-                    
+
+
                     // Navigate to payment gateway
                     window.location.href = payment_response_data.payment?.result?.redirectUrl;
                 } else {
-                    registrationHeader.current?.scrollIntoView({behavior:'smooth'});
+                    registrationHeader.current?.scrollIntoView({ behavior: 'smooth' });
                     registrationHeader.current?.focus();
                     showSnackbar(
                         payment_response.error.message,
                         ""
                     );
                 }
-                
+
             } else {
                 const registration_response = await fetch(
                     `${import.meta.env.VITE_SERVERURL}/registration`,
                     {
                         method: "POST",
-                        headers:{
+                        headers: {
                             "X-User-Timezone": userTimeZone,
                             "X-User-Lang": selectedLanguage
                         },
@@ -570,7 +603,7 @@ const TemplateForm = () => {
                 const registration_response_data = await registration_response.json();
 
                 if (registration_response_data.status) {
-                    registrationHeader.current?.scrollIntoView({behavior:'smooth'});
+                    registrationHeader.current?.scrollIntoView({ behavior: 'smooth' });
                     registrationHeader.current?.focus();
                     showSnackbar(
                         registration_response_data.message,
@@ -602,7 +635,7 @@ const TemplateForm = () => {
 
                     setSelectedDate("");
                 } else {
-                    
+
                     showSnackbar(
                         registration_response_data.message,
                         ""
@@ -611,7 +644,7 @@ const TemplateForm = () => {
             }
 
         } catch (e) {
-            
+
             showSnackbar(e.message);
         } finally {
             setIsSubmitting(false);
@@ -619,7 +652,7 @@ const TemplateForm = () => {
     };
 
     useEffect(() => {
-        
+
         return () => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
@@ -635,15 +668,15 @@ const TemplateForm = () => {
                 <CircularProgress />
             </div>
         )
-    }else{
-        
+    } else {
+
         if (!target) {
-            return <Login emailRequired={emailRequired} event={event}/>;
-        }else{
+            return <Login emailRequired={emailRequired} event={event} />;
+        } else {
 
             return (
                 <>
-                    
+
 
                     <div
                         className="template-form"
@@ -655,19 +688,19 @@ const TemplateForm = () => {
                             <IoMdInformationCircleOutline size={20} />
                         </button>
                         <button onClick={source ? navigateToSource : clearLocalStorage} className={`${source ? "source" : "cache"} cta-button simple `}>
-                            
-                            {source ? (<IoMdArrowRoundBack size={20} />): (<IoCloseCircleOutline size={20} />)}
+
+                            {source ? (<IoMdArrowRoundBack size={20} />) : (<IoCloseCircleOutline size={20} />)}
                         </button>
                         {(() => {
                             const trimmedDescription = (target.description || "").trim();
-        
+
                             // Strip HTML tags and check if there's meaningful content
                             const plainText = trimmedDescription.replace(/<[^>]*>/g, "").trim();
-        
+
                             if (plainText) {
                                 return (
-        
-        
+
+
                                     <button
                                         className={`cta-button simple slider-button ${exapndedDescriptionMobileView ? "opened" : ""}`}
                                         onClick={() => setExapndedDescriptionMobileView(prev => !prev)}
@@ -680,77 +713,77 @@ const TemplateForm = () => {
                                     </button>
                                 );
                             }
-        
+
                             return null;
                         })()}
-        
+
                         <div className={showDivFirst ? "active" : ""}>
                             {(() => {
                                 const trimmedDescription = (target.description || "").trim();
-        
+
                                 // Strip HTML tags and check if there's meaningful content
                                 const plainText = trimmedDescription.replace(/<[^>]*>/g, "").trim();
-        
+
                                 if (plainText) {
                                     return (
                                         <div
                                             className={`target-description ql-editor ${exapndedDescriptionMobileView ? "expanded" : ""}`}
                                             dangerouslySetInnerHTML={{ __html: trimmedDescription }}
                                         />
-        
+
                                     );
                                 }
-        
+
                                 return null;
                             })()}
-        
+
                             {(() => {
                                 const file = target.Image || "";
                                 const extension = file.split(".").pop().toLowerCase();
                                 const isVideo = ["mp4", "webm", "ogg"].includes(extension);
                                 const fileUrl = `${import.meta.env.VITE_SERVERURL}/uploads/${file}`;
-                                
+
                                 if (isVideo) {
-                                    return <video src={fileUrl} loop autoPlay muted playsInline 
-                                    onError={(e) => {
-                                        e.target.onerror = null; // prevent infinite loop
-                                        e.target.src = StarsField;
-                                    }}
+                                    return <video src={fileUrl} loop autoPlay muted playsInline
+                                        onError={(e) => {
+                                            e.target.onerror = null; // prevent infinite loop
+                                            e.target.src = StarsField;
+                                        }}
                                     />;
                                 } else {
                                     return <img src={fileUrl} alt={target.title} onError={(e) => {
                                         e.target.onerror = null; // prevent infinite loop
                                         e.target.src = GECBackground;
-                                    }}/>;
+                                    }} />;
                                 }
                             })()}
                         </div>
-        
+
                         <div>
-                        <div className={`${target.lockRegistration === "true" ? "locked-template-form" : ""
-                            }`}>
+                            <div className={`${target.lockRegistration === "true" ? "locked-template-form" : ""
+                                }`}>
                                 {target.countDown === "true" && (
                                     <div style={{ position: "relative", paddingBottom: 20 }}>
                                         {/* <CountDownComponent props={{event_date: "2025-07-20T00:00:00Z"}}/> */}
                                         <CountDownComponent props={{ event_date: target.event_date }} />
                                     </div>
                                 )}
-        <div ref={registrationHeader}></div>
+                                <div ref={registrationHeader}></div>
                                 <Formik
                                     enableReinitialize={true}
                                     initialValues={{
                                         ...initialValues,
-                                        email: memberRecord?.email !== null ?memberRecord?.email : "", // set your dynamic value here
-                                        firstName: memberRecord?.firstname !== null? memberRecord?.firstname:"", // set your dynamic value here
-                                        lastName: memberRecord?.lastname !== null? memberRecord?.lastname:"", // set your dynamic value here
-                                        phone: memberRecord?.mobile_number !== null? memberRecord?.mobile_number:"", // set your dynamic value here
-                                        whatsapp: memberRecord?.mobile_number !== null? memberRecord?.mobile_number:"", // set your dynamic value here
-                                        birthday: memberRecord?.birthday !== null? memberRecord?.birthday:"", // set your dynamic value here
+                                        email: memberRecord?.email !== null ? memberRecord?.email : "",
+                                        firstName: memberRecord?.firstname !== null ? memberRecord?.firstname : "",
+                                        lastName: memberRecord?.lastname !== null ? memberRecord?.lastname : "",
+                                        phone: memberRecord?.mobile_number !== null ? memberRecord?.mobile_number : "",
+                                        whatsapp: memberRecord?.mobile_number !== null ? memberRecord?.mobile_number : "",
+                                        birthday: memberRecord?.birthday !== null ? memberRecord?.birthday : "",
                                     }}
                                     validationSchema={getValidationSchema(target)}
                                     onSubmit={async (values, { resetForm, setFieldValue }) => {
                                         await handleSubmitRegistration(values, {
-        
+
                                             resetForm,
                                             setFieldValue,
                                         });
@@ -766,10 +799,10 @@ const TemplateForm = () => {
                                         setFieldTouched
                                     }) => (
                                         <Form>
-        
-        
-        
-        
+
+
+
+
                                             {/* <Button
                             variant="contained"
                             color="primary"
@@ -784,99 +817,99 @@ const TemplateForm = () => {
                           >
                             Clear Cache and Exit
                           </Button> */}
-        
+
                                             {/* Autofill phone and whatsapp fields */}
                                             {/* <AutofillPhoneAndWhatsapp mobileNumber={target.mobile_number} /> */}
-                                            <img src={`${import.meta.env.VITE_SERVERURL}/uploads/logo@2x.png`} height={70} alt="german-emirates-club"/>
+                                            <img src={`${import.meta.env.VITE_SERVERURL}/uploads/logo@2x.png`} height={70} alt="german-emirates-club" />
                                             <h1 className="mb-2">{target.title}</h1>
                                             {target.surveyForm === "false" && (
-        
-                                                     <h4 className="mb-1">
-                                                        {target.event_date ? (
-                                                            new Date(target.event_date).toLocaleDateString(languageData[selectedLanguage].date_format, {
+
+                                                <h4 className="mb-1">
+                                                    {target.event_date ? (
+                                                        new Date(target.event_date).toLocaleDateString(languageData[selectedLanguage].date_format, {
                                                             day: "2-digit",
                                                             month: "long",
                                                             year: "numeric",
                                                             weekday: "long",
-                                                            })
-                                                        ) : ""}
-                                                        </h4>
+                                                        })
+                                                    ) : ""}
+                                                </h4>
                                             )}
                                             <div className="clearance-flat"></div>
-        
+
                                             {target.gic === "false" && (
                                                 <>
                                                     {target.surveyForm === "false" && (
-        
+
                                                         <>
                                                             <div className="full">
                                                                 <div className="w-100">
-        
+
                                                                     <div className="input-group">
                                                                         {phoneRegistered ? (
- <Field
-                                                                        
-                                                                            as={TextField}
-                                                                            type="email"
-                                                                            name="email"
-                                                                            
-                                                                            size="small"
-                                                                            fullWidth
-                                                                            label="E-mail"
-                                                                            helperText={<ErrorMessage name="email" />}
-                                                                            className="pb-2"
-                                                                            error={touched.email && Boolean(errors.email)}
-                                                                            InputProps={{
-                                                                                startAdornment: (
-                                                                                    <InputAdornment position="start">
-                                                                                        {target.fieldIcon === "true" && (
-        
-                                                                                            <MdEmail />
-                                                                                        )}
-                                                                                    </InputAdornment>
-                                                                                ),
-                                                                            }}
-                                                                        />
+                                                                            <Field
+
+                                                                                as={TextField}
+                                                                                type="email"
+                                                                                name="email"
+
+                                                                                size="small"
+                                                                                fullWidth
+                                                                                label="E-mail"
+                                                                                helperText={<ErrorMessage name="email" />}
+                                                                                className="pb-2"
+                                                                                error={touched.email && Boolean(errors.email)}
+                                                                                InputProps={{
+                                                                                    startAdornment: (
+                                                                                        <InputAdornment position="start">
+                                                                                            {target.fieldIcon === "true" && (
+
+                                                                                                <MdEmail />
+                                                                                            )}
+                                                                                        </InputAdornment>
+                                                                                    ),
+                                                                                }}
+                                                                            />
                                                                         ) : (
- <Field
-                                                                        
-                                                                            as={TextField}
-                                                                            type="email"
-                                                                            name="email"
-                                                                            disabled={phoneRegistered}
-                                                                            size="small"
-                                                                            fullWidth
-                                                                            label="E-mail"
-                                                                            helperText={<ErrorMessage name="email" />}
-                                                                            className="pb-2"
-                                                                            error={touched.email && Boolean(errors.email)}
-                                                                            InputProps={{
-                                                                                startAdornment: (
-                                                                                    <InputAdornment position="start">
-                                                                                        {target.fieldIcon === "true" && (
-        
-                                                                                            <MdEmail />
-                                                                                        )}
-                                                                                    </InputAdornment>
-                                                                                ),
-                                                                            }}
-                                                                        />
+                                                                            <Field
+
+                                                                                as={TextField}
+                                                                                type="email"
+                                                                                name="email"
+                                                                                disabled={phoneRegistered}
+                                                                                size="small"
+                                                                                fullWidth
+                                                                                label="E-mail"
+                                                                                helperText={<ErrorMessage name="email" />}
+                                                                                className="pb-2"
+                                                                                error={touched.email && Boolean(errors.email)}
+                                                                                InputProps={{
+                                                                                    startAdornment: (
+                                                                                        <InputAdornment position="start">
+                                                                                            {target.fieldIcon === "true" && (
+
+                                                                                                <MdEmail />
+                                                                                            )}
+                                                                                        </InputAdornment>
+                                                                                    ),
+                                                                                }}
+                                                                            />
                                                                         )}
-                                                                       
+
                                                                     </div>
                                                                 </div>
-        
+
                                                             </div>
-        
+
                                                             <div className="full">
-        
+
                                                                 <div className="input-group">
-        
+
                                                                     <Field
                                                                         as={TextField}
-        
+
                                                                         name="phone"
-        
+
                                                                         size="small"
                                                                         fullWidth
                                                                         label={languageData[selectedLanguage].phone}
@@ -887,7 +920,7 @@ const TemplateForm = () => {
                                                                             startAdornment: (
                                                                                 <InputAdornment position="start">
                                                                                     {target.fieldIcon === "true" && (
-        
+
                                                                                         <FaPhoneAlt />
                                                                                     )}
                                                                                 </InputAdornment>
@@ -895,18 +928,18 @@ const TemplateForm = () => {
                                                                         }}
                                                                     />
                                                                 </div>
-        
+
                                                             </div>
-        
+
                                                             <div className="full">
-        
+
                                                                 <div className="input-group">
-        
+
                                                                     <Field
                                                                         as={TextField}
-        
+
                                                                         name="whatsapp"
-        
+
                                                                         size="small"
                                                                         fullWidth
                                                                         label="WhatsApp Number"
@@ -917,7 +950,7 @@ const TemplateForm = () => {
                                                                             startAdornment: (
                                                                                 <InputAdornment position="start">
                                                                                     {target.fieldIcon === "true" && (
-        
+
                                                                                         <FaWhatsapp />
                                                                                     )}
                                                                                 </InputAdornment>
@@ -927,12 +960,12 @@ const TemplateForm = () => {
                                                                     // disabled={phoneRegistered}
                                                                     />
                                                                 </div>
-        
+
                                                             </div>
-        
+
                                                             <div className={`otp-slide ${showOtpInput ? "show" : ""}`}>
                                                                 <div ref={statusRef}></div>
-        
+
                                                                 {currentResponseStatus && (
                                                                     <>
                                                                         <OtpInput
@@ -951,46 +984,46 @@ const TemplateForm = () => {
                                                                     </>
                                                                 )}
                                                             </div>
-        
+
                                                             {!phoneRegistered && (
                                                                 <>
-                                                               
-                                                                <Button
-                                                                    variant="contained"
-                                                                    color="primary"
-                                                                    disabled={validOtp === true}
-                                                                    type="button"
-                                                                    onClick={async () => {
-                                                                        const formErrors = await validateForm(); // validate entire form
-        
-                                                                        if (formErrors.email) {
-                                                                            setTouched({ email: true });
-                                                                        }
-        
-                                                                        if (!formErrors.email && values.email) {
-                                                                            handleSendOtp(values);
-                                                                        }
-                                                                    }}
-                                                                    style={{
-                                                                        pointerEvents: "auto",
-                                                                        opacity: 1,
-                                                                        width: "100%",
-                                                                        textTransform: "none",
-                                                                    }}
-                                                                >
-                                                                    
-                                                                    <p>{languageData[selectedLanguage].otp_button_text}</p>
-                                                                </Button>
-                                                                <div className="d-flex justify-content-center w-100">
-                                                                    <p className="text-center">{languageData[selectedLanguage].confirm_email}</p>
-                                                                </div>
+
+                                                                    <Button
+                                                                        variant="contained"
+                                                                        color="primary"
+                                                                        disabled={validOtp === true}
+                                                                        type="button"
+                                                                        onClick={async () => {
+                                                                            const formErrors = await validateForm(); // validate entire form
+
+                                                                            if (formErrors.email) {
+                                                                                setTouched({ email: true });
+                                                                            }
+
+                                                                            if (!formErrors.email && values.email) {
+                                                                                handleSendOtp(values);
+                                                                            }
+                                                                        }}
+                                                                        style={{
+                                                                            pointerEvents: "auto",
+                                                                            opacity: 1,
+                                                                            width: "100%",
+                                                                            textTransform: "none",
+                                                                        }}
+                                                                    >
+
+                                                                        <p>{languageData[selectedLanguage].otp_button_text}</p>
+                                                                    </Button>
+                                                                    <div className="d-flex justify-content-center w-100">
+                                                                        <p className="text-center">{languageData[selectedLanguage].confirm_email}</p>
+                                                                    </div>
                                                                 </>
                                                             )}
-        
+
                                                             <div className="spacer"></div>
-        
+
                                                             <div className="full">
-        
+
                                                                 {/* <div className="input-group">
         
         
@@ -1030,12 +1063,12 @@ const TemplateForm = () => {
                                                                     </Field>
                                                                 </div> */}
                                                             </div>
-        
+
                                                             <div className="full">
-        
+
                                                                 <div className="input-group">
-        
-        
+
+
                                                                     <Field
                                                                         as={TextField}
                                                                         size="small"
@@ -1050,7 +1083,7 @@ const TemplateForm = () => {
                                                                             startAdornment: (
                                                                                 <InputAdornment position="start">
                                                                                     {target.fieldIcon === "true" && (
-        
+
                                                                                         <MdDriveFileRenameOutline />
                                                                                     )}
                                                                                 </InputAdornment>
@@ -1058,11 +1091,11 @@ const TemplateForm = () => {
                                                                         }}
                                                                     />
                                                                 </div>
-        
+
                                                             </div>
-        
+
                                                             <div className="full">
-        
+
                                                                 <div className="input-group">
                                                                     <Field
                                                                         as={TextField}
@@ -1078,7 +1111,7 @@ const TemplateForm = () => {
                                                                             startAdornment: (
                                                                                 <InputAdornment position="start">
                                                                                     {target.fieldIcon === "true" && (
-        
+
                                                                                         <MdDriveFileRenameOutline />
                                                                                     )}
                                                                                 </InputAdornment>
@@ -1086,29 +1119,29 @@ const TemplateForm = () => {
                                                                         }}
                                                                     />
                                                                 </div>
-        
+
                                                             </div>
                                                         </>
                                                     )}
                                                     {target.birthdayRequired === "true" && (
                                                         <div className="full">
-        
+
                                                             <div className="input-group">
-                                                                
-                                                                
-        
-                                                                <BirthdayField errors={errors} setFieldValue={setFieldValue} values={values} touched={touched} setFieldTouched={setFieldTouched}/>
-                                                                
+
+
+
+                                                                <BirthdayField errors={errors} setFieldValue={setFieldValue} values={values} touched={touched} setFieldTouched={setFieldTouched} />
+
                                                             </div>
-        
+
                                                         </div>
                                                     )}
-        
+
                                                     {target.companyRequired === "true" && (
                                                         <div className="full">
-        
+
                                                             <div className="input-group">
-        
+
                                                                 <Field
                                                                     as={TextField}
                                                                     size="small"
@@ -1123,7 +1156,7 @@ const TemplateForm = () => {
                                                                         startAdornment: (
                                                                             <InputAdornment position="start">
                                                                                 {target.fieldIcon === "true" && (
-        
+
                                                                                     <LuBriefcaseBusiness />
                                                                                 )}
                                                                             </InputAdornment>
@@ -1131,20 +1164,20 @@ const TemplateForm = () => {
                                                                     }}
                                                                 />
                                                             </div>
-        
+
                                                         </div>
                                                     )}
-        
+
                                                     {target.textarea === "true" && (
                                                         <div className="full">
-        
+
                                                             <div className="input-group">
                                                                 <Field
                                                                     as={TextField}
                                                                     size="small"
                                                                     fullWidth
                                                                     label="Nachricht"
-                                                                    
+
                                                                     helperText={<ErrorMessage name="textarea" />}
                                                                     className="pb-2"
                                                                     type="text"
@@ -1161,10 +1194,10 @@ const TemplateForm = () => {
                                                                     }}
                                                                 />
                                                             </div>
-        
+
                                                         </div>
                                                     )}
-        
+
                                                     {target.fileUpload === "true" && (
                                                         <div className="full">
                                                             <div className="clearance"></div>
@@ -1191,7 +1224,7 @@ const TemplateForm = () => {
                                                                     }
                                                                 }}
                                                             />
-        
+
                                                             <ErrorMessage
                                                                 name="fileUpload"
                                                                 component="div"
@@ -1199,7 +1232,7 @@ const TemplateForm = () => {
                                                             />
                                                         </div>
                                                     )}
-        
+
                                                     {target.IdentityConsent === "true" && (
                                                         <div className="full">
                                                             <label htmlFor="consent">
@@ -1230,24 +1263,24 @@ const TemplateForm = () => {
                                                             />
                                                         </div>
                                                     )}
-        
+
                                                     {target.surveyForm === "true" && (
-                                                        <SurveyTemplateForm errors={errors} touched={touched} target={target} values={values}/>
+                                                        <SurveyTemplateForm errors={errors} touched={touched} target={target} values={values} />
                                                     )}
                                                 </>
                                             )}
-        
+
                                             {target.gic === "true" && (
                                                 <GICRegistrationForm errors={errors} touched={touched} target={target} initialValues={initialValues} setFieldValue={setFieldValue} />
                                             )}
-        
-                                            {target.paymentRequired === "true" &&(
-        
-                                             <div className="full">
-        
-                                                <div className="input-group">
-        
-        {/* {rates !== null && (
+
+                                            {target.paymentRequired === "true" && (
+
+                                                <div className="full">
+
+                                                    <div className="input-group">
+
+                                                        {/* {rates !== null && (
         
                                                     <Field
                                                         as={TextField}
@@ -1278,43 +1311,43 @@ const TemplateForm = () => {
                                                         <MenuItem value="GBP">GBP</MenuItem>
                                                     </Field>
         )} */}
+                                                    </div>
+
+
                                                 </div>
-                                                
-                                                
-                                            </div>
-        )}
-        
-        
-                                                    {target.consultationEnabled === "true" && (
-                                                        <CustomDateTimePicker 
-                                                        
-                                                        errors={errors} 
-                                                        touched={touched} 
-                                                        target={target} 
-                                                        setFieldValue={setFieldValue} 
-                                                        values={values} 
-                                                        name="metadata_selected_time" 
-                                                        setFieldTouched={setFieldTouched}/>
-                                                    )}
-        
+                                            )}
+
+
+                                            {target.consultationEnabled === "true" && (
+                                                <CustomDateTimePicker
+
+                                                    errors={errors}
+                                                    touched={touched}
+                                                    target={target}
+                                                    setFieldValue={setFieldValue}
+                                                    values={values}
+                                                    name="metadata_selected_time"
+                                                    setFieldTouched={setFieldTouched} />
+                                            )}
+
                                             <Box className="d-flex justify-content-end w-100 my-2">
                                                 <Button
                                                     onClick={async () => {
-        
+
                                                         const formErrors = await validateForm();
-        
+
                                                         const errorFields = Object.keys(formErrors);
                                                         if (errorFields.length > 0) {
-                                                            
+
                                                             const firstErrorField = document.querySelector(
                                                                 `[name="${errorFields[0]}"]`
                                                             );
-        
+
                                                             if (firstErrorField) {
                                                                 firstErrorField.scrollIntoView({ behavior: "smooth", block: "start" });
                                                                 // firstErrorField.focus();
                                                             }
-        
+
                                                             return;
                                                         }
                                                     }}
@@ -1329,38 +1362,38 @@ const TemplateForm = () => {
                                                         textTransform: "none",
                                                     }}
                                                 >
-        
+
                                                     {(() => {
                                                         if (isSubmitting) {
                                                             return <CircularProgress size={20} color="inherit" />;
                                                         }
-        
+
                                                         if (target.paymentRequired === "true") {
-                                                            
-                                                            return <span>Bestätigen & Bezahlen {target.currency === "AED" ?  Math.round(target.recordFee *(1+tax)) : Math.round(target.recordFee)} {target.currency}
-                                                            {/* {initialCurrency !== chosenCurrency && (
+
+                                                            return <span>Bestätigen & Bezahlen {target.currency === "AED" ? Math.round(target.recordFee * (1 + tax)) : Math.round(target.recordFee)} {target.currency}
+                                                                {/* {initialCurrency !== chosenCurrency && (
                                                     <small style={{fontSize : '0.8rem'}}> (approximately)</small>
                                                 )} */}
                                                             </span>;
                                                         }
-        
+
                                                         return <span>{target.send_button_text}</span>;
                                                     })()}
                                                 </Button>
                                             </Box>
-                                            <WhatsAppButton data={target}/>
+                                            <WhatsAppButton data={target} />
                                         </Form>
                                     )}
                                 </Formik>
-                            {target.lockRegistration === "true" && (
-                                <div className="locked-overlay-message">
-                                    Registration has been closed!
-                                </div>
-                            )}
+                                {target.lockRegistration === "true" && (
+                                    <div className="locked-overlay-message">
+                                        Registration has been closed!
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
-                            
+
                 </>
             );
         }

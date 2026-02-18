@@ -81,8 +81,8 @@ router.get('/payment', async (req, res) => {
 router.post("/payment/create-record", upload.none(), async (req, res) => {
     const userTimezone = req.get('X-User-Timezone'); 
     const table_name = "event_proforma_invoice";
-    const { registration_code, title, event_date, ...data } = req.body;
-    const uniqeIdentifier = generateRecordId(data.event, false);
+    const { registration_code, title, external_request ,event_date, ...data } = req.body;
+    const uniqeIdentifier = generateRecordId(data.event,external_request ,false);
 
 
     const amountValue = parseFloat(data.recordFee);
@@ -188,7 +188,9 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
 
     try {
         let registration_config;
-        const response = await fetch(`https://api.test.paymennt.com/mer/v2.0/checkout/${checkoutId}`, {
+        const isProduction = process.env.ENVIRONMENT === 'PRODUCTION';
+        const paymenntBaseUrl = isProduction ? 'https://api.paymennt.com/mer/v2.0/checkout/': 'https://api.test.paymennt.com/mer/v2.0/checkout/'; 
+        const response = await fetch(`${paymenntBaseUrl}${checkoutId}`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -214,7 +216,7 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
             
             let selected_time_for_email = "";
 
-            if (registration_config.metadata_json !== "") {
+            if (registration_config.    metadata_json !== "") {
               
                const _data = dbService.findExact("registration", "event_id", performa_invoice_data.userId);
                const config_metadata = JSON.parse(registration_config.metadata_json);
@@ -402,7 +404,7 @@ async function prepareOrder(data, userTimezone) {
 
 async function handleRegistration(data, sanitized) {
     try {
-        let table_name;
+        let table_name = "registration";
         let event_time, event_location, event_location_name;
 
         data.email = sanitized.email;
