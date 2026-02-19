@@ -22,7 +22,7 @@ import MenuItem from "@mui/material/MenuItem";
 import EventLocationInput from "../utils/EventLocationInput";
 import LockRegistrationSwitch from "../utils/LockRegistrationSwitch";
 import EnableScheduling from "../utils/EnableScheduling";
-import {config} from '../../ui_config';
+import { config } from '../../ui_config';
 
 
 const validationSchema = Yup.object({
@@ -113,31 +113,31 @@ export default function NewRegistrationPage({
     }, []);
 
     const metadata_whatsapp_number =
-  initialData?.metadata_json
-    ? (() => {
-        try {
-          const parsed = JSON.parse(initialData.metadata_json);
-          
-          return parsed.whatsapp_number || 971562050066;
-        } catch (e) {
-          console.warn("Invalid JSON in metadata_json:", e);
-          return 971562050066;
-        }
-      })()
-    : 971562050066;
+        initialData?.metadata_json
+            ? (() => {
+                try {
+                    const parsed = JSON.parse(initialData.metadata_json);
+
+                    return parsed.whatsapp_number || 971562050066;
+                } catch (e) {
+                    console.warn("Invalid JSON in metadata_json:", e);
+                    return 971562050066;
+                }
+            })()
+            : 971562050066;
 
     const metadata_whatsapp_message =
-  initialData?.metadata_json
-    ? (() => {
-        try {
-          const parsed = JSON.parse(initialData.metadata_json);
-          return parsed.whatsapp_message || "Hallo! Ich benötige Hilfe bei...";
-        } catch (e) {
-          console.warn("Invalid JSON in metadata_json:", e);
-          return "Hallo! Ich benötige Hilfe bei...";
-        }
-      })()
-    : "Hallo! Ich benötige Hilfe bei...";
+        initialData?.metadata_json
+            ? (() => {
+                try {
+                    const parsed = JSON.parse(initialData.metadata_json);
+                    return parsed.whatsapp_message || "Hallo! Ich benötige Hilfe bei...";
+                } catch (e) {
+                    console.warn("Invalid JSON in metadata_json:", e);
+                    return "Hallo! Ich benötige Hilfe bei...";
+                }
+            })()
+            : "Hallo! Ich benötige Hilfe bei...";
 
     const initialValues = {
         id: initialData?.id || null,
@@ -183,14 +183,15 @@ export default function NewRegistrationPage({
         uniqeCodeAccess: enableUniqueMemberCode ? uniqeCodeAccess : 1,
         archived: 0,
         custom_whatsapp: initialData?.custom_whatsapp === "true",
+        external_source: initialData?.external_source === "",
     };
 
     useEffect(() => {
-        
+
         if (initialValues.image && typeof initialValues.image === "string") {
             const url = `${import.meta.env.VITE_SERVERURL}/uploads/${initialValues.image}`;
             setPreview(url);
-            
+
             // Optionally fetch image and convert to File object
             fetch(url)
                 .then(res => res.blob())
@@ -209,7 +210,7 @@ export default function NewRegistrationPage({
             typeof initialValues.event_location === "string"
         ) {
             const parts = initialValues.event_location.split(", ");
-            
+
             setInitialLat(parts[0]);
             setInitialLon(parts[1]);
         }
@@ -218,7 +219,7 @@ export default function NewRegistrationPage({
     useEffect(() => {
         if (initialValues.title && typeof initialValues.title === "string") {
 
-            
+
             setSlug(
                 slugify(initialValues.title, {
                     lower: true,
@@ -226,7 +227,7 @@ export default function NewRegistrationPage({
                 })
             );
         }
-        
+
         if (initialValues.paymentRequired) {
             setCurrency(initialValues?.currency)
         }
@@ -242,14 +243,14 @@ export default function NewRegistrationPage({
         setSubmitSuccess(false);
 
         try {
-            
-            
+
+
             const formData = new FormData();
-            const metadata = values?.metadata_json!== "" ? JSON.parse(values.metadata_json) : {};
+            const metadata = values?.metadata_json !== "" ? JSON.parse(values.metadata_json) : {};
             const overwrite_flag = values?.metadata_json === "";
 
             Object.entries(values).forEach(([key, value]) => {
-                
+
                 switch (key) {
                     case "id":
                         if (initialData) {
@@ -258,7 +259,7 @@ export default function NewRegistrationPage({
                         break;
 
                     case "currency":
-                        
+
                         if (values.paymentRequired) {
                             formData.append("currency", currency);
                         }
@@ -280,51 +281,51 @@ export default function NewRegistrationPage({
                         }
                         break;
 
-                   
+
                     default:
                         if (overwrite_flag && key.startsWith("metadata_")) {
-                            
-                            if(value !== null){
-                                
+
+                            if (value !== null) {
+
                                 // Strip the prefix if you want clean keys in JSON
                                 const cleanKey = key.replace("metadata_", "");
                                 metadata[cleanKey] = value;
                             }
-                        } 
+                        }
 
-                        if(key.startsWith("metadata_whatsapp")) {
-                            
+                        if (key.startsWith("metadata_whatsapp")) {
+
                             const cleanKey = key.replace("metadata_", "");
                             metadata[cleanKey] = value;
                         }
 
-                        if(!key.startsWith("metadata_")) formData.append(key, value);
+                        if (!key.startsWith("metadata_")) formData.append(key, value);
 
                         break;
                 }
             });
-            
+
             // After loop: add metadata JSON if any
-                        
+
             if (overwrite_flag && metadata !== null) {
                 const slots = {};
 
                 // 10 → 21 (8PM is 20, but inclusive makes 12 slots)
-                for (let hour = metadata.start_time; hour < metadata.end_time; hour++) { 
+                for (let hour = metadata.start_time; hour < metadata.end_time; hour++) {
                     slots[hour] = null;
                 }
 
                 // Add slots into metadata
                 metadata.slots = slots;
-                
+
             }
 
-            
-            if(metadata !== null) formData.append("metadata_json", JSON.stringify(metadata));
-            
-            
 
-            
+            if (metadata !== null) formData.append("metadata_json", JSON.stringify(metadata));
+
+
+
+
             const response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/api/registration-config`,
                 {
@@ -460,7 +461,7 @@ export default function NewRegistrationPage({
                                         Maximum Number of Token per Guest
                                     </label>
                                     <Field
-                                        
+
                                         name="tokensPerGuest"
                                         type="number"
                                         className={`form-control ${errors.tokensPerGuest && touched.tokensPerGuest
@@ -572,24 +573,23 @@ export default function NewRegistrationPage({
                                                 <Field name="currency">
                                                     {({ field, form }) => (
                                                         <div className="btn-group" role="group" aria-label="Currency selection">
-                                                        {["AED", "EUR"].map((cur) => (
-                                                            <button
-                                                            style={{minHeight:38}}
-                                                            key={cur}
-                                                            type="button"
-                                                            className={`btn btn-sm ${
-                                                                currency === cur ? "btn-dark" : "btn-outline-scondary"
-                                                            }`}
-                                                            disabled={true}
-                                                            onClick={() => form.setFieldValue(field.name, cur)}
-                                                            >
-                                                            {cur}
-                                                            </button>
-                                                        ))}
+                                                            {["AED", "EUR"].map((cur) => (
+                                                                <button
+                                                                    style={{ minHeight: 38 }}
+                                                                    key={cur}
+                                                                    type="button"
+                                                                    className={`btn btn-sm ${currency === cur ? "btn-dark" : "btn-outline-scondary"
+                                                                        }`}
+                                                                    disabled={true}
+                                                                    onClick={() => form.setFieldValue(field.name, cur)}
+                                                                >
+                                                                    {cur}
+                                                                </button>
+                                                            ))}
                                                         </div>
                                                     )}
-                                                    </Field>
-                                               
+                                                </Field>
+
                                             </div>
                                         </div>
                                     </div>
@@ -652,7 +652,7 @@ export default function NewRegistrationPage({
                                     </div>
 
                                     <EventLocationInput
-                                        
+
                                         errors={errors}
                                         touched={touched}
                                         setFieldValue={setFieldValue}
@@ -742,6 +742,53 @@ export default function NewRegistrationPage({
                                             </div>
                                         </div>
                                     </div>
+                                    <div className="col-6">
+                                        <div className="align-items-center">
+                                            <label
+                                                htmlFor="external_source"
+                                                className="form-label"
+                                            >
+                                                External Source
+                                            </label>
+
+                                            <Tooltip
+                                                title={
+                                                    <div className="d-flex flex-column align-items-center text-center">
+                                                        <span>
+                                                            Select the external source for this event.
+                                                        </span>
+                                                    </div>
+                                                }
+                                                componentsProps={{
+                                                    tooltip: {
+                                                        sx: { fontSize: 14 },
+                                                    },
+                                                }}
+                                            >
+                                                <Field
+                                                    as="select"
+                                                    name="external_source"
+                                                    className={`form-select ${errors.external_source && touched.external_source
+                                                            ? "is-invalid"
+                                                            : ""
+                                                        }`}
+                                                >
+                                                    <option value="">Select External Source</option>
+                                                    <option value="gms">German Medical Society</option>
+                                                    <option value="gic">German Industry Club</option>
+                                                </Field>
+                                            </Tooltip>
+
+                                            <div style={{ minHeight: 30 }}>
+                                                <ErrorMessage
+                                                    name="external_source"
+                                                    component="div"
+                                                    className="text-danger small mt-1"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
                                 </div>
                             </div>
                         )}
@@ -830,7 +877,7 @@ export default function NewRegistrationPage({
                                 </div>
                             </div>
 
-                            <div className="row p-2" style={{backgroundColor: '#E6E3E3', borderRadius: 10}}>
+                            <div className="row p-2" style={{ backgroundColor: '#E6E3E3', borderRadius: 10 }}>
                                 <div className="col-6" >
                                     <div className="pb-3"><h4>Registration Settings</h4></div>
 
@@ -854,7 +901,7 @@ export default function NewRegistrationPage({
                                         </label>
                                     </div>
 
-  <div className="form-check form-switch mb-3">
+                                    <div className="form-check form-switch mb-3">
                                         <Field name="otp">
                                             {({ field }) => (
                                                 <input
@@ -872,7 +919,7 @@ export default function NewRegistrationPage({
                                             OTP
                                         </label>
                                     </div>
-                                    
+
                                     <div className="form-check form-switch mb-3">
                                         <Field name="use_member_card">
                                             {({ field }) => (
@@ -1014,7 +1061,7 @@ export default function NewRegistrationPage({
                                             Textarea for Messaging Required
                                         </label>
                                     </div>
-                                  
+
 
                                     <div className="form-check form-switch mb-3">
                                         <Field name="IdentityConsent">
@@ -1083,38 +1130,38 @@ export default function NewRegistrationPage({
                                     </div>
                                     {values.paymentRequired && (
                                         <div className="form-check form-switch mb-3">
-                                        <Field name="vatEnabled">
-                                            {({ field }) => (
-                                                <input
-                                                    name={field.name}
-                                                    checked={field.value}
-                                                    onChange={(e) => {
-                                                        field.onChange(e);
-                                                        
-                                                        if (e.target.checked) {
-                                                            setCurrency("AED");
-                                                            
-                                                            setFieldValue("currency", "AED");
-                                                        } else {
-                                                            setCurrency("EUR");
-                                                            setFieldValue("currency", "EUR");
-                                                            
-                                                        }
-                                                    }}
-                                                    onBlur={field.onBlur}
-                                                    id="vatEnabled"
-                                                    className="form-check-input"
-                                                    type="checkbox"
-                                                />
-                                            )}
-                                        </Field>
-                                        <label
-                                            className="form-check-label"
-                                            htmlFor="vatEnabled"
-                                        >
-                                            5% VAT
-                                        </label>
-                                    </div>
+                                            <Field name="vatEnabled">
+                                                {({ field }) => (
+                                                    <input
+                                                        name={field.name}
+                                                        checked={field.value}
+                                                        onChange={(e) => {
+                                                            field.onChange(e);
+
+                                                            if (e.target.checked) {
+                                                                setCurrency("AED");
+
+                                                                setFieldValue("currency", "AED");
+                                                            } else {
+                                                                setCurrency("EUR");
+                                                                setFieldValue("currency", "EUR");
+
+                                                            }
+                                                        }}
+                                                        onBlur={field.onBlur}
+                                                        id="vatEnabled"
+                                                        className="form-check-input"
+                                                        type="checkbox"
+                                                    />
+                                                )}
+                                            </Field>
+                                            <label
+                                                className="form-check-label"
+                                                htmlFor="vatEnabled"
+                                            >
+                                                5% VAT
+                                            </label>
+                                        </div>
                                     )
 
                                     }
@@ -1126,61 +1173,61 @@ export default function NewRegistrationPage({
                                 <div className="col-6">
                                     <div className="pb-3"><h4>Optional Fields</h4></div>
 
-                                    <EnableScheduling/>
-                
-                                    {values.consultationEnabled && (
-                                    <div className="col-12 d-flex">
-                                        
-                                    <div className="align-items-center col-4">
-                                        <label htmlFor="send_button_text" className="form-label">
-                                            Start Time
-                                        </label>
-                                        <Field
-                                            
-                                            
-                                            name="metadata_start_time"
-                                            type="number"
-                                            className={`form-control ${errors.metadata_start_time && touched.metadata_start_time
-                                                ? "is-invalid"
-                                                : ""
-                                                }`}
-                                            placeholder=""
-                                        />
-                                        <div style={{ minHeight: 30 }}>
-                                            <ErrorMessage
-                                                name="metadata_start_time"
-                                                component="div"
-                                                className="text-danger small mt-1"
-                                            />
-                                        </div>
-                                    </div>
-                                     <div className="align-items-center col-4">
-                                        <label htmlFor="send_button_text" className="form-label">
-                                            End Time
-                                        </label>
-                                        <Field
-                                            
-                                            
-                                            name="metadata_end_time"
-                                            type="number"
-                                            className={`form-control ${errors.metadata_end_time && touched.metadata_end_time
-                                                ? "is-invalid"
-                                                : ""
-                                                }`}
-                                            placeholder=""
-                                        />
-                                        <div style={{ minHeight: 30 }}>
-                                            <ErrorMessage
-                                                name="metadata_end_time"
-                                                component="div"
-                                                className="text-danger small mt-1"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                                                )}
+                                    <EnableScheduling />
 
- <div className="form-check form-switch mb-3">
+                                    {values.consultationEnabled && (
+                                        <div className="col-12 d-flex">
+
+                                            <div className="align-items-center col-4">
+                                                <label htmlFor="send_button_text" className="form-label">
+                                                    Start Time
+                                                </label>
+                                                <Field
+
+
+                                                    name="metadata_start_time"
+                                                    type="number"
+                                                    className={`form-control ${errors.metadata_start_time && touched.metadata_start_time
+                                                        ? "is-invalid"
+                                                        : ""
+                                                        }`}
+                                                    placeholder=""
+                                                />
+                                                <div style={{ minHeight: 30 }}>
+                                                    <ErrorMessage
+                                                        name="metadata_start_time"
+                                                        component="div"
+                                                        className="text-danger small mt-1"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="align-items-center col-4">
+                                                <label htmlFor="send_button_text" className="form-label">
+                                                    End Time
+                                                </label>
+                                                <Field
+
+
+                                                    name="metadata_end_time"
+                                                    type="number"
+                                                    className={`form-control ${errors.metadata_end_time && touched.metadata_end_time
+                                                        ? "is-invalid"
+                                                        : ""
+                                                        }`}
+                                                    placeholder=""
+                                                />
+                                                <div style={{ minHeight: 30 }}>
+                                                    <ErrorMessage
+                                                        name="metadata_end_time"
+                                                        component="div"
+                                                        className="text-danger small mt-1"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="form-check form-switch mb-3">
                                         <Field name="custom_whatsapp">
                                             {({ field }) => (
                                                 <input
@@ -1200,59 +1247,59 @@ export default function NewRegistrationPage({
                                     </div>
 
                                     {values.custom_whatsapp && (
-                                    <div className="col-12 d-flex">
-                                        
-                                        <div className="row">
+                                        <div className="col-12 d-flex">
 
-                                    <div className="align-items-center col-12">
-                                        <label htmlFor="send_button_text" className="form-label">
-                                            <small>Whatsapp Number</small>
-                                        </label>
-                                        <Field
-                                            
-                                            
-                                            name="metadata_whatsapp_number"
-                                            type="text"
-                                            className={`form-control ${errors.metadata_whatsapp_number && touched.metadata_whatsapp_number
-                                                ? "is-invalid"
-                                                : ""
-                                                }`}
-                                            placeholder=""
-                                        />
-                                        <div style={{ minHeight: 30 }}>
-                                            <ErrorMessage
-                                                name="metadata_whatsapp_number"
-                                                component="div"
-                                                className="text-danger small mt-1"
-                                            />
+                                            <div className="row">
+
+                                                <div className="align-items-center col-12">
+                                                    <label htmlFor="send_button_text" className="form-label">
+                                                        <small>Whatsapp Number</small>
+                                                    </label>
+                                                    <Field
+
+
+                                                        name="metadata_whatsapp_number"
+                                                        type="text"
+                                                        className={`form-control ${errors.metadata_whatsapp_number && touched.metadata_whatsapp_number
+                                                            ? "is-invalid"
+                                                            : ""
+                                                            }`}
+                                                        placeholder=""
+                                                    />
+                                                    <div style={{ minHeight: 30 }}>
+                                                        <ErrorMessage
+                                                            name="metadata_whatsapp_number"
+                                                            component="div"
+                                                            className="text-danger small mt-1"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="align-items-center col-12">
+                                                    <label htmlFor="send_button_text" className="form-label">
+                                                        Screen Message
+                                                    </label>
+                                                    <Field
+
+
+                                                        name="metadata_whatsapp_message"
+                                                        type="text"
+                                                        className={`form-control ${errors.metadata_whatsapp_message && touched.metadata_whatsapp_message
+                                                            ? "is-invalid"
+                                                            : ""
+                                                            }`}
+                                                        placeholder=""
+                                                    />
+                                                    <div style={{ minHeight: 30 }}>
+                                                        <ErrorMessage
+                                                            name="metadata_whatsapp_message"
+                                                            component="div"
+                                                            className="text-danger small mt-1"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                     <div className="align-items-center col-12">
-                                        <label htmlFor="send_button_text" className="form-label">
-                                            Screen Message
-                                        </label>
-                                        <Field
-                                            
-                                            
-                                            name="metadata_whatsapp_message"
-                                            type="text"
-                                            className={`form-control ${errors.metadata_whatsapp_message && touched.metadata_whatsapp_message
-                                                ? "is-invalid"
-                                                : ""
-                                                }`}
-                                            placeholder=""
-                                        />
-                                        <div style={{ minHeight: 30 }}>
-                                            <ErrorMessage
-                                                name="metadata_whatsapp_message"
-                                                component="div"
-                                                className="text-danger small mt-1"
-                                            />
-                                        </div>
-                                    </div>
-                                        </div>
-                                </div>
-                                                                )}
+                                    )}
 
 
 
@@ -1352,9 +1399,9 @@ export default function NewRegistrationPage({
                                         const formErrors = await validateForm();
 
                                         const errorFields = Object.keys(formErrors);
-                                        
+
                                         if (errorFields.length > 0) {
-                                            
+
                                             const firstErrorField = document.querySelector(
                                                 `[name="${errorFields[0]}"]`
                                             );

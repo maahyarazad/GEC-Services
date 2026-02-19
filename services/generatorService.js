@@ -26,22 +26,17 @@ const createID = (val = 0) => {
   const cleaned = sanitize(eventName);
   const idSuffix = createAcronym(cleaned);
 
-  const codeMap = {
-  "german-medical-society": "gms",
-  "german-industry-club": "gic",
-};
-
-const prefix =
-    useGecPrefix && external_request && codeMap[external_request]
-      ? codeMap[external_request]
-      : idSuffix;
-
-  const code =
+    const prefix =
     useGecPrefix && external_request
-      ? `${prefix}-${idSuffix}-${createID(codeLength ?? 0)}`
-      : `${idSuffix}-${createID(codeLength ?? 0)}`;
+        ? external_request
+        : idSuffix;
 
-  return code;
+    const code =
+    useGecPrefix && external_request
+        ? `${prefix}-${idSuffix}-${createID(codeLength ?? 0)}`
+        : `${idSuffix}-${createID(codeLength ?? 0)}`;
+
+    return code;
 };
 
 

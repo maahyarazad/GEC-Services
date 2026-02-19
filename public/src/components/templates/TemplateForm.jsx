@@ -238,10 +238,11 @@ const TemplateForm = () => {
                     lastname: last || "",
                     mobile_number: values.externalUser.user_profile.phone,
                     whatsapp: values.externalUser.user_profile.whatsapp,
-                    birthday: ""
+                    birthday: "",
+                    referer: referer
                 });
 
-                setExternalRequest(requestOrigin);
+                setExternalRequest(referer);
 
             }
 
@@ -492,6 +493,8 @@ const TemplateForm = () => {
 
             const formData = new FormData();
             formData.append("external_request", externalRequest);
+            formData.append("external_source", externalRequest);
+            
             for (const key in data) {
                 if (key === "fileUpload") continue;
                 formData.append(key, data[key]);

@@ -248,11 +248,23 @@ router.patch("/api/registration-config-switch",  async (req, res) => {
   }
 });
 
-router.get("/api/registration-config",  async (req, res) => {
+router.get("/api/registration-config", async (req, res) => {
   try {
-
     const table_name = "registration_config";
-    const rows = dbService.findAllQueryFilter(table_name);
+
+    // Get externalSource from query params
+    const { externalSource } = req.query;
+
+    let rows;
+    if (externalSource) {
+      
+      rows =  dbService.findAllQueryFilter(table_name, {
+        external_source: externalSource
+      });
+    } else {
+      
+      rows =  dbService.findAllQueryFilter(table_name);
+    }
 
     res.json({ status: true, message: "Data fetched successfully", rows });
   } catch (error) {
@@ -260,6 +272,7 @@ router.get("/api/registration-config",  async (req, res) => {
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
+
 
 
 router.patch("/api/registration-config-archive",  async (req, res) => {
