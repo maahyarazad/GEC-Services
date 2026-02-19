@@ -155,8 +155,10 @@ const TemplateForm = () => {
     const serverAPICall = useCallback(async (gecuser) => {
         try {
             
-            const requestOrigin = searchParams.get("requestOrigin");
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/optional-login?referer=${requestOrigin}`, {
+            const referer = searchParams.get("referer");
+            const sso = searchParams.get("sso");
+
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/optional-login?sso=${sso}&referer=${referer}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

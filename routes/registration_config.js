@@ -6,7 +6,8 @@ const dbService = require("../services/dbService");
 const multer = require("multer");
 const { generateRecordId } = require("../services/generatorService");
 const fs = require("fs").promises;
-
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -52,8 +53,7 @@ const loginLimiter = rateLimit({
   skipSuccessfulRequests: true
 });
 
-const jwt = require("jsonwebtoken");
-require("dotenv").config();
+
 
 
 router.post(
@@ -291,17 +291,13 @@ router.patch("/api/registration-config-archive",  async (req, res) => {
 router.post("/registration-config/optional-login", async (req, res) => {
   try {
 
-
-
     const table_name = "registration_config";
     let externalUser;
 
-    if(Object.keys(req?.cookies).length > 0){
+    if(req.query && req.query.referer){
         const referer = req.query.referer;
-
-        const token = req?.cookies["token"];
-        if(referer === 'german-medical-society') externalUser = jwt.verify(token, process.env.MEDICAL_SCOIETY_JWT_SECRET);
-        if(referer === 'german-industry-club')    externalUser = jwt.verify(token, process.env.GIC_JWT_SECRET);
+        const ssoToken = req.query.sso
+        externalUser = jwt.verify(ssoToken, process.env.SSO_SECRET);
     }
 
     if (req.body && req.body.page) {

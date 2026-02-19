@@ -5,7 +5,8 @@ const authorization_middleware = {
   authorize_admin: (req, res, next) => {
     try {
       const token = req?.cookies["a-usr"];
-      const externalToken = req?.cookies["token"];
+        const externalToken = req.headers["x-access-token"];
+
 
       if (!token && !externalToken) {
         return res
@@ -20,20 +21,10 @@ const authorization_middleware = {
         try {
           externalUser = jwt.verify(
             externalToken,
-            process.env.MEDICAL_SCOIETY_JWT_SECRET
+            process.env.EXTERNAL_ACCESS_SECRET
           );
-        } catch (err1) {
-          try {
-            externalUser = jwt.verify(
-              externalToken,
-              process.env.GIC_JWT_SECRET
-            );
-
-                    
-
-          } catch (err2) {
-            externalUser = undefined; // invalid token
-          }
+        } catch (err) {
+          console.error(err);
         }
       }
 
