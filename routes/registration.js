@@ -290,6 +290,7 @@ router.post("/registration", upload.single('attachment_file'), async (req, res) 
 router.get('/api/registration',  async (req, res) => {
     try {
 
+
         const { filters, data } = dbService.QuerySqlConverter(req.query, "registration AS r", {
             table: "event_proforma_invoice AS e",
             on: "r.event_id = e.userId",
@@ -314,7 +315,7 @@ router.get('/api/registration',  async (req, res) => {
 
         const total = dbService.getTotalCount("registration", _filters);
 
-        return res.     json({
+        return res.json({
             status: true,
             data,
             total

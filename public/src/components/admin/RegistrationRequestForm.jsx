@@ -91,6 +91,7 @@ export default function NewRegistrationPage({
     disableLogin,
     enableUniqueMemberCode,
 }) {
+    
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [slug, setSlug] = useState(null);
     const [submitError, setSubmitError] = useState("");
@@ -183,7 +184,7 @@ export default function NewRegistrationPage({
         uniqeCodeAccess: enableUniqueMemberCode ? uniqeCodeAccess : 1,
         archived: 0,
         custom_whatsapp: initialData?.custom_whatsapp === "true",
-        external_source: initialData?.external_source === "",
+        external_source: initialData?.external_source || "",
     };
 
     useEffect(() => {
@@ -217,6 +218,7 @@ export default function NewRegistrationPage({
     }, [initialValues.image, initialValues.event_location]);
 
     useEffect(() => {
+        
         if (initialValues.title && typeof initialValues.title === "string") {
 
 

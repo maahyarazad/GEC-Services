@@ -1,4 +1,4 @@
-import { useSearchParams, useParams } from 'react-router-dom';
+import { useSearchParams, useParams , useLocation} from 'react-router-dom';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 import '../utils/login.css';
@@ -28,8 +28,12 @@ const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
 });
 
-export const GuestRegistration = () => {
+ const GuestRegistration = () => {
+    
     const eventSlug = useParams();
+    const location = useLocation();
+const guestCode = new URLSearchParams(location.search).get("guest-code");
+    console.log(guestCode);
     const {showSnackbar} = useSnackbar();
 
     const passkey = 1234;
@@ -43,7 +47,7 @@ export const GuestRegistration = () => {
     const [showPassword, setShowPassowrd] = useState(false);
 
     useEffect(() => {
-
+        debugger;
         const existingUser = getCookie("g-usr");
 
         if (Number(existingUser) === passkey) {
@@ -273,5 +277,7 @@ export const GuestRegistration = () => {
 
 
 };
+
+export default GuestRegistration;
 
 

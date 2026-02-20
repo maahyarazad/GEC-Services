@@ -615,6 +615,16 @@ const TemplateForm = () => {
                         "success"
                     );
                     resetForm(); // 👈 Reset the form after submission
+
+
+                    if(externalRequest){
+                        
+                        const returnUrl = externalRequest === 'gms' ? 'https://german-medical-society.com/dashboard?tab=my_events': 'https://german-industry-club.com/dashboard?tab=my_events' 
+                         timeoutRef.current = setTimeout(() => { window.location.href = returnUrl}, 5000);
+                        return;
+                    }
+
+
                     if (target.surveyForm !== "true") {
 
                         setPhoneRegistered(false);

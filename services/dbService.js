@@ -351,7 +351,7 @@ const dbService = {
     const jsonFilters = [];
 
     Object.entries(queryFilters).forEach(([key, value]) => {
-      if (!key.startsWith("filter_")) return;
+    //   if (!key.startsWith("filter_")) return;
 
       let field = key.replace("filter_", "");
 

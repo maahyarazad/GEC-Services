@@ -32,6 +32,7 @@ import ErrorBoundary from "../../utils/ErrorBoundary";
 
 const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate, onArchive, onAutoRgister, onCleanUp, requestloading, localData }) => [
     { field: 'id', headerName: 'ID', width: 70 },
+    { field: "external_source", headerName: "External Source", hide: true },
     {
         field: 'lockRegistration', headerName: 'Active', width: 70, renderCell: (params) => {
             const value = params?.row?.lockRegistration === "true";
@@ -158,7 +159,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
             const use_member_card = params?.row?.use_member_card;
             const loginDisabled = params?.row?.loginRequired;
             const isLoading = requestloading.some((item) => item.id === params?.row?.id && item.field === `${params.field}`);
-            
+
 
 
             if (use_member_card === "true") {
@@ -275,7 +276,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
         sortable: false,
         filterable: false,
         renderCell: (params) => {
-            
+
             const isLoadingAuto = requestloading.some((item) => item.id === params?.row?.id && item.field === `${params.field}-auto`);
             const isLoadingClean = requestloading.some((item) => item.id === params?.row?.id && item.field === `${params.field}-clean`);
             return (
@@ -374,8 +375,8 @@ const RegistrationList = () => {
     const [memberCount, setMemberCount] = useState(0);
     const [isMapModalOpen, setIsMapModalOpen] = useState(false);
     const dialogRef = useRef();
-    const {showSnackbar} = useSnackbar();
-    const {openDialog} = useAlertDialog();
+    const { showSnackbar } = useSnackbar();
+    const { openDialog } = useAlertDialog();
     const [loading, setLoading] = useState(false);
     const [requestloading, setRequestLoading] = useState([]);
 
@@ -621,7 +622,7 @@ const RegistrationList = () => {
 
             setInitialData(selectedRow);
             setEditReg(true);
-            
+
         }
     };
 
@@ -756,7 +757,7 @@ const RegistrationList = () => {
     const [activeStep, setActiveStep] = useState(0);
     const handleNext = () => {
         setActiveStep((prev) => prev + 1);
-        
+
     };
 
     const handleBack = () => {
@@ -769,8 +770,8 @@ const RegistrationList = () => {
 
     return (
         <Box sx={{ padding: 1 }}>
-            
-            
+
+
             <div className="d-flex justify-content-start mb-1">
                 <div className="">
                     <Tooltip title="Add New Registration Page" componentsProps={config.tooltip_config}>
@@ -813,6 +814,14 @@ const RegistrationList = () => {
                         disableSelectionOnClick
                         disableRowSelectionOnClick
                         paginationMode="server"
+                        initialState={{
+                            columns: {
+                                columnVisibilityModel: {
+                                    external_source: true
+
+                                },
+                            },
+                        }}
                     />
                 </div>
             )}
@@ -825,13 +834,13 @@ const RegistrationList = () => {
                     setEditReg(false);
                 }}
                 onAfterClose={() => setInitialData(null)}
-                    title={`Modify ${initialData?.title}`}>
-                    <RegistrationRequestForm initialData={initialData}
-                        modalSwitch={() => {
-                            setEditReg(false);
-                            fetchData();
-                            setInitialData(null);
-                        }} />
+                title={`Modify ${initialData?.title}`}>
+                <RegistrationRequestForm initialData={initialData}
+                    modalSwitch={() => {
+                        setEditReg(false);
+                        fetchData();
+                        setInitialData(null);
+                    }} />
             </Modal>
 
 
@@ -855,7 +864,7 @@ const RegistrationList = () => {
                 isOpen={newReg}
                 onRequestClose={() => {
                     setNewReg(false);
-                    
+
                 }}
                 onAfterClose={() => { fetchData(); setActiveStep(0); }}
                 title="New Registration Page">
