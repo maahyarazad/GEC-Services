@@ -13,14 +13,11 @@ import { Button } from '@mui/material'
 import Modal from '../../Modal';
 import SlideMenu from '../../SlideMenu/SlideMenu';
 import { DataGrid } from '@mui/x-data-grid';
-import FilterParams from '../../admin/FilterParams';
 import JSONPretty from 'react-json-pretty';
 import 'react-json-pretty/themes/monikai.css'; // optional styling
 import { useSnackbar } from '../../Providers/Snackbar';
-import { IoMdAdd } from "react-icons/io";
 import { AiOutlineClear } from "react-icons/ai";
 import { RiContactsBook2Fill } from "react-icons/ri";
-import { IoMdOpen } from "react-icons/io";
 import { RiUserReceivedFill } from "react-icons/ri";
 import { RiCheckDoubleFill } from "react-icons/ri";
 import CreateContact from "./CreateContact";
@@ -42,7 +39,7 @@ const WhatsappBroadcast = () => {
     const { openDialog } = useAlertDialog();
     const [data, setData] = useState();
     const [groupedByTypeKey, setGroupedByTypeKey] = useState();
-    const [content, setContent] = useState(null);
+    
     const [openLogs, setOpenLogs] = useState(false);
     const [openContactBook, setOpenContactBook] = useState(false);
     const [openResponses, setOpenResponses] = useState(false);
@@ -51,18 +48,34 @@ const WhatsappBroadcast = () => {
     const [JSON_Value_Response_Log, setJSON_Value_Response_Log] = useState(null);
     const [viewStatus, setViewStatus] = useState(false);
     const [viewCreateNewContact, setViewCreateNewContact] = useState(false);
-    const [testAction, setTestAction] = useState(false);
-    const [massAction, setMassAction] = useState(false);
-    const [inputValue, setInputValue] = useState({});
-    const [phone, SetPhone] = useState('');
-    const [loadingMassSend, SetloadingMassSend] = useState(false);
-    const [phoneList, SetPhoneList] = useState([]);
+    
+    
+
     const [contactList, setContactList] = useState([]);
-    const [useContactBook, setUseContactBook] = useState(false);
-    const [useLanguage, setUseLanguage] = useState(true);
-    const [useTestBook, setUseTestBook] = useState(false);
     const [viewBlackList, setViewBlackList] = useState(false);
     const [viewCorruptedList, setViewCorruptedList] = useState(false);
+
+        const [messageState, setMessageState] = useState({
+        useContactBook: false,
+        useTestBook: false,
+        useLanguage: true,
+        phoneList: [],
+        inputValue: {},
+        content: null,
+        testAction: false,
+        massAction: false,
+        loadingMassSend: false,
+        phone: ''
+    });
+
+
+    const handleMessageStateChange = (key, value) => {
+        setMessageState(prev => ({
+            ...prev,
+            [key]: value,
+        }));
+    };
+
 
     const { showSnackbar } = useSnackbar();
 
@@ -328,8 +341,8 @@ const WhatsappBroadcast = () => {
         SetloadingMassSend(true);
         try {
 
-            const requiredKeys = content?.variables
-                ? Object.keys(content.variables)
+            const requiredKeys = messageState.content?.variables
+                ? Object.keys(messageState.content.variables)
                 : [];
 
             for (const key of requiredKeys) {
@@ -355,7 +368,7 @@ const WhatsappBroadcast = () => {
                         useLanguage: useLanguage,
                         phoneList,
                         payload: inputValue,
-                        template: content,
+                        template: messageState.content,
                     }),
                 }
             );
@@ -749,7 +762,7 @@ const WhatsappBroadcast = () => {
                     <AiOutlineClear style={{ marginRight: 2 }} />
                 </IconButton>
 
-                <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { setMassAction(true); }} disabled={content === null}>
+                <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { handleMessageStateChange('massAction',true); }} disabled={messageState.content === null}>
                     <FaWhatsapp size={17} style={{ marginRight: 2 }} /> Send Message
                 </Button>
                 <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenContactBook(true)}>
@@ -787,7 +800,11 @@ const WhatsappBroadcast = () => {
                                             <div className="d-flex">
                                                 <div className="col form-control">
                                                     {Object.values(groupedByTypeKey[key]).map((item, idx) => (
-                                                        <div key={idx} onClick={() => { setInputValue({}); setContent(item); }}
+                                                            <div key={idx} onClick={() => {
+                                                                
+                                                                handleMessageStateChange("inputValue", {});
+                                                                handleMessageStateChange("content", item);
+                                                            }}
                                                             style={{ border: 'solid', borderRadius: '5px', borderColor: 'gray', borderWidth: '1px', padding: '5px', marginBottom: '5px', cursor: 'pointer', overflow: 'clip' }}>
 
                                                             <strong>{item.friendlyName}</strong> ({item.language})<br />
@@ -809,17 +826,17 @@ const WhatsappBroadcast = () => {
                         </div>
                         <div style={{ position: 'fixed', right: 10, maxWidth: '45vw', height: 'calc(100vh - 200px)', overflow: 'scroll' }}>
 
-                            {content && content.types ? (
+                            {messageState.content && messageState.content.types ? (
                                 (() => {
-                                    const typeKey = Object.keys(content.types)[0];
-                                    const data = content.types[typeKey];
+                                    const typeKey = Object.keys(messageState.content.types)[0];
+                                    const data = messageState.content.types[typeKey];
 
                                     switch (typeKey) {
                                         case "whatsapp/authentication": {
                                             const { body, actions, add_security_recommendation } = data;
                                             return (
                                                 <Paper sx={{ p: 2 }} elevation={5} >
-                                                    <Typography variant="h6">{content?.friendlyName}</Typography>
+                                                    <Typography variant="h6">{messageState.content?.friendlyName}</Typography>
                                                     <Typography sx={{ my: 2 }}>{body.replace("{{1}}", "123456")}</Typography>
                                                     {actions?.map((action, i) => {
                                                         if (action.type === "COPY_CODE") {
@@ -852,7 +869,7 @@ const WhatsappBroadcast = () => {
                                             const { body, button, items } = data;
                                             return (
                                                 <Paper sx={{ p: 2 }} elevation={5}>
-                                                    <Typography variant="h6">{content?.friendlyName}</Typography>
+                                                    <Typography variant="h6">{messageState.content?.friendlyName}</Typography>
                                                     <Typography sx={{ my: 2 }}>
                                                         {body.replace("{{order_number}}", "12345").replace("{{date}}", "Jan 10")}
                                                     </Typography>
@@ -893,7 +910,7 @@ const WhatsappBroadcast = () => {
                                             const { body, media } = data;
                                             return (
                                                 <Paper sx={{ p: 2 }} elevation={5}>
-                                                    <Typography variant="h6">{content?.friendlyName}</Typography>
+                                                    <Typography variant="h6">{messageState.content?.friendlyName}</Typography>
                                                     <Typography sx={{ my: 2 }}>{body}</Typography>
                                                     {media?.map((url, idx) => (
                                                         <img
@@ -911,7 +928,7 @@ const WhatsappBroadcast = () => {
                                             const { title, subtitle, body, media, actions, orientation } = data;
                                             return (
                                                 <Paper sx={{ p: 2, maxWidth: 400, border: "1px solid #ccc", borderRadius: 4 }}>
-                                                    <Typography variant="h5">{content?.friendlyName}</Typography>
+                                                    <Typography variant="h5">{messageState.content?.friendlyName}</Typography>
                                                     {subtitle && <Typography variant="subtitle1" color="text.secondary">{subtitle}</Typography>}
                                                     {media?.length > 0 && (
                                                         <img
@@ -950,7 +967,7 @@ const WhatsappBroadcast = () => {
                                             const { body, actions, title } = data;
                                             return (
                                                 <Paper sx={{ p: 2 }} elevation={5}>
-                                                    <Typography variant="h6">{content?.friendlyName}</Typography>
+                                                    <Typography variant="h6">{messageState.content?.friendlyName}</Typography>
                                                     <Typography sx={{ my: 2 }}>{body}</Typography>
                                                     <Box sx={{ display: "flex", gap: 1 }}>
                                                         {actions?.map(({ id, title }) => (
@@ -971,7 +988,7 @@ const WhatsappBroadcast = () => {
                                             const { body, actions } = data;
                                             return (
                                                 <Paper sx={{ p: 2 }} elevation={5}>
-                                                    <Typography variant="h6">{content?.friendlyName}</Typography>
+                                                    <Typography variant="h6">{messageState.content?.friendlyName}</Typography>
                                                     <Typography sx={{ my: 2 }}>{body.replace("{{first_name}}", "John")}</Typography>
                                                     <Box sx={{ display: "flex", gap: 1 }}>
                                                         {actions?.map((action, i) => {
@@ -1011,27 +1028,11 @@ const WhatsappBroadcast = () => {
 
 
             <MessageModal
-                massAction={massAction}
-                setMassAction={setMassAction}
-                setTestAction={setTestAction}
-                content={content}
-                useContactBook={useContactBook}
-                useTestBook={useTestBook}
-                useLanguage={useLanguage}
-                setUseContactBook={setUseContactBook}
-                setUseLanguage={setUseLanguage}
-                setUseTestBook={setUseTestBook}
+                state={messageState}
+                handleMessageStateChange={handleMessageStateChange}
                 handleSubmit={handleSubmit}
-                inputValue={inputValue}
-                setInputValue={setInputValue}
-                phone={phone}
-                SetPhone={SetPhone}
-                phoneList={phoneList}
-                SetPhoneList={SetPhoneList}
                 normalizePhone={normalizePhone}
-                loadingMassSend={loadingMassSend}
             />
-
 
 
             <Modal isOpen={viewCreateNewContact}

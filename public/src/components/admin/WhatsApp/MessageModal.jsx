@@ -5,32 +5,34 @@ import { TiDelete } from "react-icons/ti";
 import Modal from "../../Modal"
 
 const MessageModal = ({
-    massAction,
-    setMassAction,
-    setTestAction,
-    content,
-    useContactBook,
-    useTestBook,
-    useLanguage,
-    setUseContactBook,
-    setUseTestBook,
-    setUseLanguage,
+    state,
+    handleMessageStateChange,
     handleSubmit,
-    inputValue,
-    setInputValue,
-    phone,
-    SetPhone,
-    phoneList,
-    SetPhoneList,
     normalizePhone,
-    loadingMassSend,
 }) => {
+
+    const {
+        massAction,
+        testAction,
+        content,
+        useContactBook,
+        useTestBook,
+        useLanguage,
+        useAudience,
+        inputValue,
+        phone,
+        phoneList,
+        loadingMassSend,
+    } = state;
+
     return (
         <Modal
             isOpen={massAction}
             onRequestClose={() => {
-                setTestAction(false);
-                setMassAction(false);
+
+                handleMessageStateChange('testAction', false);
+                handleMessageStateChange('massAction', false);
+
             }}
             title={`Test Message → ${content?.friendlyName}`}
         >
@@ -44,7 +46,7 @@ const MessageModal = ({
                             size="small"
                             title="Use Contact Book"
                             checked={useContactBook}
-                            onChange={(e) => setUseContactBook(e.target.checked)}
+                            onChange={(e) => handleMessageStateChange('useContactBook', e.target.checked)}
                             color="primary"
                         />
                         <label htmlFor="test-input">Use Test Book</label>
@@ -53,22 +55,44 @@ const MessageModal = ({
                             size="small"
                             title="Use Contact Book"
                             checked={useTestBook}
-                            onChange={(e) => setUseTestBook(e.target.checked)}
+                            onChange={(e) => handleMessageStateChange('useTestBook', e.target.checked)}
                             color="primary"
                         />
                     </div>
                     <div className="col-12">
 
-                        <label htmlFor="test-input">Pick Language From Contact Book</label>
-                        <Switch
-                            size="small"
-                            title="Language"
-                            checked={useLanguage}
-                            onChange={(e) => setUseLanguage(e.target.checked)}
-                            color="primary"
-                        />
+                        <div className="col-6">
+
+                            <label htmlFor="test-input">Pick Language From Contact Book</label>
+                            <Switch
+                                size="small"
+                                title="Language"
+                                checked={useLanguage}
+                                onChange={(e) => handleMessageStateChange('useLanguage', e.target.checked)}
+                                color="primary"
+                            />
+                        </div>
+                        <div className="col-6">
+                            <label>Type:</label>
+                            <select
+                                name="type"
+                                value={useAudience}
+                                onChange={(e) => handleMessageStateChange('useAudience', e.value)}
+                                required
+                                className="form-select"
+                            >
+                                <option value="">Select type</option>
+                                <option value="gec_staff">GEC Staff</option>
+                                <option value="club_partner">Club Partner</option>
+                                <option value="club_member">Club Member</option>
+                                <option value="expert">Expert</option>
+                                <option value="expert_guest">Expert Guest</option>
+                                <option value="difa">Difa</option>
+                                <option value="only_guest">Guest</option>
+                            </select>
+                        </div>
                     </div>
-                   
+
 
 
                 </div>
@@ -96,10 +120,10 @@ const MessageModal = ({
                                                 type="text"
                                                 value={inputValue[key] || ""}
                                                 onChange={(e) =>
-                                                    setInputValue((prev) => ({
-                                                        ...prev,
+                                                    handleMessageStateChange("inputValue", {
+                                                        ...state.inputValue,
                                                         [key]: e.target.value,
-                                                    }))
+                                                    })
                                                 }
                                                 placeholder={content.variables[key]}
                                                 required
@@ -124,7 +148,10 @@ const MessageModal = ({
                                             type="tel"
                                             value={phone || ''}
                                             onChange={(e) =>
-                                                SetPhone(normalizePhone(e.target.value))
+                                                handleMessageStateChange(
+                                                    "phone",
+                                                    normalizePhone(e.target.value)
+                                                )
                                             }
                                             placeholder="+971501234567"
                                             pattern="^\+?[0-9]{7,15}$"
@@ -132,15 +159,17 @@ const MessageModal = ({
 
                                         <IconButton
                                             onClick={() => {
-                                                if (!phone) return;
-                                                SetPhoneList((prev) => [
-                                                    ...prev,
+                                                if (!state.phone) return;
+
+                                                handleMessageStateChange("phoneList", [
+                                                    ...state.phoneList,
                                                     {
                                                         id: Date.now().toString(),
-                                                        phone: normalizePhone(phone),
+                                                        phone: normalizePhone(state.phone),
                                                     },
                                                 ]);
-                                                SetPhone("");
+
+                                                handleMessageStateChange("phone", "");
                                             }}
                                         >
                                             <IoMdAdd />
@@ -161,8 +190,9 @@ const MessageModal = ({
                                                 <IconButton
                                                     type="button"
                                                     onClick={() => {
-                                                        SetPhoneList((prev) =>
-                                                            prev.filter((item) => item.id !== id)
+                                                        handleMessageStateChange(
+                                                            "phoneList",
+                                                            state.phoneList.filter((item) => item.id !== id)
                                                         );
                                                     }}
                                                 >
@@ -226,7 +256,7 @@ const MessageModal = ({
                                     color="primary"
                                     sx={{ textTransform: "none", width: "100%" }}
                                     type="submit"
-                                    disabled={loadingMassSend? true : useContactBook || useTestBook ? false : phoneList.length === 0}
+                                    disabled={loadingMassSend ? true : useContactBook || useTestBook ? false : phoneList.length === 0}
                                     startIcon={
                                         loadingMassSend ? (
                                             <CircularProgress size={20} color="inherit" />
