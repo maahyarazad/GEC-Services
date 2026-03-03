@@ -38,8 +38,8 @@ const MessageModal = ({
         >
             <div className="">
 
-                <div className="row m-0 p-0">
-                    <div className="col-12">
+                <div className="row mx-0 px-0 my-1">
+                    <div className="col-12 justify-self-center align-self-center">
 
                         <label htmlFor="test-input">Use Contact Book</label>
                         <Switch
@@ -59,29 +59,31 @@ const MessageModal = ({
                             color="primary"
                         />
                     </div>
-                    <div className="col-12">
+                    <div className="row my-1 mx-0 px-0 ">
 
-                        <div className="col-6">
+                        <div className="col-6 justify-self-center align-self-center">
 
                             <label htmlFor="test-input">Pick Language From Contact Book</label>
                             <Switch
                                 size="small"
                                 title="Language"
-                                checked={useLanguage}
+                                checked={state.useLanguage}
                                 onChange={(e) => handleMessageStateChange('useLanguage', e.target.checked)}
                                 color="primary"
                             />
                         </div>
-                        <div className="col-6">
-                            <label>Type:</label>
+                        <div className="col-6 justify-self-center align-self-center">
+                            <label>Audience:</label>
                             <select
                                 name="type"
-                                value={useAudience}
-                                onChange={(e) => handleMessageStateChange('useAudience', e.value)}
+                                value={useAudience}   
+                                    onChange={(e) => {
+                                    handleMessageStateChange("useAudience", e.target.value);
+                                    }}
                                 required
                                 className="form-select"
                             >
-                                <option value="">Select type</option>
+                                <option value="all">All</option>
                                 <option value="gec_staff">GEC Staff</option>
                                 <option value="club_partner">Club Partner</option>
                                 <option value="club_member">Club Member</option>
@@ -99,10 +101,10 @@ const MessageModal = ({
 
 
                 <form onSubmit={handleSubmit}>
-                    <div className="row m-0 p-0 w-100">
+                    <div className="row mx-0 p-0 w-100">
                         {/* VARIABLES */}
                         <div
-                            className={`col-lg-4 col-12 p-0 m-0${Object.keys(content?.variables ?? {}).length === 0
+                            className={`col-lg-4 col-12 p-0 mx-0 ${Object.keys(content?.variables ?? {}).length === 0
                                 ? " d-none"
                                 : ""
                                 }`}

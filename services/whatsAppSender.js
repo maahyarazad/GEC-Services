@@ -2,7 +2,7 @@ const twilioClient = require("twilio")(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
-const { parsePhoneNumberFromString } = require('libphonenumber-js');
+const { parsePhoneNumberFromString } = require("libphonenumber-js");
 const dbService = require("../services/dbService");
 const db = dbService.getDB();
 
@@ -58,8 +58,11 @@ function hasPlaceholders(text) {
   return /{{\s*[^}]+\s*}}/.test(text);
 }
 
-const contactBookData = (conditions) => {
-  const query = `
+const contactBookData = (conditions, useAudience) => {
+  let query = "";
+
+  if (useAudience === "all") {
+    query = `
       SELECT *
       FROM contact_book
       WHERE phone IS NOT NULL AND blacklist = 0
@@ -83,13 +86,26 @@ const contactBookData = (conditions) => {
             END
        LIMIT 300
     `;
+  } else {
+    query = `
+      SELECT *
+      FROM contact_book
+      WHERE phone IS NOT NULL AND blacklist = 0
+       AND type IN ('${useAudience}')
+      ${
+        Object.keys(conditions).length === 0
+          ? ``
+          : `AND language = '${conditions?.language}'`
+      }
+      AND contentSid IS NULL GROUP BY phone LIMIT 300
+    `;
+  }
 
   const stmt = db.prepare(query);
   const result = stmt.all();
-    
+
   return result;
 };
-
 
 const corruptedContactBookData = (conditions) => {
   const query = `
@@ -100,29 +116,28 @@ const corruptedContactBookData = (conditions) => {
   const stmt = db.prepare(query);
   const result = stmt.all();
 
-  result.forEach(el => {
+  result.forEach((el) => {
     try {
       const phoneNumber = parsePhoneNumberFromString(el.phone);
 
       if (!phoneNumber) {
         el.phone_validation = false;
-        el.phone_invalid_reason = 'Parsing failed';
+        el.phone_invalid_reason = "Parsing failed";
       } else if (!phoneNumber.isValid()) {
         el.phone_validation = false;
-        el.phone_invalid_reason = 'Number format invalid';
+        el.phone_invalid_reason = "Number format invalid";
       } else {
         el.phone_validation = true;
         el.phone_invalid_reason = null;
       }
     } catch (error) {
       el.phone_validation = false;
-      el.phone_invalid_reason = 'Exception: ' + error.message;
+      el.phone_invalid_reason = "Exception: " + error.message;
     }
   });
 
-  return result.filter(el => el.phone_validation === false);
+  return result.filter((el) => el.phone_validation === false);
 };
-
 
 const messageSender = async (req) => {
   try {
@@ -131,6 +146,7 @@ const messageSender = async (req) => {
       useContactBook,
       useTestBook,
       useLanguage,
+      useAudience,
       template,
       payload,
     } = req.body;
@@ -139,28 +155,25 @@ const messageSender = async (req) => {
 
     const safeSendMessage = async (el) => {
       try {
-
-
         const phoneNumber = parsePhoneNumberFromString(el.phone);
 
         if (!phoneNumber || !phoneNumber.isValid()) {
-            console.error(`Error sending message to ${el.phone}:`, error);
-            dbService.create("error_log", {
-                error: error.toString(),
-                origin_function: "sendMessageToPhone",
-            });
-            return null;
+          console.error(`Error sending message to ${el.phone}:`, error);
+          dbService.create("error_log", {
+            error: error.toString(),
+            origin_function: "sendMessageToPhone",
+          });
+          return null;
         }
-        
-        return await sendMessageToPhone(el.phone, template, payload, el);
 
+        return await sendMessageToPhone(el.phone, template, payload, el);
       } catch (error) {
         console.error(`Error sending message to ${el.phone}:`, error);
         dbService.create("error_log", {
           error: error.toString(),
           origin_function: "sendMessageToPhone",
         });
-        
+
         return null;
       }
     };
@@ -186,7 +199,7 @@ const messageSender = async (req) => {
         conditions.language = template.language;
       }
 
-      const contactBook = contactBookData(conditions);
+      const contactBook = contactBookData(conditions, useAudience);
 
       const batchSize = 10; // safe batch size below max throughput
       const delayMs = 1 * 60 * 1000; // 1 minute
@@ -479,32 +492,26 @@ async function fetchHistory(phone) {
       "HXb1ce9479f3d42819bef456f00448afcc"
     );
 
-        const detailedBodies = [];
-        if (sentMessages && sentMessages.length > 0) {
-            const detailedMessages = await fetchTwilioMessagesDetails(
-            sentMessages
-            );
+    const detailedBodies = [];
+    if (sentMessages && sentMessages.length > 0) {
+      const detailedMessages = await fetchTwilioMessagesDetails(sentMessages);
 
-            for (const item of detailedMessages) {
-            const twilioMessage = item.twilioMessage;
-            if (twilioMessage) {
-                detailedBodies.push({
-                body: twilioMessage.body,
-                received_at: twilioMessage.dateSent, 
-                type: 's'
-                });
-            }
-            }
+      for (const item of detailedMessages) {
+        const twilioMessage = item.twilioMessage;
+        if (twilioMessage) {
+          detailedBodies.push({
+            body: twilioMessage.body,
+            received_at: twilioMessage.dateSent,
+            type: "s",
+          });
         }
+      }
+    }
 
-        const combined = [
-            ...receivedMessages,
-            ...detailedBodies  
-            ];
+    const combined = [...receivedMessages, ...detailedBodies];
 
-            // Sort by received_at (date string)
-            combined.sort((a, b) => new Date(a.received_at) - new Date(b.received_at));
-
+    // Sort by received_at (date string)
+    combined.sort((a, b) => new Date(a.received_at) - new Date(b.received_at));
 
     return combined;
   } catch (error) {
@@ -635,5 +642,5 @@ module.exports = {
   handleAutoResponse,
   flattenObject,
   normalizeRow,
-  corruptedContactBookData
+  corruptedContactBookData,
 };

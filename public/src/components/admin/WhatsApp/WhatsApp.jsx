@@ -55,10 +55,11 @@ const WhatsappBroadcast = () => {
     const [viewBlackList, setViewBlackList] = useState(false);
     const [viewCorruptedList, setViewCorruptedList] = useState(false);
 
-        const [messageState, setMessageState] = useState({
+    const [messageState, setMessageState] = useState({
         useContactBook: false,
         useTestBook: false,
         useLanguage: true,
+        useAudience: 'club_member',
         phoneList: [],
         inputValue: {},
         content: null,
@@ -338,7 +339,7 @@ const WhatsappBroadcast = () => {
     const handleSubmit = async (e) => {
 
         e.preventDefault();
-        SetloadingMassSend(true);
+        handleMessageStateChange( 'massAction' , true);
         try {
 
             const requiredKeys = messageState.content?.variables
@@ -346,12 +347,11 @@ const WhatsappBroadcast = () => {
                 : [];
 
             for (const key of requiredKeys) {
-                if (!inputValue[key] || inputValue[key].trim() === "") {
+                if (!messageState.inputValue[key] || messageState.inputValue[key].trim() === "") {
                     alert(`Please fill Variable ${key}`);
                     return;
                 }
             }
-
 
 
             const response = await fetch(
@@ -363,11 +363,12 @@ const WhatsappBroadcast = () => {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        useContactBook: useContactBook,
-                        useTestBook: useTestBook,
-                        useLanguage: useLanguage,
-                        phoneList,
-                        payload: inputValue,
+                        useContactBook: messageState.useContactBook,
+                        useTestBook: messageState.useTestBook,
+                        useLanguage: messageState.useLanguage,
+                        useAudience: messageState.useAudience,
+                        phoneList : messageState.phoneList,
+                        payload: messageState.inputValue,
                         template: messageState.content,
                     }),
                 }
@@ -385,8 +386,9 @@ const WhatsappBroadcast = () => {
             console.error("Failed to send:", error);
             showSnackbar("Unexpected error occurred", "error");
         } finally {
-            SetloadingMassSend(false);
-            SetPhoneList([]);
+             handleMessageStateChange( 'massAction' , false);
+             handleMessageStateChange( 'phoneList' , []);
+            
         }
     };
 
