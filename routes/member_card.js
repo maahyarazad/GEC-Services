@@ -10,7 +10,7 @@ const { generateMemberPass } = require("../services/applePassService");
 const { generateMemberGooglePass } = require("../services/googlePassService");
 const uniqid = require('uniqid');
 const path = require('path');
-
+const db = dbService.getDB();
 
 const upload = multer({
     storage: multer.memoryStorage()
@@ -30,25 +30,32 @@ function titleToSlug(title) {
 
 
 router.post('/member-card', upload.none(), async (req, res) => {
-    try {
+  try {
+    const { username } = req.body;
 
-        const body = req.body;
+    const data = dbService.findExact("member_card", "email", username.trim().toLowerCase());
 
-        const data = dbService.findExact("member_card", "email", body.username)
-
-        return res.json({
-            status: true,
-            data: data[0],
-            message: "Success`"
-
-        });
-
-    } catch (error) {
-        console.error("Error in /member:", error);
-        res.status(500).json({ status: false, message: 'Server error' });
+    if (!data || data.length === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "Member not found"
+      });
     }
-});
 
+    return res.json({
+      status: true,
+      data: data[0],
+      message: "Success"
+    });
+
+  } catch (error) {
+    console.error("Error in /member-card:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error"
+    });
+  }
+});
 
 router.post('/member-pass', authorization_middleware.authorize_member, async (req, res) => {
     const db = dbService.getDB(); // get your DB connection object
@@ -342,6 +349,61 @@ router.get('/api/member_card_report', async (req, res) => {
         console.error("Error in /member:", error);
         res.status(500).json({ status: false, message: 'Server error' });
     }
+});
+
+
+router.post('/member/email', upload.none(), async (req, res) => {
+  const apiKey = req.headers["x-api-key"];
+
+  if (!apiKey || apiKey !== process.env.SERVICES_SECRET) {
+    return res.status(401).json({
+      status: false,
+      message: "Unauthorized"
+    });
+  }
+
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      status: false,
+      message: "Email is required"
+    });
+  }
+
+  try {
+    
+         const query = `
+        SELECT *
+FROM member_card mc
+WHERE mc.email = '${email.trim().toLowerCase()}'
+  AND mc.serial_number IS NOT NULL
+  AND DATE('now') <= date(mc.card_expiry_date, 'start of month', '+1 month', '-1 day');
+    `;
+
+    const stmt = db.prepare(query);
+    const memberRecord = stmt.all();
+
+
+    if (memberRecord) {
+      return res.status(200).json({
+        status: true,
+        data: memberRecord
+      });
+    } else {
+      return res.status(404).json({
+        status: false,
+        message: "Email not found"
+      });
+    }
+
+  } catch (error) {
+    console.error("Error checking email:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error"
+    });
+  }
 });
 
 

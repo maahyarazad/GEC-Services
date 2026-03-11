@@ -282,7 +282,7 @@ router.post(
 router.get("/api/whatsapp/insight", async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-     const templates = await fetchContentTemplates();
+    const templates = await fetchContentTemplates();
     const templateMap = new Map();
 
     templates.result.forEach((t) => {
@@ -291,8 +291,6 @@ router.get("/api/whatsapp/insight", async (req, res) => {
 
     const start = new Date(startDate).toISOString().slice(0, 10);
     const end = new Date(endDate).toISOString().slice(0, 10);
-
-
 
     const deliveryQuery = `
 
@@ -331,51 +329,56 @@ router.get("/api/whatsapp/insight", async (req, res) => {
             WHERE json_extract(td.response, '$.MessageStatus') = 'read'
             AND td.metadata_createdAt BETWEEN ? AND ? GROUP BY ttm.contentSid
   `;
+
     const responseQuery = `
-
-   
-
-    SELECT 'notAttend' AS type, COUNT(*) AS to_number
-    FROM twilio_responses as tr
-    WHERE json_extract(payload, '$.ButtonPayload') = ?
-        AND tr.received_at BETWEEN ? AND ? 
-    UNION ALL
-
-    SELECT 'attend' AS type, COUNT(*) AS to_number
-    FROM twilio_responses as tr
-    WHERE json_extract(payload, '$.ButtonPayload') = ?
+        SELECT 'notAttend' AS type, COUNT(*) AS to_number
+        FROM twilio_responses as tr
+        WHERE (json_extract(payload, '$.ButtonPayload') = ? 
+                OR json_extract(payload, '$.ButtonPayload') = ?)
             AND tr.received_at BETWEEN ? AND ? 
-  `;
+        UNION ALL
+        SELECT 'attend' AS type, COUNT(*) AS to_number
+        FROM twilio_responses as tr
+        WHERE (json_extract(payload, '$.ButtonPayload') = ? 
+                OR json_extract(payload, '$.ButtonPayload') = ?)
+            AND tr.received_at BETWEEN ? AND ? 
+        `;
 
-    
     const stmt = db.prepare(deliveryQuery);
     const rows = stmt.all(
-        start,end, // undelivered
-        start,end, // delivered
-        start,end, // read
+      start,
+      end, // undelivered
+      start,
+      end, // delivered
+      start,
+      end // read
     );
 
-
-    const delivery_result = rows.map((e)=> ({
-        ...e, 
-        templateName: templateMap.get(e.contentSid) || null
+    const delivery_result = rows.map((e) => ({
+      ...e,
+      templateName: templateMap.get(e.contentSid) || null,
     }));
 
     const _stmt = db.prepare(responseQuery);
     const _rows = _stmt.all(
-     
-      "NOT_ATTEND", start, end, // notAttend ,
-      "ATTEND", start, end // attend
+      "NOT_ATTEND",
+      "NOT_INTERESTED",
+      start,
+      end,
+      "ATTEND",
+      "INTERESTED",
+      start,
+      end
     );
 
-    
     const response_result = {};
     _rows.forEach(({ type, to_number }) => {
       response_result[type] = to_number ?? 0;
     });
 
-    
-    return res.status(200).json({ status: true, data: {response_result, delivery_result} });
+    return res
+      .status(200)
+      .json({ status: true, data: { response_result, delivery_result } });
   } catch (err) {
     console.error("Failed to fetch insights", err);
     return res.status(500).json({ status: false, message: "Server error" });

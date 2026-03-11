@@ -377,7 +377,7 @@ const WhatsappBroadcast = () => {
             if (response.ok) {
                 const responseData = await response.json();
                 showSnackbar(responseData.message, "success");
-                setTestAction(false);
+                 handleMessageStateChange( 'testAction' , false);
             } else {
                 const errorData = await response.json();
                 showSnackbar(errorData.message || "Failed to send message", "error");

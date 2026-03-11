@@ -80,6 +80,7 @@ const allowedOrigins = [
   process.env.MEDICAL_SOCIETY_CLIENT_ORIGIN,
   process.env.GIC_CLIENT_ORIGIN,
   process.env.CLIENT_ORIGIN_EVENTS,
+  process.env.GEC__ORIGIN,
 ];
 
 app.set("trust proxy", 1);

@@ -579,7 +579,7 @@ async function handleAutoResponse(From, ButtonPayload) {
     const template =
       contactInfo[0].language === "de" ? de_template : en_template;
 
-    const payload = { 1: `https://maps.app.goo.gl/gJVtJxViUHPPkZdU9` };
+    const payload = { 1: `https://maps.app.goo.gl/dcgMPzgaixR9q5QF7` };
 
     const result = await messageSender({
       body: { template, phoneList, payload },
