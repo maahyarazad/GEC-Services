@@ -1,3 +1,4 @@
+require('dotenv').config();
 const twilioClient = require("twilio")(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
@@ -555,9 +556,9 @@ async function handleAutoResponse(From, ButtonPayload) {
   if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
     const templates = await fetchContentTemplates();
     const second_response_message__en_sid =
-      "HX3730fd2ee94eb7379fcad84fd41830b6";
+      "HX75ef2e505ae33e3ef47046a4dca7e230";
     const second_response_message__de_sid =
-      "HXccdd9e3ca743d83e248cc162fbfcf235";
+      "HXc61d9b3c83b98ea9f5b5fd36f3673593";
 
     const en_template = templates.result.find(
       (x) => x.sid === second_response_message__en_sid
@@ -579,7 +580,7 @@ async function handleAutoResponse(From, ButtonPayload) {
     const template =
       contactInfo[0].language === "de" ? de_template : en_template;
 
-    const payload = { 1: `https://maps.app.goo.gl/dcgMPzgaixR9q5QF7` };
+    const payload = { 1: `https://maps.app.goo.gl/bz76YAry43x9gvwL9` };
 
     const result = await messageSender({
       body: { template, phoneList, payload },

@@ -32,6 +32,7 @@ const { createWebSocketServer } = require("./websocket/admin.js");
 const cron = require("node-cron");
 // Setup DB connection
 const betterSqlite3 = require("better-sqlite3");
+const Jobs = require("./services/sqllite_jobs.js");
 
 let db;
 
@@ -100,8 +101,9 @@ app.use(
   })
 );
 
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
 
 app.use(cookieParser());
 
@@ -147,20 +149,20 @@ app.get("*", (req, res) => {
 // Attach websocket to same server
 createWebSocketServer(server, allowedOrigins);
 
+// https://crontab.guru/
+// Maahyar CM: node cron expression is different than normal expression use this site to check 
 cron.schedule("0 */6 * * *", async () => {
   try {
     console.log("Running background job every 6 hours:", new Date());
-    await GSheetService.GSheetParser();
+    // await GSheetService.GSheetParser();
+    await Jobs.normilizeMemberPhoneNumbers();
     console.log("Background job finished at:", new Date());
   } catch (err) {
     console.error("Background job failed:", err);
   }
 });
 
-// Start the server
-// app.listen(PORT, () => {
-//     console.log(`Jack: I'm good on port ${PORT}`);
-// });
+
 
 server.listen(PORT, () => {
   console.log(`🚀 Server + WS listening on http://localhost:${PORT}`);
