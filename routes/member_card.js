@@ -10,7 +10,7 @@ const { generateMemberPass } = require("../services/applePassService");
 const { generateMemberGooglePass } = require("../services/googlePassService");
 const uniqid = require('uniqid');
 const path = require('path');
-
+const db = dbService.getDB();
 
 const upload = multer({
     storage: multer.memoryStorage()
@@ -30,53 +30,37 @@ function titleToSlug(title) {
 
 
 router.post('/member-card', upload.none(), async (req, res) => {
-    try {
+  try {
+    const { username } = req.body;
 
-        const body = req.body;
+    const data = dbService.findExact("member_card", "email", username.trim().toLowerCase());
 
-        const data = await dbService.findByColumn("member_card", "email", body.username)
-
-
-        return res.json({
-            status: true,
-            data: data,
-            message: "Success`"
-
-        });
-
-    } catch (error) {
-        console.error("Error in /member:", error);
-        res.status(500).json({ status: false, message: 'Server error' });
+    if (!data || data.length === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "Member not found"
+      });
     }
-});
 
+    return res.json({
+      status: true,
+      data: data[0],
+      message: "Success"
+    });
 
-router.post('/member-card', upload.none(), async (req, res) => {
-    try {
-
-        const body = req.body;
-
-        const data = await dbService.findByColumn("member_card", "email", body.username)
-
-
-        return res.json({
-            status: true,
-            data: data,
-            message: "Success`"
-
-        });
-
-    } catch (error) {
-        console.error("Error in /member:", error);
-        res.status(500).json({ status: false, message: 'Server error' });
-    }
+  } catch (error) {
+    console.error("Error in /member-card:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error"
+    });
+  }
 });
 
 router.post('/member-pass', authorization_middleware.authorize_member, async (req, res) => {
-    const db = await dbService.getDB(); // get your DB connection object
+    const db = dbService.getDB(); // get your DB connection object
     try {
-        await db.run('BEGIN TRANSACTION');
-
+     
         const memberToken = req.cookies['member-usr'];
         if (!memberToken) {
             return res.status(401).json({
@@ -90,7 +74,7 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
         const memberId = member?.memberId;
         member.title = "German Emirates Club Membership";
 
-        const _member = await dbService.findByColumn("member_card", "email", member.email);
+        const _member = dbService.findByColumn("member_card", "email", member.email)[0];
         let applePKpassPath;
         let googlePassToken;
 
@@ -140,7 +124,7 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
             email: member.email,
             serial_number: member.serial_number,
             google_pass_token: googlePassToken,
-            birthday: new Date(member.birthday) 
+            birthday: new Date(member.birthday).toISOString()
         };
 
         // Add memberId only when it doesn’t exist yet
@@ -151,22 +135,28 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
         // Build the condition dynamically
         const whereCondition = memberId ? { memberId } : { email: member.email };
 
-        await dbService.updateWhere("member_card", updateData, whereCondition);
+        const transaction = db.transaction(() => {
+                dbService.updateWhere("member_card", updateData, whereCondition);
 
-        db.run('COMMIT');
+        })
 
-        return res.status(200).json({
+        transaction();
+
+         return res.status(200).json({
             status: true,
             data: {
                 applePassPath: applePKpassPath,
                 googlePassPath: googlePassToken
             }
         });
+       
 
     } catch (error) {
-        if (db) {
-            db.run('ROLLBACK');
-        }
+          dbService.create("error_log", {
+            error: error.toString(),
+            origin_function: "createMemberPass_route"
+        });
+
         console.error("Transaction failed:", error);
         res.status(500).json({ status: false, message: 'Server error' });
     }
@@ -200,7 +190,7 @@ router.post('/member-auto-login', upload.none(), authorization_middleware.author
 router.get('/member-card-login', upload.none(), async (req, res) => {
     const {memberId} = req.query;
     try {
-        const memberRecord = await dbService.findByConditions("member_card", {
+        const memberRecord = dbService.findByConditions("member_card", {
             card_number: memberId
         });
         return res.json({
@@ -267,9 +257,9 @@ router.get('/api/member_card', async (req, res) => {
     try {
 
         const table_name = "member_card";
-        const { filters, data } = await dbService.QuerySqlConverter(req.query, table_name);
+        const { filters, data } = dbService.QuerySqlConverter(req.query, table_name);
 
-        const total = await dbService.getTotalCount(table_name, filters);
+        const total = dbService.getTotalCount(table_name, filters);
 
         return res.json({
             status: true,
@@ -287,7 +277,7 @@ router.get('/api/member_card', async (req, res) => {
 router.get('/api/member-card-csv-data', async (req, res) => {
     try {
 
-        const data = await dbService.findAll("member_card");
+        const data = dbService.findAll("member_card");
 
         const csv = await exportTableAsCSV(data); // Await CSV generation
 
@@ -317,29 +307,29 @@ router.get('/api/member_card_report', async (req, res) => {
         const next_month = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, "0")}`;
 
 
-        const expiring_soon_count = await dbService.countExactWithConditions(table_name, {
+        const expiring_soon_count = dbService.countExactWithConditions(table_name, {
             card_expiry_date: { op: "BETWEEN", value: [this_month, next_month] }
         });
 
 
-        const expired = await dbService.countExactWithConditions(table_name, {
+        const expired = dbService.countExactWithConditions(table_name, {
             card_expiry_date: { op: "<", value: this_month }
         });
 
-        const count_total_valid = await dbService.countExactWithConditions(table_name, {
+        const count_total_valid = dbService.countExactWithConditions(table_name, {
             card_expiry_date: { op: ">", value: this_month }
         });
 
-        const blue_paid = await dbService.countExactWithConditions(table_name, {
+        const blue_paid = dbService.countExactWithConditions(table_name, {
             type: { op: "=", value: 1 }
         });
 
-        const blue_non_paid = await dbService.countExactWithConditions(table_name, {
+        const blue_non_paid = dbService.countExactWithConditions(table_name, {
             type: { op: "=", value: 5 }
         });
 
 
-        const red = await dbService.countExactWithConditions(table_name, {
+        const red = dbService.countExactWithConditions(table_name, {
             type: { op: "=", value: 7 }
         });
 
@@ -359,6 +349,61 @@ router.get('/api/member_card_report', async (req, res) => {
         console.error("Error in /member:", error);
         res.status(500).json({ status: false, message: 'Server error' });
     }
+});
+
+
+router.post('/member/email', upload.none(), async (req, res) => {
+  const apiKey = req.headers["x-api-key"];
+
+  if (!apiKey || apiKey !== process.env.SERVICES_SECRET) {
+    return res.status(401).json({
+      status: false,
+      message: "Unauthorized"
+    });
+  }
+
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      status: false,
+      message: "Email is required"
+    });
+  }
+
+  try {
+    
+         const query = `
+        SELECT *
+FROM member_card mc
+WHERE mc.email = '${email.trim().toLowerCase()}'
+  AND mc.serial_number IS NOT NULL
+  AND DATE('now') <= date(mc.card_expiry_date, 'start of month', '+1 month', '-1 day');
+    `;
+
+    const stmt = db.prepare(query);
+    const memberRecord = stmt.all();
+
+
+    if (memberRecord) {
+      return res.status(200).json({
+        status: true,
+        data: memberRecord
+      });
+    } else {
+      return res.status(404).json({
+        status: false,
+        message: "Email not found"
+      });
+    }
+
+  } catch (error) {
+    console.error("Error checking email:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error"
+    });
+  }
 });
 
 

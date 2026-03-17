@@ -1,13 +1,18 @@
+import React, { useEffect, useRef } from "react";
+
 import "./App.css";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { TemplateForm } from "./components/templates/TemplateForm";
-import { Admin } from "./components/admin/Admin";
-import { Login } from "./components/utils/Login";
-import { GuestRegistration } from "./components/guestRegistration/GuestRegistration";
+const Login = React.lazy(() => import("./components/utils/Login"));
+const TemplateForm = React.lazy(() => import("./components/templates/TemplateForm"));
+const SuccessTemplatePage = React.lazy(() => import("./components/templates/SuccessTemplatePage"));
+const GuestRegistration = React.lazy(() => import("./components/guestRegistration/GuestRegistration"));
+const PurchaseMemberShip = React.lazy(() => import("./components/pages/PurchaseMemberShip"));
+// const Admin = React.lazy(() => import("./components/admin/Admin"));
+import Admin from "./components/admin/Admin";
+
 import 'nprogress/nprogress.css';
 import NProgress from 'nprogress';
-import { useEffect, useRef } from "react";
-import { SuccessTemplatePage } from "./components/templates/SuccessTemplatePage";
+
 import NotFound from "./components/pages/NotFound";
 import { WebSocketProvider } from "./components/admin/WebSocketContext";
 import { Buffer } from 'buffer';
@@ -15,7 +20,8 @@ window.Buffer = Buffer;
 import { SnackbarProvider } from "./components/Providers/Snackbar";
 import { AlertDialogProvider } from "./components/Providers/AlertProvider";
 import { SlideModalProvider } from "./components/Providers/SlideModalProvider";
-import { PurchaseMemberShip } from "./components/pages/PurchaseMemberShip";
+
+
 
 
 
@@ -44,9 +50,9 @@ const location = useLocation();
   useEffect(() => {
     const segments = location.pathname.split("/").filter(Boolean); // remove empty strings
     const capitalizedSegments = segments.map(
-      (segment) => segment.charAt(0).toUpperCase() + segment.slice(1)
+      (segment) => segment.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase())
     );
-    const formattedPath = capitalizedSegments.join("/");
+    const formattedPath = capitalizedSegments.join(" | ");
 
     document.title = formattedPath
       ? `GEC - Services | ${formattedPath}`

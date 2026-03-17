@@ -1,84 +1,108 @@
-// components/MapModal.jsx
-import React, { useRef, useEffect } from 'react';
-import mapboxgl from 'mapbox-gl';
-import Modal from '../Modal'; 
-import 'mapbox-gl/dist/mapbox-gl.css';
-import {jwtDecode} from "jwt-decode";
-import Cookies from 'js-cookie';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import Modal from '../Modal';
 
+const MapModal = ({ isOpen, onClose, onSelect, values }) => {
+    const mapContainer = useRef(null);
+    const markerRef = useRef(null);
+    const mapRef = useRef(null);
+    const [mapboxLoaded, setMapboxLoaded] = useState(false);
 
-const MapModal = ({ isOpen, onClose, onSelect, isParentModalOpen, initialLon , initialLat }) => {
-  const mapContainer = useRef(null);
-  const markerRef = useRef(null);
+    const checkMapBox = useCallback(() => {
+        if (typeof window === 'undefined') return;
 
+        if (window.mapboxgl && window.MapboxGeocoder) {
+            window.mapboxgl.accessToken =
+                'pk.eyJ1IjoibWFoeWFyYXphZCIsImEiOiJjazhzaG9pNjIwYzJ4M2VyczJlNnNndzF6In0.ZFGc5daAFPaXObvBKA20CA';
+            setMapboxLoaded(true);
+        } else {
+            setTimeout(checkMapBox, 100);
+        }
+    }, []);
 
+    useEffect(() => {
+        checkMapBox();
+    }, [checkMapBox]);
 
-  useEffect(()=> {
-    
+    // Initialize the map - called when modal is fully opened and container is mounted
+    const initMap = () => {
+        if (!mapboxLoaded || !mapContainer.current) return;
 
-      mapboxgl.accessToken = "pk.eyJ1IjoibWFoeWFyYXphZCIsImEiOiJjazhzaG9pNjIwYzJ4M2VyczJlNnNndzF6In0.ZFGc5daAFPaXObvBKA20CA";
-    
-  }, [])
+        if (mapRef.current) {
+            mapRef.current.remove();
+            mapRef.current = null;
+        }
 
-  useEffect(() => {
-    if (!isOpen) return;
+        const mapboxgl = window.mapboxgl;
 
-    const centerLng = initialLon ?? 55.2708;
-    const centerLat = initialLat ?? 25.2048;
+        let centerLng = 25.194519;
+        let centerLat = 55.2709;
 
-    
-    const map = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v11',
-      center: [centerLng, centerLat], // Default to Dubai
-      zoom: 11,
-    });
+        try {
+            const parts = values.event_location.split(", ");
+            centerLng = parseFloat(parts[1]);
+            centerLat = parseFloat(parts[0]);
+        } catch (error) {
+            // fallback coords already set
+        }
 
-    if (markerRef.current) {
-        
-        markerRef.current.remove();
-        markerRef.current = null;
-    }
+        mapRef.current = new mapboxgl.Map({
+            container: mapContainer.current,
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [centerLng, centerLat],
+            zoom: 11,
+        });
 
-    // If initial coordinates exist, add marker at that position
-    if (initialLon != null && initialLat != null) {
-        markerRef.current = new mapboxgl.Marker().setLngLat([initialLon, initialLat]).addTo(map);
-    }
+        mapRef.current.addControl(
+            new window.MapboxGeocoder({
+                accessToken: mapboxgl.accessToken,
+                useBrowserFocus: true,
+                mapboxgl: mapboxgl,
+            })
+        );
 
-    map.on('click', (e) => {
-      const { lng, lat } = e.lngLat;
+        markerRef.current = new mapboxgl.Marker({ color: "#FF0000" })
+            .setLngLat([centerLng, centerLat])
+            .addTo(mapRef.current);
 
-      if (markerRef.current) {
-        markerRef.current.setLngLat([lng, lat]);
-      } else {
-        markerRef.current = new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
-      }
+        mapRef.current.on('click', (e) => {
+            const { lng, lat } = e.lngLat;
+            
 
-      onSelect({ lat, lng });
-    });
+            if (markerRef.current) {
+                markerRef.current.setLngLat([lng, lat]);
+            } else {
+                markerRef.current = new mapboxgl.Marker({ color: "#FF0000" })
+                    .setLngLat([lng, lat])
+                    .addTo(mapRef.current);
+            }
 
-    return () => map.remove();
-  }, [isOpen]);
+            onSelect({ lat, lng });
+        });
+    };
 
-  useEffect(() => {
-    if (!isParentModalOpen) {
-        
-        
-      onClose();
-    }
-  }, [isParentModalOpen, onClose]);
+    // Cleanup map on modal close or unmount
+    useEffect(() => {
+        if (!isOpen) {
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+            }
+        }
+    }, [isOpen]);
 
-  return (
-    <>
-        {isParentModalOpen && (
-            <Modal isOpen={isOpen} onRequestClose={onClose} title="Select Event Location">
-                <div style={{ height: '500px' }} ref={mapContainer} />
-                <p className="text-muted small mt-2">Click on the map to set a location.</p>
-            </Modal>
-        )}
-    </>
+    return (
+        <Modal
+            isOpen={isOpen}
+            title="Select Event Location"
+            onAfterOpen={initMap} // <-- run after modal fully opens and content mounted
+            onRequestClose={onClose}
+        >
+            <h4 className="small mb-3" >
+                Click on the map to set a location, and make sure the red pin appears on your screen.
+            </h4>
+            <div style={{ height: '500px' }} ref={mapContainer} />
+        </Modal>
     );
-
 };
 
 export default MapModal;

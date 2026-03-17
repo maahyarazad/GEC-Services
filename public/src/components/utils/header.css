@@ -1,9 +1,10 @@
 header {
   width: 100%;
   height: fit-content;
-  padding: 16px;
+  padding: 8px;
   border-bottom: 1px solid var(--grey);
-
+  background-color: rgb(45, 45, 45);
+  color: aliceblue;
   > div {
     position: relative;
     width: 100%;
@@ -17,20 +18,20 @@ header {
       display: inline-block;
       button#burgerMenu {
         position: relative;
-        width: 32px;
-        height: 32px;
+        width: 30px;
+        height: 30px;
         background-color: unset;
         border: unset;
         display: inline-block;
         vertical-align: middle;
-        margin-right: 8px;
+        margin-right: 2px;
 
         > span {
           position: relative;
           width: 100%;
           height: 2px;
           display: block;
-          background-color: var(--dark);
+          background-color: white; /* changed to white */
           transform-origin: center;
           transition: 0.3s all ease;
         }
@@ -42,7 +43,7 @@ header {
           display: block;
           width: 100%;
           height: 2px;
-          background-color: var(--dark);
+          background-color: white; /* changed to white */
           transform-origin: center;
           transition: 0.3s all ease;
         }
@@ -59,18 +60,20 @@ header {
         position: relative;
         > span {
           transition: 0.3s all ease;
-
           transform: rotate(45deg);
+          background-color: white; /* added */
         }
 
         > span::after {
           transform: rotate(-90deg);
           top: -2px;
+          background-color: white; /* added */
         }
 
         > span::before {
           opacity: 0;
           top: 0;
+          background-color: white; /* added */
         }
       }
 

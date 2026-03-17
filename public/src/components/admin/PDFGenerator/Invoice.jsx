@@ -1,41 +1,47 @@
-import { PDFDownloadLink, PDFViewer } from '@react-pdf/renderer';
-import MyDocument from './MyDocument';
+import React, { useState, useEffect, Suspense, useRef } from 'react';
+import { PDFViewer } from '@react-pdf/renderer';
 import PDFErrorBoundary from './PDFErrorBoundary';
 
-
+const MyDocument = React.lazy(() => import('./MyDocument'));
 
 const Invoice = ({ formData }) => {
+  const [showPdf, setShowPdf] = useState(false);
+  const [renderKey, setRenderKey] = useState(Date.now());
+  const pdfErrorBoundaryRef = useRef();
 
+  const onRetryClick = () => {
+    if (pdfErrorBoundaryRef.current) {
+      pdfErrorBoundaryRef.current.handleRetry();
+    }
+  };
 
-  //   const [renderKey, setRenderKey] = useState(0);
-  // const [changed, setChanged] = useState(null);
-  // useEffect(()=>{
-  //  setChanged((objectChanged));
-  //  setRenderKey(prev => prev + 1);
+  useEffect(() => {
+    setShowPdf(false);
+    const timeout = setTimeout(() => {
+      setRenderKey(Date.now());
+      setShowPdf(true);
+    }, 10);
 
-  // }, [objectChanged])
-
-
-
+    return () => clearTimeout(timeout);
+  }, [formData]);
 
   return (
-
-    <PDFErrorBoundary>
-      {/* Download PDF button */}
-      <div style={{ position: 'default' }}>
-
+    <div style={{ height: 'calc(100vh - 70px)', overflow: 'scroll' }}>
       
-
-        <div>
-          <PDFViewer width="100%" height="770">
-            <MyDocument formData={formData} />
-          </PDFViewer>
+      <PDFErrorBoundary ref={pdfErrorBoundaryRef}>
+        <div style={{ width: '100%', height: '770px' }}>
+          {showPdf ? (
+            <Suspense fallback={<div>Loading PDF...</div>}>
+              <PDFViewer key={renderKey} style={{ width: '100%', height: '100%' }}>
+                <MyDocument formData={formData} />
+              </PDFViewer>
+            </Suspense>
+          ) : (
+            <div>Resetting PDF Viewer...</div>
+          )}
         </div>
-
-      </div>
-
-
-    </PDFErrorBoundary>
+      </PDFErrorBoundary>
+    </div>
   );
 };
 

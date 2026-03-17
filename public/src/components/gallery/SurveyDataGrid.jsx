@@ -1,17 +1,28 @@
 import { useEffect, useState, useCallback } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import { Box, CircularProgress, Button, Tooltip, IconButton } from '@mui/material';
-import { BsFiletypeCsv } from "react-icons/bs";
+import {DataGrid} from '@mui/x-data-grid';
+
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
+
+import {BsFiletypeCsv} from 'react-icons/bs';
+import {IoTrashOutline} from 'react-icons/io5';
+import {FaRegEdit} from 'react-icons/fa';
+
 import { config } from '../../ui_config';
 import FilterParams from '../admin/FilterParams';
-import { IoTrashOutline } from "react-icons/io5";
-import { FaRegEdit } from "react-icons/fa";
+
 import { useAlertDialog } from '../Providers/AlertProvider';
 import { useSnackbar } from '../Providers/Snackbar';
 import { useSlideModal } from '../Providers/SlideModalProvider';
-import { SurveyTemplateForm } from '../templates/SurveyTemplateForm';
-import { getValidationSchema } from '../templates/dynamicValidation';
+
+import {SurveyTemplateForm} from '../templates/SurveyTemplateForm';
+import {getValidationSchema} from '../templates/dynamicValidation';
+
 import { Form, Formik } from 'formik';
+
 const PAGE_SIZE = 10;
 
 const getColumns = ({ onEdit, onDelete }) => [
@@ -93,7 +104,7 @@ const getColumns = ({ onEdit, onDelete }) => [
 
 
 
-export const SurveyDataGrid = () => {
+const SurveyDataGrid = () => {
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];
     const { openDialog } = useAlertDialog();
     const { showSnackbar } = useSnackbar();
@@ -301,10 +312,10 @@ export const SurveyDataGrid = () => {
     const handleDelete = (row) => {
 
         openDialog(
-            <div>
+            <>
                 Do you want to <strong>delete {row.partnerName} from database</strong>?
                 Are you sure you want to proceed?
-            </div>,
+            </>,
             'Confirm Action',
             {
                 text: 'Confirm',
@@ -404,7 +415,7 @@ export const SurveyDataGrid = () => {
                 </Box>
             ) : (
 
-                <div style={{ width: '100%', height: '82dvh' }}>
+                <div style={{ width: '100%', height: 'calc(100vh - 175px)' }}>
                     <DataGrid
                         rows={surveyList}
                         columns={getColumns({
@@ -451,3 +462,5 @@ export const SurveyDataGrid = () => {
         </Box>
     );
 };
+
+export default SurveyDataGrid;

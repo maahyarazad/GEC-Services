@@ -1,44 +1,69 @@
-
-import { Header } from "../utils/Header";
-import "./admin.css";
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Box from '@mui/material/Box';
+// React & Core
 import { useState, useEffect, useRef, useCallback } from "react";
-import { RegistrationList } from "./Registration/RegistrationList";
-import { RegistrationDataGrid } from "../gallery/RegistrationDataGrid"
-import { MemberDataGrid } from "../gallery/MembersDataGrid"
-import { SurveyDataGrid } from "../gallery/SurveyDataGrid"
-import "../utils/login.css";
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
-import { getCookie, setEncryptedCookie } from '../utils/cookieUtils';
-import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
-import CircularProgress from '@mui/material/CircularProgress';
-import { GoShieldLock } from "react-icons/go";
-import { Button } from "@mui/material";
-import { GiArchiveRegister } from "react-icons/gi";
-import { BsCalendar2Event } from "react-icons/bs";
-import { BsPeopleFill } from "react-icons/bs";
-import { FcSurvey } from "react-icons/fc";
-import { GICDataGrid } from "../gallery/GICDataGrid";
-import { WhatsappBroadcast } from "../../components/admin/WhatsApp/WhatsApp";
-import { IoIdCardOutline } from "react-icons/io5";
-import { GrCatalog } from "react-icons/gr";
-import { GrCatalogOption } from "react-icons/gr";
-import { MdPictureAsPdf } from "react-icons/md";
+import { useNavigate, useLocation } from "react-router-dom";
+import React from 'react';
+// Form & Validation
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
+
+
+// Import only what you use (tree-shake safe)
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import InputAdornment from "@mui/material/InputAdornment";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
+
+// Icons
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+import { BsCalendar2Event, BsPeopleFill } from "react-icons/bs";
 import { FaWhatsapp } from "react-icons/fa";
+import { FcSurvey } from "react-icons/fc";
+import { GiArchiveRegister } from "react-icons/gi";
+import { GoShieldLock } from "react-icons/go";
+import { GrCatalog, GrCatalogOption } from "react-icons/gr";
+import { IoIdCardOutline } from "react-icons/io5";
+import { MdPictureAsPdf } from "react-icons/md";
+import { MdOutlineHealthAndSafety } from "react-icons/md";
+
+// Utils
+import { Header } from "../utils/Header";
+import { getCookie, setEncryptedCookie } from "../utils/cookieUtils";
+
+// Context
+import { useWebSocket } from "./WebSocketContext";
+
+// Components
+const HealthCheck = React.lazy(() => import("./HealthCheck/HealthCheck"));
+const RegistrationList = React.lazy(() => import("./Registration/RegistrationList"));
+const RegistrationDataGrid = React.lazy(() => import("../gallery/RegistrationDataGrid"));
+const MemberDataGrid = React.lazy(() => import("../gallery/MembersDataGrid"));
+const MemberCardDataGrid = React.lazy(() => import("../gallery/MemberCardDataGrid"));
+const SurveyDataGrid = React.lazy(() => import("../gallery/SurveyDataGrid"));
+const GICDataGrid = React.lazy(() => import("../gallery/GICDataGrid"));
+const WhatsappBroadcast = React.lazy(() => import("../../components/admin/WhatsApp/WhatsApp"));
+const PDFGenerator = React.lazy(() => import("./PDFGenerator/PDFGenerator"));
+
+// import RegistrationList from "./Registration/RegistrationList";
+// import RegistrationDataGrid from "../gallery/RegistrationDataGrid";
+// import MemberDataGrid from "../gallery/MembersDataGrid";
+// import MemberCardDataGrid from "../gallery/MemberCardDataGrid";
+// import SurveyDataGrid from "../gallery/SurveyDataGrid";
+// import GICDataGrid from "../gallery/GICDataGrid";
+// import WhatsappBroadcast from "../../components/admin/WhatsApp/WhatsApp";
+// import PDFGenerator from "./PDFGenerator/PDFGenerator";
+
+
+// Styles
+import "./admin.css";
+import "../utils/login.css";
+
 
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
 });
-import { useNavigate, useLocation } from 'react-router-dom';
-import { MemberCardDataGrid } from "../gallery/MemberCardDataGrid";
-import PDFGenerator from "./PDFGenerator/PDFGenerator";
-import { useWebSocket } from "./WebSocketContext";
-import { RxDoubleArrowLeft } from "react-icons/rx";
-
-export const Admin = ({ data }) => {
+const Admin = ({ data }) => {
 
 
     const { _data } = useWebSocket();
@@ -60,7 +85,7 @@ export const Admin = ({ data }) => {
                 method: "GET",
                 credentials: "include",
             });
-
+            
             if (res.status === 401) {
 
                 console.warn("Unauthorized");
@@ -90,8 +115,8 @@ export const Admin = ({ data }) => {
     }, [checkAuth]);
 
 
-    
-   
+
+
 
 
     const handleLoginSubmit = async (values, { setSubmitting, resetForm }) => {
@@ -130,18 +155,28 @@ export const Admin = ({ data }) => {
                 const data = await res.json();
 
                 if (data.success) {
+                    const params = new URLSearchParams(location.search);
+
+                    // Ensure tab exists, but keep all other params (e.g. view)
+                    if (!params.get("tab")) {
+                        params.set("tab", "registration-config");
+                    }
+
                     // backend sets secure cookie, you just store a flag in state
                     setAdminUser(true);
                     resetForm();
 
-                    navigate(`/admin?tab=registration-config`, {
-                        state: { tab: 'registration-config' },
+                    navigate(`/admin?${params.toString()}`, {
+                    state: { tab: params.get("tab") },
                     });
-                    return setStatus("Login successful!", "dark");
+
+                    setStatus("Login successful!", "dark");
+                    return;
 
                 } else {
                     if (statusRef.current) {
-                        return setStatus("Invalid Password!");
+                        setStatus("Invalid Password!");
+                        return;
                     }
                 }
             } else {
@@ -159,6 +194,10 @@ export const Admin = ({ data }) => {
 
     const tabStyle = { textTransform: 'none', alignSelf: 'baseline', mi: '10px' };
     const tabConfig = [
+        {
+            icon: <MdOutlineHealthAndSafety size={20} />,
+            label: "Website Health",
+        },
         {
             icon: <GiArchiveRegister size={20} />,
             label: "Registration Config",
@@ -225,21 +264,18 @@ export const Admin = ({ data }) => {
 
         if (location.search) {
             const params = new URLSearchParams(location.search);
+            const tab = params.get("tab");
+            const index = tabConfig.findIndex(tabItem => slugify(tabItem.label) === tab);
 
-            const index = tabConfig.findIndex(tab => slugify(tab.label) === params.get("tab"));
-            setTabValue(index);
-
-
+            // If index is invalid, fallback to 0
+            setTabValue(index >= 0 ? index : 0);
         } else {
-
             navigate(`/admin?tab=${tabSlug}`, {
                 state: { tab: tabSlug },
             });
-
             setTabValue(0);
         }
-
-    }, [])
+    }, []);
 
     const handletabChange = (event, newValue) => {
 
@@ -268,46 +304,56 @@ export const Admin = ({ data }) => {
         return () => window.removeEventListener("popstate", onPopState);
     }, []);
 
-    useEffect(()=>{
+    useEffect(() => {
         if (_data && !_data.Auth) {
-                           setAdminUser(null);
-                       }
+            setAdminUser(null);
+        }
     }, [])
 
 
     let content;
     switch (tabValue) {
         case 0:
-            content = <RegistrationList />;
+            content = <HealthCheck />;
             break;
         case 1:
-            content = <RegistrationDataGrid />;
+            content = <RegistrationList />;
             break;
         case 2:
-            content = <SurveyDataGrid />;
+            content = <RegistrationDataGrid />;
             break;
         case 3:
-            content = <MemberCardDataGrid />;
+            content = <SurveyDataGrid />;
             break;
         case 4:
-            content = <GICDataGrid />;
+            content = <MemberCardDataGrid />;
             break;
         case 5:
-            content = <MemberDataGrid />;
+            content = <GICDataGrid />;
             break;
         case 6:
-            content = <PDFGenerator />;
+            content = <MemberDataGrid />;
             break;
         case 7:
+            content = <PDFGenerator />;
+            break;
+        case 8:
             content = <WhatsappBroadcast />;
             break;
     }
 
-    return isCheckingAuth ? (
-        <div className="w-100 min-vh-100 d-flex justify-content-center align-items-center flex-column">
 
+    const FallBackLoader = () => (
+        <div
+            className="d-flex justify-content-center align-items-center flex-column"
+            style={{ height: "100vh", width: "100vw" }}
+        >
             <CircularProgress />
         </div>
+    );
+
+    return isCheckingAuth ? (
+        <FallBackLoader />
     ) : adminUser ? (
         <>
             <Header adminUser={adminUser} setAdminUser={setAdminUser} showMenu={showMenu} burgerActive={burgerActive} setBurgerActive={setBurgerActive} />
@@ -317,7 +363,7 @@ export const Admin = ({ data }) => {
 
                         sx={{ flexGrow: 1, bgcolor: 'background.paper', display: 'flex' }}
                     >
-                        
+
                         <Tabs
                             orientation="vertical"
                             variant="scrollable"
@@ -352,7 +398,9 @@ export const Admin = ({ data }) => {
                         </Tabs>
                     </Box>
                 </div>
-                <div >{content}</div>
+                <React.Suspense fallback={<FallBackLoader />}>
+                    <div >{content}</div>
+                </React.Suspense>
             </div>
         </>
     ) : (
@@ -429,4 +477,5 @@ export const Admin = ({ data }) => {
         </div>
     );
 };
+export default Admin;
 

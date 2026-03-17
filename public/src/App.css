@@ -583,7 +583,7 @@ tr.eventhide {
   align-items: center;
   justify-content: center;
   transition: background 300ms ease-out;
-  z-index: 999;
+  z-index: 1000;
 }
 
 .modal-overlay_after-open {

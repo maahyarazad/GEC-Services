@@ -43,9 +43,9 @@ const upload = multer({ storage: storage });
 router.get('/gic-user',async (req, res) => {
     try {
 
-        const { filters, data } = await dbService.QuerySqlConverter(req.query, "GIC_Users");
+        const { filters, data } = dbService.QuerySqlConverter(req.query, "GIC_Users");
 
-        const total = await dbService.getTotalCount("GIC_Users", filters);
+        const total = dbService.getTotalCount("GIC_Users", filters);
 
         return res.json({
             status: true,
@@ -63,7 +63,7 @@ router.get('/gic-user',async (req, res) => {
 router.post('/api/gic-user/send-reset-password',  async (req, res) => {
     try {
         const table_name = "GIC_Users";
-        const userCheck = await dbService.countExact(table_name, 'email', req.body.email);
+        const userCheck = dbService.countExact(table_name, 'email', req.body.email);
             if(userCheck.count === 0){
                 return res.json({ 
                     status: false, 
@@ -71,11 +71,11 @@ router.post('/api/gic-user/send-reset-password',  async (req, res) => {
                 });
             }
 
-        const user = await dbService.findExact(table_name, 'email', req.body.email);
+        const user = dbService.findExact(table_name, 'email', req.body.email);
         const initialPassword = generatePassword();
         user[0].password_hash = await hashPassword(initialPassword);
 
-        const update_result = await dbService.update(table_name, user[0].id, user[0]);
+        const update_result = dbService.update(table_name, user[0].id, user[0]);
         if (update_result.changes > 0) {
                 await gic__reset_password({ email: user[0].email, password: initialPassword });
                return res.json({
@@ -96,7 +96,7 @@ router.post('/api/gic-user/send-reset-password',  async (req, res) => {
 router.post('/gic-user/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await dbService.findExact('GIC_Users', 'email', email);
+    const user = dbService.findExact('GIC_Users', 'email', email);
     if (!user) {
       return res.json({ status: false, message: 'User not found' });
     }

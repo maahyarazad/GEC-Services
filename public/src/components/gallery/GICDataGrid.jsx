@@ -1,9 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import { Box, CircularProgress, Button, Tooltip } from '@mui/material';
-import { MdLockReset } from "react-icons/md";
-import { IoShieldCheckmarkSharp } from "react-icons/io5";
-import { FaExclamation } from "react-icons/fa";
+import {DataGrid} from '@mui/x-data-grid';
+
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
+
+import {MdLockReset} from 'react-icons/md';
+import {IoShieldCheckmarkSharp} from 'react-icons/io5';
+import {FaExclamation} from 'react-icons/fa';
 import {config} from '../../ui_config';
 import FilterParams from '../admin/FilterParams';
 
@@ -80,7 +85,7 @@ const columns = ({ onResendPasswordReset, loadingRowId }) => [
 ];
 
 
-export const GICDataGrid = () => {
+const GICDataGrid = () => {
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];
     const [loadingRowId, setLoadingRowId] = useState(null);
     const [members, setMembers] = useState([]);
@@ -180,7 +185,7 @@ export const GICDataGrid = () => {
                     <CircularProgress />
                 </Box>
             ) : (
-                <div style={{ width: '100%', height: '82dvh' }}>
+                <div style={{ width: '100%', height: 'calc(100vh - 175px)' }}>
                     <DataGrid
                         rows={members}
                         columns={columns({ onResendPasswordReset: handleResetPassword, loadingRowId: loadingRowId })}
@@ -209,3 +214,5 @@ export const GICDataGrid = () => {
         </Box>
     );
 };
+
+export default GICDataGrid;

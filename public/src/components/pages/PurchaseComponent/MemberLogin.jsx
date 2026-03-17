@@ -1,16 +1,29 @@
-import React, { useImperativeHandle, useRef, forwardRef, useState, useCallback } from "react";
+import React, { useImperativeHandle, useRef, forwardRef, useState, useCallback, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { Button, TextField, Card, CardContent, Typography, Grid, Box, IconButton, InputAdornment, Divider } from "@mui/material";
-import { IoIosSearch } from "react-icons/io";
+
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Typography from "@mui/material/Typography";
+import Grid from "@mui/material/Grid";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import Divider from "@mui/material/Divider";
 import CircularProgress from "@mui/material/CircularProgress";
-import { useEffect } from "react";
+
+import { IoIosSearch } from "react-icons/io";
 import { MdClear } from "react-icons/md";
+import { GrLogout } from "react-icons/gr";
+
 import OtpTimer from "../../utils/OtpTimer";
 import OtpInput from "../../utils/OtpInput";
+
 import { useSnackbar } from "../../Providers/Snackbar";
 import { useAlertDialog } from '../../Providers/AlertProvider';
-import { GrLogout } from "react-icons/gr";
+
 
 const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegistration_code, setWizardState, wizardState, clear }, ref) => {
     // OTP vars
@@ -79,7 +92,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 })
             });
 
-
+            
             if (!response.ok) {
                 throw new Error('Failed to fetch');
             }
@@ -92,6 +105,8 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 setShowOtpInput(true);
             }
             else {
+                setWizardState((prev) => ({ ...prev, member: null }));
+                setShowOtpInput(false);
                 showMessage("No account found with this email address", 10000);
             }
         } catch (err) {

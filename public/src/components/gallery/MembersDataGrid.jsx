@@ -1,12 +1,23 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { DataGrid, GridToolbar, GridToolbarFilterButton } from '@mui/x-data-grid';
-import { Box, CircularProgress, Tooltip, Button, Switch } from '@mui/material';
-import { BsFiletypeCsv } from "react-icons/bs";
-import MemberRequestForm from "../../components/admin/Member/MemberRequestForm";
-import { MdFormatListBulletedAdd } from "react-icons/md";
-import Modal from "../../components/Modal";
+
+// Direct import from x-data-grid main entry is usually fine, but to optimize:
+import {DataGrid} from '@mui/x-data-grid';
+import {GridToolbar} from '@mui/x-data-grid/components';  // or import from '@mui/x-data-grid' if issues
+import {GridToolbarFilterButton} from '@mui/x-data-grid/components';
+
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import Tooltip from '@mui/material/Tooltip';
+import Button from '@mui/material/Button';
+import Switch from '@mui/material/Switch';
+
+import {BsFiletypeCsv} from 'react-icons/bs';
+import {MdFormatListBulletedAdd} from 'react-icons/md';
+import {MdAddCircleOutline} from 'react-icons/md';
+
+import MemberRequestForm from '../../components/admin/Member/MemberRequestForm';
+import Modal from '../../components/Modal';
 import debounce from 'lodash/debounce';
-import { MdAddCircleOutline } from "react-icons/md";
 import { config } from '../../ui_config';
 import FilterParams from '../admin/FilterParams';
 
@@ -52,7 +63,7 @@ const columns = ({ onEdit, onSwitchActive }) => [
     },
 ];
 
-export const MemberDataGrid = () => {
+const MemberDataGrid = () => {
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];
     const [newReg, setNewReg] = useState(false);
     const [members, setMembers] = useState([]);
@@ -280,7 +291,7 @@ export const MemberDataGrid = () => {
                     <CircularProgress />
                 </Box>
             ) : (
-                <div style={{ width: '100%', height: '82dvh' }}>
+                <div style={{ width: '100%', height: 'calc(100vh - 170px)' }}>
                     <DataGrid
                         rows={members}
                         columns={columns({ onEdit: openEdit, onSwitchActive: switchActive })}
@@ -328,3 +339,6 @@ export const MemberDataGrid = () => {
         </Box>
     );
 };
+
+
+export default MemberDataGrid;

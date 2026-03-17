@@ -1,36 +1,49 @@
-import React, { createContext, useContext, useState, useRef, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
+
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import Slide from "@mui/material/Slide";
 
 const AlertDialogContext = createContext(null);
 
-const Transition = React.forwardRef(function Transition(props, ref) {
-  return <Slide direction="left" ref={ref} {...props} />;
-});
-
 export const AlertDialogProvider = ({ children }) => {
   const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState("");
-  const [btnStyle, setBtnStyle] = useState({});
-  const [actionTitle, setActionTitle] = useState("");
+  const [message, setMessage] = useState(null);
+  const [actionTitle, setActionTitle] = useState("Confirm");
+  const [btnStyle, setBtnStyle] = useState({
+    text: "Proceed",
+    color: "primary",
+  });
+
   const onProceedRef = useRef(null);
   const onCancelRef = useRef(null);
 
-  const openDialog = useCallback((msg, title, style, onProceed, onCancel) => {
-    setMessage(msg || "");
-    setActionTitle(title || "Confirm");
-    setBtnStyle(style || { text: "Proceed", color: "primary" });
-    onProceedRef.current = onProceed;
-    onCancelRef.current = onCancel;
-    setOpen(true);
-  }, []);
+  const openDialog = useCallback(
+    (msg, title, style, onProceed, onCancel) => {
+      setMessage(msg);
+      setActionTitle(title || "Confirm");
+      setBtnStyle({
+        text: style?.text || "Proceed",
+        color: style?.color || "primary",
+      });
 
-  const handleCancel = () => {
+      onProceedRef.current = onProceed;
+      onCancelRef.current = onCancel;
+      setOpen(true);
+    },
+    []
+  );
+
+  const handleClose = () => {
     setOpen(false);
     onCancelRef.current?.();
   };
@@ -46,33 +59,40 @@ export const AlertDialogProvider = ({ children }) => {
 
       <Dialog
         open={open}
-        onClose={handleCancel}
+        onClose={handleClose}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
-        TransitionComponent={Transition}
-        keepMounted
       >
-        <DialogTitle id="alert-dialog-title">{actionTitle}</DialogTitle>
+        <DialogTitle id="alert-dialog-title">
+          {actionTitle}
+        </DialogTitle>
+
         <DialogContent>
-          <DialogContentText id="alert-dialog-description" sx={{ color: "black" }}>
-            {message}
-          </DialogContentText>
+          {typeof message === "string" ? (
+            <DialogContentText id="alert-dialog-description">
+              {message}
+            </DialogContentText>
+          ) : (
+            message
+          )}
         </DialogContent>
+
         <DialogActions>
           <Button
-            onClick={handleCancel}
+            onClick={handleClose}
             size="small"
-            variant="contained"
-            style={{ textTransform: "none" }}
+            variant="outlined"
+            sx={{ textTransform: "none" }}
           >
             Cancel
           </Button>
+
           <Button
-            size="small"
             onClick={handleProceed}
-            style={{ textTransform: "none" }}
-            variant="outlined"
+            size="small"
+            variant="contained"
             color={btnStyle.color}
+            sx={{ textTransform: "none" }}
           >
             {btnStyle.text}
           </Button>
@@ -82,11 +102,13 @@ export const AlertDialogProvider = ({ children }) => {
   );
 };
 
-// Custom hook for easy access
+// Hook
 export const useAlertDialog = () => {
   const context = useContext(AlertDialogContext);
   if (!context) {
-    throw new Error("useAlertDialog must be used within an AlertDialogProvider");
+    throw new Error(
+      "useAlertDialog must be used within an AlertDialogProvider"
+    );
   }
   return context;
 };

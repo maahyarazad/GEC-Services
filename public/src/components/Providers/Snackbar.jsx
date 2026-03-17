@@ -1,8 +1,11 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { Snackbar, Slide, useMediaQuery } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import Snackbar from "@mui/material/Snackbar";
+import Slide from "@mui/material/Slide";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import {useTheme} from "@mui/material/styles";
 import { IoMdClose } from "react-icons/io";
 import "sweetalert2/dist/sweetalert2.min.css";
+
 
 const SnackbarContext = createContext();
 

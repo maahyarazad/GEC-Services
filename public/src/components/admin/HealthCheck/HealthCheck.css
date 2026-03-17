@@ -1,0 +1,60 @@
+.paper-container {
+  margin-bottom: 8px;
+  max-width: 500px;
+  padding: 20px;
+}
+.paper-container.up {
+  background-color: rgba(71, 213, 32, 0.1) !important;
+}
+.paper-container.down {
+  background-color: rgba(213, 32, 32, 0.1) !important;
+}
+.paper-container .status-container {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  min-height: 25px;
+}
+.paper-container .status-container .status-info {
+  padding-left: 10px;
+}
+.paper-container .status-container .status-info.up {
+  color: #199647;
+}
+.paper-container .status-container .status-info.down {
+  color: rgb(184, 1, 1);
+}
+.paper-container .status-container .status-dot {
+  margin-left: 20px;
+  width: 10px;
+  height: 10px;
+  background: #199647;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+}
+.paper-container .status-container .status-dot.pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(25, 150, 71, 0.6);
+  animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.paper-container .status-container .status-dot.down {
+  background: rgb(184, 1, 1);
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(3);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}/*# sourceMappingURL=HealthCheck.css.map */

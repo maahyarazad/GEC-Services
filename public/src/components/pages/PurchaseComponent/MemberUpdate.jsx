@@ -1,12 +1,21 @@
-import React, { useImperativeHandle, useRef, forwardRef, useState, useCallback } from "react";
+import React, { useImperativeHandle, useRef, forwardRef, useState, useCallback, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { Button, TextField, Card, CardContent, Typography, Grid, Box } from "@mui/material";
-import { IoIosSearch } from "react-icons/io";
+
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Typography from "@mui/material/Typography";
+import Grid from "@mui/material/Grid";
+import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import { useEffect } from "react";
+
+import { IoIosSearch } from "react-icons/io";
+
 import { useSnackbar } from "../../Providers/Snackbar";
-import { useAlertDialog } from '../../Providers/AlertProvider';
+import { useAlertDialog } from "../../Providers/AlertProvider";
+
 import OtpTimer from "../../utils/OtpTimer";
 import OtpInput from "../../utils/OtpInput";
 import BirthdayField from "../../utils/BirthdayField";
@@ -47,9 +56,27 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
             .min(10, "Mobile number is too short. It should be at least 10 characters including country code.")
             .max(15, "Mobile number is too long")
             .required("Mobile number is required!"),
-        birthday: Yup.date()
-        .max(new Date(), "Birthday cannot be in the future")
-        .required("Birthday is required!")    
+birthday: Yup.date()
+  .transform((value, originalValue) => {
+    // Handle empty string from date inputs
+    return originalValue ? new Date(originalValue) : value;
+  })
+  .test(
+    "not-in-future",
+    "Birthday cannot be in the future",
+    value => {
+      if (!value) return false; // required will handle the message
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const inputDate = new Date(value);
+      inputDate.setHours(0, 0, 0, 0);
+
+      return inputDate <= today;
+    }
+  )
+  .required("Birthday is required!")
 
     });
 
@@ -256,7 +283,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
 
 
         } catch (err) {
-            debugger;
+            
             if (statusRef.current) {
 
                 statusRef.current.textContent = `Verification failed: ${err.message}`;
@@ -274,7 +301,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
     const getMemberPass = async () => {
 
         try {
-            debugger;
+            
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-pass`, {
                 method: 'POST',
                 headers: {
@@ -290,7 +317,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
             if (!response.ok) {
                  
                  showSnackbar("💬 Oops! Something went wrong. Please contact us.", "");
-                throw new Error('Failed to fetch');
+                
             }
 
             const result = await response.json();

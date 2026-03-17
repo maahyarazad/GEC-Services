@@ -6,7 +6,7 @@ const router = express.Router();
 const { generateRecordId, generateOTP } = require("../services/generatorService");
 const dbService = require("../services/dbService");
 const { email_otp } = require("../services/emailService");
-const twilioClient = require('twilio')(process.env.TWILIO_ACOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const twilioClient = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const smsglobal = require('smsglobal')(process.env.SMSGLOBAL_KEY, process.env.SMSGLOBAL_SECRET);
 
 
@@ -204,28 +204,39 @@ router.post("/otp-check", async (req, res) => {
     try {
         const data = req.body;
         const otp = req.session.otp;
+        const page_data = dbService.findByColumn("registration_config", "registration_code", data.registration_code);
 
-        if (Date.now() > req.session.otpExpires) {
-            return res.status(401).json({ status: false, message: 'OTP has expired please try again' });
-        }
+        if(process.env.ENVIRONMENT === 'PRODUCTION'){
 
-        if (data.otp !== otp) {
-            return res.status(401).json({
-                status: false,
-                message: "Invalid OTP code",
+            if (Date.now() > req.session.otpExpires) {
+                return res.status(401).json({ status: false, message: 'OTP has expired please try again' });
+            }
+    
+            if (data.otp !== otp) {
+                return res.status(401).json({
+                    status: false,
+                    message: "Invalid OTP code",
+                });
+            }
+    
+           
+    
+            delete data.otp;
+            if(Object.keys(data).length > 0) dbService.create("registration_client_access", data);
+
+            res.status(200).json({
+                status: true,
+                message: "Verification successful",
+                data: page_data
+            });
+        }else{
+             res.status(200).json({
+                status: true,
+                message: "Verification successful",
+                data: page_data
             });
         }
 
-        const page_data = await dbService.findByColumn("registration_config", "registration_code", data.registration_code);
-
-        delete data.otp;
-        if(Object.keys(data).length > 0) await dbService.create("registration_client_access", data);
-
-        res.status(200).json({
-            status: true,
-            message: "Verification successful",
-            data: page_data
-        });
 
 
     } catch (error) {

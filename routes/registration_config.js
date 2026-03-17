@@ -6,6 +6,9 @@ const dbService = require("../services/dbService");
 const multer = require("multer");
 const { generateRecordId } = require("../services/generatorService");
 const fs = require("fs").promises;
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "file_storage/");
@@ -50,6 +53,9 @@ const loginLimiter = rateLimit({
   skipSuccessfulRequests: true
 });
 
+
+
+
 router.post(
   "/api/registration-config",
   
@@ -66,7 +72,7 @@ router.post(
       // EDIT MODE
       if (registration_data.id) {
         console.log("edit mode");
-        const existing = await dbService.findById(
+        const existing = dbService.findById(
           table_name,
           registration_data.id
         );
@@ -78,14 +84,14 @@ router.post(
         }
 
         // Check duplicate
-        const duplicate_record = await dbService.findByColumn(
+        const duplicate_record = dbService.findByColumn(
           table_name,
           "page",
           registration_data.page
         );
         console.log("check duplicate record");
 
-        if (duplicate_record && duplicate_record.id !== existing.id) {
+        if (duplicate_record.length > 0 && duplicate_record[0].id !== existing.id) {
           return res.status(400).json({
             status: false,
             message: "A duplicate record with the same page URL was found.",
@@ -107,7 +113,7 @@ router.post(
 
         // Update record (registration_code should not change if not re-generated)
 
-        const updated = await dbService.update(
+        const updated = dbService.update(
           table_name,
           registration_data.id,
           {
@@ -123,7 +129,7 @@ router.post(
       }
 
       // Check duplicate
-      const duplicate_record = await dbService.any(
+      const duplicate_record = dbService.any(
         table_name,
         "page",
         registration_data.page
@@ -161,7 +167,7 @@ router.post(
 
         const code_list = [];
         if (Number(data.uniqeCodeAccess) > 1) {
-          const members = await dbService.findExact(
+          const members = dbService.findExact(
             "Member",
             "active_member",
             true
@@ -175,7 +181,7 @@ router.post(
         }
 
         if (code_list.length > 0) {
-          const insert_data = await dbService.insertWithKeys(
+          const insert_data = dbService.insertWithKeys(
             "registration_config",
             registration_data,
             code_list
@@ -225,7 +231,7 @@ router.patch("/api/registration-config-switch",  async (req, res) => {
 
     const id = Number(idParam);
     const val = req.query.switch;
-    const result = await dbService.updateWhere(
+    const result = dbService.updateWhere(
       "registration_config",
       { lockRegistration: val, modifiedAt: new Date().toISOString() },
       { id }
@@ -242,10 +248,23 @@ router.patch("/api/registration-config-switch",  async (req, res) => {
   }
 });
 
-router.get("/api/registration-config",  async (req, res) => {
+router.get("/api/registration-config", async (req, res) => {
   try {
     const table_name = "registration_config";
-    const rows = await dbService.findAllQueryFilter(table_name);
+
+    // Get externalSource from query params
+    const { externalSource } = req.query;
+
+    let rows;
+    if (externalSource) {
+      
+      rows =  dbService.findAllQueryFilter(table_name, {
+        external_source: externalSource
+      });
+    } else {
+      
+      rows =  dbService.findAllQueryFilter(table_name);
+    }
 
     res.json({ status: true, message: "Data fetched successfully", rows });
   } catch (error) {
@@ -253,6 +272,7 @@ router.get("/api/registration-config",  async (req, res) => {
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
+
 
 
 router.patch("/api/registration-config-archive",  async (req, res) => {
@@ -263,7 +283,7 @@ router.patch("/api/registration-config-archive",  async (req, res) => {
       return res.status(400).json({ status: false, message: "Missing id parameter" });
     }
 
-    const result = await dbService.updateWhere(
+    const result = dbService.updateWhere(
       "registration_config",
       { archived: 1, modifiedAt: new Date().toISOString() },
       { id }
@@ -283,15 +303,25 @@ router.patch("/api/registration-config-archive",  async (req, res) => {
 
 router.post("/registration-config/optional-login", async (req, res) => {
   try {
+
     const table_name = "registration_config";
+    let externalUser;
+
+    if(req.query && req.query.referer){
+        const referer = req.query.referer;
+        const ssoToken = req.query.sso
+        externalUser = jwt.verify(ssoToken, process.env.SSO_SECRET);
+    }
+
     if (req.body && req.body.page) {
       const page = req.body.page;
-      const rows = await dbService.findExact(table_name, "page", page);
+      const rows = dbService.findExact(table_name, "page", page);
 
       return res.json({
         status: true,
         message: "Data fetched successfully",
         rows,
+        externalUser
       });
     }
 
@@ -311,7 +341,7 @@ router.post("/registration-config-access", upload.none(), loginLimiter, async (r
       .replace(/\s+/g, " ")
       .trim();
 
-    const member_key = await dbService.findExact(
+    const member_key = dbService.findExact(
       "member_card",
       "card_number", Number(registration_code.slice(1, registration_code.length)));
     if (member_key.length === 1) {
@@ -339,7 +369,7 @@ router.post("/registration-config-access", upload.none(), loginLimiter, async (r
           });
       }
 
-      const page_data = await dbService.findExact(
+      const page_data = dbService.findExact(
         "registration_config",
         "page",
         data.event
@@ -358,14 +388,14 @@ router.post("/registration-config-access", upload.none(), loginLimiter, async (r
 
     // Check duplicate
 
-    const key = await dbService.findExact(
+    const key = dbService.findExact(
       "registration_keys",
       "key",
       registration_code
     );
 
     if (key && key.length > 0) {
-      const page_data = await dbService.findExact(
+      const page_data = dbService.findExact(
         "registration_config",
         "id",
         key[0].registration_config_id
@@ -383,7 +413,7 @@ router.post("/registration-config-access", upload.none(), loginLimiter, async (r
       }
     }
 
-    const page_data = await dbService.findExact(
+    const page_data = dbService.findExact(
       "registration_config",
       "registration_code",
       registration_code
@@ -397,7 +427,7 @@ router.post("/registration-config-access", upload.none(), loginLimiter, async (r
 
 
     // await sendOtpToPhone(data.mobile_number, req, res, client);
-    // await dbService.create("registration_client_access", data);
+    // dbService.create("registration_client_access", data);
 
     return res.status(200).json({
       status: true,
@@ -423,7 +453,7 @@ router.post(
       const id = data.id;
 
       // Check if the record exists
-      const existing = await dbService.findById(table_name, id);
+      const existing = dbService.findById(table_name, id);
       if (!existing) {
         return res
           .status(404)
@@ -459,7 +489,7 @@ router.post(
 router.get('/api/registration-config-list',  async (req, res) => {
   try {
 
-    const rows = await dbService.registration_config_list();
+    const rows = dbService.registration_config_list();
 
     return res.status(200).json({
       status: true,

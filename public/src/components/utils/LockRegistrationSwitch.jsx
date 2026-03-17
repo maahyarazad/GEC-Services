@@ -15,10 +15,10 @@ const LockRegistrationSwitch =
     
     if(field.value === "false"){
       openDialog(
-        <div>
-          <p>Enabling this option will <strong>lock the registration page and prevent further submissions.</strong> Are you sure you want to proceed?</p>
+        <>
+          <>Enabling this option will <strong>lock the registration page and prevent further submissions.</strong> Are you sure you want to proceed?</>
           <img src={lockRegistrationImage} alt="lock registration" className='mt-1 rounded-1' width={150} />
-        </div>,
+        </>,
         'Confirm Action',
         () => {
           

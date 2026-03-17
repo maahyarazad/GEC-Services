@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useLocation, useParams, useSearchParams } from "react-router-dom";
 import CircularProgress from "@mui/material/CircularProgress";
-export const SuccessTemplatePage = ({}) => {
+const SuccessTemplatePage = ({}) => {
     const { event } = useParams(); // "october-party"
     const [searchParams] = useSearchParams();
     const [isLoading, setLoading] = useState(true);
@@ -15,9 +15,11 @@ export const SuccessTemplatePage = ({}) => {
     const currentYear = new Date().getFullYear();
 
     const fetchPaymentStatus = async (checkoutId) => {
+
         if (!checkoutId) return;
 
         try {
+            
             const response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/payment/status/${checkoutId}`, {
                 method: 'GET',
@@ -88,6 +90,7 @@ export const SuccessTemplatePage = ({}) => {
 
     const fetchData = useCallback(async () => {
         try {
+
             setLoading(true);
 
             // const value = location.pathname;
@@ -106,11 +109,11 @@ export const SuccessTemplatePage = ({}) => {
             }
             const queryParams = new URLSearchParams(window.location.search);
             const values = await response.json();
-
+            
             if (values) {
                 values.rows.map(async (x) => {
 
-                    if (x.loginRequired === "false") {
+                    if (x.paymentRequired === "true") {
 
                         const reference = queryParams.get("reference");
                         const checkout = queryParams.get("checkout");
@@ -361,3 +364,5 @@ export const SuccessTemplatePage = ({}) => {
     </div>
   );
 }
+
+export default SuccessTemplatePage;

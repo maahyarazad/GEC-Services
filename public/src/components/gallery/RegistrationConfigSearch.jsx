@@ -90,13 +90,7 @@ const RegistrationConfigSearch = ({onSelect}) => {
         </div>
       </div>
 
-      {/* Optional quick style: inline CSS or add to your stylesheet */}
-      <style jsx>{`
-        .hover-item:hover {
-          background-color: #e9ecef;
-          transform: scale(1.02);
-        }
-      `}</style>
+    
     </div>
   );
 };

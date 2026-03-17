@@ -2,19 +2,19 @@ import "./header.css";
 import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
 import CHookDateTime from "./CHookDateTime";
-import GEC_logo from "../../assets/media/20-Jahre.webp";
-import { RiLogoutBoxRLine } from "react-icons/ri";
-import { Tooltip } from "@mui/material";
-import { useNavigate } from "react-router";
-import {config} from '../../ui_config';
 
-export const Header = ({ adminUser, setAdminUser, showMenu, burgerActive,setBurgerActive  }) => {
+import { RiLogoutBoxRLine } from "react-icons/ri";
+import Tooltip from "@mui/material/Tooltip";
+import { useNavigate } from "react-router";
+import { config } from '../../ui_config';
+
+export const Header = ({ adminUser, setAdminUser, showMenu, burgerActive, setBurgerActive }) => {
 
 
     const handleBurgerMenu = () => {
         setBurgerActive((prev) => !prev);
-        
-    
+
+
     }
 
     const dateTime = CHookDateTime();
@@ -45,36 +45,45 @@ export const Header = ({ adminUser, setAdminUser, showMenu, burgerActive,setBurg
     return (
         <>
             <header>
-                <div>
-                    
+                <div >
+
                     <span>
-                    <div className={showMenu ? "" : `d-none`}>
+                        <div className={showMenu ? "visible" : 'invisible'}>
 
-                        <button 
-                        onClick={handleBurgerMenu}
-                        id="burgerMenu"
-                        className={burgerActive ? "click" : null}
-                        >
-                        <span></span>
-                        </button>
-                    </div>
-                    
-                        <a to="/">
-                            <img alt="GEC Logo" src={GEC_logo}></img>
-                        </a>
+                            <button
+                                onClick={handleBurgerMenu}
+                                id="burgerMenu"
+                                className={burgerActive ? "click" : null}
+                            >
+                                <span></span>
+                            </button>
+                        </div>
+
+                        <div className="d-flex align-items-center">
+                            <img alt="GEC Logo" src={`${import.meta.env.VITE_SERVERURL}/uploads/logo@2x.png`} height={50} style={{cursor:'pointer'}} onClick={()=>  console.log('🤖')}/>
+                            <div className="d-flex flex-column ps-3" style={{fontWeight: 300 }}>
+                                <div>GEC Services</div>
+                                <div style={{fontSize: 10}}>Admin Area</div>
+                            </div>
+                        </div>
+                        
                     </span>
-                    <div className="d-flex align-items-center">
 
-                        <strong className="pe-2">
+
+                    <div className={`align-items-end d-flex ${showMenu ? "" : ''}`}>
+
+                        <strong className={`pe-2 ${showMenu ? "d-none" : ''}`}>
                             <p id="setTheTime">{dateTime}</p>
                         </strong>
                         <Tooltip componentsProps={config.tooltip_config}
-                        title="Logout">
+                            title="Logout">
                             <div onClick={HandleLogout} style={{ cursor: 'pointer' }}>
                                 <RiLogoutBoxRLine size={22} />
                             </div>
                         </Tooltip>
                     </div>
+
+
                 </div>
             </header>
         </>

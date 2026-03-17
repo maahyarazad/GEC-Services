@@ -1,10 +1,15 @@
-// RegistrationForm.jsx
 import { Field, ErrorMessage } from "formik";
+
 import misc from "../../assets/misc.json";
 import GICTemplate from "../../assets/GICTemplate.json";
+
 import { getCodeList } from "country-list";
+
 import InputAdornment from "@mui/material/InputAdornment";
-import { TextField, MenuItem, Autocomplete } from "@mui/material";
+import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
+import Autocomplete from "@mui/material/Autocomplete";
+
 import { IconMap } from "./IconMap";
 
 

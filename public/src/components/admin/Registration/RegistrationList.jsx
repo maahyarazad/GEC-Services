@@ -28,9 +28,11 @@ import { useWebSocket } from "../WebSocketContext"
 import { PercentageBar } from "../PercentageBar";
 import { StatData } from "../StatData";
 import { MdCleaningServices } from "react-icons/md";
+import ErrorBoundary from "../../utils/ErrorBoundary";
 
 const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate, onArchive, onAutoRgister, onCleanUp, requestloading, localData }) => [
     { field: 'id', headerName: 'ID', width: 70 },
+    { field: "external_source", headerName: "External Source", hide: true },
     {
         field: 'lockRegistration', headerName: 'Active', width: 70, renderCell: (params) => {
             const value = params?.row?.lockRegistration === "true";
@@ -157,7 +159,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
             const use_member_card = params?.row?.use_member_card;
             const loginDisabled = params?.row?.loginRequired;
             const isLoading = requestloading.some((item) => item.id === params?.row?.id && item.field === `${params.field}`);
-            
+
 
 
             if (use_member_card === "true") {
@@ -274,7 +276,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
         sortable: false,
         filterable: false,
         renderCell: (params) => {
-            
+
             const isLoadingAuto = requestloading.some((item) => item.id === params?.row?.id && item.field === `${params.field}-auto`);
             const isLoadingClean = requestloading.some((item) => item.id === params?.row?.id && item.field === `${params.field}-clean`);
             return (
@@ -348,7 +350,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
 ];
 
 
-export const RegistrationList = () => {
+const RegistrationList = () => {
 
     const { data: _data } = useWebSocket();
     const [localData, setLocalData] = useState(null);
@@ -371,10 +373,10 @@ export const RegistrationList = () => {
     const [codeList, setCodeList] = useState(null);
     const [codeEventTitle, setCodeEventTitle] = useState(null);
     const [memberCount, setMemberCount] = useState(0);
-    const [isParentModalOpen, setIsParentModalOpen] = useState(false);
+    const [isMapModalOpen, setIsMapModalOpen] = useState(false);
     const dialogRef = useRef();
-    const {showSnackbar} = useSnackbar();
-    const {openDialog} = useAlertDialog();
+    const { showSnackbar } = useSnackbar();
+    const { openDialog } = useAlertDialog();
     const [loading, setLoading] = useState(false);
     const [requestloading, setRequestLoading] = useState([]);
 
@@ -413,7 +415,7 @@ export const RegistrationList = () => {
     const getMemberCount = useCallback(async () => {
         try {
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-get-count/`, {
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-count/`, {
                 method: 'GET',
                 credentials: "include"
             });
@@ -427,7 +429,7 @@ export const RegistrationList = () => {
             }
 
 
-            setMemberCount(respnse_data.total.count)
+            setMemberCount(respnse_data.total)
 
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -620,7 +622,7 @@ export const RegistrationList = () => {
 
             setInitialData(selectedRow);
             setEditReg(true);
-            setIsParentModalOpen(true);
+
         }
     };
 
@@ -628,10 +630,10 @@ export const RegistrationList = () => {
         if (row.lockRegistration === "false") {
 
             openDialog(
-                <div>
-                    <div>Enabling this option will <strong>lock the registration page and prevent further submissions.</strong> Are you sure you want to proceed?</div>
+                <>
+                    <>Enabling this option will <strong>lock the registration page and prevent further submissions.</strong> Are you sure you want to proceed?</>
                     <img src={lockRegistrationImage} alt="Lock" width={400} className="mt-1 rounded-1" />
-                </div>,
+                </>,
                 'Confirm Action',
                 {
                     text: 'Lock Page',
@@ -662,10 +664,10 @@ export const RegistrationList = () => {
 
 
         openDialog(
-            <div>
+            <>
                 Do you want to <strong>Auto Register base on the Google Sheet Geburtstagsparty </strong>
                 Are you sure you want to proceed?
-            </div>,
+            </>,
             'Confirm Action',
             {
                 text: 'Confirm',
@@ -691,10 +693,10 @@ export const RegistrationList = () => {
     const eventCleanUpAlert = (row) => {
 
         openDialog(
-            <div>
+            <>
                 Do you want to <strong>delete PKPass and QRCode files from the server</strong>?
                 Are you sure you want to proceed?
-            </div>,
+            </>,
             'Confirm Action',
             {
                 text: 'Confirm',
@@ -720,10 +722,10 @@ export const RegistrationList = () => {
 
     const archiveAlert = (row) => {
         openDialog(
-            <div>
+            <>
                 Do you want to <strong>archive the registration record and hide it from active listings. </strong>
                 Are you sure you want to proceed?
-            </div>,
+            </>,
             'Confirm Action',
             {
                 text: 'Archive',
@@ -755,7 +757,7 @@ export const RegistrationList = () => {
     const [activeStep, setActiveStep] = useState(0);
     const handleNext = () => {
         setActiveStep((prev) => prev + 1);
-        setIsParentModalOpen(true);
+
     };
 
     const handleBack = () => {
@@ -768,8 +770,8 @@ export const RegistrationList = () => {
 
     return (
         <Box sx={{ padding: 1 }}>
-            
-            
+
+
             <div className="d-flex justify-content-start mb-1">
                 <div className="">
                     <Tooltip title="Add New Registration Page" componentsProps={config.tooltip_config}>
@@ -792,7 +794,7 @@ export const RegistrationList = () => {
                     <CircularProgress />
                 </Box>
             ) : (
-                <div style={{ width: '100%', height: '82dvh' }}>
+                <div style={{ width: '100%', height: 'calc(100vh - 170px)' }}>
                     <DataGrid
                         rowCount={rowCount}
                         rows={registrationList}
@@ -812,26 +814,35 @@ export const RegistrationList = () => {
                         disableSelectionOnClick
                         disableRowSelectionOnClick
                         paginationMode="server"
+                        initialState={{
+                            columns: {
+                                columnVisibilityModel: {
+                                    external_source: true
+
+                                },
+                            },
+                        }}
                     />
                 </div>
             )}
 
 
 
+
             <Modal isOpen={editReg} _style={{ minWidth: '50vw', minHeight: '95vh' }}
                 onRequestClose={() => {
                     setEditReg(false);
-                    setIsParentModalOpen(false);
                 }}
                 onAfterClose={() => setInitialData(null)}
                 title={`Modify ${initialData?.title}`}>
-                <RegistrationRequestForm initialData={initialData} isParentModalOpen={isParentModalOpen} modalSwitch={() => {
-                    setEditReg(false);
-                    setIsParentModalOpen(false);
-                    fetchData();
-                    setInitialData(null);
-                }} />
+                <RegistrationRequestForm initialData={initialData}
+                    modalSwitch={() => {
+                        setEditReg(false);
+                        fetchData();
+                        setInitialData(null);
+                    }} />
             </Modal>
+
 
 
             <Modal isOpen={codeModal}
@@ -853,7 +864,6 @@ export const RegistrationList = () => {
                 isOpen={newReg}
                 onRequestClose={() => {
                     setNewReg(false);
-                    setIsParentModalOpen(false);
 
                 }}
                 onAfterClose={() => { fetchData(); setActiveStep(0); }}
@@ -921,16 +931,13 @@ export const RegistrationList = () => {
                     {activeStep === 1 && (
                         <>
                             <RegistrationRequestForm
-                                isParentModalOpen={isParentModalOpen}
                                 initialData={null}
                                 uniqeCodeAccess={memberCount}
                                 enableUniqueMemberCode={enableUniqueMemberCode}
                                 disableLogin={disableLogin}
                                 modalSwitch={() => {
                                     setNewReg(false);
-                                    setIsParentModalOpen(false);
                                     setActiveStep(0); // reset step on close
-
                                     fetchData();
                                 }}
                             />
@@ -946,3 +953,6 @@ export const RegistrationList = () => {
         </Box>
     );
 };
+
+
+export default RegistrationList;

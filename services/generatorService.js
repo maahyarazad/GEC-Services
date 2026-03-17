@@ -1,5 +1,5 @@
 
-const generateRecordId = (eventName, codeLength = null, useGecPrefix = true) => {
+const generateRecordId = (eventName, external_request = 'gec', codeLength = null, useGecPrefix = true) => {
   const sanitize = (str) => {
     return str
       .toLowerCase()
@@ -26,11 +26,17 @@ const createID = (val = 0) => {
   const cleaned = sanitize(eventName);
   const idSuffix = createAcronym(cleaned);
 
-  const code = useGecPrefix
-    ? `gec-${idSuffix}-${createID(codeLength)}`
-    : `${idSuffix}-${createID(codeLength)}`;
+    const prefix =
+    useGecPrefix && external_request
+        ? external_request
+        : idSuffix;
 
-  return code;
+    const code =
+    useGecPrefix && external_request
+        ? `${prefix}-${idSuffix}-${createID(codeLength ?? 0)}`
+        : `${idSuffix}-${createID(codeLength ?? 0)}`;
+
+    return code;
 };
 
 

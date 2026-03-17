@@ -7,9 +7,9 @@ const { exportTableAsCSV } = require("../services/csvParser");
 router.get('/api/survey',  async (req, res) => {
   try {
   
-    const { filters, data } = await dbService.QuerySqlConverter(req.query, "Company");
+    const { filters, data } = dbService.QuerySqlConverter(req.query, "Company");
     
-    const total = await dbService.getTotalCount("Company", filters);
+    const total = dbService.getTotalCount("Company", filters);
 
     return res.json({
       status: true,
@@ -35,7 +35,7 @@ router.post('/api/update-survey',  async (req, res) => {
       });
     }
 
-    const updated = await dbService.update("Company", data.id, data);
+    const updated = dbService.update("Company", data.id, data);
 
     if (!updated) {
       return res.status(404).json({
@@ -75,7 +75,7 @@ router.get('/api/delete-survey',  async (req, res) => {
 
     console.log(`🗑️ Deleting survey with ID: ${id}`);
 
-    const result = await dbService.remove("Company", id);
+    const result = dbService.remove("Company", id);
 
     if (!result) {
       return res.status(404).json({
@@ -102,7 +102,7 @@ router.get('/api/delete-survey',  async (req, res) => {
 router.get('/api/survey-csv-data',  async (req, res) => {
     try {
 
-        const data = await dbService.findAll("company");
+        const data = dbService.findAll("company");
 
         const csv = await exportTableAsCSV(data); // Await CSV generation
 

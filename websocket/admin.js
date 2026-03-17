@@ -40,10 +40,10 @@ function createWebSocketServer(server, allowedOrigins = []) {
     
         
         const hasToken = socket.handshake.headers.cookie?.includes("a-usr=") ?? false;
-        socket.emit("auth", { Auth: !!hasToken, registration_stat: await dbService.registration_stat() });
+        socket.emit("auth", { Auth: !!hasToken, registration_stat: dbService.registration_stat() });
 
         const interval = setInterval(async () => {
-            const registration_stat = await dbService.registration_stat();
+            const registration_stat = dbService.registration_stat();
             const liveToken = socket.handshake.headers.cookie?.includes("a-usr=") ?? false;
             socket.emit("auth", { Auth: !!liveToken, registration_stat });
 

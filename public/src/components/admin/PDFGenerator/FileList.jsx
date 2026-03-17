@@ -1,26 +1,42 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../WebSocketContext';
 import { IoTrashOutline, IoDownloadOutline } from "react-icons/io5";
-import MyDocument from './MyDocument';
+// import MyDocument from './MyDocument';
+const MyDocument = React.lazy(() => import('./MyDocument'));
 
+import CircularProgress from "@mui/material/CircularProgress";
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { IoSave } from "react-icons/io5";
-import { Button, IconButton } from '@mui/material';
+import IconButton from '@mui/material/IconButton';
 import { VscNewFile } from "react-icons/vsc";
 import { useSnackbar } from '../../Providers/Snackbar';
 import { useAlertDialog } from '../../Providers/AlertProvider';
+import InvoiceDownload from './InvoiceDownload';
+const deletedItemTemplate = {
+    deleted: true,
+    title: "Item Title",
+    price: "",
+    qty: "1",
+    disc: "0.00",
+    vat: "0.00",
+    vat_p: "0",
+    amount: "",
+    body: ""
+};
 
-const FileList = ({ onSelect, formData, initialFormData }) => {
+const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
 
     const { showSnackbar } = useSnackbar();
     const { openDialog } = useAlertDialog();
     const iconSize = 24;
     const { onEvent } = useWebSocket();
     const dialogRef = useRef();
-    
+
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedItem, setSelectedItem] = useState('');
+    const [temp, setTemp] = useState(null);
+    const [referenceLength, setReferenceLength] = useState(0);
     const [fileList, setFileList] = useState([]);
 
     const filteredList = fileList.filter(item =>
@@ -34,6 +50,13 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
 
     const Save = async () => {
         try {
+
+            let warning_message;
+            if (selectedItem !== formData.project.project_name && fileList.some(item => item.project.project_name.includes(formData.project.project_name))) {
+                formData.project.project_name = `${formData.project.project_name} ${Date.now()}`;
+                warning_message = 'There is another file with the same project name you entered, so a random number will be added to the end to prevent overwriting.'
+                window.alert('There is another file with the same project name you entered, so a random number will be added to the end to prevent overwriting.');
+            }
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/invoice-save`, {
                 method: 'POST',
@@ -53,7 +76,7 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
 
 
             if (respnse_data) {
-                showSnackbar(respnse_data.message, 'success');
+                showSnackbar(`${respnse_data.message}`, 'success');
                 sendRequest("invoice");
 
             }
@@ -65,10 +88,42 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
     };
 
 
+
+
     const handleSelect = (k) => {
-        setSelectedItem(k.project.project_name);
-        onSelect(k);
-    }
+        
+        if (temp) {
+
+            
+            // Reference length to compare against — adjust as needed
+            const referenceLength = temp.items.length;
+
+            // Make a copy of items to avoid mutating input
+            let newItems = [...(k.items || [])];
+
+            // Add deleted items until lengths match
+            while (newItems.length < referenceLength) {
+                newItems.push({ ...deletedItemTemplate });
+            }
+
+            // Create a new object with updated items
+            const updatedSelection = {
+                ...k,
+                items: newItems,
+            };
+
+            setSelectedItem(k.project.project_name);
+            setTemp(updatedSelection)
+
+
+            onSelect(updatedSelection);
+        } else {
+            setSelectedItem(k.project.project_name);
+            setTemp(k)
+            onSelect(k);
+
+        }
+    };
 
 
     const handleDelete = async (projectName) => {
@@ -104,11 +159,11 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
     const confirmDelete = (projectName) => {
 
         openDialog(
-            <div>
+            <>
                 Deleting this file will <strong>permanently remove it and its data. </strong>
                 Are you sure you want to proceed?
 
-            </div>,
+            </>,
             'Delete', {
             text: 'Delete',
             color: 'error'
@@ -175,7 +230,7 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
 
     return (
         <div style={{ height: '82dvh' }}>
-            
+
             <div className='d-flex justify-content-between align-items-center'>
 
                 <div>
@@ -188,28 +243,13 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
                     </IconButton>
                     <IconButton
                         title="New Document"
-                        onClick={() => { onSelect(initialFormData) }}
+                        onClick={() => { handleSelect(initialFormData) }}
                     >
                         <VscNewFile color="dark" size={iconSize} />
                     </IconButton>
                 </div>
 
-
-                <PDFDownloadLink
-                    document={<MyDocument formData={formData} />}
-                    fileName="invoice.pdf"
-                    style={{ textDecoration: 'none' }}
-                >
-                    {({ loading }) => (
-                        loading ? (
-                            "Loading document..."
-                        ) : (
-                            <IconButton title="Download PDF file">
-                                <IoDownloadOutline color="dark" size={iconSize} />
-                            </IconButton>
-                        )
-                    )}
-                </PDFDownloadLink>
+                <InvoiceDownload iconSize={iconSize} formData={formData} loadingFlag={loadingFlag} />
 
             </div>
 
@@ -229,7 +269,7 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
                 />
 
                 {/* List */}
-                <div style={{ overflow: 'scroll', height: '78vh' }}>
+                <div style={{ overflow: 'scroll', height: '76vh' }}>
 
                     <ul className="list-unstyled p-0 m-0 list-group" >
                         {filteredList.length > 0 ? (
@@ -267,13 +307,6 @@ const FileList = ({ onSelect, formData, initialFormData }) => {
                 </div>
             </div>
 
-            {/* Optional quick style: inline CSS or add to your stylesheet */}
-            <style jsx>{`
-        .hover-item:hover {
-          background-color: #e9ecef;
-          transform: scale(1.02);
-        }
-      `}</style>
         </div>
     );
 };

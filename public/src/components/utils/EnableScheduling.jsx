@@ -13,10 +13,10 @@ const EnableScheduling =
     
     if(field.value === false){
       openDialog(
-        <div>
-          <p>Enabling this option will initialize the slots from 10 AM to 8 PM in hourly intervals <strong>(you can customize them in the next step)</strong>. Once you enable this and <strong>save it</strong>, you won’t be able to change it, as the scheduling system uses this data to prevent duplicate reservations.</p>
+        <>
+          <>Enabling this option will initialize the slots from 10 AM to 8 PM in hourly intervals <strong>(you can customize them in the next step)</strong>. Once you enable this and <strong>save it</strong>, you won’t be able to change it, as the scheduling system uses this data to prevent duplicate reservations.</>
           <img src={enableScheduling} alt="enableScheduling" width={200} className='mt-1 rounded-1'/>
-        </div>,
+        </>,
         'Confirm Action',
         
             {

@@ -1,5 +1,10 @@
 import React, {useState, useEffect, useCallback} from "react";
-import { Grid, Paper, Typography, Box, CircularProgress } from "@mui/material";
+import Grid from "@mui/material/Grid";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
+
 import { IoPeople } from "react-icons/io5";
 import { MdWorkspacePremium, MdOutlineAccessTime } from "react-icons/md";
 const paidBlue = '#0f0faf';

@@ -3,7 +3,8 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import ReactModal from "react-modal";
 import { IoClose } from "react-icons/io5";
 import { create } from "lodash";
-import { IconButton, Typography } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
 
 const SlideModal = ({ isOpen, onRequestClose, title, children }) => {
   useEffect(() => {
@@ -16,7 +17,7 @@ const SlideModal = ({ isOpen, onRequestClose, title, children }) => {
     return () => window.removeEventListener("keydown", handleEsc);
   }, [isOpen, onRequestClose]);
 
-return (
+  return (
     <ReactModal
       isOpen={true} // always mounted while visible
       onRequestClose={onRequestClose}
@@ -65,7 +66,7 @@ return (
           className="d-flex justify-content-between items-center px-4 py-2 border-b bg-white"
           style={{ position: "sticky", top: 0, zIndex: 10 }}
         >
-          <Typography variant="h4" color="#ED791F">
+          <Typography variant="h4" style={{color: 'rgb(112,128,144)'}}>
             {title}
           </Typography>
           <IconButton className="p-1 hover:bg-gray-100 rounded-full" onClick={onRequestClose}>

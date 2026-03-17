@@ -29,6 +29,47 @@ CREATE TABLE IF NOT EXISTS registration_keys (
 );
 
 
+CREATE TABLE IF NOT EXISTS twilio_responses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  source VARCHAR(100) NOT NULL,          -- e.g. 'twilio', 'stripe', etc.
+  event_type VARCHAR(100) DEFAULT NULL, -- e.g. 'message.received', 'delivery.status'
+  payload TEXT NOT NULL,                 -- full raw JSON/text response
+  received_at DATETIME DEFAULT (datetime('now')),  -- when you saved it
+  processed BOOLEAN DEFAULT 0            -- flag if you've processed this record
+);
+
+CREATE TABLE IF NOT EXISTS twilio_delivery (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  response TEXT,
+    metadata_createdAt DATETIME DEFAULT (datetime('now'))
+);
+
+
+
+
+
+CREATE TABLE IF NOT EXISTS contact_book (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title VARCHAR(10),
+  first_name VARCHAR(255) NOT NULL,
+  last_name VARCHAR(255),
+  gender VARCHAR(8),
+  phone VARCHAR(50) NOT NULL,
+  language VARCHAR(2) NOT NULL,
+  type VARCHAR(20) NOT NULL CHECK (type IN ('club_member', 'club_partner', 'expert', 'gec_staff', 'difa', 'expert_guest', 'only_guest')),
+  club_partner_name VARCHAR(255),
+  blacklist BOOLEAN DEFAULT FALSE,
+  contentSid VARCHAR(255)
+);
+
+
+CREATE TABLE  IF NOT EXISTS twilio_template_message (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  messageSid VARCHAR(100) NOT NULL,
+  contentSid VARCHAR(100) NOT NULL
+);
+
+
 
 CREATE TABLE IF NOT EXISTS registration_config (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
