@@ -61,6 +61,8 @@ function hasPlaceholders(text) {
 
 const contactBookData = (conditions, useAudience) => {
   let query = "";
+  
+
 
   if (useAudience === "all") {
     query = `
@@ -70,7 +72,7 @@ const contactBookData = (conditions, useAudience) => {
       ${
         Object.keys(conditions).length === 0
           ? ``
-          : `AND language = '${conditions?.language}'`
+          : `AND language = '${conditions?.language?.slice(0, 2)}'`
       }
       AND contentSid IS NULL
       GROUP BY phone 
@@ -96,7 +98,7 @@ const contactBookData = (conditions, useAudience) => {
       ${
         Object.keys(conditions).length === 0
           ? ``
-          : `AND language = '${conditions?.language}'`
+          : `AND language = '${conditions?.language?.slice(0, 2)}'`
       }
       AND contentSid IS NULL GROUP BY phone LIMIT 300
     `;
