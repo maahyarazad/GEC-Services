@@ -211,7 +211,7 @@ const PurchaseMemberShip = () => {
                                         {(() => {
                                             switch (activeStep) {
                                                 case 0:
-                                                    return <MemberLogin wizardState={wizardState} setWizardState={setWizardState} />
+                                                    return <MemberLogin wizardState={wizardState} setWizardState={setWizardState} setActiveStep={setActiveStep}/>
 
                                                 case 1:
                                                     return <MemberUpdate wizardState={wizardState} setWizardState={setWizardState} setActiveStep={setActiveStep}/>
