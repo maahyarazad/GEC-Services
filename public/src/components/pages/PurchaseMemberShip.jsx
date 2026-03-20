@@ -107,7 +107,7 @@ const PurchaseMemberShip = () => {
             className="d-flex justify-content-center align-items-start"
             style={{
                 backgroundColor: ' var(--light)',
-                padding: isMobile ? '1rem' : '2rem',
+                padding: isMobile ? '1rem' : '0rem',
                 height:'100vh',
                                     width: '100vw',
                 boxSizing: 'border-box',
@@ -115,6 +115,7 @@ const PurchaseMemberShip = () => {
         >
             <Box
                 sx={{
+                    boxShadow: 10,
                     backgroundColor: 'white',
                     borderRadius: 5,
                     padding: isMobile ? '1rem' : '2rem',
@@ -166,7 +167,7 @@ const PurchaseMemberShip = () => {
                     //    display:'inline-block',
 
                         // height: '65vh',
-                        minHeight: isMobile ? '50vh' : '65vh',
+                        minHeight: isMobile ? '50vh' : '60vh',
                     }}
                 >
                     <Slide

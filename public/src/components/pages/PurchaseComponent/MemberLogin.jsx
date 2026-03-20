@@ -98,6 +98,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
             }
 
             const result = await response.json();
+            debugger;
             if (result.data) {
 
                 showMessage("Found a corresponding email for your account. Please confirm your email to proceed.", 60000);
