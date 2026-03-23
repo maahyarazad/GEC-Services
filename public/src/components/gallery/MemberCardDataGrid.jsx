@@ -68,7 +68,8 @@ const columns = ({ onResendPasswordReset, loadingRowId }) => [
 },
 
 
-    { field: 'card_number', headerName: 'Card Number', width: 150, filterable: true },
+    { field: 'card_number', headerName: 'Card Number', width: 100, filterable: true },
+    { field: 'partner', headerName: 'Partner', width: 150, filterable: true },
     { field: 'firstname', headerName: 'First Name', width: 150, filterable: true },
     { field: 'lastname', headerName: 'Last Name', width: 150, filterable: true },
     { field: 'card_expiry_date', headerName: 'Card Expiry Date', width: 200, filterable: true },

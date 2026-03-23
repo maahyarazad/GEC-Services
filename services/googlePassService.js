@@ -34,7 +34,7 @@ async function generateMemberGooglePass(data) {
     
     const title = slugToTitle(data.title);
     const event_page = titleToSlug(data.title);
-    const { firstname, lastname, memberId, card_expiry_date, serial_number } = data;
+    const { firstname, lastname, memberId, card_expiry_date, serial_number, partner } = data;
     
    
     const qrValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event_page}?guest-code=${serial_number}`;
@@ -62,7 +62,7 @@ const genericClass = {
     title: "German Emirates Club",
     programName: "German Emirates Club",
     reviewStatus: "underReview",
-    hexBackgroundColor: "#D9B144",
+    hexBackgroundColor: "#9d1d1d",
     
     textModulesData: [
         {
@@ -86,7 +86,7 @@ const genericClass = {
                         endItem: {
                             firstValue: {
                                 fields: [
-                                    { fieldPath: 'object.textModulesData["serialNumber"].body' }
+                                    { fieldPath: 'object.textModulesData["partner"].body' }
                                 ]
                             }
                         }
@@ -103,7 +103,7 @@ const genericClass = {
                         },
                         endItem: {
                             firstValue: {
-                                fields: [] // optionally leave empty or add another field
+                                fields: [{ fieldPath: 'object.textModulesData["serialNumber"].body' }] 
                             }
                         }
                     }
@@ -118,7 +118,7 @@ const genericClass = {
             id: objectId,
             classId: classId,
             state: "active",
-            hexBackgroundColor: "#0d1b2a",
+            hexBackgroundColor: "#9d1d1d",
             logo: {
     sourceUri: {
       uri: "https://services.german-emirates-club.com/uploads/logo.jpg"
@@ -139,7 +139,7 @@ const genericClass = {
             subheader: {
                 defaultValue: {
                     language: "en-US",
-                    value: `CARD HOLDER NAME`
+                    value: `Name`
                 }
             },
             heroImage: {
@@ -178,12 +178,13 @@ const genericClass = {
                     header: "Member Id",
                     body: `${memberId}`
                 },
-                { id: "serialNumber", header: "Serial Number", body: `${serial_number}`},
+                { id: "partner", header: "Corporate Partner", body: `${partner}`},
                 {
                     id: "expiry",
                     header: "Expiry Date",
                     body: `${formattedDate}`
-                }
+                },
+                  { id: "serialNumber", header: "Serial Number", body: `${serial_number}`},
             ],
             barcode: {
                 type: "QR_CODE",

@@ -154,7 +154,7 @@ createWebSocketServer(server, allowedOrigins);
 cron.schedule("0 */6 * * *", async () => {
   try {
     console.log("Running background job every 6 hours:", new Date());
-    // await GSheetService.GSheetParser();
+    await GSheetService.GSheetParser();
     await Jobs.normilizeMemberPhoneNumbers();
     console.log("Background job finished at:", new Date());
   } catch (err) {

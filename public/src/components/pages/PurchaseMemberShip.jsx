@@ -107,7 +107,7 @@ const PurchaseMemberShip = () => {
             className="d-flex justify-content-center align-items-start"
             style={{
                 backgroundColor: ' var(--light)',
-                padding: isMobile ? '1rem' : '0rem',
+                padding: isMobile ? '1rem' : '1rem',
                 height:'100vh',
                                     width: '100vw',
                 boxSizing: 'border-box',

@@ -72,7 +72,7 @@ router.post('/member-pass', authorization_middleware.authorize_member, async (re
 
         const { member } = req.body;
         const memberId = member?.memberId;
-        member.title = "German Emirates Club Membership";
+        member.title = "CORPORATE CARD";
 
         const _member = dbService.findByColumn("member_card", "email", member.email)[0];
         let applePKpassPath;
