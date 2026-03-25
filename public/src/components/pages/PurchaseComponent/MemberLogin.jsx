@@ -23,13 +23,15 @@ import OtpInput from "../../utils/OtpInput";
 
 import { useSnackbar } from "../../Providers/Snackbar";
 import { useAlertDialog } from '../../Providers/AlertProvider';
-
-
+import { parsePhoneNumberFromString } from "libphonenumber-js";
+import { useTheme } from '@mui/material';
+import useMediaQuery from '@mui/material/useMediaQuery';
 const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegistration_code, setWizardState, wizardState, setActiveStep }, ref) => {
     // OTP vars
     const [showOtpInput, setShowOtpInput] = useState(false);
     const statusRef = useRef();
     const otpRef = useRef();
+    const otpFocus = useRef();
     const [validOtp, setValidOtp] = useState(null);
     const [currentResponseStatus, setCurrentResponseStatus] = useState(null);
     const [currentResponseMessage, setCurrentResponseMessage] = useState(null);
@@ -41,7 +43,8 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
     const [isSearching, setIsSearching] = useState(false);
     const [responseMessage, setResponseMessage] = useState("");
     const [authorized, setAuthorized] = useState(false);
-
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const validationSchema = Yup.object({
         email: Yup.string().email("Enter a valid email").required("Email is required!"),
@@ -92,13 +95,21 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 })
             });
 
-            
+
             const result = await response.json();
-            
+
             if (result.data) {
 
                 showMessage("Found a corresponding email for your account. Please confirm your email to proceed.", 60000);
-                setWizardState((prev) => ({ ...prev, member: result.data }));
+
+                const member = result?.data;
+
+                const libphone = member?.mobile_number ? parsePhoneNumberFromString(`+${member.mobile_number}`) : null;
+
+                const _member = { ...member, ...(libphone || {}) };
+
+                setWizardState(prev => ({ ...prev, member: _member }));
+
                 setShowOtpInput(true);
             }
             else {
@@ -131,7 +142,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
             });
 
 
-          
+
 
         } catch (err) {
 
@@ -150,7 +161,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 credentials: 'include',
             });
 
-           
+
 
             // Optionally handle response data
             const data = await response.json();
@@ -260,6 +271,8 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 const response_data = await otp_response.json();
 
                 setCurrentResponseMessage(response_data.message);
+
+                otpFocus?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
 
 
@@ -341,7 +354,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
             }
 
             const data = await response.json();
-            
+
 
 
             // Optionally, clear any local state or redirect
@@ -480,7 +493,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
             </div>
 
             <div
-                className={`fade-in ${responseMessage ? "visible" : ""} mt-2 mb-2`}
+                className={`fade-in ${responseMessage ? "visible" : ""} mt-1 mb-1`}
                 style={{
 
                     minHeight: 50,
@@ -499,7 +512,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
             </div>
 
             {wizardState?.member && (
-                <Card sx={{ minWidth: 250, boxShadow: 3, cursor: 'pointer', textAlign: 'start' }}>
+                <Card sx={{ minWidth: isMobile ? 'auto' : 400, boxShadow: 3, cursor: 'pointer', textAlign: 'start', width: isMobile ? "100%" : "" }}>
                     <CardContent>
                         {/* Helper to mask text */}
                         {(() => {
@@ -627,6 +640,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                                 </>
                                             )}
                                         </div>
+                                        <span ref={otpFocus}></span>
                                     </>
                                 </>
 

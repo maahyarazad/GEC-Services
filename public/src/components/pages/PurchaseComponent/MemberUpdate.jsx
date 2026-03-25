@@ -10,7 +10,7 @@ import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-
+import CountrySelect from "./CountryCode";
 import { IoIosSearch } from "react-icons/io";
 
 import { useSnackbar } from "../../Providers/Snackbar";
@@ -19,18 +19,20 @@ import { useAlertDialog } from "../../Providers/AlertProvider";
 import OtpTimer from "../../utils/OtpTimer";
 import OtpInput from "../../utils/OtpInput";
 import BirthdayField from "../../utils/BirthdayField";
-import { parsePhoneNumberFromString } from "libphonenumber-js";
+import { parsePhoneNumberFromString, isValidPhoneNumber } from "libphonenumber-js";
 
 
 const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegistration_code, onMemberChange, wizardState, setWizardState, setActiveStep }, ref) => {
     const formikRef = useRef();
+    const otpFocus = useRef();
 
     const timer = useRef(null);
     const [isSearching, setIsSearching] = useState(false);
     const [fetchingPasses, setFetchingPasses] = useState(false);
     const [responseMessage, setResponseMessage] = useState("");
     const [authorized, setAuthorized] = useState(false);
-
+    const [libphone, setlibphone] = useState(null);
+    const [selectedCountry, setSelectedCountry] = useState(null);
 
 
     const validationSchema = Yup.object({
@@ -48,14 +50,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
             .max(50, "Last name can't exceed 50 characters")
             .required("Last name is required!"),
 
-        mobile_number: Yup.string()
-            .matches(
-                /^\+?\d{1,3}[0-9\-() ]+$/,
-                "Mobile number must start with a country code (e.g., 971 or +971) and can contain numbers and symbols like -, (, )"
-            )
-            .min(10, "Mobile number is too short. It should be at least 10 characters including country code.")
-            .max(15, "Mobile number is too long")
-            .required("Mobile number is required!"),
+
         birthday: Yup.date()
             .transform((value, originalValue) => {
                 // Handle empty string from date inputs
@@ -164,10 +159,20 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
     }, [wizardState?.passData])
 
 
-    const handleSendOtp = async (values) => {
+    const handleSendOtp = async (values, setFieldError, setFieldTouched) => {
         try {
 
 
+            const mobile_number = `+${values.countryCallingCode}${values.mobile_number}`;
+            const normilized = `${values.countryCallingCode}${values.mobile_number}`;
+            const isValid = isValidPhoneNumber(mobile_number);
+
+
+            if (!isValid) {
+                setFieldTouched("mobile_number", true, false);
+                setFieldError("mobile_number", "Invalid mobile number");
+                return;
+            }
 
             const otp_response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/send-otp-mobile`,
@@ -175,7 +180,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                     headers: { "Content-Type": "application/json" },
                     method: "POST",
                     credentials: "include", // ✅ important for sessions
-                    body: JSON.stringify({ origin: "German Emirates Club Membership", mobile_number: values.mobile_number }),
+                    body: JSON.stringify({ origin: "German Emirates Club Membership", mobile_number: normilized }),
 
                 }
             );
@@ -203,11 +208,11 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                     ...prev,
                     otpState: {
                         ...prev.otpState,
-                        currentResponseStatus: true, validOtp: true, currentResponseMessage: `OTP sent to  ${wizardState?.member.mobile_number}`, otp_data: response_data.data,
+                        currentResponseStatus: true, validOtp: true, currentResponseMessage: `OTP sent to  ${mobile_number}`, otp_data: response_data.data,
                         initialSeconds: 300, responseMessageStyle: true
                     }
                 }));
-
+                otpFocus?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             } else {
 
@@ -302,6 +307,9 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
 
         try {
 
+            wizardState.member.mobile_number = `${wizardState.member.countryCallingCode}${wizardState.member.nationalNumber}`;
+
+
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-pass`, {
                 method: 'POST',
                 headers: {
@@ -367,18 +375,12 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
     useEffect(() => {
         if (!fetchingPasses) return;
 
-        // const parsed = parsePhoneNumberFromString(wizardState.member?.mobile_number);
-        // console.log(parsed);
-
-
         const interval = setInterval(() => {
             setDots((prev) => (prev.length === 4 ? "" : prev + "."));
         }, 300); // change speed if you like
 
         return () => clearInterval(interval);
     }, [fetchingPasses]);
-
-
 
 
 
@@ -393,15 +395,26 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                         email: wizardState.member?.email || "",
                         firstname: wizardState.member?.firstname || "",
                         lastname: wizardState.member?.lastname || "",
-                        mobile_number: wizardState.member?.mobile_number || "",
+                        mobile_number: wizardState.member?.nationalNumber || "",
                         card_number: wizardState.member?.card_number || "",
                         card_expiry_date: wizardState.member?.card_expiry_date || "",
-                        birthday: wizardState.member?.birthday || ""
+                        birthday: wizardState.member?.birthday || "",
+                        countryCallingCode: wizardState.member?.countryCallingCode || "",
                     }}
                     validationSchema={validationSchema}
-                    onSubmit={(values, formikHelpers) => handleSendOtp(wizardState.member)}
+                    onSubmit={(values, { setFieldError, setFieldTouched, setSubmitting }) =>
+                        handleSendOtp(values, setFieldError, setFieldTouched, setSubmitting)
+                    }
                 >
-                    {({ setFieldValue, errors, touched, isSubmitting, values, setFieldTouched }) => (
+                    {({
+                        setFieldValue,
+                        errors,
+                        touched,
+                        isSubmitting,
+                        values,
+                        setFieldTouched,
+                    }) => (
+
                         <Form>
                             {/* Email Field */}
                             <TextField
@@ -446,6 +459,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
 
                             {/* Last Name */}
                             <TextField
+
                                 className="mt-1"
                                 type="text"
                                 name="lastname"
@@ -465,7 +479,12 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                 error={touched.lastname && Boolean(errors.lastname)}
                             />
 
-                            {/* Mobile Number */}
+                            <CountrySelect
+
+                                wizardState={wizardState}
+                                setWizardState={setWizardState}
+                            />
+
                             <TextField
                                 className="mt-1"
                                 type="text"
@@ -474,20 +493,23 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                 label="Mobile Number"
                                 disabled={wizardState?.otpState?.getMemberPass}
                                 value={values.mobile_number}
-                                helperText={<ErrorMessage name="mobile_number" />}
+                                helperText={touched.mobile_number ? errors.mobile_number : ""}
                                 onChange={(e) => {
                                     const value = e.target.value;
                                     setFieldValue("mobile_number", value);
+
                                     setWizardState((prev) => ({
                                         ...prev,
-                                        member: { ...prev.member, mobile_number: value },
+                                        member: { ...prev.member, nationalNumber: value },
                                     }));
                                 }}
+                                onBlur={() => setFieldTouched("mobile_number", true)}
                                 error={touched.mobile_number && Boolean(errors.mobile_number)}
                             />
 
 
-                            <div className="mt-1">
+
+                            <div className="mt-1" style={{ width: '100%' }}>
 
                                 <BirthdayField errors={errors} setFieldValue={setFieldValue} size="medium" setWizardState={setWizardState}
                                     values={values} touched={touched} setFieldTouched={setFieldTouched} />
@@ -549,6 +571,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                     </>
                                 )}
                             </div>
+                            <span ref={otpFocus}></span>
                         </Form>
                     )}
                 </Formik>

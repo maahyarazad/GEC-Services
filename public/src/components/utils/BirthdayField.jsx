@@ -1,52 +1,60 @@
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-
 import dayjs from "dayjs";
-import { useEffect } from "react";
 
-export default function BirthdayField({ values, setFieldValue, setFieldTouched, errors, touched, size='small' , setWizardState}) {
-  const birthdayValue = values.birthday ? dayjs(values.birthday) : null;
+export default function BirthdayField({
+    values,
+    setFieldValue,
+    setFieldTouched,
+    errors,
+    touched,
+    size = "small",
+    setWizardState,
+}) {
+    return (
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <div className="pb-2" style={{ width: "100%" }}>
+                <DatePicker
+                    label="Birthday"
+                    value={values.birthday ? dayjs(values.birthday) : null}
+                    onChange={(newValue) => {
+                        const formattedValue = newValue ? newValue.format("YYYY-MM-DD") : "";
 
+                        setFieldValue("birthday", formattedValue);
 
-
-  return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <div className="pb-2">
-      <DatePicker
-
-        label="Birthday"
-        value={values.birthday ? dayjs(values.birthday) : null}
-        onChange={(newValue) => {
-          const value = newValue;
-
-    setFieldValue("birthday", value ? value.format("YYYY-MM-DD") : "");
-                 if(setWizardState !== null){
-
-                   setWizardState((prev) => ({
-                       ...prev,
-                       member: { ...prev.member, birthday: value.format("YYYY-MM-DD") },
-                   }));
-                 }                 
-   
-  }}
-       
-        
-        slotProps={{
-          textField: {
-            name: "birthday",
-            size: size,
-            fullWidth: true,
-            error: touched.birthday && Boolean(errors.birthday),
-            helperText: errors.birthday,
-            onBlur: () => setFieldTouched("birthday", true),InputLabelProps: {
-        shrink: true, // ✅ forces the label to float
-      },
-            
-          },
-        }}
-      />
-      </div>
-    </LocalizationProvider>
-  );
+                        if (setWizardState) {
+                            setWizardState((prev) => ({
+                                ...prev,
+                                member: {
+                                    ...prev.member,
+                                    birthday: formattedValue,
+                                },
+                            }));
+                        }
+                    }}
+                    slotProps={{
+                        textField: {
+                            name: "birthday",
+                            size,
+                            fullWidth: true,
+                            sx: {
+                                width: "100%",
+                              "& .MuiPickersInputBase-root.MuiPickersInputBase-root": {
+    minHeight: 53,
+  },
+                               
+                            },
+                            error: touched.birthday && Boolean(errors.birthday),
+                            helperText: touched.birthday ? errors.birthday : "",
+                            onBlur: () => setFieldTouched("birthday", true),
+                            InputLabelProps: {
+                                shrink: true,
+                            },
+                        },
+                    }}
+                />
+            </div>
+        </LocalizationProvider>
+    );
 }

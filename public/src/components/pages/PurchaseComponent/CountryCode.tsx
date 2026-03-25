@@ -1,22 +1,48 @@
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import Autocomplete from '@mui/material/Autocomplete';
+import Box from "@mui/material/Box";
+import TextField from "@mui/material/TextField";
+import Autocomplete from "@mui/material/Autocomplete";
+import { useMemo } from "react";
 
-export default function CountrySelect() {
+export default function CountrySelect({ wizardState, setWizardState }) {
+  const selectedCountry = useMemo(() => {
+    if (!wizardState?.member?.countryCallingCode) return null;
+
+    return (
+      countries.find(
+        (country) =>
+          country.phone === String(wizardState.member.countryCallingCode)
+      ) || null
+    );
+  }, [wizardState?.member?.countryCallingCode]);
+
   return (
     <Autocomplete
       id="country-select-demo"
-      sx={{ width: 300 }}
+      sx={{ width: '100%' }}
       options={countries}
       autoHighlight
-      getOptionLabel={(option) => option.label}
+      value={selectedCountry}
+      onChange={(event, newValue) => {
+        setWizardState((prev) => ({
+          ...prev,
+          member: {
+            ...prev.member,
+            countryCallingCode: newValue?.phone || "",
+            country: newValue?.code || "",
+          },
+        }));
+      }}
+      isOptionEqualToValue={(option, value) =>
+        option.code === value.code
+      }
+      getOptionLabel={(option) => option.label || ""}
       renderOption={(props, option) => {
         const { key, ...optionProps } = props;
         return (
           <Box
             key={key}
             component="li"
-            sx={{ '& > img': { mr: 2, flexShrink: 0 } }}
+            sx={{ "& > img": { mr: 2, flexShrink: 0 } }}
             {...optionProps}
           >
             <img
@@ -34,11 +60,9 @@ export default function CountrySelect() {
         <TextField
           {...params}
           label="Country Code"
-          slotProps={{
-            htmlInput: {
-              ...params.inputProps,
-              autoComplete: 'new-password', // disable autocomplete and autofill
-            },
+          inputProps={{
+            ...params.inputProps,
+            autoComplete: "new-password",
           }}
         />
       )}
@@ -155,7 +179,7 @@ const countries: readonly CountryType[] = [
   },
   { code: 'DJ', label: 'Djibouti', phone: '253' },
   { code: 'DK', label: 'Denmark', phone: '45' },
-  { code: 'DM', label: 'Dominica', phone: '1-767' },
+  { code: 'DM', label: 'Dominica', phone: '1767' },
   {
     code: 'DO',
     label: 'Dominican Republic',
@@ -190,7 +214,7 @@ const countries: readonly CountryType[] = [
   },
   { code: 'GA', label: 'Gabon', phone: '241' },
   { code: 'GB', label: 'United Kingdom', phone: '44' },
-  { code: 'GD', label: 'Grenada', phone: '1-473' },
+  { code: 'GD', label: 'Grenada', phone: '1473' },
   { code: 'GE', label: 'Georgia', phone: '995' },
   { code: 'GF', label: 'French Guiana', phone: '594' },
   { code: 'GG', label: 'Guernsey', phone: '44' },
@@ -240,7 +264,7 @@ const countries: readonly CountryType[] = [
   { code: 'IS', label: 'Iceland', phone: '354' },
   { code: 'IT', label: 'Italy', phone: '39' },
   { code: 'JE', label: 'Jersey', phone: '44' },
-  { code: 'JM', label: 'Jamaica', phone: '1-876' },
+  { code: 'JM', label: 'Jamaica', phone: '1876' },
   { code: 'JO', label: 'Jordan', phone: '962' },
   {
     code: 'JP',
@@ -265,7 +289,7 @@ const countries: readonly CountryType[] = [
   },
   { code: 'KR', label: 'Korea, Republic of', phone: '82' },
   { code: 'KW', label: 'Kuwait', phone: '965' },
-  { code: 'KY', label: 'Cayman Islands', phone: '1-345' },
+  { code: 'KY', label: 'Cayman Islands', phone: '1345' },
   { code: 'KZ', label: 'Kazakhstan', phone: '7' },
   {
     code: 'LA',
@@ -273,7 +297,7 @@ const countries: readonly CountryType[] = [
     phone: '856',
   },
   { code: 'LB', label: 'Lebanon', phone: '961' },
-  { code: 'LC', label: 'Saint Lucia', phone: '1-758' },
+  { code: 'LC', label: 'Saint Lucia', phone: '1758' },
   { code: 'LI', label: 'Liechtenstein', phone: '423' },
   { code: 'LK', label: 'Sri Lanka', phone: '94' },
   { code: 'LR', label: 'Liberia', phone: '231' },
