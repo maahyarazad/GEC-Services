@@ -23,7 +23,7 @@ const generateMemberPass = async (data) => {
 
     const title = slugToTitle(data.title);
     const event_page = titleToSlug(data.title);
-    const { firstname, lastname, event_id, card_expiry_date, memberId, serial_number } = data;
+    const { firstname, lastname, event_id, card_expiry_date, memberId, serial_number, partner } = data;
     const wwdrPath = path.join(__dirname, "../certs/AppleWWDRCAG4.pem");
     const signerCertPath = path.join(__dirname, "../certs/signerCert.pem");
     const signerKeyPath = path.join(__dirname, "../certs/signerKey.pem");
@@ -59,8 +59,9 @@ const generateMemberPass = async (data) => {
     const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
     const formattedDate = expirationDate.toLocaleDateString('en-GB', options).replace(/\//g, '-');
     pass.secondaryFields.push({ key: "expiry", label: "Expiry Date", value: formattedDate });
-    pass.primaryFields.push({ key: "event_name", label: "CARDHOLDER NAME", "value": `${firstname} ${lastname}` });
+    pass.primaryFields.push({ key: "event_name", label: "Name", "value": `${firstname} ${lastname}` });
     pass.auxiliaryFields.push({ key: "fullname", label: "Member ID", "value": `${memberId}`, textAlignment: "PKTextAlignmentLeft" });
+    pass.auxiliaryFields.push({ key: "partner", label: "Corporate Partner", value: `${partner}` , textAlignment: "PKTextAlignmentRight"});
     // pass.auxiliaryFields.push({ key: "passid", label: "Pass ID", value: `${event_id}`, textAlignment: "PKTextAlignmentLeft" });
     // Add QR code at the bottom of the pass
     const qeValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event_page}?guest-code=${serial_number}`;
@@ -86,7 +87,7 @@ const generateApplePass = async (data) => {
     
     const title = slugToTitle(data.title);
     const event_page = titleToSlug(data.title);
-    const { firstName, lastName, event_id, event_date } = data;
+    const { firstName, lastName, event_id, event_date, partner } = data;
     const wwdrPath = path.join(__dirname, "../certs/AppleWWDRCAG4.pem");
     const signerCertPath = path.join(__dirname, "../certs/signerCert.pem");
     const signerKeyPath = path.join(__dirname, "../certs/signerKey.pem");
@@ -123,6 +124,7 @@ const generateApplePass = async (data) => {
     pass.secondaryFields.push({ key: "expiry", label: "Expiry Date", value: formattedDate });
     pass.primaryFields.push({ key: "event_name", label: "Event", "value": `${title}` });
     pass.auxiliaryFields.push({ key: "fullname", label: "Fullname", value: `${firstName} ${lastName}`, textAlignment: "PKTextAlignmentLeft" });
+    
     // pass.auxiliaryFields.push({ key: "passid", label: "Pass ID", value: `${event_id}`, textAlignment: "PKTextAlignmentLeft" });
     // Add QR code at the bottom of the pass
     const qeValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event_page}?guest-code=${event_id}`;

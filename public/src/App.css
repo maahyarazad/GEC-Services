@@ -45,6 +45,21 @@
   --primaryfont: "Atkinson", sans-serif;
 }
 
+
+/* Hide scrollbars but keep scrolling */
+html,
+body,
+* {
+  -ms-overflow-style: none;  /* IE / old Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none;             /* Chrome / Safari / Edge */
+}
+
 /*COLOR BG*/
 .suspect,
 .cancelled {

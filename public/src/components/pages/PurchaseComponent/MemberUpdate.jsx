@@ -19,7 +19,7 @@ import { useAlertDialog } from "../../Providers/AlertProvider";
 import OtpTimer from "../../utils/OtpTimer";
 import OtpInput from "../../utils/OtpInput";
 import BirthdayField from "../../utils/BirthdayField";
-
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 
 const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegistration_code, onMemberChange, wizardState, setWizardState, setActiveStep }, ref) => {
@@ -56,27 +56,27 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
             .min(10, "Mobile number is too short. It should be at least 10 characters including country code.")
             .max(15, "Mobile number is too long")
             .required("Mobile number is required!"),
-birthday: Yup.date()
-  .transform((value, originalValue) => {
-    // Handle empty string from date inputs
-    return originalValue ? new Date(originalValue) : value;
-  })
-  .test(
-    "not-in-future",
-    "Birthday cannot be in the future",
-    value => {
-      if (!value) return false; // required will handle the message
+        birthday: Yup.date()
+            .transform((value, originalValue) => {
+                // Handle empty string from date inputs
+                return originalValue ? new Date(originalValue) : value;
+            })
+            .test(
+                "not-in-future",
+                "Birthday cannot be in the future",
+                value => {
+                    if (!value) return false; // required will handle the message
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
 
-      const inputDate = new Date(value);
-      inputDate.setHours(0, 0, 0, 0);
+                    const inputDate = new Date(value);
+                    inputDate.setHours(0, 0, 0, 0);
 
-      return inputDate <= today;
-    }
-  )
-  .required("Birthday is required!")
+                    return inputDate <= today;
+                }
+            )
+            .required("Birthday is required!")
 
     });
 
@@ -118,7 +118,7 @@ birthday: Yup.date()
     useEffect(() => {
         if (!wizardState.otpState) return;
         if (wizardState.otpState.initialSeconds <= 0) return;
-        
+
         const interval = setInterval(() => tick(), 1000);
         return () => clearInterval(interval);
 
@@ -145,20 +145,20 @@ birthday: Yup.date()
     }, [wizardState.otpState])
 
     useEffect(() => {
-        
-        if(wizardState?.passData !== null){
-            
+
+        if (wizardState?.passData !== null) {
+
             setWizardState((prev) => ({
-                        ...prev,
-                        otpState: {
-                            ...prev.otpState,
-                            currentResponseMessage: "Your pass is now ready.",
-                            getMemberPass: true,
-                            currentResponseStatus: false,
-                            responseMessageStyle: true
-                        }
-                    }));
-                    
+                ...prev,
+                otpState: {
+                    ...prev.otpState,
+                    currentResponseMessage: "Your pass is now ready.",
+                    getMemberPass: true,
+                    currentResponseStatus: false,
+                    responseMessageStyle: true
+                }
+            }));
+
         }
 
     }, [wizardState?.passData])
@@ -174,7 +174,7 @@ birthday: Yup.date()
                 {
                     headers: { "Content-Type": "application/json" },
                     method: "POST",
-                     credentials: "include", // ✅ important for sessions
+                    credentials: "include", // ✅ important for sessions
                     body: JSON.stringify({ origin: "German Emirates Club Membership", mobile_number: values.mobile_number }),
 
                 }
@@ -211,7 +211,7 @@ birthday: Yup.date()
 
             } else {
 
-         
+
                 setWizardState((prev) => ({ ...prev, otpState: { ...prev.otpState, currentResponseMessage: otp_response.statusText, responseMessageStyle: false } }));
             }
 
@@ -254,7 +254,7 @@ birthday: Yup.date()
                 }
             );
 
-            
+
             if (otpResponse.status === 400 || otpResponse.status === 500) {
                 throw new Error(`Server responded with ${otpResponse.status}`);
             }
@@ -283,15 +283,15 @@ birthday: Yup.date()
 
 
         } catch (err) {
-            
+
             if (statusRef.current) {
 
                 statusRef.current.textContent = `Verification failed: ${err.message}`;
                 statusRef.current.classList.add("text-danger");
             }
-        }finally{
+        } finally {
 
-           
+
         }
     };
 
@@ -301,7 +301,7 @@ birthday: Yup.date()
     const getMemberPass = async () => {
 
         try {
-            
+
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-pass`, {
                 method: 'POST',
                 headers: {
@@ -309,21 +309,21 @@ birthday: Yup.date()
                 },
                 credentials: "include",
                 body: JSON.stringify({
-                    member: {...wizardState.member}
+                    member: { ...wizardState.member }
                 })
             });
 
-            
+
             if (!response.ok) {
-                 
-                 showSnackbar("💬 Oops! Something went wrong. Please contact us.", "");
-                
+
+                showSnackbar("💬 Oops! Something went wrong. Please contact us.", "");
+
             }
 
             const result = await response.json();
 
             if (result.status) {
-               
+
                 setWizardState((prev) => ({ ...prev, passData: result.data }));
                 setFetchingPasses(false);
                 setActiveStep((prev) => prev + 1);
@@ -336,7 +336,7 @@ birthday: Yup.date()
 
 
         } catch (err) {
-            
+
             showMessage(err);
             console.error('Error fetching data:', err);
         } finally {
@@ -362,19 +362,25 @@ birthday: Yup.date()
 
 
     // Loader
-     const [dots, setDots] = useState("");
+    const [dots, setDots] = useState("");
 
-  useEffect(() => {
-    if (!fetchingPasses) return;
+    useEffect(() => {
+        if (!fetchingPasses) return;
 
-    const interval = setInterval(() => {
-      setDots((prev) => (prev.length === 4 ? "" : prev + "."));
-    }, 300); // change speed if you like
+        // const parsed = parsePhoneNumberFromString(wizardState.member?.mobile_number);
+        // console.log(parsed);
 
-    return () => clearInterval(interval);
-  }, [fetchingPasses]);
 
-  
+        const interval = setInterval(() => {
+            setDots((prev) => (prev.length === 4 ? "" : prev + "."));
+        }, 300); // change speed if you like
+
+        return () => clearInterval(interval);
+    }, [fetchingPasses]);
+
+
+
+
 
     return (
         <div className="w-100 d-flex justify-content-center align-items-center flex-column" >
@@ -481,10 +487,10 @@ birthday: Yup.date()
                             />
 
 
-                            <div  className="mt-1">
+                            <div className="mt-1">
 
                                 <BirthdayField errors={errors} setFieldValue={setFieldValue} size="medium" setWizardState={setWizardState}
-                                    values={values} touched={touched} setFieldTouched={setFieldTouched}/>
+                                    values={values} touched={touched} setFieldTouched={setFieldTouched} />
                             </div>
 
                             {/* Submit Button */}
@@ -514,12 +520,12 @@ birthday: Yup.date()
                                 {
                                     fetchingPasses && (
                                         <div className="d-flex align-items-center gap-2">
-                                        <span style={{ fontSize: 12, whiteSpace: "pre" }}>
-                                            Generating your pass{dots}
-                                        </span>
-                                            
+                                            <span style={{ fontSize: 12, whiteSpace: "pre" }}>
+                                                Generating your pass{dots}
+                                            </span>
+
                                         </div>
-                                          
+
                                     )
                                 }
                                 <div ref={statusRef}></div>

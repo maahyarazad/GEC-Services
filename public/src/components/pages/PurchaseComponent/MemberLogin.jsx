@@ -25,7 +25,7 @@ import { useSnackbar } from "../../Providers/Snackbar";
 import { useAlertDialog } from '../../Providers/AlertProvider';
 
 
-const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegistration_code, setWizardState, wizardState, clear }, ref) => {
+const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegistration_code, setWizardState, wizardState, setActiveStep }, ref) => {
     // OTP vars
     const [showOtpInput, setShowOtpInput] = useState(false);
     const statusRef = useRef();
@@ -93,11 +93,8 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
             });
 
             
-            if (!response.ok) {
-                throw new Error('Failed to fetch');
-            }
-
             const result = await response.json();
+            
             if (result.data) {
 
                 showMessage("Found a corresponding email for your account. Please confirm your email to proceed.", 60000);
@@ -134,10 +131,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
             });
 
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch');
-                console.error('Response Error');
-            }
+          
 
         } catch (err) {
 
@@ -156,10 +150,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 credentials: 'include',
             });
 
-            if (!response.ok) {
-                console.error('Response Error');
-                throw new Error('Failed to fetch');
-            }
+           
 
             // Optionally handle response data
             const data = await response.json();
@@ -320,6 +311,8 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 otpRef?.current?.blurAll();
 
                 showSnackbar(otp_response_data.message, "success");
+
+                setActiveStep((prev) => prev + 1);
             } else {
                 statusRef.current.textContent = otp_response_data.message;
                 statusRef.current.classList.add("text-danger");

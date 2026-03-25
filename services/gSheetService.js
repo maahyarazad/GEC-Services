@@ -73,7 +73,7 @@ const GSheetService = {
                 const paid = card_number && card_number[0] === '7' ? 0 : 1;
                 const type = card_number ? Number(card_number[0]) : null;
                 const normalized = x['Mobile Number'].replace(/[=+'"\s-]/g, '');
-
+                const partner = x['Company Name']?.toString().trimEnd();
                 newObject.push({
                     card_number: Number(card_number),
                     paid: paid,
@@ -83,6 +83,7 @@ const GSheetService = {
                     card_expiry_date: expiryDate,
                     email: x['Email Address'],
                     mobile_number: normalized,
+                    partner: partner
                 })
             });
 

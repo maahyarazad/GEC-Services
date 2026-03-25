@@ -8,15 +8,19 @@ import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import Slide from '@mui/material/Slide';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import {useTheme} from '@mui/material';
+import { useTheme } from '@mui/material';
 import { useRef } from "react";
-import GECLogo from '../../assets/media/HGEC.png'
-const MemberLogin = React.lazy(()=> import ("./PurchaseComponent/MemberLogin"));
-const MemberUpdate = React.lazy(()=> import ("./PurchaseComponent/MemberUpdate"));
+import GECLogo from '../../assets/background.webp'
+const MemberLogin = React.lazy(() => import("./PurchaseComponent/MemberLogin"));
+const MemberUpdate = React.lazy(() => import("./PurchaseComponent/MemberUpdate"));
 
 
 import applePass from '../../../../file_storage/apple-wallet.png';
 import googlePass from '../../../../file_storage/enUS_add_to_google_wallet_add-wallet-badge.png';
+import AppStore from '../../assets/download-app-store.png';
+import PlayStore from '../../assets/download-play-store.png';
+
+
 
 
 const steps = ['Check Your Current Status', 'Update Your Profile', 'Get Your Membership Pass'];
@@ -27,7 +31,7 @@ const PurchaseMemberShip = () => {
 
 
 
-    const [wizardState, setWizardState] = React.useState({ member: null, authenticate: false, passData: null, otpState: null, isMounted : false });
+    const [wizardState, setWizardState] = React.useState({ member: null, authenticate: false, passData: null, otpState: null, isMounted: false });
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -50,7 +54,7 @@ const PurchaseMemberShip = () => {
 
 
     const handleBack = () => {
-        
+
         setSlideDirection('right');
         setActiveStep((prev) => prev - 1);
     };
@@ -85,19 +89,19 @@ const PurchaseMemberShip = () => {
 
     async function downloadPass(url) {
         const res = await fetch(url, { credentials: 'include' }); // include cookies if needed
-        
+
         if (!res.ok) throw new Error('Failed to fetch pass');
-            const blob = await res.blob();
-            const a = document.createElement('a');
-            const objectUrl = URL.createObjectURL(blob);
-            a.href = objectUrl;
-            const filename = url.split('/').pop();
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(objectUrl);
-        }
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        const objectUrl = URL.createObjectURL(blob);
+        a.href = objectUrl;
+        const filename = url.split('/').pop();
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(objectUrl);
+    }
 
 
 
@@ -107,23 +111,24 @@ const PurchaseMemberShip = () => {
             className="d-flex justify-content-center align-items-start"
             style={{
                 backgroundColor: ' var(--light)',
-                padding: isMobile ? '1rem' : '2rem',
-                height:'100vh',
-                                    width: '100vw',
+                padding: isMobile ? '0rem' : '1rem',
+                height: '100vh',
+                width: '100vw',
                 boxSizing: 'border-box',
             }}
         >
             <Box
                 sx={{
+                    boxShadow: 10,
                     backgroundColor: 'white',
-                    borderRadius: 5,
+                    borderRadius: isMobile ? 0 : 5,
                     padding: isMobile ? '1rem' : '2rem',
                     width: '100vw',
                     maxWidth: '1000px',
-                    height: 'auto',
+                    height: isMobile ? '100dvh' : '97vh',
                 }}
             >
-                <img src={GECLogo} height={60} />
+                <img src={GECLogo} height={55} />
                 {/* Stepper Header */}
                 <Stepper
                     activeStep={activeStep}
@@ -163,10 +168,10 @@ const PurchaseMemberShip = () => {
                     sx={{
                         position: 'relative',
                         overflow: 'scroll',
-                    //    display:'inline-block',
+                        //    display:'inline-block',
 
                         // height: '65vh',
-                        minHeight: isMobile ? '50vh' : '65vh',
+                        minHeight: isMobile ? '50vh' : '60vh',
                     }}
                 >
                     <Slide
@@ -180,8 +185,8 @@ const PurchaseMemberShip = () => {
                         <Box
                             sx={{
                                 display: 'flex',
-    justifyContent: 'center', // horizontal centering
-    alignItems: 'center',     // vertical centering
+                                justifyContent: 'center', // horizontal centering
+                                alignItems: 'center',     // vertical centering
                                 position: 'absolute',
                                 width: '100%',
                                 minHeight: isMobile ? '50vh' : '65vh',
@@ -203,51 +208,54 @@ const PurchaseMemberShip = () => {
                             ) : (
 
                                 <>
-                                    
 
 
-                                        {/* Put JS logic outside JSX */}
-                                        {(() => {
-                                            switch (activeStep) {
-                                                case 0:
-                                                    return <MemberLogin wizardState={wizardState} setWizardState={setWizardState} />
 
-                                                case 1:
-                                                    return <MemberUpdate wizardState={wizardState} setWizardState={setWizardState} setActiveStep={setActiveStep}/>
+                                    {/* Put JS logic outside JSX */}
+                                    {(() => {
+                                        switch (activeStep) {
+                                            case 0:
+                                                return <MemberLogin wizardState={wizardState} setWizardState={setWizardState} setActiveStep={setActiveStep} />
+
+                                            case 1:
+                                                return <MemberUpdate wizardState={wizardState} setWizardState={setWizardState} setActiveStep={setActiveStep} />
 
 
-                                                case 2:
-                                                    const passStyle = { border: 0, borderRadius: 12, display: "block" };
-                                                    return (
-                                                        <div className="w-100 d-flex justify-content-center align-items-center flex-column" style={{ width: "100%", maxWidth: 400 }}>
-                                                            <span className='py-1'>Your digital membership pass is ready — click on either the <strong>Google Wallet</strong> or <strong>Apple Wallet</strong> button below to add it to your wallet. </span>
-                                                            <div className='py-2'>
-                                                                <div className="" onClick={()=> downloadPass(wizardState.passData?.applePassPath)} download="German_Emirates_Club.pkpass" style={{cursor:'pointer'}}>
-                                                                    <img width="300" src={applePass} alt="Google Pass" style={passStyle} />
-                                                                </div>
-                                                            </div>
-                                                            <div className='py-2'>
-
-                                                                 <a className="" target='_blank' href={`${wizardState.passData?.googlePassPath}`} rel="noopener noreferrer">
-                                                                    <img width="300" src={googlePass} alt="Google Pass" style={passStyle} />
-                                                                </a>
-
-                                                            </div>
+                                            case 2:
+                                                const passStyle = { border: 0, borderRadius: 12, display: "block" };
+                                                return (
+                                                    <div className="w-100 d-flex justify-content-center align-items-center flex-column" style={{ width: "100%" }}>
+                                                        <div className='py-1 pb-5' style={{ fontSize: '1.5rem', lineHeight: 1.2 }}>
+                                                            Congratulations! Your corporate membership pass has been issued and sent to your email. Please <strong style={{}}>download the application</strong> and register your account to access it on your mobile device.
                                                         </div>
-                                                    );
+                                                        <div className='py-2'>
+                                                            <a href="https://play.google.com/store/apps/details?id=com.buenapublica.GECRewards" target="_blank" rel="noopener noreferrer" style={{ minHeight: '70px', display: 'block' }}>
+                                                                <img src={PlayStore} alt="Get it on Google Play" class="download-img" width="300" />
+                                                            </a>
+                                                        </div>
+                                                        <div className='py-2'>
 
-                                                    break;
+                                                            <a href="https://apps.apple.com/ae/app/gec-rewards/id6444924851" target="_blank" rel="noopener noreferrer" style={{ minHeight: '70px', display: 'block' }}>
+                                                                <img src={AppStore} alt="Download on the App Store" class="download-img" width="300" />
+                                                            </a>
 
-                                                default:
-                                                    break;
-                                            }
-                                            return null;
-                                        })()}
+                                                        </div>
+
+                                                    </div>
+                                                );
+
+                                                break;
+
+                                            default:
+                                                break;
+                                        }
+                                        return null;
+                                    })()}
 
 
 
 
-                                    
+
                                 </>
                             )}
                         </Box>
