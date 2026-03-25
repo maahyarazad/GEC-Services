@@ -7,7 +7,7 @@ import { RiLogoutBoxRLine } from "react-icons/ri";
 import Tooltip from "@mui/material/Tooltip";
 import { useNavigate } from "react-router";
 import { config } from '../../ui_config';
-
+import GECLogo from '../../assets/background.webp'
 export const Header = ({ adminUser, setAdminUser, showMenu, burgerActive, setBurgerActive }) => {
 
 
@@ -60,7 +60,7 @@ export const Header = ({ adminUser, setAdminUser, showMenu, burgerActive, setBur
                         </div>
 
                         <div className="d-flex align-items-center">
-                            <img alt="GEC Logo" src={`${import.meta.env.VITE_SERVERURL}/uploads/logo@2x.png`} height={50} style={{cursor:'pointer'}} onClick={()=>  console.log('🤖')}/>
+                            <img alt="GEC Logo" src={GECLogo} height={50} style={{cursor:'pointer'}} onClick={()=>  console.log('🤖')}/>
                             <div className="d-flex flex-column ps-3" style={{fontWeight: 300 }}>
                                 <div>GEC Services</div>
                                 <div style={{fontSize: 10}}>Admin Area</div>

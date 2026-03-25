@@ -262,6 +262,7 @@ CREATE TABLE IF NOT EXISTS member_card (
     metadata_modifiedAt DATETIME,
      google_pass_token TEXT ,
      serial_number TEXT,
+     partner TEXT,
      birthday datetime
 );
 
