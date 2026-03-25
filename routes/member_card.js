@@ -75,6 +75,13 @@ router.post(
       }
 
       const { member } = req.body;
+
+            delete member.nationalNumber;
+            delete member.countryCallingCode;
+            delete member.__countryCallingCodeSource;
+            delete member.country;
+            delete member.number;
+
       const memberId = member?.memberId;
       member.title = "CORPORATE CARD";
 
