@@ -25,6 +25,7 @@ import { parsePhoneNumberFromString, isValidPhoneNumber } from "libphonenumber-j
 const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegistration_code, onMemberChange, wizardState, setWizardState, setActiveStep }, ref) => {
     const formikRef = useRef();
     const otpFocus = useRef();
+    const countryRef = useRef();
 
     const timer = useRef(null);
     const [isSearching, setIsSearching] = useState(false);
@@ -162,6 +163,11 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
     const handleSendOtp = async (values, setFieldError, setFieldTouched) => {
         try {
 
+
+             if (!values.countryCallingCode) {
+                countryRef.current?.setError("Country code required");
+                return;
+            }
 
             const mobile_number = `+${values.countryCallingCode}${values.mobile_number}`;
             const normilized = `${values.countryCallingCode}${values.mobile_number}`;
@@ -480,7 +486,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                             />
 
                             <CountrySelect
-
+                                    ref={countryRef}
                                 wizardState={wizardState}
                                 setWizardState={setWizardState}
                             />
