@@ -181,7 +181,7 @@ async function event_confirm_registration_email_aws(reqBody) {
                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
                   <p>
                     If you have any questions, feel free to contact us at <br/>
-                    <a href="mailto:office5@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office5@german-emirates-club.com</a>.
+                    <a href="mailto:office2@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office2@german-emirates-club.com</a>.
                   </p>
                   <p>Warm regards,<br />The German Emirates Club Team</p>
                 </td>
@@ -265,7 +265,7 @@ async function comfirm_message_email(reqBody) {
                   </p>
                   <p>
                     If you have any questions in the meantime, please feel free to contact us at
-                    <a href="mailto:office5@german-emirates-club.com" style="color: #D9B144; text-decoration: none;">office5@german-emirates-club.com</a>.
+                    <a href="mailto:office2@german-emirates-club.com" style="color: #D9B144; text-decoration: none;">office2@german-emirates-club.com</a>.
                   </p>
                   <p>Warm regards,<br/>The German Emirates Club Team</p>
                 </td>
@@ -668,7 +668,7 @@ async function membership_pass_email({ data }) {
               <td style="padding:0 30px 20px; font-size:16px; color:#333333; line-height:1.7;">
                 <p>
                   If you have any questions or need assistance, please contact us at<br />
-                  <a href="mailto:office5@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office5@german-emirates-club.com</a>
+                  <a href="mailto:office2@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office2@german-emirates-club.com</a>
                 </p>
 
                 <p>
@@ -903,7 +903,7 @@ Teilnahme.</p>
                 <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
                   <p>
                     Wenn Sie Fragen haben, kontaktieren Sie uns bitte unter <br/>
-                    <a href="mailto:office5@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office5@german-emirates-club.com</a>.
+                    <a href="mailto:office2@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office2@german-emirates-club.com</a>.
                   </p>
                   <p>Mit freundlichen Grüßen,<br />Das Team des German Emirates Club</p>
                 </td>
@@ -1576,7 +1576,7 @@ async function membership_courtacy_at_venue_message(data) {
                       event
                     )}</strong> venue.</p>
                     <p>We appreciate your participation and look forward to welcoming you again soon.</p>
-                    <p>If you have any questions or need assistance, please feel free to contact us at <a href="mailto:office5@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office5@german-emirates-club.com</a>.</p>
+                    <p>If you have any questions or need assistance, please feel free to contact us at <a href="mailto:office2@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office2@german-emirates-club.com</a>.</p>
                     <p>Warm regards,<br />The German Emirates Club Team</p>
                   </td>
                 </tr>

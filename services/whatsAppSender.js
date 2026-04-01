@@ -558,9 +558,9 @@ async function handleAutoResponse(From, ButtonPayload) {
   if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
     const templates = await fetchContentTemplates();
     const second_response_message__en_sid =
-      "HX75ef2e505ae33e3ef47046a4dca7e230";
+      "HX2bdea0d549ccd461d737fe9e321dd651";
     const second_response_message__de_sid =
-      "HXc61d9b3c83b98ea9f5b5fd36f3673593";
+      "HX6d0c3c5a81fa8cd504f2a3dbfa21cb17";
 
     const en_template = templates.result.find(
       (x) => x.sid === second_response_message__en_sid
@@ -582,7 +582,7 @@ async function handleAutoResponse(From, ButtonPayload) {
     const template =
       contactInfo[0].language === "de" ? de_template : en_template;
 
-    const payload = { 1: `https://maps.app.goo.gl/bz76YAry43x9gvwL9` };
+    const payload = { 1: `https://maps.app.goo.gl/rCQUvusGWLQTaam89` };
 
     const result = await messageSender({
       body: { template, phoneList, payload },

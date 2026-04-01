@@ -20,6 +20,7 @@ window.Buffer = Buffer;
 import { SnackbarProvider } from "./components/Providers/Snackbar";
 import { AlertDialogProvider } from "./components/Providers/AlertProvider";
 import { SlideModalProvider } from "./components/Providers/SlideModalProvider";
+import AccountDeletionRequestPage from "./components/pages/AccountDeletionRequestPage";
 
 
 
@@ -69,6 +70,7 @@ function AppRoutes() {
       <TitleManager />
       <Routes>
         <Route path="/" element={<Login />} />
+        <Route path="/account-deletion" element={<AccountDeletionRequestPage />} />
         <Route path="/registration/:event" element={<TemplateForm />} />
         <Route path="/registration/:event/success" element={<SuccessTemplatePage />} />
         <Route path="/guest-registration/:eventSlug" element={<GuestRegistration />} />
