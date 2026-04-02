@@ -267,3 +267,14 @@ CREATE TABLE IF NOT EXISTS member_card (
 );
 
 
+CREATE TABLE account_deletion_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    full_name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    member_id TEXT,
+    phone TEXT,
+    country TEXT,
+    reason TEXT,
+    request_source TEXT DEFAULT 'app',
+    requested_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

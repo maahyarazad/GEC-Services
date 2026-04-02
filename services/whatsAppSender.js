@@ -1,4 +1,4 @@
-require('dotenv').config();
+require("dotenv").config();
 const twilioClient = require("twilio")(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
@@ -61,8 +61,6 @@ function hasPlaceholders(text) {
 
 const contactBookData = (conditions, useAudience) => {
   let query = "";
-  
-
 
   if (useAudience === "all") {
     query = `
@@ -87,7 +85,7 @@ const contactBookData = (conditions, useAudience) => {
                 WHEN 'only_guest' THEN 7
                 ELSE 8
             END
-       LIMIT 300
+       LIMIT ${conditions.senderLimit}
     `;
   } else {
     query = `
@@ -100,7 +98,7 @@ const contactBookData = (conditions, useAudience) => {
           ? ``
           : `AND language = '${conditions?.language?.slice(0, 2)}'`
       }
-      AND contentSid IS NULL GROUP BY phone LIMIT 300
+      AND contentSid IS NULL GROUP BY phone LIMIT ${conditions.senderLimit}
     `;
   }
 
@@ -152,6 +150,7 @@ const messageSender = async (req) => {
       useAudience,
       template,
       payload,
+      senderLimit
     } = req.body;
 
     // Helper function to safely send message and swallow errors
@@ -198,6 +197,7 @@ const messageSender = async (req) => {
 
     if (useContactBook) {
       const conditions = {};
+      conditions.senderLimit = senderLimit;
       if (useLanguage) {
         conditions.language = template.language;
       }
@@ -553,41 +553,66 @@ async function fetchTwilioMessagesDetails(sentMessages) {
 }
 
 async function handleAutoResponse(From, ButtonPayload) {
-  const from = From.replace("whatsapp:", "");
+  try {
+    const from = From.replace("whatsapp:", "");
 
-  if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
-    const templates = await fetchContentTemplates();
-    const second_response_message__en_sid =
-      "HX2bdea0d549ccd461d737fe9e321dd651";
-    const second_response_message__de_sid =
-      "HX6d0c3c5a81fa8cd504f2a3dbfa21cb17";
+    if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
+      const templates = await fetchContentTemplates();
+      const second_response_message__en_sid =
+        "HX2bdea0d549ccd461d737fe9e321dd651";
+      const second_response_message__de_sid =
+        "HX6d0c3c5a81fa8cd504f2a3dbfa21cb17";
 
-    const en_template = templates.result.find(
-      (x) => x.sid === second_response_message__en_sid
-    );
-    const de_template = templates.result.find(
-      (x) => x.sid === second_response_message__de_sid
-    );
+      const en_template = templates.result.find(
+        (x) => x.sid === second_response_message__en_sid
+      );
+      const de_template = templates.result.find(
+        (x) => x.sid === second_response_message__de_sid
+      );
 
-    const query = `
-        SELECT * FROM contact_book cb
-        WHERE cb.phone = '${from}'
-    `;
+      const query = `
+              SELECT * FROM contact_book cb
+              WHERE cb.phone = '${from}'
+          `;
 
-    const stmt = db.prepare(query);
-    const contactInfo = stmt.all(); // synchronous, returns rows array
+      const stmt = db.prepare(query);
+      const contactInfo = stmt.all(); // synchronous, returns rows array
 
-    const phoneList = [{ id: "8176278162873", phone: contactInfo[0].phone }];
-    // const media_template = contactInfo[0].type === 'club_member' ? "HX4974a2a0c07f4b9d7b31db0737e87d50" : "HX6b3e75b231d4e0a205d575c3f90b27d3";
-    const template =
-      contactInfo[0].language === "de" ? de_template : en_template;
+      let phoneList = [];
+      let template = "";
+      let payload = {};
 
-    const payload = { 1: `https://maps.app.goo.gl/rCQUvusGWLQTaam89` };
+      const guest_Types = ["expert_guest", "only_guest", "Wüstenkinder"];
 
-    const result = await messageSender({
-      body: { template, phoneList, payload },
-    });
-  } else {
+      const contact = contactInfo?.[0];
+      if (!contact) return;
+
+      phoneList.push({
+        id: "8176278162873",
+        phone: contact.phone,
+      });
+
+      if (guest_Types.includes(contact.type)) {
+        const template_sid = "HXb1ce9479f3d42819bef456f00448afcc";
+        template = templates.result.find((x) => x.sid === template_sid);
+        const message = `Super, du stehst auf der Gästeliste! Wir freuen uns auf dich. Kommst du allein oder in Begleitung? Schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nDie genaue Location bekommst du gleich.`;
+
+        payload[1] = message;
+      } else {
+        template = contact.language === "de" ? de_template : en_template;
+
+        payload[1] = "https://maps.app.goo.gl/rCQUvusGWLQTaam89";
+      }
+
+      const result = await messageSender({
+        body: { template, phoneList, payload },
+      });
+    } else {
+    }
+  } catch (e) {
+   
+    console.error(e);
+    
   }
 }
 

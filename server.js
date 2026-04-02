@@ -83,6 +83,7 @@ const allowedOrigins = [
   process.env.GIC_CLIENT_ORIGIN,
   process.env.CLIENT_ORIGIN_EVENTS,
   process.env.GEC__ORIGIN,
+  process.env.BP_ORIGIN,
 ];
 
 app.set("trust proxy", 1);
