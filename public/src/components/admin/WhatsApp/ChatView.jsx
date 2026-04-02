@@ -26,7 +26,13 @@ const ChatView = ({ messages }) => {
 
   if(!messages) return null;
   return (
-    <div className="chat-container">
+    <div className="chat-container" style={{
+    // backgroundImage: `url(${WABackground})`,
+    // backgroundSize: 'cover',
+    // backgroundPosition: 'center',
+    width: '100%',
+    height: '50vh', 
+  }}>
       {messages.map((msg, index) => {
         const messageDate = new Date(msg.received_at);
         const showDate =

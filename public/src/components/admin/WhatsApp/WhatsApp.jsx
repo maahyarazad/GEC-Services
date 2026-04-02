@@ -29,17 +29,22 @@ import QuickReply from "./QuickReply";
 import { IoStatsChartSharp } from "react-icons/io5";
 import WhastAppReport from '../Dashboard/WhastAppReport';
 import { useNavigate, useLocation } from "react-router-dom";
-
+import FilterParams from '../../admin/FilterParams';
 
 
 const WhatsappBroadcast = () => {
+
+
+
+
+
 
     const location = useLocation();
     const navigate = useNavigate();
     const { openDialog } = useAlertDialog();
     const [data, setData] = useState();
     const [groupedByTypeKey, setGroupedByTypeKey] = useState();
-    
+
     const [openLogs, setOpenLogs] = useState(false);
     const [openContactBook, setOpenContactBook] = useState(false);
     const [openResponses, setOpenResponses] = useState(false);
@@ -48,8 +53,8 @@ const WhatsappBroadcast = () => {
     const [JSON_Value_Response_Log, setJSON_Value_Response_Log] = useState(null);
     const [viewStatus, setViewStatus] = useState(false);
     const [viewCreateNewContact, setViewCreateNewContact] = useState(false);
-    
-    
+
+
 
     const [contactList, setContactList] = useState([]);
     const [viewBlackList, setViewBlackList] = useState(false);
@@ -68,7 +73,7 @@ const WhatsappBroadcast = () => {
         loadingMassSend: false,
         loadingMassSend: false,
         phone: '',
-        senderLimit :500,
+        senderLimit: 500,
     });
 
 
@@ -254,7 +259,7 @@ const WhatsappBroadcast = () => {
                 <>
                     <strong>⚠️ Warning:</strong>
                     <br></br>
-                   This operation is irreversible. Once cleared, all contact delivery flag information will be permanently deleted.
+                    This operation is irreversible. Once cleared, all contact delivery flag information will be permanently deleted.
                     <br></br>
                     <strong>When to use:</strong>
                     <br></br>
@@ -268,7 +273,7 @@ const WhatsappBroadcast = () => {
                 text: 'Clear',
                 color: 'error',
             },
-            () => { callClearContactBook()},
+            () => { callClearContactBook() },
             () => { }
         );
     };
@@ -341,7 +346,7 @@ const WhatsappBroadcast = () => {
     const handleSubmit = async (e) => {
 
         e.preventDefault();
-        handleMessageStateChange( 'massAction' , true);
+        handleMessageStateChange('massAction', true);
         try {
 
             const requiredKeys = messageState.content?.variables
@@ -369,7 +374,7 @@ const WhatsappBroadcast = () => {
                         useTestBook: messageState.useTestBook,
                         useLanguage: messageState.useLanguage,
                         useAudience: messageState.useAudience,
-                        phoneList : messageState.phoneList,
+                        phoneList: messageState.phoneList,
                         payload: messageState.inputValue,
                         template: messageState.content,
                         senderLimit: messageState.senderLimit,
@@ -380,7 +385,7 @@ const WhatsappBroadcast = () => {
             if (response.ok) {
                 const responseData = await response.json();
                 showSnackbar(responseData.message, "success");
-                 handleMessageStateChange( 'testAction' , false);
+                handleMessageStateChange('testAction', false);
             } else {
                 const errorData = await response.json();
                 showSnackbar(errorData.message || "Failed to send message", "error");
@@ -389,33 +394,19 @@ const WhatsappBroadcast = () => {
             console.error("Failed to send:", error);
             showSnackbar("Unexpected error occurred", "error");
         } finally {
-             handleMessageStateChange( 'massAction' , false);
-             handleMessageStateChange( 'phoneList' , []);
-            
+            handleMessageStateChange('massAction', false);
+            handleMessageStateChange('phoneList', []);
+
         }
     };
 
 
-    /////////////////////////////////  LOGS   //////////////////////////////////////
+    //////////////////////////////  RESPONSE LOGS   /////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
 
-    const defaultSortModel = [{ field: 'id', sort: 'desc' }];
-    const [rowCount, setRowCount] = useState(0);
-    const [loading_logs, setloading_logs] = useState(false);
-    const [sortModel, setSortModel] = useState(defaultSortModel);
-    const [filterModel, setFilterModel] = useState({
-        items: [],
-    });
-    const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
-    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
-    const [_paginationModel, _setPaginationModel] = useState({
-        page: 0,
-        pageSize: 100,
-    });
 
-    const [logs, setLogs] = useState([]);
-    const [responses, setResponses] = useState([]);
+
 
     const fetchResponses = useCallback(
         async () => {
@@ -438,19 +429,67 @@ const WhatsappBroadcast = () => {
         []
     );
 
+
+    /////////////////////////////////  DELIVERY LOGS   /////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////
+
+    const defaultSortModel = [{ field: 'id', sort: 'desc' }];
+    const [rowCount, setRowCount] = useState(0);
+    const [loading_logs, setloading_logs] = useState(false);
+    const [sortModel, setSortModel] = useState(defaultSortModel);
+    const [filterModel, setFilterModel] = useState({
+        items: [],
+    });
+    const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
+    const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
+    const [_paginationModel, _setPaginationModel] = useState({
+        page: 0,
+        pageSize: 100,
+    });
+
+    const [logs, setLogs] = useState([]);
+    const [responses, setResponses] = useState([]);
+
+    const now = new Date();
+    const defaultStart = new Date();
+    defaultStart.setDate(now.getDate() - 2);
+    const formatDateForInput = (date) =>
+        date.toISOString().slice(0, 10);
+    const [startDate, setStartDate] = useState(formatDateForInput(defaultStart));
+    const [endDate, setEndDate] = useState(formatDateForInput(now));
+
     const fetchLogs = useCallback(
 
-        async () => {
+        async (paginationModel, sortModel = [], filterModel = {}, start, end) => {
 
             setloading_logs(true);
             try {
 
 
-                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-delivery-logs`, { credentials: "include" });
+                const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
+                const sortField = sort.field || '';
+                const sortOrder = sort.sort || '';
+
+                // Parse filters from filterModel.items
+                const filterParams = FilterParams(filterModel);
+
+
+                const queryParams = [
+                    `page=${paginationModel.page + 1}`,
+                    `pageSize=${paginationModel.pageSize}`,
+                    sortField ? `sortField=${sortField}` : '',
+                    sortOrder ? `sortOrder=${sortOrder}` : '',
+                    filterParams
+                ].filter(Boolean).join('&');
+
+                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-delivery-logs?${queryParams}&startDate=${start}&endDate=${end}`, { credentials: "include" });
                 const data = await response.json();
 
+
+
                 setLogs(data.result || []);
-                setRowCount(data.result.length || 0);
+                setRowCount(data.pagination.totalCount || 0);
             } catch (err) {
                 console.error('Failed to fetch:', err);
             } finally {
@@ -461,15 +500,17 @@ const WhatsappBroadcast = () => {
     );
 
     useEffect(() => {
-        if (openLogs) fetchLogs();
+        if (openLogs) fetchLogs(paginationModel, sortModel, applyFilterTrigger, startDate, endDate);
         if (openResponses) fetchResponses();
 
 
-    }, [openLogs, openResponses]);
+    }, [openLogs, openResponses, paginationModel, sortModel, applyFilterTrigger, startDate, endDate]);
 
     useEffect(() => {
         if (openContactBook && !viewCorruptedList) fetchContactData();
     }, [openContactBook, viewBlackList, viewCorruptedList]);
+
+
 
 
 
@@ -610,17 +651,71 @@ const WhatsappBroadcast = () => {
                 ) : (
                     <>
                         {openLogs && (
-                            <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
+                            <div style={{ width: '100%', height: 'calc(100vh - 155px)' }}>
+
+                                <div style={{ marginBottom: 12 }} className="d-flex">
+                                    <div >
+
+                                        <label>
+                                            Start Date{" "}
+                                            <input className=""
+                                                type="date"
+                                                value={startDate}
+                                                onChange={(e) => setStartDate(e.target.value)}
+                                            />
+                                        </label>{" "}
+                                    </div>
+                                    <div className="ps-2">
+
+                                        <label>
+                                            End Date{" "}
+                                            <input
+                                                type="date"
+                                                className=""
+                                                value={endDate}
+                                                onChange={(e) => setEndDate(e.target.value)}
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
+
+
                                 <DataGrid
                                     rows={logs}
                                     columns={columns({ onViewJson })}
-                                    paginationModel={_paginationModel}
-                                    onPaginationModelChange={_setPaginationModel}
-                                    pageSizeOptions={[25, 50, 100]}
-                                    pagination
+                                    getRowHeight={(params) => {
+                                        const companyData = params?.row?.company_data;
+
+                                        if (companyData) {
+                                            return 200;
+                                        }
+                                        return 52;
+                                    }}
+                                    // getRowClassName={(params) =>
+                                    //     params.row.company_data ? "companyRow" : ""
+                                    // }
+                                    rowsPerPageOptions={[25, 50, 100]}
+                                    paginationMode="server"
+                                    sortingMode="server"
+                                    filterMode="server"
+                                    rowCount={rowCount}
+                                    paginationModel={paginationModel}
+                                    onPaginationModelChange={(newModel) => {
+                                        setPaginationModel(newModel);
+                                    }}
+                                    onSortModelChange={(newModel) => {
+
+                                        setSortModel(newModel)
+                                    }}
+                                    filterModel={filterModel}
+                                    onFilterModelChange={(newModel) => {
+                                        setFilterModel(newModel); // use the raw model now
+                                    }}
+                                    sortModel={sortModel}
                                     disableRowSelectionOnClick
                                     disableSelectionOnClick
                                     showToolbar
+                                    pagination
                                 />
                             </div>
                         )}
@@ -767,7 +862,7 @@ const WhatsappBroadcast = () => {
                     <AiOutlineClear style={{ marginRight: 2 }} />
                 </IconButton>
 
-                <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { handleMessageStateChange('massAction',true); }} disabled={messageState.content === null}>
+                <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { handleMessageStateChange('massAction', true); }} disabled={messageState.content === null}>
                     <FaWhatsapp size={17} style={{ marginRight: 2 }} /> Send Message
                 </Button>
                 <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenContactBook(true)}>
@@ -805,11 +900,11 @@ const WhatsappBroadcast = () => {
                                             <div className="d-flex">
                                                 <div className="col form-control">
                                                     {Object.values(groupedByTypeKey[key]).map((item, idx) => (
-                                                            <div key={idx} onClick={() => {
-                                                                
-                                                                handleMessageStateChange("inputValue", {});
-                                                                handleMessageStateChange("content", item);
-                                                            }}
+                                                        <div key={idx} onClick={() => {
+
+                                                            handleMessageStateChange("inputValue", {});
+                                                            handleMessageStateChange("content", item);
+                                                        }}
                                                             style={{ border: 'solid', borderRadius: '5px', borderColor: 'gray', borderWidth: '1px', padding: '5px', marginBottom: '5px', cursor: 'pointer', overflow: 'clip' }}>
 
                                                             <strong>{item.friendlyName}</strong> ({item.language})<br />

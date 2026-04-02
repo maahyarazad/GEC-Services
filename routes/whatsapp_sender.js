@@ -16,7 +16,7 @@ const { pipeline, Readable } = require("stream");
 const { promisify } = require("util");
 const streamPipeline = promisify(pipeline);
 const fetch = require("node-fetch");
-
+const {getCountCacheKey, countCache} = require("../services/cacheService")
 const MessagingResponse = require("twilio").twiml.MessagingResponse;
 
 router.post("/api/whatsapp/send", (req, res) => {
@@ -159,6 +159,32 @@ router.post("/whatsapp/twilio-callback", (req, res) => {
 
 router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
   try {
+    const page = Math.max(parseInt(req.query.page, 25) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 25) || 25, 1), 100);
+    const offset = (page - 1) * limit;
+
+    const now = new Date();
+    const defaultStart = new Date();
+    defaultStart.setDate(now.getDate() - 2);
+
+    const startDate = req.query.startDate
+      ? new Date(req.query.startDate)
+      : defaultStart;
+
+    const endDate = req.query.endDate
+      ? new Date(req.query.endDate)
+      : now;
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid startDate or endDate",
+      });
+    }
+
+    const endDateInclusive = new Date(endDate);
+    endDateInclusive.setHours(23, 59, 59, 999);
+
     const templates = await fetchContentTemplates();
     const templateMap = new Map();
 
@@ -166,49 +192,97 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
       templateMap.set(t.sid, t.friendlyName);
     });
 
-    const query = `
-WITH ranked AS (
-    SELECT 
-        td.id,
-        td.metadata_createdAt, 
-        ttm.contentSid, 
-        json_extract(td.response, '$.SmsStatus') AS SmsStatus,  
-        ttm.messageSid, 
-        (cb.first_name || ' ' || cb.last_name) AS full_name,  
-        cb.phone,
-        ROW_NUMBER() OVER (PARTITION BY td.id ORDER BY td.metadata_createdAt DESC) AS rn
-    FROM twilio_delivery td
-    LEFT JOIN twilio_template_message ttm
-        ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
-    LEFT JOIN contact_book cb
-        ON json_extract(td.response, '$.To') = 'whatsapp:' || cb.phone
-    WHERE ttm.messageSid IS NOT NULL
-)
-SELECT *
-FROM ranked
-WHERE rn = 1
-ORDER BY metadata_createdAt DESC;
+    const start = startDate.toISOString();
+    const end = endDateInclusive.toISOString();
 
+    const baseCte = `
+      WITH ranked AS (
+        SELECT 
+          td.id,
+          td.metadata_createdAt,
+          ttm.contentSid,
+          json_extract(td.response, '$.SmsStatus') AS SmsStatus,
+          ttm.messageSid,
+          (cb.first_name || ' ' || cb.last_name) AS full_name,
+          cb.phone,
+          ROW_NUMBER() OVER (
+            PARTITION BY td.id
+            ORDER BY td.metadata_createdAt DESC
+          ) AS rn
+        FROM twilio_delivery td
+        LEFT JOIN twilio_template_message ttm
+          ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+        LEFT JOIN contact_book cb
+          ON json_extract(td.response, '$.To') = 'whatsapp:' || cb.phone
+        WHERE ttm.messageSid IS NOT NULL
+          AND td.metadata_createdAt >= ?
+          AND td.metadata_createdAt <= ?
+      )
+    `;
 
-                    
-            `;
+    const dataQuery = `
+      ${baseCte}
+      SELECT *
+      FROM ranked
+      WHERE rn = 1
+      ORDER BY metadata_createdAt DESC
+      LIMIT ? OFFSET ?;
+    `;
 
-    const stmt = db.prepare(query);
-    const rows = stmt.all();
+    const countQuery = `
+      ${baseCte}
+      SELECT COUNT(*) AS totalCount
+      FROM ranked
+      WHERE rn = 1;
+    `;
+
+    const dataStmt = db.prepare(dataQuery);
+    const rows = dataStmt.all(start, end, limit, offset);
+
+    const cacheKey = getCountCacheKey(start, end);
+
+    let totalCount;
+    const cachedCount = countCache.get(cacheKey);
+
+    if (cachedCount !== undefined) {
+      totalCount = cachedCount;
+    } else {
+      const countStmt = db.prepare(countQuery);
+      const countRow = countStmt.get(start, end);
+      totalCount = countRow?.totalCount || 0;
+      countCache.set(cacheKey, totalCount);
+    }
 
     const result = rows.map((row) => ({
-      // id: crypto.randomUUID(), // uncomment if you want unique IDs
       ...row,
       templateFriendlyName: templateMap.get(row.contentSid) ?? null,
     }));
 
+    const totalPages = Math.ceil(totalCount / limit);
+
     return res.json({
       status: true,
       result,
+      filters: {
+        startDate: start,
+        endDate: end,
+      },
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages,
+        currentCount: result.length,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
     });
   } catch (error) {
-    console.error("Error in /member:", error);
-    res.status(500).json({ status: false, message: "Server error" });
+    console.error("Error in /api/whatsapp/twilio-delivery-logs:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
   }
 });
 

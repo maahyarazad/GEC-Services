@@ -120,7 +120,7 @@ useEffect(()=> {
 
     return (
         <form onSubmit={handleSubmit}>
-            <div className="container pt-2">
+            <div className="container pt-2" >
                 <div className="container pt-2 d-flex align-items-center gap-2">
                 <div className="avatar-circle">
                     {contact_name?.charAt(0).toUpperCase()}
@@ -150,7 +150,7 @@ useEffect(()=> {
                     <div className="col mb-3">
                         <label>Your Message:</label>
                         <textarea
-                            rows={4}
+                            rows={2}
                             name="message"
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
