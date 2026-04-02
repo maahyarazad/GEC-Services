@@ -1,9 +1,21 @@
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
-import { useMemo } from "react";
+import {
+  useMemo,
+  useState,
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+} from "react";
 
-export default function CountrySelect({ wizardState, setWizardState }) {
+const CountrySelect = forwardRef(function CountrySelect(
+  { wizardState, setWizardState, required = false },
+  ref
+) {
+  const [error, setError] = useState("");
+  const inputRef = useRef(null);
+
   const selectedCountry = useMemo(() => {
     if (!wizardState?.member?.countryCallingCode) return null;
 
@@ -15,10 +27,33 @@ export default function CountrySelect({ wizardState, setWizardState }) {
     );
   }, [wizardState?.member?.countryCallingCode]);
 
+  const validate = () => {
+    const hasValue =
+      wizardState?.member?.countryCallingCode &&
+      wizardState?.member?.country;
+
+    if (required && !hasValue) {
+      setError("Country code is required");
+      return false;
+    }
+
+    setError("");
+    return true;
+  };
+
+  useImperativeHandle(ref, () => ({
+    validate,
+    setError: (message) => setError(message || ""),
+    clearError: () => setError(""),
+    focus: () => {
+      inputRef.current?.focus?.();
+    },
+  }));
+
   return (
     <Autocomplete
       id="country-select-demo"
-      sx={{ width: '100%' }}
+      sx={{ width: "100%" }}
       options={countries}
       autoHighlight
       value={selectedCountry}
@@ -31,10 +66,12 @@ export default function CountrySelect({ wizardState, setWizardState }) {
             country: newValue?.code || "",
           },
         }));
+
+        if (error) {
+          setError("");
+        }
       }}
-      isOptionEqualToValue={(option, value) =>
-        option.code === value.code
-      }
+      isOptionEqualToValue={(option, value) => option.code === value.code}
       getOptionLabel={(option) => option.label || ""}
       renderOption={(props, option) => {
         const { key, ...optionProps } = props;
@@ -60,6 +97,9 @@ export default function CountrySelect({ wizardState, setWizardState }) {
         <TextField
           {...params}
           label="Country Code"
+          error={!!error}
+          helperText={error}
+          inputRef={inputRef}
           inputProps={{
             ...params.inputProps,
             autoComplete: "new-password",
@@ -68,7 +108,9 @@ export default function CountrySelect({ wizardState, setWizardState }) {
       )}
     />
   );
-}
+});
+
+export default CountrySelect;
 interface CountryType {
   code: string;
   label: string;

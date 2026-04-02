@@ -47,7 +47,7 @@ const guestCode = new URLSearchParams(location.search).get("guest-code");
     const [showPassword, setShowPassowrd] = useState(false);
 
     useEffect(() => {
-        debugger;
+        
         const existingUser = getCookie("g-usr");
 
         if (Number(existingUser) === passkey) {

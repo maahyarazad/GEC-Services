@@ -23,6 +23,7 @@ const MessageModal = ({
         phone,
         phoneList,
         loadingMassSend,
+        senderLimit,
     } = state;
 
     return (
@@ -34,14 +35,15 @@ const MessageModal = ({
                 handleMessageStateChange('massAction', false);
 
             }}
-            title={`Test Message → ${content?.friendlyName}`}
+            title={`${content?.friendlyName}`}
         >
             <div className="">
 
-                <div className="row mx-0 px-0 my-1">
-                    <div className="col-12 justify-self-center align-self-center">
+                <div className="row mx-0 px-0 my-2 card pb-2 pt-2">
 
+                    <div className="col-12 justify-self-center align-self-center">
                         <label htmlFor="test-input">Use Contact Book</label>
+
                         <Switch
                             size="small"
                             title="Use Contact Book"
@@ -49,6 +51,11 @@ const MessageModal = ({
                             onChange={(e) => handleMessageStateChange('useContactBook', e.target.checked)}
                             color="primary"
                         />
+
+                    </div>
+                    <div className="col-12 justify-self-center align-self-center">
+
+
                         <label htmlFor="test-input">Use Test Book</label>
 
                         <Switch
@@ -59,7 +66,11 @@ const MessageModal = ({
                             color="primary"
                         />
                     </div>
-                    <div className="row my-1 mx-0 px-0 ">
+                    <div className="col-12 justify-self-center align-self-center">
+
+                        <div className="row mx-0 px-0 ">
+
+                        </div>
 
                         <div className="col-6 justify-self-center align-self-center">
 
@@ -76,10 +87,10 @@ const MessageModal = ({
                             <label>Audience:</label>
                             <select
                                 name="type"
-                                value={useAudience}   
-                                    onChange={(e) => {
+                                value={useAudience}
+                                onChange={(e) => {
                                     handleMessageStateChange("useAudience", e.target.value);
-                                    }}
+                                }}
                                 required
                                 className="form-select"
                             >
@@ -90,7 +101,30 @@ const MessageModal = ({
                                 <option value="expert">Expert</option>
                                 <option value="expert_guest">Expert Guest</option>
                                 <option value="difa">Difa</option>
+
                                 <option value="only_guest">Guest</option>
+                                <option value="Wüstenkinder">Wüstenkinder</option>
+                            </select>
+                        </div>
+
+                        <div className="col-6 justify-self-center align-self-center">
+                            <label>Set Limit for Sender:</label>
+                            <select
+                                name="type"
+                                value={senderLimit}
+                                onChange={(e) => {
+                                    handleMessageStateChange("senderLimit", e.target.value);
+                                }}
+                                required
+                                className="form-select"
+                            >
+                                <option value={500}>500</option>
+                                <option value={200}>200</option>
+                                <option value={100}>100</option>
+                                <option value={50}>50</option>
+                                <option value={10}>10</option>
+
+
                             </select>
                         </div>
                     </div>
@@ -100,16 +134,18 @@ const MessageModal = ({
                 </div>
 
 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} >
+
+                    {/* VARIABLES */}
                     <div className="row mx-0 p-0 w-100">
-                        {/* VARIABLES */}
+                        
                         <div
-                            className={`col-lg-4 col-12 p-0 mx-0 ${Object.keys(content?.variables ?? {}).length === 0
+                            className={`col-lg-4 col-12 p-0 mx-0 card ${Object.keys(content?.variables ?? {}).length === 0
                                 ? " d-none"
                                 : ""
                                 }`}
                         >
-                            <div className="p-2">
+                            <div className="p-2 ">
                                 {content?.variables &&
                                     Object.keys(content.variables).map((key) => (
                                         <div key={key}>
@@ -137,7 +173,7 @@ const MessageModal = ({
 
                         {/* PHONE INPUT */}
                         <div
-                            className={`col-lg-8 m-0 p-0 col-12 ${massAction ? "" : "d-none"
+                            className={`col-lg-8 col-12 m-0 px-4 py-2 card${massAction ? "" : "d-none"
                                 } ${useContactBook || useTestBook ? "d-none" : ""}`}
                         >
                             <div className="p-2">
@@ -211,7 +247,7 @@ const MessageModal = ({
 
                         {/* CONTACT BOOK INFO */}
                         <div
-                            className={` ${useContactBook || useTestBook ? "col-lg-8 col-12 m-0 p-0" : "d-none"
+                            className={` ${useContactBook || useTestBook ? "col-lg-8 col-12 m-0 px-4 py-2 card" : "d-none"
                                 }`}
                         >
                             <div className="p-0">
@@ -249,27 +285,29 @@ const MessageModal = ({
                                 </p>
                             </div>
                         </div>
+                    </div>
 
 
-                        <div className="row p-0 m-0">
-                            <div className="col-12 m-0 p-0">
-                                <Button
-                                    variant="contained"
-                                    color="primary"
-                                    sx={{ textTransform: "none", width: "100%" }}
-                                    type="submit"
-                                    disabled={loadingMassSend ? true : useContactBook || useTestBook ? false : phoneList.length === 0}
-                                    startIcon={
-                                        loadingMassSend ? (
-                                            <CircularProgress size={20} color="inherit" />
-                                        ) : null
-                                    }
-                                >
-                                    {loadingMassSend ? "Sending..." : "Send Message"}
-                                </Button>
-                            </div>
+                    <div className="row p-0 m-0 w-100">
+                        <div className="col-12 m-0 p-0">
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                sx={{ textTransform: "none", width: "100%" }}
+                                type="submit"
+                                disabled={loadingMassSend ? true : useContactBook || useTestBook ? false : phoneList.length === 0}
+                                startIcon={
+                                    loadingMassSend ? (
+                                        <CircularProgress size={20} color="inherit" />
+                                    ) : null
+                                }
+                            >
+                                {loadingMassSend ? "Sending..." : "Send Message"}
+                            </Button>
                         </div>
                     </div>
+
+
                 </form>
             </div>
         </Modal>

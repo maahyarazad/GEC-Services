@@ -26,6 +26,7 @@ const invoice = require("./routes/invoice.js");
 const whatsapp = require("./routes/whatsapp_sender.js");
 const contact_book = require("./routes/contact_book.js");
 const health_check = require("./routes/health_check.js");
+const account_deletion = require("./routes/account_deletion.js");
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
 const { createWebSocketServer } = require("./websocket/admin.js");
@@ -82,6 +83,7 @@ const allowedOrigins = [
   process.env.GIC_CLIENT_ORIGIN,
   process.env.CLIENT_ORIGIN_EVENTS,
   process.env.GEC__ORIGIN,
+  process.env.BP_ORIGIN,
 ];
 
 app.set("trust proxy", 1);
@@ -119,6 +121,7 @@ app.use("/maps", express.static(path.join(__dirname, "maps")));
 app.use("/", express.static(path.join(__dirname, "public")));
 
 app.use("/", otp);
+app.use("/", account_deletion);
 app.use("/", registration_config);
 app.use("/", registration);
 app.use("/", survey);

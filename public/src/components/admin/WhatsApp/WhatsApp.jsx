@@ -66,7 +66,9 @@ const WhatsappBroadcast = () => {
         testAction: false,
         massAction: false,
         loadingMassSend: false,
-        phone: ''
+        loadingMassSend: false,
+        phone: '',
+        senderLimit :500,
     });
 
 
@@ -370,6 +372,7 @@ const WhatsappBroadcast = () => {
                         phoneList : messageState.phoneList,
                         payload: messageState.inputValue,
                         template: messageState.content,
+                        senderLimit: messageState.senderLimit,
                     }),
                 }
             );
