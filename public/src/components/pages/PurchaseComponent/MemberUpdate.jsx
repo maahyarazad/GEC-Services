@@ -1,7 +1,7 @@
 import React, { useImperativeHandle, useRef, forwardRef, useState, useCallback, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-
+import { useTheme } from '@mui/material';
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Card from "@mui/material/Card";
@@ -20,13 +20,14 @@ import OtpTimer from "../../utils/OtpTimer";
 import OtpInput from "../../utils/OtpInput";
 import BirthdayField from "../../utils/BirthdayField";
 import { parsePhoneNumberFromString, isValidPhoneNumber } from "libphonenumber-js";
-
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegistration_code, onMemberChange, wizardState, setWizardState, setActiveStep }, ref) => {
     const formikRef = useRef();
     const otpFocus = useRef();
     const countryRef = useRef();
-
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const timer = useRef(null);
     const [isSearching, setIsSearching] = useState(false);
     const [fetchingPasses, setFetchingPasses] = useState(false);
@@ -164,7 +165,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
         try {
 
 
-             if (!values.countryCallingCode) {
+            if (!values.countryCallingCode) {
                 countryRef.current?.setError("Country code required");
                 return;
             }
@@ -392,218 +393,223 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
 
     return (
         <div className="w-100 d-flex justify-content-center align-items-center flex-column" >
-            <div style={{ width: "100%", maxWidth: 400 }}>
+            <Typography style={{ textAlign: "center", maxWidth: 600, fontSize: isMobile ? 15 : 20 }} className="pb-2 pt-0">
+                Check your account details
+            </Typography>
+            <div className="w-100 d-flex justify-content-center align-items-center flex-column" >
+                <div style={{ width: "100%", maxWidth: 400 }}>
 
-                <Formik
-                    innerRef={formikRef}
-                    enableReinitialize={true}
-                    initialValues={{
-                        email: wizardState.member?.email || "",
-                        firstname: wizardState.member?.firstname || "",
-                        lastname: wizardState.member?.lastname || "",
-                        mobile_number: wizardState.member?.nationalNumber || "",
-                        card_number: wizardState.member?.card_number || "",
-                        card_expiry_date: wizardState.member?.card_expiry_date || "",
-                        birthday: wizardState.member?.birthday || "",
-                        countryCallingCode: wizardState.member?.countryCallingCode || "",
-                    }}
-                    validationSchema={validationSchema}
-                    onSubmit={(values, { setFieldError, setFieldTouched, setSubmitting }) =>
-                        handleSendOtp(values, setFieldError, setFieldTouched, setSubmitting)
-                    }
-                >
-                    {({
-                        setFieldValue,
-                        errors,
-                        touched,
-                        isSubmitting,
-                        values,
-                        setFieldTouched,
-                    }) => (
+                    <Formik
+                        innerRef={formikRef}
+                        enableReinitialize={true}
+                        initialValues={{
+                            email: wizardState.member?.email || "",
+                            firstname: wizardState.member?.firstname || "",
+                            lastname: wizardState.member?.lastname || "",
+                            mobile_number: wizardState.member?.nationalNumber || "",
+                            card_number: wizardState.member?.card_number || "",
+                            card_expiry_date: wizardState.member?.card_expiry_date || "",
+                            birthday: wizardState.member?.birthday || "",
+                            countryCallingCode: wizardState.member?.countryCallingCode || "",
+                        }}
+                        validationSchema={validationSchema}
+                        onSubmit={(values, { setFieldError, setFieldTouched, setSubmitting }) =>
+                            handleSendOtp(values, setFieldError, setFieldTouched, setSubmitting)
+                        }
+                    >
+                        {({
+                            setFieldValue,
+                            errors,
+                            touched,
+                            isSubmitting,
+                            values,
+                            setFieldTouched,
+                        }) => (
 
-                        <Form>
-                            {/* Email Field */}
-                            <TextField
-                                type="email"
-                                name="email"
-                                fullWidth
-                                label="E-mail"
-                                value={values.email}
-                                disabled={wizardState?.otpState?.getMemberPass}
-                                helperText={<ErrorMessage name="email" />}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    setFieldValue("email", value);
-                                    setWizardState((prev) => ({
-                                        ...prev,
-                                        member: { ...prev.member, email: value },
-                                    }));
-                                }}
-                                error={touched.email && Boolean(errors.email)}
-                            />
+                            <Form>
+                                {/* Email Field */}
+                                <TextField
+                                    type="email"
+                                    name="email"
+                                    fullWidth
+                                    label="E-mail"
+                                    value={values.email}
+                                    disabled={wizardState?.otpState?.getMemberPass}
+                                    helperText={<ErrorMessage name="email" />}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setFieldValue("email", value);
+                                        setWizardState((prev) => ({
+                                            ...prev,
+                                            member: { ...prev.member, email: value },
+                                        }));
+                                    }}
+                                    error={touched.email && Boolean(errors.email)}
+                                />
 
-                            {/* First Name */}
-                            <TextField
-                                className="mt-1"
-                                type="text"
-                                name="firstname"
-                                fullWidth
-                                label="First Name"
-                                value={values.firstname}
-                                disabled={wizardState?.otpState?.getMemberPass}
-                                helperText={<ErrorMessage name="firstname" />}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    setFieldValue("firstname", value);
-                                    setWizardState((prev) => ({
-                                        ...prev,
-                                        member: { ...prev.member, firstname: value },
-                                    }));
-                                }}
-                                error={touched.firstname && Boolean(errors.firstname)}
-                            />
+                                {/* First Name */}
+                                <TextField
+                                    className="mt-1"
+                                    type="text"
+                                    name="firstname"
+                                    fullWidth
+                                    label="First Name"
+                                    value={values.firstname}
+                                    disabled={wizardState?.otpState?.getMemberPass}
+                                    helperText={<ErrorMessage name="firstname" />}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setFieldValue("firstname", value);
+                                        setWizardState((prev) => ({
+                                            ...prev,
+                                            member: { ...prev.member, firstname: value },
+                                        }));
+                                    }}
+                                    error={touched.firstname && Boolean(errors.firstname)}
+                                />
 
-                            {/* Last Name */}
-                            <TextField
+                                {/* Last Name */}
+                                <TextField
 
-                                className="mt-1"
-                                type="text"
-                                name="lastname"
-                                fullWidth
-                                label="Last Name"
-                                value={values.lastname}
-                                disabled={wizardState?.otpState?.getMemberPass}
-                                helperText={<ErrorMessage name="lastname" />}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    setFieldValue("lastname", value);
-                                    setWizardState((prev) => ({
-                                        ...prev,
-                                        member: { ...prev.member, lastname: value },
-                                    }));
-                                }}
-                                error={touched.lastname && Boolean(errors.lastname)}
-                            />
+                                    className="mt-1"
+                                    type="text"
+                                    name="lastname"
+                                    fullWidth
+                                    label="Last Name"
+                                    value={values.lastname}
+                                    disabled={wizardState?.otpState?.getMemberPass}
+                                    helperText={<ErrorMessage name="lastname" />}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setFieldValue("lastname", value);
+                                        setWizardState((prev) => ({
+                                            ...prev,
+                                            member: { ...prev.member, lastname: value },
+                                        }));
+                                    }}
+                                    error={touched.lastname && Boolean(errors.lastname)}
+                                />
 
-                            <CountrySelect
+                                <CountrySelect
                                     ref={countryRef}
-                                wizardState={wizardState}
-                                setWizardState={setWizardState}
-                            />
+                                    wizardState={wizardState}
+                                    setWizardState={setWizardState}
+                                />
 
-                            <TextField
-                                className="mt-1"
-                                type="text"
-                                name="mobile_number"
-                                fullWidth
-                                label="Mobile Number"
-                                disabled={wizardState?.otpState?.getMemberPass}
-                                value={values.mobile_number}
-                                helperText={touched.mobile_number ? errors.mobile_number : ""}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    setFieldValue("mobile_number", value);
+                                <TextField
+                                    className="mt-1"
+                                    type="text"
+                                    name="mobile_number"
+                                    fullWidth
+                                    label="Mobile Number"
+                                    disabled={wizardState?.otpState?.getMemberPass}
+                                    value={values.mobile_number}
+                                    helperText={touched.mobile_number ? errors.mobile_number : ""}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        setFieldValue("mobile_number", value);
 
-                                    setWizardState((prev) => ({
-                                        ...prev,
-                                        member: { ...prev.member, nationalNumber: value },
-                                    }));
-                                }}
-                                onBlur={() => setFieldTouched("mobile_number", true)}
-                                error={touched.mobile_number && Boolean(errors.mobile_number)}
-                            />
+                                        setWizardState((prev) => ({
+                                            ...prev,
+                                            member: { ...prev.member, nationalNumber: value },
+                                        }));
+                                    }}
+                                    onBlur={() => setFieldTouched("mobile_number", true)}
+                                    error={touched.mobile_number && Boolean(errors.mobile_number)}
+                                />
 
 
 
-                            <div className="mt-1" style={{ width: '100%' }}>
+                                <div className="mt-1" style={{ width: '100%' }}>
 
-                                <BirthdayField errors={errors} setFieldValue={setFieldValue} size="medium" setWizardState={setWizardState}
-                                    values={values} touched={touched} setFieldTouched={setFieldTouched} />
-                            </div>
+                                    <BirthdayField errors={errors} setFieldValue={setFieldValue} size="medium" setWizardState={setWizardState}
+                                        values={values} touched={touched} setFieldTouched={setFieldTouched} />
+                                </div>
 
-                            {/* Submit Button */}
-                            <Button
-                                className="mt-1"
-                                type="submit"
-                                variant="contained"
-                                disabled={wizardState?.otpState?.getMemberPass}
-                                style={{ textTransform: "none", width: "100%" }}
-                            >
-                                <span
-                                    style={{ minWidth: 60, minHeight: 25 }}
-                                    className="d-flex justify-content-center align-items-center"
+                                {/* Submit Button */}
+                                <Button
+                                    className="mt-1"
+                                    type="submit"
+                                    variant="contained"
+                                    disabled={wizardState?.otpState?.getMemberPass}
+                                    style={{ textTransform: "none", width: "100%" }}
                                 >
-                                    {isSubmitting ? (
-                                        <CircularProgress size={20} color="inherit" />
-                                    ) : (
-                                        <>Verify Your Phone and Get Your Pass</>
-                                    )}
-                                </span>
-                            </Button>
-
-                            <div
-                                className={`otp-slide ${wizardState.otpState?.showOtpInput ? "show" : ""
-                                    } mt-2 d-flex flex-column align-items-start justify-content-start text-start`}
-                            >
-                                {
-                                    fetchingPasses && (
-                                        <div className="d-flex align-items-center gap-2">
-                                            <span style={{ fontSize: 12, whiteSpace: "pre" }}>
-                                                Generating your pass{dots}
-                                            </span>
-
-                                        </div>
-
-                                    )
-                                }
-                                <div ref={statusRef}></div>
-
-                                {wizardState.otpState?.currentResponseStatus && (
-                                    <>
-                                        <OtpInput
-                                            ref={otpRef}
-                                            onComplete={(val) => {
-                                                handlePostOTP(val);
-                                            }}
-                                        />
-                                        {wizardState.otpState?.validOtp && (
-                                            <OtpTimer
-                                                key={wizardState.otpState?.initialSeconds}
-                                                initialSeconds={wizardState.otpState?.initialSeconds}
-                                                loginResponseData={wizardState.otpState?.currentResponseStatus}
-                                                onExpiredChange={handleExpiredChange}
-                                            />
+                                    <span
+                                        style={{ minWidth: 60, minHeight: 25 }}
+                                        className="d-flex justify-content-center align-items-center"
+                                    >
+                                        {isSubmitting ? (
+                                            <CircularProgress size={20} color="inherit" />
+                                        ) : (
+                                            <>Final Step: Send an SMS OTP</>
                                         )}
-                                    </>
-                                )}
-                            </div>
-                            <span ref={otpFocus}></span>
-                        </Form>
-                    )}
-                </Formik>
+                                    </span>
+                                </Button>
+
+                                <div
+                                    className={`otp-slide ${wizardState.otpState?.showOtpInput ? "show" : ""
+                                        } mt-2 d-flex flex-column align-items-start justify-content-start text-start`}
+                                >
+                                    {
+                                        fetchingPasses && (
+                                            <div className="d-flex align-items-center gap-2">
+                                                <span style={{ fontSize: 12, whiteSpace: "pre" }}>
+                                                    Generating your pass{dots}
+                                                </span>
+
+                                            </div>
+
+                                        )
+                                    }
+                                    <div ref={statusRef}></div>
+
+                                    {wizardState.otpState?.currentResponseStatus && (
+                                        <>
+                                            <OtpInput
+                                                ref={otpRef}
+                                                onComplete={(val) => {
+                                                    handlePostOTP(val);
+                                                }}
+                                            />
+                                            {wizardState.otpState?.validOtp && (
+                                                <OtpTimer
+                                                    key={wizardState.otpState?.initialSeconds}
+                                                    initialSeconds={wizardState.otpState?.initialSeconds}
+                                                    loginResponseData={wizardState.otpState?.currentResponseStatus}
+                                                    onExpiredChange={handleExpiredChange}
+                                                />
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                                <span ref={otpFocus}></span>
+                            </Form>
+                        )}
+                    </Formik>
+
+                </div>
+                <div
+                    className={`fade-in ${responseMessage ? "visible" : ""} mt-2 mb-2`}
+                    style={{
+
+                        minHeight: 50,
+                        maxWidth: 300,
+                        opacity: responseMessage ? 1 : 0,
+                        transition: "opacity 0.5s ease",
+                        // color: responseMessage.includes("success") ? "green" : "red",
+                        textAlign: "center",
+                        marginTop: "0rem",
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word"
+                    }}
+                >
+                    {responseMessage}
+                </div>
+
+
 
             </div>
-            <div
-                className={`fade-in ${responseMessage ? "visible" : ""} mt-2 mb-2`}
-                style={{
-
-                    minHeight: 50,
-                    maxWidth: 300,
-                    opacity: responseMessage ? 1 : 0,
-                    transition: "opacity 0.5s ease",
-                    // color: responseMessage.includes("success") ? "green" : "red",
-                    textAlign: "center",
-                    marginTop: "0rem",
-                    whiteSpace: "normal",
-                    wordBreak: "break-word",
-                    overflowWrap: "break-word"
-                }}
-            >
-                {responseMessage}
-            </div>
-
-
-
         </div>
     );
 });

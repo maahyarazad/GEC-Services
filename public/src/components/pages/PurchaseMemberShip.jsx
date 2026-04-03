@@ -190,7 +190,7 @@ const PurchaseMemberShip = () => {
                                 position: 'absolute',
                                 width: '100%',
                                 minHeight: isMobile ? '50vh' : '65vh',
-                                padding: isMobile ? '1rem' : '2rem',
+                                padding: isMobile ? '0.5rem' : '1rem',
                                 left: 0,
                                 overflow: 'scroll',
                                 textAlign: isMobile ? 'center' : 'left',
@@ -225,9 +225,13 @@ const PurchaseMemberShip = () => {
                                                 const passStyle = { border: 0, borderRadius: 12, display: "block" };
                                                 return (
                                                     <div className="w-100 d-flex justify-content-center align-items-center flex-column" style={{ width: "100%" }}>
-                                                        <div className='py-1 pb-5' style={{ fontSize: '1.5rem', lineHeight: 1.2 }}>
-                                                            Congratulations! Your corporate membership pass has been issued and sent to your email. Please <strong style={{}}>download the application</strong> and register your account to access it on your mobile device.
-                                                        </div>
+                                                        <Typography className='py-1 pb-5 text-center' style={{ fontSize: isMobile ? 15 : 20, lineHeight: 1.7, maxWidth: 600 }}>
+                                                            Your account has been verified!
+                                                            Please check your email for your personalised membership pass.
+
+                                                            <strong style={{}}>Don't forget to download the GEC Mobile App</strong>
+                                                            to avail of your benefits.
+                                                        </Typography>
                                                         <div className='py-2'>
                                                             <a href="https://play.google.com/store/apps/details?id=com.buenapublica.GECRewards" target="_blank" rel="noopener noreferrer" style={{ minHeight: '70px', display: 'block' }}>
                                                                 <img src={PlayStore} alt="Get it on Google Play" class="download-img" width="300" />

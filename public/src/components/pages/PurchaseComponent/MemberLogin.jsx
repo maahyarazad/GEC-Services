@@ -115,7 +115,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
             else {
                 setWizardState((prev) => ({ ...prev, member: null }));
                 setShowOtpInput(false);
-                showMessage("No account found with this email address", 10000);
+                showMessage("Email not found. Please speak with your HR department as soon as possible.", 10000);
             }
         } catch (err) {
             showMessage(err);
@@ -406,46 +406,52 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
 
     return (
         <div className="w-100 d-flex justify-content-center align-items-center flex-column" >
-            <div style={{ width: "100%", maxWidth: 400 }}>
+            <Typography style={{ textAlign: "center", maxWidth: 600, fontSize: isMobile ? 15 : 20 }} className="pb-2 pt-0">
+                Welcome! To receive your membership pass, let's verify your account details.
+                <br></br>
+                Please enter your email address.
+            </Typography>
+            <div className="w-100 d-flex justify-content-center align-items-center flex-column" >
+                <div style={{ width: "100%", maxWidth: 400 }}>
+                    <Formik
+                        innerRef={formikRef}
+                        initialValues={initialValues}
+                        validationSchema={validationSchema}
+                        onSubmit={(values, formikHelpers) => searchMember(values)}
+                    >
+                        {({ setFieldValue, errors, touched, isSubmitting }) => (
+                            <Form>
 
-                <Formik
-                    innerRef={formikRef}
-                    initialValues={initialValues}
-                    validationSchema={validationSchema}
-                    onSubmit={(values, formikHelpers) => searchMember(values)}
-                >
-                    {({ setFieldValue, errors, touched, isSubmitting }) => (
-                        <Form>
 
-                            {/* Email Field */}
-                            <Field
-                                as={TextField}
-                                type="email"
-                                name="email"
-                                fullWidth
-                                label="E-mail"
-                                disabled={wizardState.authenticate}
-                                helperText={<ErrorMessage name="email" />}
-                                error={touched.email && Boolean(errors.email)}
-                                InputProps={{
-                                    endAdornment: !wizardState.authenticate ? (<></>) : (
-                                        <InputAdornment position="end">
-                                            <IconButton
-                                                onClick={confirmClear}
-                                                edge="end"
-                                                size="small"
-                                            >
-                                                <MdClear />
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-                            <div className="full position-relative w-100">
+                                {/* Email Field */}
+                                <Field
+                                    as={TextField}
+                                    type="email"
+                                    name="email"
+                                    fullWidth
+                                    label="E-mail"
+                                    disabled={wizardState.authenticate}
+                                    helperText={<ErrorMessage name="email" />}
+                                    error={touched.email && Boolean(errors.email)}
+                                    InputProps={{
+                                        endAdornment: !wizardState.authenticate ? (<></>) : (
+                                            <InputAdornment position="end">
+                                                <IconButton
+                                                    onClick={confirmClear}
+                                                    edge="end"
+                                                    size="small"
+                                                >
+                                                    <MdClear />
+                                                </IconButton>
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                                <div className="full position-relative w-100">
 
-                            </div>
-                            {/* Card Number Field */}
-                            {/* <div className="full position-relative mb-3">
+                                </div>
+                                {/* Card Number Field */}
+                                {/* <div className="full position-relative mb-3">
                             <Field
                                 as={TextField}
                                 type="password"
@@ -462,199 +468,200 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                         </div> */}
 
 
-                            {/* Submit Button */}
+                                {/* Submit Button */}
 
-                            <Button
-                                className="mt-1"
-                                type="submit"
-                                variant={wizardState.member === null ? "contained" : "outlined"}
-                                disabled={wizardState.authenticate}
-                                style={{ textTransform: "none", width: "100%" }}
+                                <Button
+                                    className="mt-1"
+                                    type="submit"
+                                    variant={wizardState.member === null ? "contained" : "outlined"}
+                                    disabled={wizardState.authenticate}
+                                    style={{ textTransform: "none", width: "100%" }}
 
-                            >
-                                <span style={{ minWidth: 60, minHeight: 25 }} className="d-flex justify-content-center align-items-center">
+                                >
+                                    <span style={{ minWidth: 60, minHeight: 25 }} className="d-flex justify-content-center align-items-center">
 
-                                    {isSubmitting ? (
-                                        <CircularProgress size={20} color="inherit" />
-                                    ) : (
-                                        <>
-                                            Search
-                                        </>
-                                    )}
-
-                                </span>
-
-                            </Button>
-
-                        </Form>
-
-                    )}
-                </Formik>
-            </div>
-
-            <div
-                className={`fade-in ${responseMessage ? "visible" : ""} mt-1 mb-1`}
-                style={{
-
-                    minHeight: 50,
-                    maxWidth: 300,
-                    opacity: responseMessage ? 1 : 0,
-                    transition: "opacity 0.5s ease",
-                    // color: responseMessage.includes("success") ? "green" : "red",
-                    textAlign: "center",
-                    marginTop: "0rem",
-                    whiteSpace: "normal",
-                    wordBreak: "break-word",
-                    overflowWrap: "break-word"
-                }}
-            >
-                {responseMessage}
-            </div>
-
-            {wizardState?.member && (
-                <Card sx={{ minWidth: isMobile ? 'auto' : 400, boxShadow: 3, cursor: 'pointer', textAlign: 'start', width: isMobile ? "100%" : "" }}>
-                    <CardContent>
-                        {/* Helper to mask text */}
-                        {(() => {
-                            const maskText = (text) => {
-                                if (!text) return '';
-                                // Split words, keep first letter, replace rest with *
-                                return text
-                                    .split(' ')
-                                    .map((word) =>
-                                        authorized
-                                            ? word // if authorized, show full text
-                                            : word[0] + '*'.repeat(word.length - 1)
-                                    )
-                                    .join(' ');
-                            };
-
-                            return (
-                                <>
-                                    <div className="d-flex justify-content-between align-items-top">
-                                        {/* Header */}
-                                        <Typography variant="h6" gutterBottom>
-                                            {wizardState?.authenticate
-                                                ? (wizardState?.member?.title
-                                                    ? `${wizardState?.member?.title} ${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`
-                                                    : `${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`)
-                                                : maskText(
-                                                    wizardState?.member?.title
-                                                        ? `${wizardState?.member?.title} ${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`
-                                                        : `${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`
-                                                )}
-                                        </Typography>
-
-                                        {wizardState?.authenticate && (
-                                            <IconButton onClick={confirmClear}>
-                                                <GrLogout />
-                                            </IconButton>
+                                        {isSubmitting ? (
+                                            <CircularProgress size={20} color="inherit" />
+                                        ) : (
+                                            <>
+                                                Search
+                                            </>
                                         )}
-                                    </div>
 
-                                    <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-                                        Member ID:{" "}
-                                        {wizardState?.authenticate
-                                            ? wizardState?.member?.memberId
-                                            : maskText(wizardState?.member?.memberId?.toString())}
-                                    </Typography>
+                                    </span>
 
-                                    <Box sx={{ mt: 2 }}>
-                                        <Grid container spacing={1}>
-                                            <Grid item xs={6}>
-                                                <Typography variant="body2" color="textSecondary">
-                                                    Card Number
-                                                </Typography>
-                                                <Typography variant="body1">
-                                                    {wizardState?.authenticate
-                                                        ? wizardState?.member?.card_number
-                                                        : maskText(wizardState?.member?.card_number?.toString())}
-                                                </Typography>
-                                            </Grid>
+                                </Button>
 
-                                            <Grid item xs={6}>
-                                                <Typography variant="body2" color="textSecondary">
-                                                    Expiry Date
-                                                </Typography>
-                                                <Typography variant="body1">
-                                                    {wizardState?.authenticate
-                                                        ? wizardState?.member?.card_expiry_date?.split(" ")?.[0]
-                                                        : maskText(wizardState?.member?.card_expiry_date?.split(" ")?.[0])}
-                                                </Typography>
-                                            </Grid>
-                                        </Grid>
+                            </Form>
 
-                                        <Box sx={{ mt: 2 }}>
-                                            <Typography variant="body2" color="textSecondary">
-                                                Email
-                                            </Typography>
-                                            <Typography variant="body1">
-                                                {wizardState?.authenticate
-                                                    ? wizardState?.member?.email
-                                                    : maskEmail(wizardState?.member?.email)}
-                                            </Typography>
-                                        </Box>
-                                    </Box>
+                        )}
+                    </Formik>
+                </div>
 
-                                    <Divider sx={{ borderBottomWidth: 1, borderColor: "#000", my: 2 }} />
+                <div
+                    className={`fade-in ${responseMessage ? "visible" : ""} mt-1 mb-1`}
+                    style={{
 
+                        minHeight: 50,
+                        maxWidth: 300,
+                        opacity: responseMessage ? 1 : 0,
+                        transition: "opacity 0.5s ease",
+                        // color: responseMessage.includes("success") ? "green" : "red",
+                        textAlign: "center",
+                        marginTop: "0rem",
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word"
+                    }}
+                >
+                    {responseMessage}
+                </div>
+
+                {wizardState?.member && (
+                    <Card sx={{ minWidth: isMobile ? 'auto' : 400, boxShadow: 3, cursor: 'pointer', textAlign: 'start', width: isMobile ? "100%" : "" }}>
+                        <CardContent>
+                            {/* Helper to mask text */}
+                            {(() => {
+                                const maskText = (text) => {
+                                    if (!text) return '';
+                                    // Split words, keep first letter, replace rest with *
+                                    return text
+                                        .split(' ')
+                                        .map((word) =>
+                                            authorized
+                                                ? word // if authorized, show full text
+                                                : word[0] + '*'.repeat(word.length - 1)
+                                        )
+                                        .join(' ');
+                                };
+
+                                return (
                                     <>
-                                        <Button
-                                            variant="contained"
-                                            color="primary"
-                                            disabled={wizardState?.authenticate === true}
-                                            type="button"
-                                            onClick={handleSendOtp}
-                                            style={{
-                                                pointerEvents: "auto",
-                                                opacity: 1,
-                                                width: "100%",
-                                                textTransform: "none",
-                                            }}
-                                        >
-                                            <p>
-                                                {wizardState?.authenticate === true
-                                                    ? "Authenticated"
-                                                    : "Authenticate With Your Email"}
-                                            </p>
-                                        </Button>
-
-                                        <div className={`otp-slide ${showOtpInput ? "show" : ""} mt-2`}>
-                                            <div ref={statusRef}></div>
-
-                                            {currentResponseStatus && (
-                                                <>
-                                                    <OtpInput
-                                                        ref={otpRef}
-                                                        onComplete={(val) => {
-                                                            handlePostOTP(val);
-                                                        }}
-                                                    />
-                                                    {validOtp && (
-                                                        <OtpTimer
-                                                            initialSeconds={300}
-                                                            loginResponseData={currentResponseStatus}
-                                                            onExpiredChange={handleExpiredChange}
-                                                        />
+                                        <div className="d-flex justify-content-between align-items-top">
+                                            {/* Header */}
+                                            <Typography variant="h6" gutterBottom>
+                                                {wizardState?.authenticate
+                                                    ? (wizardState?.member?.title
+                                                        ? `${wizardState?.member?.title} ${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`
+                                                        : `${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`)
+                                                    : maskText(
+                                                        wizardState?.member?.title
+                                                            ? `${wizardState?.member?.title} ${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`
+                                                            : `${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`
                                                     )}
-                                                </>
+                                            </Typography>
+
+                                            {wizardState?.authenticate && (
+                                                <IconButton onClick={confirmClear}>
+                                                    <GrLogout />
+                                                </IconButton>
                                             )}
                                         </div>
-                                        <span ref={otpFocus}></span>
+
+                                        <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                                            Member ID:{" "}
+                                            {wizardState?.authenticate
+                                                ? wizardState?.member?.memberId
+                                                : maskText(wizardState?.member?.memberId?.toString())}
+                                        </Typography>
+
+                                        <Box sx={{ mt: 2 }}>
+                                            <Grid container spacing={1}>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="body2" color="textSecondary">
+                                                        Card Number
+                                                    </Typography>
+                                                    <Typography variant="body1">
+                                                        {wizardState?.authenticate
+                                                            ? wizardState?.member?.card_number
+                                                            : maskText(wizardState?.member?.card_number?.toString())}
+                                                    </Typography>
+                                                </Grid>
+
+                                                <Grid item xs={6}>
+                                                    <Typography variant="body2" color="textSecondary">
+                                                        Expiry Date
+                                                    </Typography>
+                                                    <Typography variant="body1">
+                                                        {wizardState?.authenticate
+                                                            ? wizardState?.member?.card_expiry_date?.split(" ")?.[0]
+                                                            : maskText(wizardState?.member?.card_expiry_date?.split(" ")?.[0])}
+                                                    </Typography>
+                                                </Grid>
+                                            </Grid>
+
+                                            <Box sx={{ mt: 2 }}>
+                                                <Typography variant="body2" color="textSecondary">
+                                                    Email
+                                                </Typography>
+                                                <Typography variant="body1">
+                                                    {wizardState?.authenticate
+                                                        ? wizardState?.member?.email
+                                                        : maskEmail(wizardState?.member?.email)}
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+
+                                        <Divider sx={{ borderBottomWidth: 1, borderColor: "#000", my: 2 }} />
+
+                                        <>
+                                            <Button
+                                                variant="contained"
+                                                color="primary"
+                                                disabled={wizardState?.authenticate === true}
+                                                type="button"
+                                                onClick={handleSendOtp}
+                                                style={{
+                                                    pointerEvents: "auto",
+                                                    opacity: 1,
+                                                    width: "100%",
+                                                    textTransform: "none",
+                                                }}
+                                            >
+                                                <p>
+                                                    {wizardState?.authenticate === true
+                                                        ? "Verified"
+                                                        : "Verify your email to confirm your account details"}
+                                                </p>
+                                            </Button>
+
+                                            <div className={`otp-slide ${showOtpInput ? "show" : ""} mt-2`}>
+                                                <div ref={statusRef}></div>
+
+                                                {currentResponseStatus && (
+                                                    <>
+                                                        <OtpInput
+                                                            ref={otpRef}
+                                                            onComplete={(val) => {
+                                                                handlePostOTP(val);
+                                                            }}
+                                                        />
+                                                        {validOtp && (
+                                                            <OtpTimer
+                                                                initialSeconds={300}
+                                                                loginResponseData={currentResponseStatus}
+                                                                onExpiredChange={handleExpiredChange}
+                                                            />
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
+                                            <span ref={otpFocus}></span>
+                                        </>
                                     </>
-                                </>
 
-                            )
+                                )
 
-                        })()}
-                    </CardContent>
+                            })()}
+                        </CardContent>
 
-                </Card>
-            )}
-
+                    </Card>
+                )}
 
 
 
+
+            </div>
         </div>
     );
 });
