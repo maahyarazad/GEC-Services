@@ -100,7 +100,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
 
             if (result.data) {
 
-                showMessage("Found a corresponding email for your account. Please confirm your email to proceed.", 60000);
+                showMessage("", 60000);
 
                 const member = result?.data;
 
@@ -407,7 +407,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
     return (
         <div className="w-100 d-flex justify-content-center align-items-center flex-column" >
             <Typography style={{ textAlign: "center", maxWidth: 600, fontSize: isMobile ? 15 : 20 }} className="pb-2 pt-0">
-                Welcome! To receive your membership pass, let's verify your account details.
+                Welcome! Verify your account details to receive your Membership Pass.
                 <br></br>
                 Please enter your email address.
             </Typography>

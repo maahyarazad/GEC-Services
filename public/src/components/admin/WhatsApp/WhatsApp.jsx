@@ -28,9 +28,12 @@ import { useAlertDialog } from "../../Providers/AlertProvider";
 import QuickReply from "./QuickReply";
 import { IoStatsChartSharp } from "react-icons/io5";
 import WhastAppReport from '../Dashboard/WhastAppReport';
+import WhastAppTypeReport from '../Dashboard/WhastAppTypeReport';
+import WhastAppAttendanceTypeReport from '../Dashboard/WhastAppAttendanceTypeReport';
 import { useNavigate, useLocation } from "react-router-dom";
 import FilterParams from '../../admin/FilterParams';
-
+import { MdInsights } from "react-icons/md";
+import { PiUserCircleCheckDuotone } from "react-icons/pi";
 
 const WhatsappBroadcast = () => {
 
@@ -52,6 +55,8 @@ const WhatsappBroadcast = () => {
     const [viewJsonModal, setViewJsonModal] = useState(false);
     const [JSON_Value_Response_Log, setJSON_Value_Response_Log] = useState(null);
     const [viewStatus, setViewStatus] = useState(false);
+    const [viewStatusType, setViewStatusType] = useState(false);
+    const [viewStatusAttendanceType, setViewStatusAttendanceType] = useState(false);
     const [viewCreateNewContact, setViewCreateNewContact] = useState(false);
 
 
@@ -520,49 +525,52 @@ const WhatsappBroadcast = () => {
     ////////////////////////////////////////////////////////////////////////////////
     const [showChart, setShowChart] = useState(false);
     useEffect(() => {
-        if (viewStatus) {
-            const timer = setTimeout(() => setShowChart(true), 200);
-            return () => clearTimeout(timer);
-        } else {
-            setShowChart(false);
-        }
-    }, [viewStatus]);
+    if (viewStatus || viewStatusType || viewStatusAttendanceType) {
+        const timer = setTimeout(() => setShowChart(true), 200);
+        return () => clearTimeout(timer);
+    } else {
+        setShowChart(false);
+    }
+    }, [viewStatus, viewStatusType, viewStatusAttendanceType]);
 
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const modalView = params.get("view");
-        if (modalView === "report") {
-            setViewStatus(true);
-            setOpenResponses(false);
-        }
 
-        if (modalView === "response_logs") {
-            setOpenResponses(true);
-            setViewStatus(false);
-        }
+        setViewStatus(modalView === "report");
+        setViewStatusType(modalView === "report-type");
+        setViewStatusAttendanceType(modalView === "report-type-attendance");
+        setOpenResponses(modalView === "response_logs");
     }, [location.search]);
 
-    // When viewStatus changes, update the URL query params accordingly
-    useEffect(() => {
-        const params = new URLSearchParams(location.search);
+useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    
+    const viewMap = {
+        report: viewStatus,
+        response_logs: openResponses,
+        "report-type": viewStatusType,
+        "report-type-attendance": viewStatusAttendanceType,
+        "contact-book": openContactBook,
+        // "delivery-logs": openDeliveryLogs,
+    };
 
-        if (viewStatus) {
-            params.set("view", "report");
-            setOpenResponses(false);
-        } else if (openResponses) {
-            params.set("view", "response_logs");
-        } else {
-            params.delete("view");
-        }
+    const activeView = Object.keys(viewMap).find((key) => viewMap[key]);
 
-        // Update URL without reloading page
-        navigate({
-            pathname: location.pathname,
-            search: params.toString() ? `?${params.toString()}` : "",
-        }, { replace: true }); // replace to avoid history stack pollution
+    if (activeView) {
+        params.set("view", activeView);
+    } else {
+        params.delete("view");
+    }
 
-    }, [viewStatus, navigate, location.pathname, location.search, openResponses]);
+    navigate({
+        pathname: location.pathname,
+        search: params.toString() ? `?${params.toString()}` : "",
+    }, { replace: true });
+
+}, [viewStatus, openResponses, viewStatusType, openContactBook, 
+    , navigate, location.pathname, location.search]);
 
 
     const modalTitle = (() => {
@@ -622,13 +630,33 @@ const WhatsappBroadcast = () => {
 
         <Box sx={{ padding: 1, position: 'relative' }}>
 
-            <Modal isOpen={viewStatus}
-                onRequestClose={() => { setViewStatus(false); }}
-                title={`Delivery Status`}>
-
+            <Modal
+                isOpen={viewStatus}
+                onRequestClose={() => setViewStatus(false)}
+                title="Delivery Status"
+            >
                 <div className="d-lg-flex justify-content-between align-items-center">
-
                     {showChart && <WhastAppReport />}
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={viewStatusType}
+                onRequestClose={() => setViewStatusType(false)}
+                title="Delivery Status By Contact Type"
+            >
+                <div className="d-lg-flex justify-content-between align-items-center">
+                    {showChart && <WhastAppTypeReport />}
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={viewStatusAttendanceType}
+                onRequestClose={() => setViewStatusAttendanceType(false)}
+                title="Attendance Status By Contact Type"
+            >
+                <div className="d-lg-flex justify-content-between align-items-center">
+                    {showChart && <WhastAppAttendanceTypeReport />}
                 </div>
             </Modal>
 
@@ -854,8 +882,16 @@ const WhatsappBroadcast = () => {
 
             <div className="pb-2 border-bottom border-1">
 
-                <IconButton title='View MemberShip Status' onClick={() => setViewStatus(true)}>
+                <IconButton title='Open Delivery Report' onClick={() => setViewStatus(true)}>
                     <IoStatsChartSharp />
+                </IconButton>
+
+                <IconButton title='Open Delivery Insight by Contact Type' onClick={() => setViewStatusType(true)}>
+                    <MdInsights />
+                </IconButton>
+
+                <IconButton title='Open Attendance Insight by Contact Type' onClick={() => setViewStatusAttendanceType(true)}>
+                    <PiUserCircleCheckDuotone />
                 </IconButton>
 
                 <IconButton title='Reset ClubTime invitation data from Contact Book' onClick={clearContactBook}>

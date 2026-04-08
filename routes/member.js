@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { exportTableAsCSV } = require("../services/csvParser");
 const dbService = require("../services/dbService");
+const {membership__invitation} = require("../services/emailService");
 const multer = require("multer");
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -149,6 +150,22 @@ router.post("/api/active-member-switch",  upload.none(), async (req, res) => {
 
 
         return res.json({ status: false, message: "Bad Request! Record not found" });
+
+    } catch (error) {
+        console.error("Edit error:", error);
+        res.status(500).json({ status: false, message: error.message });
+    }
+});
+
+router.post("/api/send-invitation-email",  upload.none(), async (req, res) => {
+    try {
+       
+        const {data} = req.body;
+       
+        await membership__invitation(data);
+       
+
+        return res.json({ status: false, message: "Request completed" });
 
     } catch (error) {
         console.error("Edit error:", error);

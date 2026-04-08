@@ -41,6 +41,7 @@ export default function WhastAppReport() {
 
             if (response.ok) {
                 const json = await response.json();
+                
                 setPanelData(json.data);
             }
         } catch (err) {

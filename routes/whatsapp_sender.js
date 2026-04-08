@@ -16,7 +16,7 @@ const { pipeline, Readable } = require("stream");
 const { promisify } = require("util");
 const streamPipeline = promisify(pipeline);
 const fetch = require("node-fetch");
-const {getCountCacheKey, countCache} = require("../services/cacheService")
+const { getCountCacheKey, countCache } = require("../services/cacheService");
 const MessagingResponse = require("twilio").twiml.MessagingResponse;
 
 router.post("/api/whatsapp/send", (req, res) => {
@@ -160,7 +160,10 @@ router.post("/whatsapp/twilio-callback", (req, res) => {
 router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
   try {
     const page = Math.max(parseInt(req.query.page, 25) || 1, 1);
-    const limit = Math.min(Math.max(parseInt(req.query.limit, 25) || 25, 1), 100);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit, 25) || 25, 1),
+      100
+    );
     const offset = (page - 1) * limit;
 
     const now = new Date();
@@ -171,9 +174,7 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
       ? new Date(req.query.startDate)
       : defaultStart;
 
-    const endDate = req.query.endDate
-      ? new Date(req.query.endDate)
-      : now;
+    const endDate = req.query.endDate ? new Date(req.query.endDate) : now;
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return res.status(400).json({
@@ -453,6 +454,91 @@ router.get("/api/whatsapp/insight", async (req, res) => {
     return res
       .status(200)
       .json({ status: true, data: { response_result, delivery_result } });
+  } catch (err) {
+    console.error("Failed to fetch insights", err);
+    return res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
+router.get("/api/whatsapp/attendance-insight-by-type", async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const start = new Date(startDate).toISOString().slice(0, 10);
+    const end = new Date(endDate).toISOString().slice(0, 10);
+
+    const attendanceInsightByTypeQuery = `
+
+WITH responses AS (
+  SELECT 
+    '+' || json_extract(tr.payload, '$.WaId') AS phone,
+    CASE 
+      WHEN json_extract(tr.payload, '$.ButtonPayload') IN ('ATTEND', 'INTERESTED') THEN 'attend'
+      WHEN json_extract(tr.payload, '$.ButtonPayload') IN ('NOT_ATTEND', 'NOT_INTERESTED') THEN 'notAttend'
+    END AS status
+  FROM twilio_responses AS tr
+  WHERE json_extract(tr.payload, '$.ButtonPayload') IN (
+    'ATTEND', 'INTERESTED', 'NOT_ATTEND', 'NOT_INTERESTED'
+  )
+  AND tr.received_at BETWEEN ? AND ?
+)
+SELECT 
+  COALESCE(cb.type, 'unknown') AS type,
+  r.status,
+  COUNT(*) AS responses
+FROM responses r
+LEFT JOIN contact_book cb 
+  ON r.phone = cb.phone
+GROUP BY cb.type, r.status
+ORDER BY responses DESC;
+  `;
+
+    const stmt = db.prepare(attendanceInsightByTypeQuery);
+    const attendance_result = stmt.all(start, end);
+
+    return res.status(200).json({ status: true, data: { attendance_result } });
+  } catch (err) {
+    console.error("Failed to fetch insights", err);
+    return res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+router.get("/api/whatsapp/insight-by-type", async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const start = new Date(startDate).toISOString().slice(0, 10);
+    const end = new Date(endDate).toISOString().slice(0, 10);
+
+    const deliveryInsightByTypeQuery = `
+
+ WITH messages AS (
+    SELECT
+        replace(json_extract(td.response, '$.To'), 'whatsapp:', '') AS to_number,
+        json_extract(td.response, '$.MessageStatus') AS status
+    FROM twilio_delivery td
+    LEFT JOIN twilio_template_message ttm
+        ON json_extract(td.response, '$.SmsSid') = ttm.messageSid
+    WHERE json_extract(td.response, '$.MessageStatus') IN ('delivered', 'undelivered', 'read')
+    AND td.metadata_createdAt BETWEEN ? AND ?
+)
+SELECT 
+    COALESCE(cb.type, 'unknown') AS type,
+    SUM(CASE WHEN dm.status = 'delivered'   THEN 1 ELSE 0 END) AS delivered_count,
+    SUM(CASE WHEN dm.status = 'undelivered' THEN 1 ELSE 0 END) AS undelivered_count,
+    SUM(CASE WHEN dm.status = 'read'        THEN 1 ELSE 0 END) AS read_count,
+    COUNT(*) AS total_count
+FROM messages dm
+LEFT JOIN contact_book cb 
+    ON dm.to_number = cb.phone
+GROUP BY cb.type
+ORDER BY total_count DESC;
+
+  `;
+
+    const stmt = db.prepare(deliveryInsightByTypeQuery);
+    const delivery_result = stmt.all(start, end);
+
+    return res.status(200).json({ status: true, data: { delivery_result } });
   } catch (err) {
     console.error("Failed to fetch insights", err);
     return res.status(500).json({ status: false, message: "Server error" });

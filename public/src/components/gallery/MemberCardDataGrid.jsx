@@ -1,72 +1,101 @@
 import { useEffect, useState, useCallback } from 'react';
-import {DataGrid} from '@mui/x-data-grid';
-
+import { DataGrid } from '@mui/x-data-grid';
+import { useAlertDialog } from '../Providers/AlertProvider';
+import { useSnackbar } from '../Providers/Snackbar';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import DashboardCards from '../admin/Dashboard/DashboardCards';
-import {MdWorkspacePremium}  from "react-icons/md";
-import {BsFiletypeCsv}  from "react-icons/bs";
+import { MdWorkspacePremium } from "react-icons/md";
+import { BsFiletypeCsv } from "react-icons/bs";
 import FilterParams from '../admin/FilterParams';
-import {GrVirtualMachine} from "react-icons/gr";
+import { GrVirtualMachine } from "react-icons/gr";
 import Modal from '../Modal';
 import { IconButton } from '@mui/material';
 import { FaUsersViewfinder } from "react-icons/fa6";
 const paidBlue = '#0f0faf';
 const nonpaidBlue = '#55729e';
 const red = '#cc0000';;
+import { SiMinutemailer } from "react-icons/si";
 
-
-const columns = ({ onResendPasswordReset, loadingRowId }) => [
+const columns = ({ onResendPasswordReset, loadingRowId, onSendInvitationEmail }) => [
     { field: 'id', headerName: 'ID', width: 70 },
- {
-  field: 'type',
-  headerName: 'Type',
-  width: 100,
-  filterable: true,
-  renderCell: (params) => {
-    const virtualCard = params.row.serial_number 
-      ?
-      <Tooltip title={`Virtual Pass Serial Number: ${params.row.serial_number }` }><GrVirtualMachine size={20} style={{ marginRight: 6 }} /> </Tooltip> 
-      : <div style={{ width: 20, height: 20, marginRight: 6 }} />;
+    {
+        field: 'type',
+        headerName: 'Type',
+        width: 100,
+        filterable: true,
+        renderCell: (params) => {
+            const virtualCard = params.row.serial_number
+                ?
+                <Tooltip title={`Virtual Pass Serial Number: ${params.row.serial_number}`}><GrVirtualMachine size={20} style={{ marginRight: 6 }} /> </Tooltip>
+                : <div style={{ width: 20, height: 20, marginRight: 6 }} />;
 
-    const containerStyle = {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      width: '100%',
-      height: '100%',
-    };
+            const containerStyle = {
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: '100%',
+                height: '100%',
+            };
 
-    switch (params.row.type) {
-      case 7:
-        return (
-          <div style={containerStyle}>
-            {virtualCard}
-            <MdWorkspacePremium color={red} size={22} />
-          </div>
-        );
+            switch (params.row.type) {
+                case 7:
+                    return (
+                        <div style={containerStyle}>
+                            {virtualCard}
+                            <MdWorkspacePremium color={red} size={22} />
+                        </div>
+                    );
 
-      case 5:
-        return (
-          <div style={containerStyle}>
-            {virtualCard}
-            <MdWorkspacePremium color={nonpaidBlue} size={22} />
-          </div>
-        );
+                case 5:
+                    return (
+                        <div style={containerStyle}>
+                            {virtualCard}
+                            <MdWorkspacePremium color={nonpaidBlue} size={22} />
+                        </div>
+                    );
 
-      default:
-        return (
-          <div style={containerStyle}>
-            {virtualCard}
-            <MdWorkspacePremium color={paidBlue} size={22} />
-          </div>
-        );
-    }
-  },
-},
+                default:
+                    return (
+                        <div style={containerStyle}>
+                            {virtualCard}
+                            <MdWorkspacePremium color={paidBlue} size={22} />
+                        </div>
+                    );
+            }
+        },
+    },
 
+    {
+        field: '',
+        headerName: 'Actions',
+        width: 100,
+        filterable: false,
+        renderCell: (params) => {
+
+            const containerStyle = {
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: '100%',
+                height: '100%',
+            };
+
+            return (
+                <div style={containerStyle}>
+                    <Tooltip title={`Send invitation email to ${params.row.email}`}>
+                        <IconButton onClick={()=> onSendInvitationEmail(params.row)}>
+                            <SiMinutemailer color={'gray'} size={22} />
+                        </IconButton>
+                    </Tooltip>
+
+                </div>
+            );
+
+        }
+    },
 
     { field: 'card_number', headerName: 'Card Number', width: 100, filterable: true },
     { field: 'partner', headerName: 'Partner', width: 150, filterable: true },
@@ -98,6 +127,59 @@ const MemberCardDataGrid = () => {
     });
     const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
+const { openDialog } = useAlertDialog();
+const { showSnackbar } = useSnackbar();
+
+
+const confirmSendInvitationEmail = (member_data) => {
+    openDialog(
+        <>
+            Are you sure you want to send an invitation email to <strong>{member_data?.email || "this member"}</strong>?
+        </>,
+        'Send Invitation Email', {
+            text: 'Send',
+            color: 'primary'
+        },
+        () => {
+            handleSendInvitationEmail(member_data)
+        },
+        () => {
+            // Cancelled: do nothing
+        }
+    );
+}
+
+
+    const handleSendInvitationEmail = async (member_data) => {
+        
+        try {
+            setLoadingRowId(member_data.id);
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/send-invitation-email`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({ data : member_data }),
+            });
+
+            const data = await response.json();
+debugger;
+            if (!response.ok) {
+
+                showSnackbar(data.message);
+                throw new Error(response.message);
+            }
+
+             showSnackbar(data.message);
+        } catch (error) {
+            console.error("Error:", error);
+
+
+        } finally {
+            setLoadingRowId(null);
+        }
+    };
 
     const handleResetPassword = async (row) => {
         try {
@@ -162,23 +244,23 @@ const MemberCardDataGrid = () => {
     }, [paginationModel, sortModel, applyFilterTrigger]);
 
 
-const handsendEmail = async (type) => {
-    try {
-        const response = await fetch(
-            `${import.meta.env.VITE_SERVERURL}/api/send-party-invitation/?type=${encodeURIComponent(type)}`,
-            { credentials: "include" }
-        );
+    const handsendEmail = async (type) => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/send-party-invitation/?type=${encodeURIComponent(type)}`,
+                { credentials: "include" }
+            );
 
-        // optional: handle response
-        const data = await response.json();
-        console.log("Response:", data);
+            // optional: handle response
+            const data = await response.json();
+            console.log("Response:", data);
 
-    } catch (error) {
-        console.error("Error sending email:", error);
-    } finally {
-        // optional: cleanup or loading state
-    }
-};
+        } catch (error) {
+            console.error("Error sending email:", error);
+        } finally {
+            // optional: cleanup or loading state
+        }
+    };
 
 
     const handleExport = async () => {
@@ -192,7 +274,7 @@ const handsendEmail = async (type) => {
             }
 
             const contentDisposition = response.headers.get("Content-Disposition");
-            
+
             let fileName = "download.csv"; // fallback
             if (contentDisposition) {
                 const match = contentDisposition.match(/filename="?([^"]+)"?/);
@@ -229,40 +311,40 @@ const handsendEmail = async (type) => {
 
                 <div className="d-lg-flex justify-content-between align-items-center">
 
-                        <DashboardCards />
-                    </div>
+                    <DashboardCards />
+                </div>
             </Modal>
             <div className="row mb-1">
-      
-                
-                    <div  className=''>
-  <IconButton title='View MemberShip Status' onClick={()=> setViewStatus(true)}>
-<FaUsersViewfinder/>
-        </IconButton>
-                        <Button
 
-                            variant="outlined"
-                            startIcon={<BsFiletypeCsv size={20} />}
-                            onClick={handleExport}
-                            sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all', marginRight: 1 }}
-                        >
-                            {isDownloading ? (
-                                <CircularProgress size={20} color="inherit" />
-                            ) : (
-                                "Download (All Records) CSV"
-                            )}
 
-                        </Button>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
-                            sx={{ fontSize: 13, textTransform: 'none' }}
-                        >
-                            Apply Filters
-                        </Button>
-                       
-                       {/* <div className='mt-2'>
+                <div className=''>
+                    <IconButton title='View MemberShip Status' onClick={() => setViewStatus(true)}>
+                        <FaUsersViewfinder />
+                    </IconButton>
+                    <Button
+
+                        variant="outlined"
+                        startIcon={<BsFiletypeCsv size={20} />}
+                        onClick={handleExport}
+                        sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all', marginRight: 1 }}
+                    >
+                        {isDownloading ? (
+                            <CircularProgress size={20} color="inherit" />
+                        ) : (
+                            "Download (All Records) CSV"
+                        )}
+
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
+                        sx={{ fontSize: 13, textTransform: 'none' }}
+                    >
+                        Apply Filters
+                    </Button>
+
+                    {/* <div className='mt-2'>
 
                         <Button
                             variant="contained"
@@ -273,11 +355,11 @@ const handsendEmail = async (type) => {
                             Send Email to Red
                         </Button>
                        </div> */}
-                    </div>
-                   
                 </div>
 
-            
+            </div>
+
+
 
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -287,7 +369,7 @@ const handsendEmail = async (type) => {
                 <div style={{ width: '100%', height: 'calc(100vh - 180px)' }}>
                     <DataGrid
                         rows={members}
-                        columns={columns({ onResendPasswordReset: handleResetPassword, loadingRowId: loadingRowId })}
+                        columns={columns({ onResendPasswordReset: handleResetPassword, loadingRowId: loadingRowId, onSendInvitationEmail:  confirmSendInvitationEmail})}
                         rowCount={rowCount}
                         rowsPerPageOptions={[25, 50, 100]}
                         paginationMode="server"

@@ -7,6 +7,8 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const { SESClient, SendRawEmailCommand } = require("@aws-sdk/client-ses");
 const nodemailer = require("nodemailer");
 const { emailTemplates } = require("./templates/email_template");
+const moment = require("moment");
+
 function slugToTitle(slug) {
   return slug
     .replace(/-/g, " ") // Replace dashes with spaces
@@ -554,148 +556,343 @@ async function event_confirm_registration_email(reqBody) {
 
 async function membership_pass_email({ data }) {
   const { member, applePKpassPath, googlePassToken } = data;
-  const applefileStorage = path.join(
-    __dirname,
-    "..",
-    "file_storage",
-    "apple-wallet.png"
-  );
-  const googlefileStorage = path.join(
-    __dirname,
-    "..",
-    "file_storage",
-    "enUS_add_to_google_wallet_add-wallet-badge.png"
-  );
 
   try {
-    const applefileStorageBuffer = fs.existsSync(applefileStorage)
-      ? fs.readFileSync(applefileStorage)
-      : null;
-    const googlefileStorageBuffer = fs.existsSync(googlefileStorage)
-      ? fs.readFileSync(googlefileStorage)
-      : null;
-
     const attachments = [];
-
-    if (applefileStorageBuffer) {
-      attachments.push({
-        filename: `apple-wallet.png`,
-        content: applefileStorageBuffer,
-        contentType: "image/png",
-        cid: "applewalletimg",
-      });
-    }
-
-    if (googlefileStorageBuffer) {
-      attachments.push({
-        filename: `aenUS_add_to_google_wallet_add-wallet-badge.png`,
-        content: googlefileStorageBuffer,
-        contentType: "image/png",
-        cid: "googlewalletimg",
-      });
-    }
 
     const currentYear = new Date().getFullYear();
 
-    const htmlBody = `
-<!DOCTYPE html>
+    const htmlBody = `<!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta charset="UTF-8" />
     <title>Corporate Card Issued</title>
-  </head>
-  <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
+</head>
+
+<body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
+
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
-      <tr>
-        <td align="center">
-          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1); margin:40px auto;">
-            <tr>
-              <td bgcolor="#D9B144" style="color:#ffffff; text-align:center; padding:20px; font-size:22px; font-weight:bold;">
-                Corporate Card Issued
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:30px; font-size:16px; color:#333333; line-height:1.7;">
-                <p>Dear ${member?.firstname || "Member"},</p>
+        <tr>
+            <td align="center">
+                <table width="500" cellpadding="0" cellspacing="0" border="0"
+                    style="width:100%; max-width:500px; background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1); margin:40px auto;">
 
-                <p>
-                  Your Corporate Card has been successfully issued.
-                </p>
+                    <tr>
+                        <td>
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                <tr>
+                                    <td align="center" style="padding:20px 0;">
+                                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"
+                                            style="width:100%; max-width:500px; background:#9d1d1d; border-radius:10px;">
+                                            <tr>
+                                                <td style="padding:15px 20px; font-family:Arial, Helvetica, sans-serif;">
+                                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td align="left">
+                                                                <img src="https://www.german-emirates-club.com/uploads/files/user/GE-LOGO-GOLD.png"
+                                                                    width="120" alt="GE Logo"
+                                                                    style="display:block; border:0;">
+                                                            </td>
+                                                            <td align="right" 
+                                                                style="color:#fba918; font-size:26px; align-content: end;">
+                                                                
+                                                                CORPORATE CARD
+                                                            </td>
+                                                        </tr>
+                                                    </table>
 
-                <p>
-                  <strong>Important:</strong> Please download the mobile application, register your account, and log in to access and use your card features.
-                </p>
+                                                    <table role="presentation" cellpadding="0" cellspacing="0"
+                                                        border="0" width="100%"
+                                                        style="background:#9d1d1d; margin-top:70px;">
+                                                        <tr>
+                                                            <td align="center" valign="middle">
+                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                                                    <tr>
+                                                                        <td align="center" valign="middle" width="42" height="42"></td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
 
-                <p>
-                  If you have already seen these steps before, please treat this email as a reminder to complete them and make sure your account is fully set up.
-                </p>
+                                                            <td align="center" valign="middle">
+                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                                                    <tr>
+                                                                        <td align="center" valign="middle" width="42" height="42"></td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
 
-                <p>
-                  For your convenience, you can also add your card to your mobile wallet using the options below:
-                </p>
-              </td>
-            </tr>
+                                                            <td align="center" valign="middle">
+                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                                                    <tr>
+                                                                        <td align="center" valign="middle" width="42" height="42"></td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
 
-            <tr>
-              <td align="center" style="padding:10px 20px 30px; font-size:16px; color:#333333;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-                  <tr>
-                    <td style="padding-right:10px;">
-                      <a href="${
-                        process.env.CLIENT_ORIGIN}${applePKpassPath}" style="display:inline-block;">
-                        <img 
-                          src="cid:applewalletimg" 
-                          alt="Add to Apple Wallet" 
-                          style="height:60px; border:0; border-radius:12px; display:block;"
-                        />
-                      </a>
-                    </td>
-                    <td style="padding-left:10px;">
-                      <a href="${googlePassToken}" style="display:inline-block;">
-                        <img 
-                          src="cid:googlewalletimg" 
-                          alt="Add to Google Wallet" 
-                          style="height:60px; border:0; border-radius:12px; display:block;"
-                        />
-                      </a>
-                    </td>
-                  </tr>
+                                                            <td align="center" valign="middle">
+                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                                                    <tr>
+                                                                        <td align="center" valign="middle" width="42" height="42"></td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+
+                                                            <td align="center" valign="middle">
+                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                                                    <tr>
+                                                                        <td align="center" valign="middle" width="42" height="42"></td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+
+                                                            <td align="center" valign="middle">
+                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                                                    <tr>
+                                                                        <td align="center" valign="middle" width="42" height="42"></td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+
+                                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td style="width:42%; color:#ffffff; font-size:18px;">
+                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                                                    <tr>
+                                                                        <td style="color:#fba918; font-size:12px;">Name</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>${member?.firstname || "Member"}</td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+
+                                                            <td style="width:30%; color:#ffffff; font-size:18px;">
+                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                                                    <tr>
+                                                                        <td style="color:#fba918; font-size:12px;">Corporate Partner</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>${member?.partner || ""}</td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+
+                                                            <td style="width:18%; color:#ffffff; font-size:18px;" align="right">
+                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                                                    <tr>
+                                                                        <td style="color:#fba918; font-size:12px; text-align:right;">Expiry</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td style="text-align:right;">
+                                                                            ${member?.card_expiry_date ? moment(member?.card_expiry_date).format("MM/YY") : "--/--"}
+                                                                        </td>
+                                                                    </tr>
+                                                                </table>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding:30px; font-size:16px; color:#333333; line-height:1.7;">
+                            <p>Dear ${member?.firstname || "Member"},</p>
+                            <p>
+                                Your account has been verified and we've issued your Membership Pass below. Please click
+                                on the image matching your mobile app wallet.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="padding:10px 20px 30px; font-size:16px; color:#333333;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td style="padding-right:10px;">
+                                        <a href="${process.env.CLIENT_ORIGIN}${applePKpassPath}" style="display:inline-block;">
+                                            <img src="https://services.german-emirates-club.com/uploads/apple-wallet.png" alt="Add to Apple Wallet"
+                                                style="height:60px; border:0; border-radius:12px; display:block;" />
+                                        </a>
+                                    </td>
+                                    <td style="padding-left:10px;">
+                                        <a href="${googlePassToken}" style="display:inline-block;">
+                                            <img src="https://services.german-emirates-club.com/uploads/enUS_add_to_google_wallet_add-wallet-badge.png" alt="Add to Google Wallet"
+                                                style="height:60px; border:0; border-radius:12px; display:block;" />
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding:0 30px 20px; font-size:16px; color:#333333; line-height:1.7;">
+                            <p>Download the GEC Mobile App here to avail your benefits.</p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td align="center" style="padding:10px 20px 30px; font-size:16px; color:#333333;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                                <tr>
+                                    <td style="padding-right:10px;">
+                                        <a href="https://play.google.com/store/apps/details?id=com.buenapublica.GECRewards"
+                                            target="_blank" rel="noopener noreferrer" style="display:inline-block;">
+                                            <img src="https://www.german-emirates-club.com/images/download-play-store.png"
+                                                alt="Get it on Google Play" style="height:50px; border:0; display:block;">
+                                        </a>
+                                    </td>
+                                    <td style="padding-left:10px;">
+                                        <a href="https://apps.apple.com/ae/app/gec-rewards/id6444924851" target="_blank"
+                                            rel="noopener noreferrer" style="display:inline-block;">
+                                            <img src="https://www.german-emirates-club.com/images/download-app-store.png"
+                                                alt="Download on the App Store"
+                                                style="height:50px; border:0; display:block;">
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding:0 30px 20px; font-size:16px; color:#333333; line-height:1.7;">
+                            <p>
+                                For any queries or clarifications, please send us a message on
+                                <a href="mailto:office2@german-emirates-club.com?subject=GEC%20Mobile%20App%20inquiries">Email</a>
+                                or
+                                <a href="https://wa.me/971563998300">Whatsapp</a>
+                            </p>
+                            <p>
+                                Best regards,<br />
+                                German Emirates Club Team
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
+                            &copy; ${currentYear} German Emirates Club. All rights reserved.
+                        </td>
+                    </tr>
+
                 </table>
-              </td>
-            </tr>
-
-            <tr>
-              <td style="padding:0 30px 20px; font-size:16px; color:#333333; line-height:1.7;">
-                <p>
-                  If you have any questions or need assistance, please contact us at<br />
-                  <a href="mailto:office2@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office2@german-emirates-club.com</a>
-                </p>
-
-                <p>
-                  Best regards,<br />
-                  German Emirates Club Team
-                </p>
-              </td>
-            </tr>
-
-            <tr>
-              <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
-                &copy; ${currentYear} German Emirates Club. All rights reserved.
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
+            </td>
+        </tr>
     </table>
-  </body>
-</html>
-`;
+
+</body>
+</html>`;
+
     // ✅ Send email using your own SMTP function
     return await sendRawEmailWithAttachments({
       to: member.email,
       subject: `Your Corporate Card Has Been Issued`,
       html: htmlBody,
       text: "Your Corporate Card has been issued. Please download the mobile application, register, and log in. You can also add your card to Apple Wallet or Google Wallet.",
+      attachments,
+    });
+  } catch (error) {
+    console.error("Failed to send registration email:", error);
+    throw error;
+  }
+}
+async function membership__invitation(data) {
+  try {
+    const attachments = [];
+
+    const currentYear = new Date().getFullYear();
+
+    const htmlBody = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title></title>
+</head>
+
+<body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
+
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
+      <tr>
+        <td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;">
+
+            <tr>
+                <td align="center" style="background-color: #000000; padding:10px 30px;  border-top-left-radius:8px; border-top-right-radius:8px;">
+                    <img src="https://www.german-emirates-club.com/uploads/files/user/GE-LOGO-GOLD.png"
+                         width="120" alt="GE Logo"
+                         style="display:block; border:0;">
+                </td>
+            </tr>
+
+            <tr>
+                <td style="padding:0 30px; font-size:16px; color:#333333; line-height:1.7;">
+                    <p>
+                        Dear ${data?.firstname || "member"},
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <td style="padding:0 30px 0px; font-size:16px; color:#333333; line-height:1.7;">
+                    <p>
+                        Congrats, ${data?.partner || "our partner"} has requested a complimentary GEC Corporate Membership Pass for you. Click on this <a href="https://services.german-emirates-club.com/membership">link</a> to complete the account set-up, or copy and paste the link below in your browser.
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <td style="padding:0 30px 0px; font-size:16px; color:#333333; line-height:1.7;">
+                    <p>
+                        https://services.german-emirates-club.com/membership
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <td style="padding:0 30px 20px; font-size:16px; color:#333333; line-height:1.7;">
+                    <p>
+                        For any queries or clarifications, please send us a message on
+                        <a href="mailto:office2@german-emirates-club.com?subject=GEC%20Mobile%20App%20inquiries">Email</a>
+                        or
+                        <a href="https://wa.me/971563998300">Whatsapp</a>
+                    </p>
+
+                    <p>
+                        Best regards,<br />
+                        German Emirates Club Team
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
+                <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
+                    &copy; ${currentYear} German Emirates Club. All rights reserved.
+                </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+
+</body>
+</html>`;
+
+    // ✅ Send email using your own SMTP function
+    return await sendRawEmailWithAttachments({
+      to: data.email,
+      subject: `Download your GEC Membership Pass`,
+      html: htmlBody,
+      //   text: "Your Corporate Card has been issued. Please download the mobile application, register, and log in. You can also add your card to Apple Wallet or Google Wallet.",
       attachments,
     });
   } catch (error) {
@@ -952,10 +1149,11 @@ async function email_otp(reqBody) {
   </head>
   <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
-      <thead>
-        <tr>
+     
+      <tbody>
+      <tr>
           <td align="center">
-            <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); overflow: hidden; margin: 40px auto;">
+            <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); overflow: hidden; margin: 5px auto;">
               <tr>
                 <td bgcolor="#D9B144" style="color: #ffffff; text-align: center; padding: 20px; font-size: 22px; font-weight: bold; border-top-left-radius: 8px; border-top-right-radius: 8px;">
                   ${event_name} - OTP Verification
@@ -964,8 +1162,7 @@ async function email_otp(reqBody) {
             </table>
           </td>
         </tr>
-      </thead>
-      <tbody>
+
         <tr>
           <td align="center">
             <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; padding: 30px;">
@@ -1622,4 +1819,5 @@ module.exports = {
   event_confirm_registration_email_with_invoice,
   membership_courtacy_at_venue_message,
   membership_pass_email,
+  membership__invitation,
 };

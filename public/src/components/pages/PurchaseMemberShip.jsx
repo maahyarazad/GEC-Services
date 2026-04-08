@@ -227,10 +227,11 @@ const PurchaseMemberShip = () => {
                                                     <div className="w-100 d-flex justify-content-center align-items-center flex-column" style={{ width: "100%" }}>
                                                         <Typography className='py-1 pb-5 text-center' style={{ fontSize: isMobile ? 15 : 20, lineHeight: 1.7, maxWidth: 600 }}>
                                                             Your account has been verified!
-                                                            Please check your email for your personalised membership pass.
+                                                            <br></br>
+                                                            Please check your email for a personalised Membership Pass.<br></br>
 
-                                                            <strong style={{}}>Don't forget to download the GEC Mobile App</strong>
-                                                            to avail of your benefits.
+                                                            <strong style={{}}>Don't forget to download the GEC Mobile App </strong>
+                                                            to avail your benefits.
                                                         </Typography>
                                                         <div className='py-2'>
                                                             <a href="https://play.google.com/store/apps/details?id=com.buenapublica.GECRewards" target="_blank" rel="noopener noreferrer" style={{ minHeight: '70px', display: 'block' }}>
