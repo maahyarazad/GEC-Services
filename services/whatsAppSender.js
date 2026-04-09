@@ -463,75 +463,58 @@ async function getMessageBody(messageSid) {
     throw error;
   }
 }
+
 async function fetchHistory(phone) {
   try {
     const toNumber = `whatsapp:+${phone}`;
 
-    const used_ContentSidList_Query = `SELECT DISTINCT ttm.contentSid
-    FROM twilio_delivery td
-    LEFT JOIN twilio_template_message ttm
+    const sentQuery = `
+      SELECT 
+        ttm.messageSid,
+        td.metadata_createdAt
+      FROM twilio_delivery td
+      INNER JOIN twilio_template_message ttm
         ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
-    WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
-        AND json_extract(td.response, '$.To') = ? AND ttm.contentSid IS NOT NULL`;
-
-    const used_ContentSidList_Stmt = db.prepare(used_ContentSidList_Query);
-    const contentSids = used_ContentSidList_Stmt.all(toNumber);
-
-    // Step 2: scan each contentSid
-
-    const allSentMessages = [];
-
-    for (const { contentSid } of contentSids) {
-      const stmt = db.prepare(`
-    SELECT 
-        ttm.messageSid,  td.metadata_createdAt
-    FROM twilio_delivery td
-    LEFT JOIN twilio_template_message ttm
-      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
-    WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
-      AND json_extract(td.response, '$.To') = ?
-      AND ttm.contentSid = ?
-    ORDER BY td.metadata_createdAt DESC;
-  `);
-
-      const rows = stmt.all(toNumber, contentSid);
-      allSentMessages.push(...rows);
-    }
+      WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
+        AND json_extract(td.response, '$.To') = ?
+        AND ttm.contentSid IS NOT NULL
+      ORDER BY td.metadata_createdAt DESC
+    `;
 
     const receivedQuery = `
-           SELECT
-                json_extract(tr.payload, '$.Body') AS body,
-                tr.received_at,
-                'r' AS type
-            FROM twilio_responses tr
-            WHERE json_extract(tr.payload, '$.WaId') = ?;
-            `;
+      SELECT
+        json_extract(tr.payload, '$.Body') AS body,
+        tr.received_at,
+        'r' AS type
+      FROM twilio_responses tr
+      WHERE json_extract(tr.payload, '$.WaId') = ?
+    `;
 
+    const sentStmt = db.prepare(sentQuery);
     const receivedStmt = db.prepare(receivedQuery);
+
+    const allSentMessages = sentStmt.all(toNumber);
     const receivedMessages = receivedStmt.all(phone);
 
-    const detailedBodies = [];
-    if (allSentMessages && allSentMessages.length > 0) {
+    let detailedBodies = [];
+
+    if (allSentMessages.length > 0) {
       const detailedMessages = await fetchTwilioMessagesDetails(
         allSentMessages
       );
 
-      for (const item of detailedMessages) {
-        const twilioMessage = item.twilioMessage;
-        if (twilioMessage) {
-          detailedBodies.push({
-            body: twilioMessage.body,
-            received_at: twilioMessage.dateSent,
-            type: "s",
-          });
-        }
-      }
+      detailedBodies = detailedMessages
+        .filter((item) => item.twilioMessage)
+        .map((item) => ({
+          body: item.twilioMessage.body,
+          received_at: item.twilioMessage.dateSent,
+          type: "s",
+        }));
     }
 
-    const combined = [...receivedMessages, ...detailedBodies];
-
-    // Sort by received_at (date string)
-    combined.sort((a, b) => new Date(a.received_at) - new Date(b.received_at));
+    const combined = [...receivedMessages, ...detailedBodies].sort(
+      (a, b) => new Date(a.received_at) - new Date(b.received_at)
+    );
 
     return combined;
   } catch (error) {
