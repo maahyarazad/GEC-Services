@@ -8,9 +8,10 @@ import './QuickReply.css';
 const QuickReply = ({ CloseModal, incoming_message, contact_name }) => {
     const { showSnackbar } = useSnackbar();
     const [loading, setLoading] = useState(false);
+    const [loadingHistory, setLoadingHistory] = useState(true);
     const [history, setHistory] = useState([]);
     const [message, setMessage] = useState('');
-    console.log(incoming_message)
+    
     // Audio playback state
     const audioRef = useRef(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -55,7 +56,6 @@ const QuickReply = ({ CloseModal, incoming_message, contact_name }) => {
 
     const fetchHistory = useCallback(async (e) => {
        
-        setLoading(true);
         try {
             const response = await fetch(
             `${import.meta.env.VITE_SERVERURL}/api/whatsapp/history/${incoming_message.WaId}`,
@@ -78,7 +78,7 @@ const QuickReply = ({ CloseModal, incoming_message, contact_name }) => {
             console.error(error);
             showSnackbar(error.message || "Unexpected error occurred", "error");
         } finally {
-            setLoading(false);
+            setLoadingHistory(false);
         }
     },[]);
 
@@ -129,7 +129,7 @@ useEffect(()=> {
                 </div>
 
                 <div className="py-2 d-flex justify-content-start align-items-center">
-                    <ChatView messages={history}/>
+                    <ChatView messages={history} loadingHistory={loadingHistory}/>
 
                 </div>
                     {hasMedia && (
