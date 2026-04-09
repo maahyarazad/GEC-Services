@@ -150,7 +150,7 @@ const messageSender = async (req) => {
       useAudience,
       template,
       payload,
-      senderLimit
+      senderLimit,
     } = req.body;
 
     // Helper function to safely send message and swallow errors
@@ -465,6 +465,39 @@ async function getMessageBody(messageSid) {
 }
 async function fetchHistory(phone) {
   try {
+    const toNumber = `whatsapp:+${phone}`;
+
+    const used_ContentSidList_Query = `SELECT DISTINCT ttm.contentSid
+    FROM twilio_delivery td
+    LEFT JOIN twilio_template_message ttm
+        ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+    WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
+        AND json_extract(td.response, '$.To') = ? AND ttm.contentSid IS NOT NULL`;
+
+    const used_ContentSidList_Stmt = db.prepare(used_ContentSidList_Query);
+    const contentSids = used_ContentSidList_Stmt.all(toNumber);
+
+    // Step 2: scan each contentSid
+
+    const allSentMessages = [];
+
+    for (const { contentSid } of contentSids) {
+      const stmt = db.prepare(`
+    SELECT 
+        ttm.messageSid,  td.metadata_createdAt
+    FROM twilio_delivery td
+    LEFT JOIN twilio_template_message ttm
+      ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+    WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
+      AND json_extract(td.response, '$.To') = ?
+      AND ttm.contentSid = ?
+    ORDER BY td.metadata_createdAt DESC;
+  `);
+
+      const rows = stmt.all(toNumber, contentSid);
+      allSentMessages.push(...rows);
+    }
+
     const receivedQuery = `
            SELECT
                 json_extract(tr.payload, '$.Body') AS body,
@@ -474,30 +507,14 @@ async function fetchHistory(phone) {
             WHERE json_extract(tr.payload, '$.WaId') = ?;
             `;
 
-    const sentQuery = `
-            SELECT
-                td.*,
-                ttm.*
-            FROM twilio_delivery td
-            LEFT JOIN twilio_template_message ttm
-                ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
-            WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
-                AND json_extract(td.response, '$.To') = ?
-                AND ttm.contentSid = ?;
-            `;
-
     const receivedStmt = db.prepare(receivedQuery);
-    const sentStmt = db.prepare(sentQuery);
-
     const receivedMessages = receivedStmt.all(phone);
-    const sentMessages = sentStmt.all(
-      `whatsapp:+${phone}`,
-      "HXb1ce9479f3d42819bef456f00448afcc"
-    );
 
     const detailedBodies = [];
-    if (sentMessages && sentMessages.length > 0) {
-      const detailedMessages = await fetchTwilioMessagesDetails(sentMessages);
+    if (allSentMessages && allSentMessages.length > 0) {
+      const detailedMessages = await fetchTwilioMessagesDetails(
+        allSentMessages
+      );
 
       for (const item of detailedMessages) {
         const twilioMessage = item.twilioMessage;
@@ -610,9 +627,7 @@ async function handleAutoResponse(From, ButtonPayload) {
     } else {
     }
   } catch (e) {
-   
     console.error(e);
-    
   }
 }
 
