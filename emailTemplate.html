@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8" />
-    <title>Corporate Card Issued</title>
+    <title></title>
 </head>
 
 <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
@@ -10,212 +11,70 @@
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
         <tr>
             <td align="center">
-                <table width="500" cellpadding="0" cellspacing="0" border="0"
-                    style="width:100%; max-width:500px; background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1); margin:40px auto;">
+                <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;">
 
                     <tr>
-                        <td>
-                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                                <tr>
-                                    <td align="center" style="padding:20px 0;">
-                                        <table role="presentation" cellpadding="0" cellspacing="0" border="0"
-                                            style="width:100%; max-width:500px; background:#9d1d1d; border-radius:10px;">
-                                            <tr>
-                                                <td style="padding:15px 20px; font-family:Arial, Helvetica, sans-serif;">
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                                                        <tr>
-                                                            <td align="left">
-                                                                <img src="https://www.german-emirates-club.com/uploads/files/user/GE-LOGO-GOLD.png"
-                                                                    width="120" alt="GE Logo"
-                                                                    style="display:block; border:0;">
-                                                            </td>
-                                                            <td align="right" 
-                                                                style="color:#fba918; font-size:26px; align-content: end;">
-                                                                
-                                                                CORPORATE CARD
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-
-                                                    <table role="presentation" cellpadding="0" cellspacing="0"
-                                                        border="0" width="100%"
-                                                        style="background:#9d1d1d; margin-top:70px;">
-                                                        <tr>
-                                                            <td align="center" valign="middle">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                                                                    <tr>
-                                                                        <td align="center" valign="middle" width="42" height="42"></td>
-                                                                    </tr>
-                                                                </table>
-                                                            </td>
-
-                                                            <td align="center" valign="middle">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                                                                    <tr>
-                                                                        <td align="center" valign="middle" width="42" height="42"></td>
-                                                                    </tr>
-                                                                </table>
-                                                            </td>
-
-                                                            <td align="center" valign="middle">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                                                                    <tr>
-                                                                        <td align="center" valign="middle" width="42" height="42"></td>
-                                                                    </tr>
-                                                                </table>
-                                                            </td>
-
-                                                            <td align="center" valign="middle">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                                                                    <tr>
-                                                                        <td align="center" valign="middle" width="42" height="42"></td>
-                                                                    </tr>
-                                                                </table>
-                                                            </td>
-
-                                                            <td align="center" valign="middle">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                                                                    <tr>
-                                                                        <td align="center" valign="middle" width="42" height="42"></td>
-                                                                    </tr>
-                                                                </table>
-                                                            </td>
-
-                                                            <td align="center" valign="middle">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                                                                    <tr>
-                                                                        <td align="center" valign="middle" width="42" height="42"></td>
-                                                                    </tr>
-                                                                </table>
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-
-                                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                                                        <tr>
-                                                            <td style="width:42%; color:#ffffff; font-size:18px;">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                                                                    <tr>
-                                                                        <td style="color:#fba918; font-size:12px;">Name</td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td>${member?.firstname || "Member"}</td>
-                                                                    </tr>
-                                                                </table>
-                                                            </td>
-
-                                                            <td style="width:30%; color:#ffffff; font-size:18px;">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                                                                    <tr>
-                                                                        <td style="color:#fba918; font-size:12px;">Corporate Partner</td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td>${member?.partner || ""}</td>
-                                                                    </tr>
-                                                                </table>
-                                                            </td>
-
-                                                            <td style="width:18%; color:#ffffff; font-size:18px;" align="right">
-                                                                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                                                                    <tr>
-                                                                        <td style="color:#fba918; font-size:12px; text-align:right;">Expiry</td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td style="text-align:right;">
-                                                                            ${member?.card_expiry_date ? moment(member?.card_expiry_date).format("MM/YY") : "--/--"}
-                                                                        </td>
-                                                                    </tr>
-                                                                </table>
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </td>
-                                </tr>
-                            </table>
+                        <td align="center"
+                            style="background-color: #000000; padding:10px 30px;  border-top-left-radius:8px; border-top-right-radius:8px;">
+                            <img src="https://www.german-emirates-club.com/uploads/files/user/GE-LOGO-GOLD.png"
+                                width="120" alt="GE Logo" style="display:block; border:0;">
                         </td>
                     </tr>
 
                     <tr>
-                        <td style="padding:30px; font-size:16px; color:#333333; line-height:1.7;">
-                            <p>Dear ${member?.firstname || "Member"},</p>
+                        <td style="padding:0 30px; font-size:16px; color:#333333; line-height:1.7;">
                             <p>
-                                Your account has been verified and we've issued your Membership Pass below. Please click
-                                on the image matching your mobile app wallet.
+                                Dear ${data?.firstname || "member"},
                             </p>
                         </td>
                     </tr>
 
                     <tr>
-                        <td align="center" style="padding:10px 20px 30px; font-size:16px; color:#333333;">
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-                                <tr>
-                                    <td style="padding-right:10px;">
-                                        <a href="${process.env.CLIENT_ORIGIN}${applePKpassPath}" style="display:inline-block;">
-                                            <img src="https://services.german-emirates-club.com/uploads/apple-wallet.png" alt="Add to Apple Wallet"
-                                                style="height:60px; border:0; border-radius:12px; display:block;" />
-                                        </a>
-                                    </td>
-                                    <td style="padding-left:10px;">
-                                        <a href="${googlePassToken}" style="display:inline-block;">
-                                            <img src="https://services.german-emirates-club.com/uploads/enUS_add_to_google_wallet_add-wallet-badge.png" alt="Add to Google Wallet"
-                                                style="height:60px; border:0; border-radius:12px; display:block;" />
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td style="padding:0 30px 20px; font-size:16px; color:#333333; line-height:1.7;">
-                            <p>Download the GEC Mobile App here to avail your benefits.</p>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td align="center" style="padding:10px 20px 30px; font-size:16px; color:#333333;">
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-                                <tr>
-                                    <td style="padding-right:10px;">
-                                        <a href="https://play.google.com/store/apps/details?id=com.buenapublica.GECRewards"
-                                            target="_blank" rel="noopener noreferrer" style="display:inline-block;">
-                                            <img src="https://www.german-emirates-club.com/images/download-play-store.png"
-                                                alt="Get it on Google Play" style="height:50px; border:0; display:block;">
-                                        </a>
-                                    </td>
-                                    <td style="padding-left:10px;">
-                                        <a href="https://apps.apple.com/ae/app/gec-rewards/id6444924851" target="_blank"
-                                            rel="noopener noreferrer" style="display:inline-block;">
-                                            <img src="https://www.german-emirates-club.com/images/download-app-store.png"
-                                                alt="Download on the App Store"
-                                                style="height:50px; border:0; display:block;">
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td style="padding:0 30px 20px; font-size:16px; color:#333333; line-height:1.7;">
+                        <td style="padding:0 30px 0; font-size:16px; color:#333333; line-height:1.7;">
                             <p>
-                                For any queries or clarifications, please send us a message on
-                                <a href="mailto:office2@german-emirates-club.com?subject=GEC%20Mobile%20App%20inquiries">Email</a>
-                                or
-                                <a href="https://wa.me/971563998300">Whatsapp</a>
+                                Congratulations, your employer ${data?.partner || "our partner"} has requested a
+                                complimentary digital Membership Pass for you. <br />
+                                With your Pass, you gain access to a wide range of discounts and privileges across the
+                                UAE, conveniently available on your mobile device - on your fingertips! <br />
+                                To activate your membership, please click the link below and complete your account
+                                setup:<br />
                             </p>
+                            <a
+                                href="https://services.german-emirates-club.com/membership">https://services.german-emirates-club.com/membership</a>
+                        </td>
+                    </tr>
+
+
+
+                    <tr>
+                        <td style="padding:0 30px 10px; font-size:16px; color:#333333; line-height:1.7;">
                             <p>
-                                Best regards,<br />
-                                German Emirates Club Team
+                                For any queries or clarifications, please contact your HR Department or send us a
+                                message by Email or WhatsApp.
+                                <br />
+                                Email:
+                                <a
+                                    href="mailto:office2@german-emirates-club.com?subject=GEC%20Mobile%20App%20Inquiries">
+                                    office2@german-emirates-club.com
+                                </a>
+                                <br />
+
+                                WhatsApp:
+                                <a href="https://wa.me/971563998300">
+                                    +971 56 399 8300
+                                </a>
+                            </p>
+
+                            <p>
+                                Kind Regards,<br />
+                                German Emirates Club
                             </p>
                         </td>
                     </tr>
 
                     <tr>
-                        <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
+                        <td
+                            style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
                             &copy; ${currentYear} German Emirates Club. All rights reserved.
                         </td>
                     </tr>
@@ -226,4 +85,5 @@
     </table>
 
 </body>
+
 </html>

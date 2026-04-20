@@ -813,6 +813,7 @@ async function membership__invitation(data) {
 
     const htmlBody = `<!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8" />
     <title></title>
@@ -821,76 +822,89 @@ async function membership__invitation(data) {
 <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
 
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
-      <tr>
-        <td align="center">
-          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;">
 
-            <tr>
-                <td align="center" style="background-color: #000000; padding:10px 30px;  border-top-left-radius:8px; border-top-right-radius:8px;">
-                    <img src="https://www.german-emirates-club.com/uploads/files/user/GE-LOGO-GOLD.png"
-                         width="120" alt="GE Logo"
-                         style="display:block; border:0;">
-                </td>
-            </tr>
+                    <tr>
+                        <td align="center"
+                            style="background-color: #000000; padding:10px 30px;  border-top-left-radius:8px; border-top-right-radius:8px;">
+                            <img src="https://www.german-emirates-club.com/uploads/files/user/GE-LOGO-GOLD.png"
+                                width="120" alt="GE Logo" style="display:block; border:0;">
+                        </td>
+                    </tr>
 
-            <tr>
-                <td style="padding:0 30px; font-size:16px; color:#333333; line-height:1.7;">
-                    <p>
-                        Dear ${data?.firstname || "member"},
-                    </p>
-                </td>
-            </tr>
+                    <tr>
+                        <td style="padding:0 30px; font-size:16px; color:#333333; line-height:1.7;">
+                            <p>
+                                Dear ${data?.firstname || "member"},
+                            </p>
+                        </td>
+                    </tr>
 
-            <tr>
-                <td style="padding:0 30px 0px; font-size:16px; color:#333333; line-height:1.7;">
-                    <p>
-                        Congrats, ${data?.partner || "our partner"} has requested a complimentary GEC Corporate Membership Pass for you. Click on this <a href="https://services.german-emirates-club.com/membership">link</a> to complete the account set-up, or copy and paste the link below in your browser.
-                    </p>
-                </td>
-            </tr>
+                    <tr>
+                        <td style="padding:0 30px 0; font-size:16px; color:#333333; line-height:1.7;">
+                            <p>
+                                Congratulations, your employer ${data?.partner || "our partner"} has requested a
+                                complimentary digital Membership Pass for you. <br />
+                                With your Pass, you gain access to a wide range of discounts and privileges across the
+                                UAE, conveniently available on your mobile device - on your fingertips! <br />
+                                To activate your membership, please click the link below and complete your account
+                                setup:<br />
+                            </p>
+                            <a
+                                href="https://services.german-emirates-club.com/membership">https://services.german-emirates-club.com/membership</a>
+                        </td>
+                    </tr>
 
-            <tr>
-                <td style="padding:0 30px 0px; font-size:16px; color:#333333; line-height:1.7;">
-                    <p>
-                        https://services.german-emirates-club.com/membership
-                    </p>
-                </td>
-            </tr>
 
-            <tr>
-                <td style="padding:0 30px 20px; font-size:16px; color:#333333; line-height:1.7;">
-                    <p>
-                        For any queries or clarifications, please send us a message on
-                        <a href="mailto:office2@german-emirates-club.com?subject=GEC%20Mobile%20App%20inquiries">Email</a>
-                        or
-                        <a href="https://wa.me/971563998300">Whatsapp</a>
-                    </p>
 
-                    <p>
-                        Best regards,<br />
-                        German Emirates Club Team
-                    </p>
-                </td>
-            </tr>
+                    <tr>
+                        <td style="padding:0 30px 10px; font-size:16px; color:#333333; line-height:1.7;">
+                            <p>
+                                For any queries or clarifications, please contact your HR Department or send us a
+                                message by Email or WhatsApp.
+                                <br />
+                                Email:
+                                <a
+                                    href="mailto:office2@german-emirates-club.com?subject=GEC%20Mobile%20App%20Inquiries">
+                                    office2@german-emirates-club.com
+                                </a>
+                                <br />
 
-            <tr>
-                <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
-                    &copy; ${currentYear} German Emirates Club. All rights reserved.
-                </td>
-            </tr>
+                                WhatsApp:
+                                <a href="https://wa.me/971563998300">
+                                    +971 56 399 8300
+                                </a>
+                            </p>
 
-          </table>
-        </td>
-      </tr>
+                            <p>
+                                Kind Regards,<br />
+                                German Emirates Club
+                            </p>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td
+                            style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
+                            &copy; ${currentYear} German Emirates Club. All rights reserved.
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
     </table>
 
 </body>
+
 </html>`;
 
     // ✅ Send email using your own SMTP function
     return await sendRawEmailWithAttachments({
       to: data.email,
-      subject: `Download your GEC Membership Pass`,
+      subject: `${data?.partner || "Our partner"} offers you your Membership Pass - for free!`,
       html: htmlBody,
       //   text: "Your Corporate Card has been issued. Please download the mobile application, register, and log in. You can also add your card to Apple Wallet or Google Wallet.",
       attachments,
