@@ -19,7 +19,7 @@ import { useSnackbar } from '../Providers/Snackbar';
 import { useSlideModal } from '../Providers/SlideModalProvider';
 
 import {SurveyTemplateForm} from '../templates/SurveyTemplateForm';
-import {getValidationSchema} from '../templates/dynamicValidation';
+
 
 import { Form, Formik } from 'formik';
 
