@@ -295,6 +295,7 @@ WITH ranked AS (
     tr.id,
     tr.received_at,
     (cb.first_name || ' ' || cb.last_name) AS full_name,  
+    	cb.type,
     json_extract(tr.payload, '$.WaId') AS WaId,
     json_extract(tr.payload, '$.ProfileName') AS ProfileName,
     json_extract(tr.payload, '$.MessageType') AS MessageType,

@@ -348,63 +348,73 @@ const WhatsappBroadcast = () => {
 
 
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
+    e.preventDefault(); // move it here, outside the dialog callback
 
-        e.preventDefault();
-        handleMessageStateChange('massAction', true);
-        try {
+    openDialog(
+        <>
+            Have you reviewed all parameters and settings before sending your request?{' '}
+            <strong>This action cannot be undone.</strong>
+        </>,
+        'Confirm Action',
+        {
+            text: 'Confirm',
+            color: 'danger',
+        },
+        async () => {  
+            handleMessageStateChange('massAction', true);
+            try {
+                const requiredKeys = messageState.content?.variables
+                    ? Object.keys(messageState.content.variables)
+                    : [];
 
-            const requiredKeys = messageState.content?.variables
-                ? Object.keys(messageState.content.variables)
-                : [];
-
-            for (const key of requiredKeys) {
-                if (!messageState.inputValue[key] || messageState.inputValue[key].trim() === "") {
-                    alert(`Please fill Variable ${key}`);
-                    return;
+                for (const key of requiredKeys) {
+                    if (!messageState.inputValue[key] || messageState.inputValue[key].trim() === '') {
+                        alert(`Please fill Variable ${key}`);
+                        return;
+                    }
                 }
-            }
 
+                const response = await fetch(
+                    `${import.meta.env.VITE_SERVERURL}/api/whatsapp/send`,
+                    {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            useContactBook: messageState.useContactBook,
+                            useTestBook: messageState.useTestBook,
+                            useLanguage: messageState.useLanguage,
+                            useAudience: messageState.useAudience,
+                            phoneList: messageState.phoneList,
+                            payload: messageState.inputValue,
+                            template: messageState.content,
+                            senderLimit: messageState.senderLimit,
+                        }),
+                    }
+                );
 
-            const response = await fetch(
-                `${import.meta.env.VITE_SERVERURL}/api/whatsapp/send`,
-                {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        useContactBook: messageState.useContactBook,
-                        useTestBook: messageState.useTestBook,
-                        useLanguage: messageState.useLanguage,
-                        useAudience: messageState.useAudience,
-                        phoneList: messageState.phoneList,
-                        payload: messageState.inputValue,
-                        template: messageState.content,
-                        senderLimit: messageState.senderLimit,
-                    }),
+                if (response.ok) {
+                    const responseData = await response.json();
+                    showSnackbar(responseData.message, 'success');
+                    handleMessageStateChange('testAction', false);
+                } else {
+                    const errorData = await response.json();
+                    showSnackbar(errorData.message || 'Failed to send message', 'error');
                 }
-            );
-
-            if (response.ok) {
-                const responseData = await response.json();
-                showSnackbar(responseData.message, "success");
-                handleMessageStateChange('testAction', false);
-            } else {
-                const errorData = await response.json();
-                showSnackbar(errorData.message || "Failed to send message", "error");
+            } catch (error) {
+                console.error('Failed to send:', error);
+                showSnackbar('Unexpected error occurred', 'error');
+            } finally {
+                handleMessageStateChange('massAction', false);
+                handleMessageStateChange('phoneList', []);
             }
-        } catch (error) {
-            console.error("Failed to send:", error);
-            showSnackbar("Unexpected error occurred", "error");
-        } finally {
-            handleMessageStateChange('massAction', false);
-            handleMessageStateChange('phoneList', []);
-
-        }
-    };
-
+        },
+        () => {} // cancel callback
+    );
+};
 
     //////////////////////////////  RESPONSE LOGS   /////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
