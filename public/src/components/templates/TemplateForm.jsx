@@ -40,7 +40,7 @@ import { useSnackbar } from "../Providers/Snackbar";
 
 
 // Forms & Validation
-import { getValidationSchema } from "./dynamicValidation";
+import { getValidationSchema } from "./DynamicValidation";
 import { SurveyTemplateForm } from "./SurveyTemplateForm";
 import { initialValues } from "./InitialValues";
 
