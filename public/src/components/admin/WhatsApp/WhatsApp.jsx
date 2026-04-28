@@ -34,13 +34,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 import FilterParams from '../../admin/FilterParams';
 import { MdInsights } from "react-icons/md";
 import { PiUserCircleCheckDuotone } from "react-icons/pi";
+import ContactBookDataGrid from './ContactBookDataGrid';
+import ViewModeButtonGroup from "./ViewModeButtonGroup";
+
 
 const WhatsappBroadcast = () => {
-
-
-
-
-
 
     const location = useLocation();
     const navigate = useNavigate();
@@ -62,9 +60,8 @@ const WhatsappBroadcast = () => {
 
 
     const [contactList, setContactList] = useState([]);
-    const [viewBlackList, setViewBlackList] = useState(false);
-    const [viewCorruptedList, setViewCorruptedList] = useState(false);
-
+    const [viewMode, setViewMode] = useState("default"); // "default" | "corrupted" | "guest_list"
+    const [debouncedViewMode, setDebouncedViewMode] = useState(viewMode);
     const [messageState, setMessageState] = useState({
         useContactBook: false,
         useTestBook: false,
@@ -107,12 +104,28 @@ const WhatsappBroadcast = () => {
         }
     }, []);
 
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const fetchContactData = useCallback(async () => {
         try {
             setloading_logs(true)
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts${viewBlackList ? '?blacklist=1' : ''}`, { credentials: "include" });
+            const modeQueryMap = {
+                blacklist: "?blacklist=1",
+                corrupted: "?corrupted=1",
+                guest_list: "?guest_list=1",
+                default: "",
+            };
+
+            const query = modeQueryMap[viewMode];
+
+            const response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/contacts${modeQueryMap[viewMode] ?? ""}`,
+                { credentials: "include" }
+            );
+
 
             if (response.status === 200) {
                 const response_data = await response.json();
@@ -124,7 +137,7 @@ const WhatsappBroadcast = () => {
         } finally {
             setloading_logs(false)
         }
-    }, [viewBlackList]);
+    }, [debouncedViewMode]);
 
     const fetchCorruptedContactData = useCallback(async () => {
         try {
@@ -145,15 +158,18 @@ const WhatsappBroadcast = () => {
     }, [])
 
 
-    useEffect(() => {
-        if (viewCorruptedList) fetchCorruptedContactData();
-    }, [viewCorruptedList]);
+
+
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        const timer = setTimeout(() => setDebouncedViewMode(viewMode), 60);
+        return () => clearTimeout(timer);
+    }, [viewMode]);
 
 
+    useEffect(() => {
+        if (openContactBook) fetchContactData();
+    }, [openContactBook, fetchContactData]);
 
     const onViewJson = (value, type, full_name) => {
 
@@ -293,6 +309,11 @@ const WhatsappBroadcast = () => {
         handleSwitchBlacklist(updatedRow);
     };
 
+    const addToGuestListHandler = (row) => {
+        debugger;
+
+    };
+
     const handleSwitchBlacklist = async (row) => {
         try {
 
@@ -349,72 +370,72 @@ const WhatsappBroadcast = () => {
 
 
     const handleSubmit = (e) => {
-    e.preventDefault(); // move it here, outside the dialog callback
+        e.preventDefault(); // move it here, outside the dialog callback
 
-    openDialog(
-        <>
-            Have you reviewed all parameters and settings before sending your request?{' '}
-            <strong>This action cannot be undone.</strong>
-        </>,
-        'Confirm Action',
-        {
-            text: 'Confirm',
-            color: 'danger',
-        },
-        async () => {  
-            handleMessageStateChange('massAction', true);
-            try {
-                const requiredKeys = messageState.content?.variables
-                    ? Object.keys(messageState.content.variables)
-                    : [];
+        openDialog(
+            <>
+                Have you reviewed all parameters and settings before sending your request?{' '}
+                <strong>This action cannot be undone.</strong>
+            </>,
+            'Confirm Action',
+            {
+                text: 'Confirm',
+                color: 'danger',
+            },
+            async () => {
+                handleMessageStateChange('massAction', true);
+                try {
+                    const requiredKeys = messageState.content?.variables
+                        ? Object.keys(messageState.content.variables)
+                        : [];
 
-                for (const key of requiredKeys) {
-                    if (!messageState.inputValue[key] || messageState.inputValue[key].trim() === '') {
-                        alert(`Please fill Variable ${key}`);
-                        return;
+                    for (const key of requiredKeys) {
+                        if (!messageState.inputValue[key] || messageState.inputValue[key].trim() === '') {
+                            alert(`Please fill Variable ${key}`);
+                            return;
+                        }
                     }
-                }
 
-                const response = await fetch(
-                    `${import.meta.env.VITE_SERVERURL}/api/whatsapp/send`,
-                    {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            useContactBook: messageState.useContactBook,
-                            useTestBook: messageState.useTestBook,
-                            useLanguage: messageState.useLanguage,
-                            useAudience: messageState.useAudience,
-                            phoneList: messageState.phoneList,
-                            payload: messageState.inputValue,
-                            template: messageState.content,
-                            senderLimit: messageState.senderLimit,
-                        }),
+                    const response = await fetch(
+                        `${import.meta.env.VITE_SERVERURL}/api/whatsapp/send`,
+                        {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                useContactBook: messageState.useContactBook,
+                                useTestBook: messageState.useTestBook,
+                                useLanguage: messageState.useLanguage,
+                                useAudience: messageState.useAudience,
+                                phoneList: messageState.phoneList,
+                                payload: messageState.inputValue,
+                                template: messageState.content,
+                                senderLimit: messageState.senderLimit,
+                            }),
+                        }
+                    );
+
+                    if (response.ok) {
+                        const responseData = await response.json();
+                        showSnackbar(responseData.message, 'success');
+                        handleMessageStateChange('testAction', false);
+                    } else {
+                        const errorData = await response.json();
+                        showSnackbar(errorData.message || 'Failed to send message', 'error');
                     }
-                );
-
-                if (response.ok) {
-                    const responseData = await response.json();
-                    showSnackbar(responseData.message, 'success');
-                    handleMessageStateChange('testAction', false);
-                } else {
-                    const errorData = await response.json();
-                    showSnackbar(errorData.message || 'Failed to send message', 'error');
+                } catch (error) {
+                    console.error('Failed to send:', error);
+                    showSnackbar('Unexpected error occurred', 'error');
+                } finally {
+                    handleMessageStateChange('massAction', false);
+                    handleMessageStateChange('phoneList', []);
                 }
-            } catch (error) {
-                console.error('Failed to send:', error);
-                showSnackbar('Unexpected error occurred', 'error');
-            } finally {
-                handleMessageStateChange('massAction', false);
-                handleMessageStateChange('phoneList', []);
-            }
-        },
-        () => {} // cancel callback
-    );
-};
+            },
+            () => { } // cancel callback
+        );
+    };
 
     //////////////////////////////  RESPONSE LOGS   /////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
@@ -521,9 +542,7 @@ const WhatsappBroadcast = () => {
 
     }, [openLogs, openResponses, paginationModel, sortModel, applyFilterTrigger, startDate, endDate]);
 
-    useEffect(() => {
-        if (openContactBook && !viewCorruptedList) fetchContactData();
-    }, [openContactBook, viewBlackList, viewCorruptedList]);
+
 
 
 
@@ -535,12 +554,12 @@ const WhatsappBroadcast = () => {
     ////////////////////////////////////////////////////////////////////////////////
     const [showChart, setShowChart] = useState(false);
     useEffect(() => {
-    if (viewStatus || viewStatusType || viewStatusAttendanceType) {
-        const timer = setTimeout(() => setShowChart(true), 200);
-        return () => clearTimeout(timer);
-    } else {
-        setShowChart(false);
-    }
+        if (viewStatus || viewStatusType || viewStatusAttendanceType) {
+            const timer = setTimeout(() => setShowChart(true), 200);
+            return () => clearTimeout(timer);
+        } else {
+            setShowChart(false);
+        }
     }, [viewStatus, viewStatusType, viewStatusAttendanceType]);
 
 
@@ -554,33 +573,33 @@ const WhatsappBroadcast = () => {
         setOpenResponses(modalView === "response_logs");
     }, [location.search]);
 
-useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    
-    const viewMap = {
-        report: viewStatus,
-        response_logs: openResponses,
-        "report-type": viewStatusType,
-        "report-type-attendance": viewStatusAttendanceType,
-        "contact-book": openContactBook,
-        // "delivery-logs": openDeliveryLogs,
-    };
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
 
-    const activeView = Object.keys(viewMap).find((key) => viewMap[key]);
+        const viewMap = {
+            report: viewStatus,
+            response_logs: openResponses,
+            "report-type": viewStatusType,
+            "report-type-attendance": viewStatusAttendanceType,
+            "contact-book": openContactBook,
+            // "delivery-logs": openDeliveryLogs,
+        };
 
-    if (activeView) {
-        params.set("view", activeView);
-    } else {
-        params.delete("view");
-    }
+        const activeView = Object.keys(viewMap).find((key) => viewMap[key]);
 
-    navigate({
-        pathname: location.pathname,
-        search: params.toString() ? `?${params.toString()}` : "",
-    }, { replace: true });
+        if (activeView) {
+            params.set("view", activeView);
+        } else {
+            params.delete("view");
+        }
 
-}, [viewStatus, openResponses, viewStatusType, openContactBook, 
-    , navigate, location.pathname, location.search]);
+        navigate({
+            pathname: location.pathname,
+            search: params.toString() ? `?${params.toString()}` : "",
+        }, { replace: true });
+
+    }, [viewStatus, openResponses, viewStatusType, openContactBook,
+        , navigate, location.pathname, location.search]);
 
 
     const modalTitle = (() => {
@@ -635,6 +654,9 @@ useEffect(() => {
             </div>
         );
     }
+
+    const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist };
+
 
     return (
 
@@ -792,85 +814,38 @@ useEffect(() => {
             >
 
 
-                {loading_logs ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                        <CircularProgress />
-                    </Box>
-                ) : (
-                    <>
+                <div style={{ width: '100%', height: 'calc(100vh - 125px)' }} className={`${openContactBook ? "" : "hidden"}`}>
+                    <div className="col-12 d-flex flex-start align-items-center">
+                        <div className="d-flex">
+                            <Button className="me-2"
+                                variant="contained" color="primary" size="small"
+                                sx={{ textTransform: 'none', marginBottom: 1 }}
+                                onClick={() => { setViewCreateNewContact(true); }}>
+                                <IoAddCircleOutline size={17} style={{ marginRight: 2 }} /> Create New Contact
+                            </Button>
+                            <ViewModeButtonGroup viewMode={viewMode} setViewMode={setViewMode} />
+                        </div>
+                    </div>
 
+                    {loading_logs ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : (
 
-                        {openContactBook && (
-                            <div style={{ width: '100%', height: 'calc(100vh - 125px)' }} >
-                                <div className="col-12 d-flex flex-start align-items-center">
+                        <ContactBookDataGrid
+                            contactList={contactList}
+                            viewMode={viewMode}
+                            paginationModel={_paginationModel}
+                            setPaginationModel={_setPaginationModel}
+                            onModifyContact={onModifyContact}
+                            onDeleteContact={onDeleteContact}
+                            onSwitchBlacklist={onSwitchBlacklist}
+                            onAddToGuestList={addToGuestListHandler}
+                        />
 
-                                    <div className="">
-
-                                        <Button className="me-2"
-                                            variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginBottom: 1 }} onClick={() => { setViewCreateNewContact(true); }}>
-                                            <IoAddCircleOutline size={17} style={{ marginRight: 2 }} /> Create New Contact
-                                        </Button>
-                                    </div>
-
-                                    <div>
-                                        <div className="">
-
-                                            <label htmlFor="test-input">View Blacklist</label>
-
-                                            <Switch
-                                                size="small"
-                                                title="Use Contact Book"
-                                                checked={viewBlackList}
-                                                onChange={(e) => setViewBlackList(e.target.checked)}
-                                                color="primary"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="">
-                                        <div className="">
-
-                                            <label htmlFor="test-input">View Corrupted Contacts</label>
-
-                                            <Switch
-                                                size="small"
-                                                title="Use Contact Book"
-                                                checked={viewCorruptedList}
-                                                onChange={(e) => setViewCorruptedList(e.target.checked)}
-                                                color="primary"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                {viewCorruptedList ? (
-                                    <DataGrid
-                                        rows={contactList}
-                                        columns={corruptedContactBookColumn({ onModifyContact, onDeleteContact, onSwitchBlacklist })}
-                                        paginationModel={_paginationModel}
-                                        onPaginationModelChange={_setPaginationModel}
-                                        pageSizeOptions={[25, 50, 100]}
-                                        pagination
-                                        disableRowSelectionOnClick
-                                        disableSelectionOnClick
-                                        showToolbar
-                                    />
-                                ) : (
-                                    <DataGrid
-                                        rows={contactList}
-                                        columns={contactBookColumn({ onModifyContact, onDeleteContact, onSwitchBlacklist })}
-                                        paginationModel={_paginationModel}
-                                        onPaginationModelChange={_setPaginationModel}
-                                        pageSizeOptions={[25, 50, 100]}
-                                        pagination
-                                        disableRowSelectionOnClick
-                                        disableSelectionOnClick
-                                        showToolbar
-                                    />
-                                )}
-
-                            </div>
-                        )}
-                    </>
-                )}
+                    )}
+                </div>
 
 
 
