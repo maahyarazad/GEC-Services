@@ -90,47 +90,47 @@ router.put("/api/contacts/modify", (req, res) => {
 
 router.get("/api/contacts", (req, res) => {
   try {
-    const blacklistFilter = req.query.blacklist;
-    // Convert query param to integer, default to 0 if undefined
-    const blacklist = blacklistFilter === undefined ? 0 : (blacklistFilter === '1' || blacklistFilter === 'true' ? 1 : 0);
+    const { blacklist, corrupted, guest_list } = req.query;
 
-    // Use parameterized query to avoid injection
+    // Handle corrupted contacts - delegate to existing function
+    if (corrupted === "1") {
+      const result = corruptedContactBookData();
+      return res.status(200).json({ status: true, data: result });
+    }
+
+    // Handle guest list
+    if (guest_list === "1") {
+      const query = `
+        SELECT cb.*
+        FROM contact_book cb
+        INNER JOIN event_guest_list egl ON egl.contact_book_id = cb.id
+        WHERE cb.phone IS NOT NULL
+        ORDER BY cb.id DESC
+      `;
+      const result = db.prepare(query).all();
+      return res.status(200).json({ status: true, data: result });
+    }
+
+    // Handle default + blacklist
+    const blacklistValue = blacklist === "1" || blacklist === "true" ? 1 : 0;
     const query = `
       SELECT *
       FROM contact_book
-      WHERE phone IS NOT NULL AND blacklist = ? 
+      WHERE phone IS NOT NULL AND blacklist = ?
       ORDER BY id DESC
     `;
+    const result = db.prepare(query).all(blacklistValue);
 
-    const stmt = db.prepare(query);
-    const result = stmt.all(blacklist);
+    return res.status(200).json({ status: true, data: result });
 
-    res.status(200).json({
-      status: true,
-      data: result,
-    });
   } catch (error) {
     console.error("Failed to fetch contacts:", error);
-    res.status(500).json({
-      status: false,
-      message: "Failed to fetch contacts",
-    });
+    res.status(500).json({ status: false, message: "Failed to fetch contacts" });
   }
 });
 
 
-router.get("/api/contacts/corrupted-contact-book", async (req, res) => {
-  try {
-    const result = corruptedContactBookData();
-    res.status(200).json({ status: true, data: result });
-    
-  } catch (error) {
-    console.error("Failed to fetch data", error);
-    res
-      .status(500)
-      .json({ status: false, message: "Failed to fetch data" });
-  }
-});
+
 
 router.get("/api/contacts/clear-contact-book", async (req, res) => {
   try {
@@ -156,5 +156,26 @@ router.get("/api/contacts/clear-contact-book", async (req, res) => {
 });
 
 
+router.post("/api/contacts/add-to-guest-list", (req, res) => {
+  try {
+    
+    const contactData = req.body;
+
+    const result = dbService.create("event_guest_list", {
+        contact_book_id: contactData.id
+    });
+
+    res.status(200).json({
+      status: true,
+      data: result,
+    });
+  } catch (error) {
+    console.error("Failed to fetch contacts:", error);
+    res.status(500).json({
+      status: false,
+      message: "Failed to fetch contacts",
+    });
+  }
+});
 
 module.exports = router;
