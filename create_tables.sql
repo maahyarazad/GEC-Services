@@ -267,7 +267,7 @@ CREATE TABLE IF NOT EXISTS member_card (
 );
 
 
-CREATE TABLE account_deletion_requests (
+CREATE TABLE IF NOT EXISTS  account_deletion_requests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     full_name TEXT NOT NULL,
     email TEXT NOT NULL,
@@ -277,4 +277,22 @@ CREATE TABLE account_deletion_requests (
     reason TEXT,
     request_source TEXT DEFAULT 'app',
     requested_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE IF NOT EXISTS event_guest_list (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  contact_book_id INTEGER,
+  event_id INTEGER,
+  FOREIGN KEY (contact_book_id) REFERENCES contact_book(id)
+  FOREIGN KEY (event_id) REFERENCES events(id)
+);
+
+CREATE TABLE IF NOT EXISTS events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title VARCHAR(500), 
+  description TEXT, 
+metadata_createdAt DATETIME,
+metadata_modifiedAt DATETIME,
+  event_date DATETIME
 );

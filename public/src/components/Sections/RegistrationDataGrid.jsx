@@ -15,7 +15,7 @@ import {GrVirtualMachine} from 'react-icons/gr';
 
 import MessageModalTrigger from '../utils/MessageModalTrigger';
 import { config } from '../../ui_config';
-import FilterParams from '../admin/FilterParams';
+import FilterParams from '../Dashboard/FilterParams';
 import RegistrationConfigSearch from './RegistrationConfigSearch';
 
 const PAGE_SIZE = 10;

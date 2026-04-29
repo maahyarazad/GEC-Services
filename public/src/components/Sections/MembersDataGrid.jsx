@@ -15,11 +15,11 @@ import {BsFiletypeCsv} from 'react-icons/bs';
 import {MdFormatListBulletedAdd} from 'react-icons/md';
 import {MdAddCircleOutline} from 'react-icons/md';
 
-import MemberRequestForm from '../../components/admin/Member/MemberRequestForm';
-import Modal from '../../components/Modal';
+import MemberRequestForm from '../Dashboard/Member/MemberRequestForm';
+import Modal from '../Modal';
 import debounce from 'lodash/debounce';
 import { config } from '../../ui_config';
-import FilterParams from '../admin/FilterParams';
+import FilterParams from '../Dashboard/FilterParams';
 
 
 const columns = ({ onEdit, onSwitchActive }) => [

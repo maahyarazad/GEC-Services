@@ -18,6 +18,7 @@ const survey = require("./routes/survey.js");
 const gic_user = require("./routes/gic_user.js");
 const payment = require("./routes/payment.js");
 const external_route = require("./routes/external_route.js");
+const events = require("./routes/events.js");
 const email_storage = require("./routes/email_storage.js");
 const GSheetService = require("./services/gSheetService.js");
 const g_sheet = require("./routes/gSheet.js");
@@ -139,6 +140,7 @@ app.use("/", whatsapp);
 app.use("/", health_check);
 app.use("/", contact_book);
 app.use("/", external_route);
+app.use("/", events);
 
 // Route to serve your main HTML file
 app.get("/", (req, res) => {

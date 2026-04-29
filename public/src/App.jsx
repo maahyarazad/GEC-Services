@@ -8,13 +8,13 @@ const SuccessTemplatePage = React.lazy(() => import("./components/templates/Succ
 const GuestRegistration = React.lazy(() => import("./components/guestRegistration/GuestRegistration"));
 const PurchaseMemberShip = React.lazy(() => import("./components/pages/PurchaseMemberShip"));
 // const Admin = React.lazy(() => import("./components/admin/Admin"));
-import Admin from "./components/admin/Admin";
+import Dashboard from "./components/Dashboard/Dashboard";
 
 import 'nprogress/nprogress.css';
 import NProgress from 'nprogress';
 
 import NotFound from "./components/pages/NotFound";
-import { WebSocketProvider } from "./components/admin/WebSocketContext";
+import { WebSocketProvider } from "./components/Dashboard/WebSocketContext";
 import { Buffer } from 'buffer';
 window.Buffer = Buffer;
 import { SnackbarProvider } from "./components/Providers/Snackbar";
@@ -79,7 +79,7 @@ function AppRoutes() {
           path="/admin"
           element={
             <WebSocketProvider>
-              <Admin />
+              <Dashboard />
             </WebSocketProvider>
           }
         />

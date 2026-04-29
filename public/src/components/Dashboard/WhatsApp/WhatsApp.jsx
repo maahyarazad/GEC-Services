@@ -31,7 +31,7 @@ import WhastAppReport from '../Dashboard/WhastAppReport';
 import WhastAppTypeReport from '../Dashboard/WhastAppTypeReport';
 import WhastAppAttendanceTypeReport from '../Dashboard/WhastAppAttendanceTypeReport';
 import { useNavigate, useLocation } from "react-router-dom";
-import FilterParams from '../../admin/FilterParams';
+import FilterParams from '../FilterParams';
 import { MdInsights } from "react-icons/md";
 import { PiUserCircleCheckDuotone } from "react-icons/pi";
 import ContactBookDataGrid from './ContactBookDataGrid';

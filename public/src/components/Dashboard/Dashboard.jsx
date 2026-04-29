@@ -37,12 +37,12 @@ import { useWebSocket } from "./WebSocketContext";
 // Components
 const HealthCheck = React.lazy(() => import("./HealthCheck/HealthCheck"));
 const RegistrationList = React.lazy(() => import("./Registration/RegistrationList"));
-const RegistrationDataGrid = React.lazy(() => import("../gallery/RegistrationDataGrid"));
-const MemberDataGrid = React.lazy(() => import("../gallery/MembersDataGrid"));
-const MemberCardDataGrid = React.lazy(() => import("../gallery/MemberCardDataGrid"));
-const SurveyDataGrid = React.lazy(() => import("../gallery/SurveyDataGrid"));
-const GICDataGrid = React.lazy(() => import("../gallery/GICDataGrid"));
-const WhatsappBroadcast = React.lazy(() => import("../../components/admin/WhatsApp/WhatsApp"));
+const RegistrationDataGrid = React.lazy(() => import("../Sections/RegistrationDataGrid"));
+const MemberDataGrid = React.lazy(() => import("../Sections/MembersDataGrid"));
+const MemberCardDataGrid = React.lazy(() => import("../Sections/MemberCardDataGrid"));
+const SurveyDataGrid = React.lazy(() => import("../Sections/SurveyDataGrid"));
+const GICDataGrid = React.lazy(() => import("../Sections/GICDataGrid"));
+const WhatsappBroadcast = React.lazy(() => import("./WhatsApp/WhatsApp"));
 const PDFGenerator = React.lazy(() => import("./PDFGenerator/PDFGenerator"));
 
 // import RegistrationList from "./Registration/RegistrationList";
@@ -56,7 +56,7 @@ const PDFGenerator = React.lazy(() => import("./PDFGenerator/PDFGenerator"));
 
 
 // Styles
-import "./admin.css";
+import "./Dashboard.css";
 import "../utils/login.css";
 
 

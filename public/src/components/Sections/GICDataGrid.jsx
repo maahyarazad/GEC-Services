@@ -10,7 +10,7 @@ import {MdLockReset} from 'react-icons/md';
 import {IoShieldCheckmarkSharp} from 'react-icons/io5';
 import {FaExclamation} from 'react-icons/fa';
 import {config} from '../../ui_config';
-import FilterParams from '../admin/FilterParams';
+import FilterParams from '../Dashboard/FilterParams';
 
 const columns = ({ onResendPasswordReset, loadingRowId }) => [
     { field: 'id', headerName: 'ID', width: 70 },

@@ -12,7 +12,7 @@ import {IoTrashOutline} from 'react-icons/io5';
 import {FaRegEdit} from 'react-icons/fa';
 
 import { config } from '../../ui_config';
-import FilterParams from '../admin/FilterParams';
+import FilterParams from '../Dashboard/FilterParams';
 
 import { useAlertDialog } from '../Providers/AlertProvider';
 import { useSnackbar } from '../Providers/Snackbar';

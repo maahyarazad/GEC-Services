@@ -10,7 +10,7 @@ import lockRegistrationImage from '../../../assets/media/lock_registration.webp'
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
-import RegistrationKeyList from '../Registration/RegistrationKeyList'
+import RegistrationKeyList from './RegistrationKeyList'
 import { FaCheckCircle } from "react-icons/fa";
 import { MdDisabledVisible } from "react-icons/md";
 import { FaAddressCard } from "react-icons/fa";

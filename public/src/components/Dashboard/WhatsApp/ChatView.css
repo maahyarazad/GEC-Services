@@ -1,5 +1,5 @@
 .chat-container {
-  height: 40vh;
+  height: 50vh;
   width: 100%;
   padding: 16px;
   background: #e5ddd5;
@@ -8,7 +8,6 @@
   gap: 10px;
   overflow-y: auto;
   font-family: Arial, sans-serif;
-  /* Common message wrapper */
 }
 .chat-container .whatsapp-green-overlay {
   position: relative;
@@ -35,12 +34,13 @@
   border-radius: 20px;
   margin: 10px 0;
 }
+.chat-container {
+  /* Common message wrapper */
+}
 .chat-container .chat-message {
   display: flex;
   width: 100%;
   /* LEFT (received) */
-  /* RIGHT (sent) */
-  /* Bubble */
 }
 .chat-container .chat-message.received {
   justify-content: flex-start;
@@ -49,12 +49,18 @@
   background: #ffffff;
   border-top-left-radius: 0;
 }
+.chat-container .chat-message {
+  /* RIGHT (sent) */
+}
 .chat-container .chat-message.sent {
   justify-content: flex-end;
 }
 .chat-container .chat-message.sent .bubble {
   background: #dcf8c6;
   border-top-right-radius: 0;
+}
+.chat-container .chat-message {
+  /* Bubble */
 }
 .chat-container .chat-message .bubble {
   max-width: 70%;
@@ -63,12 +69,14 @@
   position: relative;
   word-wrap: break-word;
   /* Text */
-  /* Meta (time + ticks) */
 }
 .chat-container .chat-message .bubble .text {
   margin: 0;
   font-size: 14px;
   line-height: 1.4;
+}
+.chat-container .chat-message .bubble {
+  /* Meta (time + ticks) */
 }
 .chat-container .chat-message .bubble .meta {
   display: flex;
