@@ -11,7 +11,7 @@ import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
-
+import { useSnackbar } from '../Providers/Snackbar';
 import { BsFiletypeCsv } from 'react-icons/bs';
 import { MdOutlineAddCircleOutline, MdOutlineEdit, MdDeleteOutline } from 'react-icons/md';
 
@@ -27,6 +27,9 @@ const EMPTY_FORM = {
 };
 
 // ─── columns ────────────────────────────────────────────────────────────────
+const formatDate = (value) => {
+    return value ? new Date(value).toLocaleString() : '—';
+};
 
 const buildColumns = (onEdit, onDelete) => [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -37,13 +40,22 @@ const buildColumns = (onEdit, onDelete) => [
         headerName: 'Event Date',
         width: 170,
         filterable: true,
-        renderCell: (params) =>
-            params?.row?.event_date
-                ? new Date(params.row.event_date).toLocaleString()
-                : '—',
+        renderCell: (params) => formatDate(params?.row?.event_date),
     },
-    { field: 'metadata_createdAt', headerName: 'Created At', width: 170, filterable: true },
-    { field: 'metadata_modifiedAt', headerName: 'Modified At', width: 170, filterable: true },
+    {
+        field: 'metadata_createdAt',
+        headerName: 'Created At',
+        width: 170,
+        filterable: true,
+        renderCell: (params) => formatDate(params?.row?.metadata_createdAt),
+    },
+    {
+        field: 'metadata_modifiedAt',
+        headerName: 'Modified At',
+        width: 170,
+        filterable: true,
+        renderCell: (params) => formatDate(params?.row?.metadata_modifiedAt),
+    },
     {
         field: '_actions',
         headerName: 'Actions',
@@ -52,18 +64,24 @@ const buildColumns = (onEdit, onDelete) => [
         filterable: false,
         disableColumnMenu: true,
         renderCell: (params) => (
-            <>
+            <div>
                 <Tooltip title="Edit event" componentsProps={config.tooltip_config}>
-                    <IconButton size="small" onClick={() => onEdit(params.row)}>
-                        <MdOutlineEdit size={18} />
+                    <IconButton size="small" onClick={() => onEdit(params.row)} sx={{
+                        color: "#1976d2",
+                        "&:hover": { backgroundColor: "#e3f2fd" },
+                    }}>
+                        <MdOutlineEdit size={22} />
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="Delete event" componentsProps={config.tooltip_config}>
-                    <IconButton size="small" color="error" onClick={() => onDelete(params.row)}>
-                        <MdDeleteOutline size={18} />
+                    <IconButton size="small" color="error" onClick={() => onDelete(params.row)} sx={{
+                        color: "#d32f2f",
+                        "&:hover": { backgroundColor: "#ffebee" },
+                    }}>
+                        <MdDeleteOutline size={22} />
                     </IconButton>
                 </Tooltip>
-            </>
+            </div>
         ),
     },
 ];
@@ -72,7 +90,7 @@ const buildColumns = (onEdit, onDelete) => [
 
 const EventSection = () => {
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];
-
+    const { showSnackbar } = useSnackbar();
     const [eventList, setEventList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
@@ -212,12 +230,17 @@ const EventSection = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
             });
+
             const json = await response.json();
             if (!json.status) throw new Error(json.message);
-
+            showSnackbar(response.statusText, "success");
             setModalOpen(false);
             fetchData(paginationModel, sortModel, filterModel);
+
+
         } catch (err) {
+            debugger
+            showSnackbar(err.message, "error");
             console.error('Save failed:', err);
         } finally {
             setSaving(false);
@@ -241,12 +264,13 @@ const EventSection = () => {
             });
             const json = await response.json();
             if (!json.status) throw new Error(json.message);
-
+            showSnackbar(response.statusText, "success");
             setDeleteOpen(false);
             setDeleteTarget(null);
             fetchData(paginationModel, sortModel, filterModel);
         } catch (err) {
             console.error('Delete failed:', err);
+            showSnackbar(err.message, "error");
         } finally {
             setDeleting(false);
         }

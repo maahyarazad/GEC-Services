@@ -3,7 +3,7 @@ const router = express.Router();
 const dbService = require("../services/dbService");
 
 // ── PUT /api/events  – update an existing event by id ──────────────────────
-router.put('/api/events', async (req, res) => {
+router.put('/api/events', (req, res) => {
     try {
         const {
             id,
@@ -17,30 +17,17 @@ router.put('/api/events', async (req, res) => {
             return res.status(400).json({ status: false, message: 'Missing required field: id' });
         }
 
-        const now = new Date().toISOString();
-
-        const fields = [];
-        const values = [];
-
-        if (title       !== undefined) { fields.push("title = ?");       values.push(title); }
-        if (description !== undefined) { fields.push("description = ?"); values.push(description); }
-        if (event_date  !== undefined) { fields.push("event_date = ?");  values.push(event_date); }
-
-        if (fields.length === 0) {
-            return res.status(400).json({ status: false, message: 'No fields to update' });
+        const data= {
+            title, 
+            description,
+            event_date,
+            metadata_modifiedAt: new Date().toISOString()
         }
+       
+       
+        const result = dbService.update('events',id, data);
 
-        fields.push("metadata_modifiedAt = ?");
-        values.push(now);
-        values.push(id); // for the WHERE clause
-
-        const sql = `UPDATE events SET ${fields.join(", ")} WHERE id = ?`;
-        dbService.run(sql, values);
-
-        const { filters, data } = dbService.QuerySqlConverter({ id }, "events");
-        const total = dbService.getTotalCount("events", filters);
-
-        return res.json({ status: true, data, total });
+        return res.json({ status: true, result });
 
     } catch (error) {
         console.error("Error in PUT /api/events:", error);
@@ -65,19 +52,9 @@ router.post('/api/events', async (req, res) => {
             });
         }
 
-        const now = new Date().toISOString();
-
-        const sql = `
-            INSERT INTO events (title, description, metadata_createdAt, metadata_modifiedAt, event_date)
-            VALUES (?, ?, ?, ?, ?)
-        `;
-
-        const result = dbService.run(sql, [title, description ?? null, now, now, event_date]);
-        const newId  = result?.lastInsertRowid ?? result?.lastID;
-
-        const { data } = dbService.QuerySqlConverter({ id: newId }, "events");
-
-        return res.status(201).json({ status: true, data });
+    
+        const result = dbService.create('events', {title: title, description: description, event_date: event_date});
+        return res.status(201).json({ status: true, result });
 
     } catch (error) {
         console.error("Error in POST /api/events:", error);
@@ -96,6 +73,20 @@ router.get('/api/events', async (req, res) => {
     } catch (error) {
         console.error("Error in GET /api/events:", error);
         res.status(500).json({ status: false, message: 'Server error' });
+    }
+});
+
+router.delete('/api/events/:id', (req, res) => {
+    try {
+        const { id } = req.params;  
+
+        const result = dbService.remove("events", id);
+
+        return res.json({ status: true, data: result });
+
+    } catch (error) {
+        console.error("Error in DELETE /api/events:", error);
+        return res.status(500).json({ status: false, message: 'Server error' });
     }
 });
 

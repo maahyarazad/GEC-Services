@@ -2,9 +2,8 @@
 
 import { IconButton, Switch, Tooltip, Box } from "@mui/material";
 import { RiEditLine } from "react-icons/ri";
-import { IoTrashOutline } from "react-icons/io5";
 import { TbClipboardCheck } from "react-icons/tb";
-
+import { MdDeleteOutline } from 'react-icons/md';
 interface ActionCellProps {
   params: any;
   onModifyContact: (row: any) => void;
@@ -45,7 +44,7 @@ export default function ActionCell({
             "&:hover": { backgroundColor: "#ffebee" },
           }}
         >
-          <IoTrashOutline size={22} />
+          <MdDeleteOutline size={22} />
         </IconButton>
       </Tooltip>
 

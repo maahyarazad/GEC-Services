@@ -37,6 +37,7 @@ import { MdInsights } from "react-icons/md";
 import { PiUserCircleCheckDuotone } from "react-icons/pi";
 import ContactBookDataGrid from './ContactBookDataGrid';
 import ViewModeButtonGroup from "./ViewModeButtonGroup";
+import EventSection from '../../Sections/EventSection';
 
 
 const WhatsappBroadcast = () => {
@@ -577,22 +578,10 @@ const WhatsappBroadcast = () => {
     }, []);
 
     const handleSetOpenPanel = (panel) => {
-        const panelToView = {
-            "report": "report",
-            "reportType": "report-type",
-            "reportAttendance": "report-type-attendance",
-            "responses": "response-logs",
-            "logs": "delivery-logs",
-            "contactBook": "contact-book",
-            "eventList": "event-list",
-        };
 
         // ✅ Read existing params and only update "view"
         const params = new URLSearchParams(location.search);
-        
-        
-        
-        
+
 
         if (panel) {
             params.set("view", panel);
@@ -845,8 +834,15 @@ const WhatsappBroadcast = () => {
 
                     )}
                 </div>
+            </SlideMenu>
 
+            <SlideMenu id={'event-list'}
+                isOpen={openPanel === 'event-list'}
+                onClose={() => { handleSetOpenPanel(null) }}
+                headerTitle={'Event List'}
+            >
 
+                <EventSection />
 
             </SlideMenu>
 

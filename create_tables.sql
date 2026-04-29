@@ -292,7 +292,7 @@ CREATE TABLE IF NOT EXISTS events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title VARCHAR(500), 
   description TEXT, 
-metadata_createdAt DATETIME,
+metadata_createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 metadata_modifiedAt DATETIME,
   event_date DATETIME
 );
