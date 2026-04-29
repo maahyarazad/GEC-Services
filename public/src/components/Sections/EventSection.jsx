@@ -239,7 +239,7 @@ const EventSection = () => {
 
 
         } catch (err) {
-            debugger
+            
             showSnackbar(err.message, "error");
             console.error('Save failed:', err);
         } finally {

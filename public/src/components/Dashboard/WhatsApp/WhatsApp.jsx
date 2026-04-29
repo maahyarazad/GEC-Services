@@ -23,7 +23,7 @@ import { RiCheckDoubleFill } from "react-icons/ri";
 import { BsCalendar2Event } from "react-icons/bs";
 import CreateContact from "./CreateContact";
 import { IoAddCircleOutline } from "react-icons/io5";
-import { columns, responseColumns, contactBookColumn, tabstyle, normalizePhone, corruptedContactBookColumn } from './WhatsAppComponentConfig'
+import { columns, responseColumns, tabstyle, normalizePhone } from './WhatsAppComponentConfig'
 import MessageModal from "./MessageModal";
 import { useAlertDialog } from "../../Providers/AlertProvider";
 import QuickReply from "./QuickReply";
@@ -38,6 +38,7 @@ import { PiUserCircleCheckDuotone } from "react-icons/pi";
 import ContactBookDataGrid from './ContactBookDataGrid';
 import ViewModeButtonGroup from "./ViewModeButtonGroup";
 import EventSection from '../../Sections/EventSection';
+import EventSpeedDial from "./EventSpeedDial";
 
 
 const WhatsappBroadcast = () => {
@@ -54,6 +55,29 @@ const WhatsappBroadcast = () => {
     const [viewJsonModal, setViewJsonModal] = useState(false);
     const [JSON_Value_Response_Log, setJSON_Value_Response_Log] = useState(null);
     const [viewCreateNewContact, setViewCreateNewContact] = useState(false);
+    const [events, setEvents] = useState();
+    const fetchEvents = useCallback(async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SERVERURL}/api/events/latest`,
+          {
+            method: "GET",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+        const responseData = await response.json();
+
+        if (!response.ok) {
+          console.error(responseData.error);
+          return;
+        }
+
+            setEvents(responseData.rows ?? []);    
+      } catch (error) {
+        console.error(error);
+      }
+    },[]);
 
 
 
@@ -104,6 +128,7 @@ const WhatsappBroadcast = () => {
 
     useEffect(() => {
         fetchData();
+        fetchEvents();
     }, [fetchData]);
 
     const fetchContactData = useCallback(async () => {
@@ -307,10 +332,7 @@ const WhatsappBroadcast = () => {
         handleSwitchBlacklist(updatedRow);
     };
 
-    const addToGuestListHandler = (row) => {
-        debugger;
 
-    };
 
     const handleSwitchBlacklist = async (row) => {
         try {
@@ -650,7 +672,8 @@ const WhatsappBroadcast = () => {
         );
     }
 
-    const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist };
+    
+
 
 
     return (
@@ -822,6 +845,7 @@ const WhatsappBroadcast = () => {
                     ) : (
 
                         <ContactBookDataGrid
+                            events={events}
                             contactList={contactList}
                             viewMode={viewMode}
                             paginationModel={_paginationModel}
@@ -829,7 +853,7 @@ const WhatsappBroadcast = () => {
                             onModifyContact={onModifyContact}
                             onDeleteContact={onDeleteContact}
                             onSwitchBlacklist={onSwitchBlacklist}
-                            onAddToGuestList={addToGuestListHandler}
+                            
                         />
 
                     )}
@@ -1165,6 +1189,7 @@ const WhatsappBroadcast = () => {
                     CloseModal={async () => { setViewCreateNewContact(false); setContactModifyVal(null); await fetchContactData(); }}
                 />
             </Modal>
+
 
 
         </Box>

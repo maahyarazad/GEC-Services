@@ -2,14 +2,17 @@
 
 import { IconButton, Switch, Tooltip, Box } from "@mui/material";
 import { RiEditLine } from "react-icons/ri";
-import { TbClipboardCheck } from "react-icons/tb";
+
 import { MdDeleteOutline } from 'react-icons/md';
+import EventSpeedDial from "./EventSpeedDial";
 interface ActionCellProps {
   params: any;
+  events: any;
   onModifyContact: (row: any) => void;
   onDeleteContact: (row: any) => void;
   onAddToGuestList: (row: any) => void;
   onSwitchBlacklist: (row: any, val: boolean) => void;
+  viewEventSpeedDial: boolean
 }
 
 export default function ActionCell({
@@ -18,6 +21,8 @@ export default function ActionCell({
   onDeleteContact,
   onAddToGuestList,
   onSwitchBlacklist,
+  events,
+  viewEventSpeedDial
 }: ActionCellProps) {
   return (
     <div>
@@ -48,18 +53,10 @@ export default function ActionCell({
         </IconButton>
       </Tooltip>
 
-      <Tooltip title="Add to Guest List">
-        <IconButton
-        //   size="small"
-          onClick={() => onAddToGuestList(params.row)}
-          sx={{
-            color: "#ed6c02",
-            "&:hover": { backgroundColor: "#fff3e0" },
-          }}
-        >
-          <TbClipboardCheck size={22} />
-        </IconButton>
-      </Tooltip>
+{viewEventSpeedDial && <EventSpeedDial _events={events} params={ params}/>}
+        
+        
+      
 
       <Tooltip title={params.row.blacklist ? "Remove from Blacklist" : "Add to Blacklist"}>
         <Switch

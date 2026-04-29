@@ -1,5 +1,5 @@
 import { DataGrid } from '@mui/x-data-grid';
-import { columns, responseColumns, contactBookColumn, tabstyle, normalizePhone, corruptedContactBookColumn } from './WhatsAppComponentConfig'
+import { contactBookColumn, corruptedContactBookColumn } from './WhatsAppComponentConfig'
 const ContactBookDataGrid = ({
     contactList,
     viewMode,
@@ -8,6 +8,7 @@ const ContactBookDataGrid = ({
     onModifyContact,
     onDeleteContact,
     onSwitchBlacklist,
+    events,
 }) => {
     const commonProps = {
         rows: contactList,
@@ -21,7 +22,8 @@ const ContactBookDataGrid = ({
         
     };
 
-    const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist };
+    const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, events, viewEventSpeedDial: false };
+    const contactBookColumnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, events, viewEventSpeedDial: true };
 
    switch (viewMode) {
         case "blacklist":
@@ -35,7 +37,7 @@ const ContactBookDataGrid = ({
             return <DataGrid {...commonProps} columns={contactBookColumn(columnProps)} />;
         case "default":
             //@ts-ignore
-            return <DataGrid {...commonProps} columns={contactBookColumn(columnProps)} />;
+            return <DataGrid {...commonProps} columns={contactBookColumn(contactBookColumnProps)} />;
             default:
                 //@ts-ignore
                 return null;

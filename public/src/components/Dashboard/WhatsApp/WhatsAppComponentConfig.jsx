@@ -129,7 +129,7 @@ export const corruptedContactBookColumn = ({ onModifyContact, onDeleteContact, o
     }
 
 ];
-export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBlacklist, onAddToGuestList }) => [
+export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBlacklist, events, viewEventSpeedDial }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'type', headerName: 'Type', width: 110, filterable: true },
     { field: 'title', headerName: 'Title', width: 70, filterable: true },
@@ -143,7 +143,7 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
     {
         field: '_',
         headerName: 'Actions',
-        width: 160,
+        width: 300,
 
         filterable: true,
         renderCell: (params) => {
@@ -151,8 +151,7 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
 
             return (
                 <div>
-                    <ActionCell params={params}
-                        onAddToGuestList={onAddToGuestList}
+                    <ActionCell params={params} events={events} viewEventSpeedDial={viewEventSpeedDial}
                         onModifyContact={onModifyContact}
                         onDeleteContact={onDeleteContact}
                         onSwitchBlacklist={onSwitchBlacklist} />

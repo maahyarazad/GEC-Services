@@ -164,7 +164,7 @@ const confirmSendInvitationEmail = (member_data) => {
             });
 
             const data = await response.json();
-debugger;
+
             if (!response.ok) {
 
                 showSnackbar(data.message);
