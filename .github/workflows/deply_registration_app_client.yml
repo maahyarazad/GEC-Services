@@ -26,7 +26,10 @@ jobs:
 
       - name: Install dependencies
         working-directory: public
-        run: npm ci
+        run: |
+            rm -f package-lock.json
+            npm install
+            npm install @rollup/rollup-linux-x64-gnu --save-optional
 
       - name: Build client
         working-directory: public

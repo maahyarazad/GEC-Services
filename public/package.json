@@ -80,5 +80,10 @@
     "rollup-plugin-visualizer": "^6.0.5",
     "terser": "^5.44.1",
     "vite": "^6.1.0"
+  },
+    "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "*",
+    "@rollup/rollup-darwin-arm64": "*",
+    "@rollup/rollup-darwin-x64": "*"
   }
 }
