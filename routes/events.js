@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const dbService = require("../services/dbService");
-
+const db = dbService.getDB();
 // ── PUT /api/events  – update an existing event by id ──────────────────────
 router.put('/api/events', (req, res) => {
     try {
@@ -76,6 +76,25 @@ router.get('/api/events', async (req, res) => {
     }
 });
 
+router.get('/api/events/latest', async (req, res) => {
+    try {
+
+    const dataQuery = `
+      SELECT id, title
+      FROM events
+      ORDER BY metadata_createdAt DESC LIMIT 3
+    `;
+         const dataStmt = db.prepare(dataQuery);
+        const rows = dataStmt.all();
+
+        return res.json({ status: true, rows });
+
+    } catch (error) {
+        console.error("Error in GET /api/events:", error);
+        res.status(500).json({ status: false, message: 'Server error' });
+    }
+});
+
 router.delete('/api/events/:id', (req, res) => {
     try {
         const { id } = req.params;  
@@ -86,7 +105,7 @@ router.delete('/api/events/:id', (req, res) => {
 
     } catch (error) {
         console.error("Error in DELETE /api/events:", error);
-        return res.status(500).json({ status: false, message: 'Server error' });
+        return res.status(500).json({ status: false, message: error.message });
     }
 });
 

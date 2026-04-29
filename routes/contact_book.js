@@ -2,14 +2,18 @@ const express = require("express");
 const router = express.Router();
 const dbService = require("../services/dbService");
 const db = dbService.getDB();
-const {corruptedContactBookData} = require("../services/whatsAppSender");
+const { corruptedContactBookData } = require("../services/whatsAppSender");
 
 router.post("/api/contacts/create", (req, res) => {
   try {
     const contactData = req.body;
 
     // Check if phone already exists (returns array)
-    const duplicates = dbService.findByColumn("contact_book", "phone", contactData.phone);
+    const duplicates = dbService.findByColumn(
+      "contact_book",
+      "phone",
+      contactData.phone
+    );
 
     if (duplicates.length > 0) {
       return res.status(409).json({
@@ -27,7 +31,9 @@ router.post("/api/contacts/create", (req, res) => {
     });
   } catch (error) {
     console.error("Failed to create contact:", error.message);
-    res.status(500).json({ status: false, message: "Failed to create contact" });
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to create contact" });
   }
 });
 
@@ -41,7 +47,9 @@ router.delete("/api/contacts", (req, res) => {
     const result = dbService.remove("contact_book", id);
 
     if (result.changes === 0) {
-      return res.status(404).json({ status: false, message: "Contact not found" });
+      return res
+        .status(404)
+        .json({ status: false, message: "Contact not found" });
     }
 
     res.status(200).json({
@@ -50,7 +58,9 @@ router.delete("/api/contacts", (req, res) => {
     });
   } catch (error) {
     console.error("Failed to delete contact:", error.message);
-    res.status(500).json({ status: false, message: "Failed to delete contact" });
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to delete contact" });
   }
 });
 
@@ -62,8 +72,12 @@ router.put("/api/contacts/modify", (req, res) => {
     }
 
     // Check for duplicates excluding current contact id
-    const duplicates = dbService.findByColumn("contact_book", "phone", contactData.phone);
-    const duplicateExists = duplicates.some(d => d.id !== contactData.id);
+    const duplicates = dbService.findByColumn(
+      "contact_book",
+      "phone",
+      contactData.phone
+    );
+    const duplicateExists = duplicates.some((d) => d.id !== contactData.id);
 
     if (duplicateExists) {
       return res.status(409).json({
@@ -72,10 +86,16 @@ router.put("/api/contacts/modify", (req, res) => {
       });
     }
 
-    const result = dbService.update("contact_book", contactData.id, contactData);
+    const result = dbService.update(
+      "contact_book",
+      contactData.id,
+      contactData
+    );
 
     if (result.changes === 0) {
-      return res.status(404).json({ status: false, message: "Contact not found" });
+      return res
+        .status(404)
+        .json({ status: false, message: "Contact not found" });
     }
 
     res.status(200).json({
@@ -84,7 +104,9 @@ router.put("/api/contacts/modify", (req, res) => {
     });
   } catch (error) {
     console.error("Failed to update contact:", error.message);
-    res.status(500).json({ status: false, message: "Failed to update contact" });
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to update contact" });
   }
 });
 
@@ -122,15 +144,13 @@ router.get("/api/contacts", (req, res) => {
     const result = db.prepare(query).all(blacklistValue);
 
     return res.status(200).json({ status: true, data: result });
-
   } catch (error) {
     console.error("Failed to fetch contacts:", error);
-    res.status(500).json({ status: false, message: "Failed to fetch contacts" });
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to fetch contacts" });
   }
 });
-
-
-
 
 router.get("/api/contacts/clear-contact-book", async (req, res) => {
   try {
@@ -139,12 +159,12 @@ router.get("/api/contacts/clear-contact-book", async (req, res) => {
     `;
 
     const stmt = db.prepare(query);
-    const result = stmt.run(); 
+    const result = stmt.run();
 
     res.status(200).json({
       status: true,
       message: "Contact book cleared successfully",
-      changes: result.changes, 
+      changes: result.changes,
     });
   } catch (error) {
     console.error("Failed to clear contact book:", error);
@@ -155,14 +175,30 @@ router.get("/api/contacts/clear-contact-book", async (req, res) => {
   }
 });
 
-
-router.post("/api/contacts/add-to-guest-list", (req, res) => {
+router.get("/api/contacts/add-to-guest-list", async (req, res) => {
   try {
-    
-    const contactData = req.body;
+    const { contactId, eventId } = req.query;
+
+    const duplicateQuery = ` SELECT EXISTS (
+    SELECT 1
+    FROM event_guest_list
+    WHERE contact_book_id = ?
+      AND event_id = ?
+) AS exists_flag;
+        
+      `;
+    const stmt = db.prepare(duplicateQuery)
+    const duplicateCheck = await stmt.get(contactId, eventId);
+
+    if(duplicateCheck.exists_flag === 1){
+        return res.status(404).json({
+      status: false,
+    });
+    }
 
     const result = dbService.create("event_guest_list", {
-        contact_book_id: contactData.id
+      contact_book_id: Number(contactId),
+      event_id: Number(eventId),
     });
 
     res.status(200).json({
