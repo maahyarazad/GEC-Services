@@ -3,7 +3,7 @@ name: Deploy Registration App
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
   # ─────────────────────────────────────────────
@@ -31,7 +31,7 @@ jobs:
       - name: Build client
         working-directory: public
         env:
-          VITE_SERVERURL: ${{ secrets.VITE_SERVERURL }}
+          VITE_SERVERURL: 'https://services.german-emirates-club.com'
         run: npm run build
 
       - name: Setup SSH
