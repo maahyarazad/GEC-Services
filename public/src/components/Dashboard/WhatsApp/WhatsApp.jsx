@@ -20,6 +20,7 @@ import { AiOutlineClear } from "react-icons/ai";
 import { RiContactsBook2Fill } from "react-icons/ri";
 import { RiUserReceivedFill } from "react-icons/ri";
 import { RiCheckDoubleFill } from "react-icons/ri";
+import { BsCalendar2Event } from "react-icons/bs";
 import CreateContact from "./CreateContact";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { columns, responseColumns, contactBookColumn, tabstyle, normalizePhone, corruptedContactBookColumn } from './WhatsAppComponentConfig'
@@ -46,15 +47,11 @@ const WhatsappBroadcast = () => {
     const [data, setData] = useState();
     const [groupedByTypeKey, setGroupedByTypeKey] = useState();
 
-    const [openLogs, setOpenLogs] = useState(false);
-    const [openContactBook, setOpenContactBook] = useState(false);
-    const [openResponses, setOpenResponses] = useState(false);
+    const [openPanel, setOpenPanel] = useState(null);
+    // null | 'contact-book' | 'event-list' | 'response-logs' | 'delivery-logs' | 'report' | 'report-type' | 'report-type-attendance'
     const [loading, setLoading] = useState(true);
     const [viewJsonModal, setViewJsonModal] = useState(false);
     const [JSON_Value_Response_Log, setJSON_Value_Response_Log] = useState(null);
-    const [viewStatus, setViewStatus] = useState(false);
-    const [viewStatusType, setViewStatusType] = useState(false);
-    const [viewStatusAttendanceType, setViewStatusAttendanceType] = useState(false);
     const [viewCreateNewContact, setViewCreateNewContact] = useState(false);
 
 
@@ -168,8 +165,8 @@ const WhatsappBroadcast = () => {
 
 
     useEffect(() => {
-        if (openContactBook) fetchContactData();
-    }, [openContactBook, fetchContactData]);
+        if (openPanel === 'contact-book') fetchContactData();
+    }, [openPanel, fetchContactData]);
 
     const onViewJson = (value, type, full_name) => {
 
@@ -536,11 +533,11 @@ const WhatsappBroadcast = () => {
     );
 
     useEffect(() => {
-        if (openLogs) fetchLogs(paginationModel, sortModel, applyFilterTrigger, startDate, endDate);
-        if (openResponses) fetchResponses();
+        if (openPanel === 'delivery-logs') fetchLogs(paginationModel, sortModel, applyFilterTrigger, startDate, endDate);
+        if (openPanel === 'response-logs') fetchResponses();
 
 
-    }, [openLogs, openResponses, paginationModel, sortModel, applyFilterTrigger, startDate, endDate]);
+    }, [openPanel, paginationModel, sortModel, applyFilterTrigger, startDate, endDate]);
 
 
 
@@ -554,53 +551,62 @@ const WhatsappBroadcast = () => {
     ////////////////////////////////////////////////////////////////////////////////
     const [showChart, setShowChart] = useState(false);
     useEffect(() => {
-        if (viewStatus || viewStatusType || viewStatusAttendanceType) {
+        if (openPanel === 'report' || openPanel === 'report-type' || openPanel === 'report-type-attendance') {
             const timer = setTimeout(() => setShowChart(true), 200);
             return () => clearTimeout(timer);
         } else {
             setShowChart(false);
         }
-    }, [viewStatus, viewStatusType, viewStatusAttendanceType]);
+    }, [openPanel]);
 
 
     useEffect(() => {
-        const params = new URLSearchParams(location.search);
-        const modalView = params.get("view");
+        const modalView = new URLSearchParams(location.search).get("view");
 
-        setViewStatus(modalView === "report");
-        setViewStatusType(modalView === "report-type");
-        setViewStatusAttendanceType(modalView === "report-type-attendance");
-        setOpenResponses(modalView === "response_logs");
-    }, [location.search]);
-
-    useEffect(() => {
-        const params = new URLSearchParams(location.search);
-
-        const viewMap = {
-            report: viewStatus,
-            response_logs: openResponses,
-            "report-type": viewStatusType,
-            "report-type-attendance": viewStatusAttendanceType,
-            "contact-book": openContactBook,
-            // "delivery-logs": openDeliveryLogs,
+        const panelMap = {
+            "report": "report",
+            "report-type": "report-type",
+            "report-type-attendance": "report-type-attendance",
+            "response-logs": "response-logs",
+            "delivery-logs": "delivery-logs",
+            "contact-book": "contact-book",
+            "event-list": "event-list",
         };
 
-        const activeView = Object.keys(viewMap).find((key) => viewMap[key]);
+        setOpenPanel(panelMap[modalView] ?? null);
+    }, []);
 
-        if (activeView) {
-            params.set("view", activeView);
+    const handleSetOpenPanel = (panel) => {
+        const panelToView = {
+            "report": "report",
+            "reportType": "report-type",
+            "reportAttendance": "report-type-attendance",
+            "responses": "response-logs",
+            "logs": "delivery-logs",
+            "contactBook": "contact-book",
+            "eventList": "event-list",
+        };
+
+        // ✅ Read existing params and only update "view"
+        const params = new URLSearchParams(location.search);
+        
+        
+        
+        
+
+        if (panel) {
+            params.set("view", panel);
         } else {
             params.delete("view");
         }
 
         navigate({
             pathname: location.pathname,
-            search: params.toString() ? `?${params.toString()}` : "",
+            search: `?${params.toString()}`,
         }, { replace: true });
 
-    }, [viewStatus, openResponses, viewStatusType, openContactBook,
-        , navigate, location.pathname, location.search]);
-
+        setOpenPanel(panel);
+    };
 
     const modalTitle = (() => {
         switch (JSON_Value_Response_Log?.type) {
@@ -663,8 +669,8 @@ const WhatsappBroadcast = () => {
         <Box sx={{ padding: 1, position: 'relative' }}>
 
             <Modal
-                isOpen={viewStatus}
-                onRequestClose={() => setViewStatus(false)}
+                isOpen={openPanel === 'report'}
+                onRequestClose={() => handleSetOpenPanel(null)}
                 title="Delivery Status"
             >
                 <div className="d-lg-flex justify-content-between align-items-center">
@@ -673,8 +679,8 @@ const WhatsappBroadcast = () => {
             </Modal>
 
             <Modal
-                isOpen={viewStatusType}
-                onRequestClose={() => setViewStatusType(false)}
+                isOpen={openPanel === 'report-type'}
+                onRequestClose={() => handleSetOpenPanel(null)}
                 title="Delivery Status By Contact Type"
             >
                 <div className="d-lg-flex justify-content-between align-items-center">
@@ -683,8 +689,8 @@ const WhatsappBroadcast = () => {
             </Modal>
 
             <Modal
-                isOpen={viewStatusAttendanceType}
-                onRequestClose={() => setViewStatusAttendanceType(false)}
+                isOpen={openPanel === 'report-type-attendance'}
+                onRequestClose={() => handleSetOpenPanel(null)}
                 title="Attendance Status By Contact Type"
             >
                 <div className="d-lg-flex justify-content-between align-items-center">
@@ -693,14 +699,10 @@ const WhatsappBroadcast = () => {
             </Modal>
 
 
-            <SlideMenu
-                isOpen={openLogs || openResponses}
-                onClose={() => {
-                    setOpenLogs(false);
-                    setOpenResponses(false);
-
-                }}
-                headerTitle={openLogs ? 'Delivery Logs' : 'Response Logs'}
+            <SlideMenu id={`${openPanel === 'response-logs' ? "response-logs" : "delivery-logs"}`}
+                isOpen={openPanel === 'response-logs' || openPanel === 'delivery-logs'}
+                onClose={() => { handleSetOpenPanel(null) }}
+                headerTitle={openPanel === 'delivery-logs' ? 'Delivery Logs' : 'Response Logs'}
             >
 
 
@@ -710,7 +712,7 @@ const WhatsappBroadcast = () => {
                     </Box>
                 ) : (
                     <>
-                        {openLogs && (
+                        {openPanel === 'delivery-logs' && (
                             <div style={{ width: '100%', height: 'calc(100vh - 155px)' }}>
 
                                 <div style={{ marginBottom: 12 }} className="d-flex">
@@ -780,7 +782,7 @@ const WhatsappBroadcast = () => {
                             </div>
                         )}
 
-                        {openResponses && (
+                        {openPanel === 'response-logs' && (
                             <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
                                 <DataGrid
                                     rows={responses}
@@ -805,16 +807,13 @@ const WhatsappBroadcast = () => {
             </SlideMenu>
 
             <SlideMenu id={'contact-book'}
-                isOpen={openContactBook}
-                onClose={() => {
-
-                    setOpenContactBook(false);
-                }}
+                isOpen={openPanel === 'contact-book'}
+                onClose={() => { handleSetOpenPanel(null) }}
                 headerTitle={'Contact Book'}
             >
 
 
-                <div style={{ width: '100%', height: 'calc(100vh - 125px)' }} className={`${openContactBook ? "" : "hidden"}`}>
+                <div style={{ width: '100%', height: 'calc(100vh - 125px)' }} className={`${openPanel === 'contact-book' ? "" : "hidden"}`}>
                     <div className="col-12 d-flex flex-start align-items-center">
                         <div className="d-flex">
                             <Button className="me-2"
@@ -867,15 +866,15 @@ const WhatsappBroadcast = () => {
 
             <div className="pb-2 border-bottom border-1">
 
-                <IconButton title='Open Delivery Report' onClick={() => setViewStatus(true)}>
+                <IconButton title='Open Delivery Report' onClick={() => handleSetOpenPanel('report')}>
                     <IoStatsChartSharp />
                 </IconButton>
 
-                <IconButton title='Open Delivery Insight by Contact Type' onClick={() => setViewStatusType(true)}>
+                <IconButton title='Open Delivery Insight by Contact Type' onClick={() => handleSetOpenPanel('report-type')}>
                     <MdInsights />
                 </IconButton>
 
-                <IconButton title='Open Attendance Insight by Contact Type' onClick={() => setViewStatusAttendanceType(true)}>
+                <IconButton title='Open Attendance Insight by Contact Type' onClick={() => handleSetOpenPanel('report-type-attendance')}>
                     <PiUserCircleCheckDuotone />
                 </IconButton>
 
@@ -886,15 +885,20 @@ const WhatsappBroadcast = () => {
                 <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { handleMessageStateChange('massAction', true); }} disabled={messageState.content === null}>
                     <FaWhatsapp size={17} style={{ marginRight: 2 }} /> Send Message
                 </Button>
-                <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenContactBook(true)}>
+
+                <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => handleSetOpenPanel('contact-book')}>
                     <RiContactsBook2Fill size={17} style={{ marginRight: 2 }} />
                     Contact Book
                 </Button>
-                <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenResponses(true)}>
+                <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => handleSetOpenPanel('event-list')}>
+                    <BsCalendar2Event size={17} style={{ marginRight: 2 }} />
+                    Event List
+                </Button>
+                <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => handleSetOpenPanel('response-logs')}>
                     <RiUserReceivedFill style={{ marginRight: 2 }} />
                     Response Logs
                 </Button>
-                <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => setOpenLogs(true)}>
+                <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => handleSetOpenPanel('delivery-logs')}>
                     <RiCheckDoubleFill style={{ marginRight: 2 }} />
                     Delivery Logs
                 </Button>
