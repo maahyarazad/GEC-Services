@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - main
 
 jobs:
   # ─────────────────────────────────────────────
@@ -31,7 +32,6 @@ jobs:
       - name: Build client
         working-directory: public
         env:
-          CI: false
           VITE_SERVERURL: 'https://services.german-emirates-club.com'
         run: npm run build
 
