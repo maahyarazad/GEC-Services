@@ -3,7 +3,7 @@ name: Deploy Registration App
 on:
   push:
     branches:
-      - main
+      - dev
 
 jobs:
   # ─────────────────────────────────────────────
