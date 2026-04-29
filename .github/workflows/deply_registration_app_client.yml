@@ -26,7 +26,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: public
-        run: npm install
+        run: npm ci
 
       - name: Build client
         working-directory: public
