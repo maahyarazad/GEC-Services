@@ -36,8 +36,8 @@ import { useWebSocket } from "./WebSocketContext";
 
 // Components
 const HealthCheck = React.lazy(() => import("./HealthCheck/HealthCheck"));
-const RegistrationList = React.lazy(() => import("./Registration/RegistrationList"));
-const RegistrationDataGrid = React.lazy(() => import("../Sections/RegistrationDataGrid"));
+const RegistrationConfig = React.lazy(() => import("./Registration/RegistrationConfig"));
+const RegistrantSection = React.lazy(() => import("../Sections/RegistrantSection"));
 const MemberDataGrid = React.lazy(() => import("../Sections/MembersDataGrid"));
 const MemberCardDataGrid = React.lazy(() => import("../Sections/MemberCardDataGrid"));
 const SurveyDataGrid = React.lazy(() => import("../Sections/SurveyDataGrid"));
@@ -204,7 +204,7 @@ const Admin = ({ data }) => {
         },
         {
             icon: <GrCatalogOption size={20} />,
-            label: "Events",
+            label: "Registrant Section",
         },
         {
             icon: <FcSurvey size={24} />,
@@ -317,10 +317,10 @@ const Admin = ({ data }) => {
             content = <HealthCheck />;
             break;
         case 1:
-            content = <RegistrationList />;
+            content = <RegistrationConfig />;
             break;
         case 2:
-            content = <RegistrationDataGrid />;
+            content = <RegistrantSection />;
             break;
         case 3:
             content = <SurveyDataGrid />;

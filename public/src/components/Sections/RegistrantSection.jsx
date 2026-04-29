@@ -121,7 +121,7 @@ const columns = [
 
 
 
-const RegistrationDataGrid = () => {
+const RegistrantSection = () => {
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];
 
     const [registrationList, setRegistrationList] = useState([]);
@@ -325,4 +325,4 @@ const RegistrationDataGrid = () => {
 };
 
 
-export default RegistrationDataGrid;
+export default RegistrantSection;

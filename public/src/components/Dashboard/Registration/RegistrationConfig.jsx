@@ -350,7 +350,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
 ];
 
 
-const RegistrationList = () => {
+const RegistrationConfig = () => {
 
     const { data: _data } = useWebSocket();
     const [localData, setLocalData] = useState(null);
@@ -955,4 +955,4 @@ const RegistrationList = () => {
 };
 
 
-export default RegistrationList;
+export default RegistrationConfig;
