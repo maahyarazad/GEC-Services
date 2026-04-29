@@ -304,12 +304,13 @@ router.patch("/api/registration-config-archive",  async (req, res) => {
 router.post("/registration-config/optional-login", async (req, res) => {
   try {
 
+
     const table_name = "registration_config";
     let externalUser;
+    const referer = req.query?.referer;
+    const ssoToken = req.query?.sso;
 
-    if(req.query && req.query.referer){
-        const referer = req.query.referer;
-        const ssoToken = req.query.sso
+    if(ssoToken !== 'null' && referer!== 'null'){
         externalUser = jwt.verify(ssoToken, process.env.SSO_SECRET);
     }
 

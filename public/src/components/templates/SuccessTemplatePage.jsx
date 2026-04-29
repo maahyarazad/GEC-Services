@@ -105,7 +105,7 @@ const SuccessTemplatePage = ({}) => {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch');
+                console.error('Failed to fetch optional-login')
             }
             const queryParams = new URLSearchParams(window.location.search);
             const values = await response.json();

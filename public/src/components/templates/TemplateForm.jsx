@@ -135,7 +135,7 @@ const TemplateForm = () => {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch');
+                console.error('Failed to fetch currency');
             }
 
             const values = await response.json();
@@ -158,6 +158,8 @@ const TemplateForm = () => {
             const referer = searchParams.get("referer");
             const sso = searchParams.get("sso");
 
+            
+
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/registration-config/optional-login?sso=${sso}&referer=${referer}`, {
                 method: 'POST',
                 headers: {
@@ -171,7 +173,7 @@ const TemplateForm = () => {
 
 
             if (!response.ok) {
-                throw new Error('Failed to fetch');
+                console.error('Failed to fetch sso');
             }
 
             const values = await response.json();
@@ -189,7 +191,7 @@ const TemplateForm = () => {
                     if (x.use_member_card === "true") {
                         setEmailRequired(true);
                     }
-
+                    
                     if (x.loginRequired === "false") {
 
                         setTarget(values.rows[0]);
@@ -267,7 +269,7 @@ const TemplateForm = () => {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch');
+                console.error('Failed to fetch memberId');
                 return;
             }
 
