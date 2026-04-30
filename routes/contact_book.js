@@ -122,15 +122,20 @@ router.get("/api/contacts", (req, res) => {
 
     // Handle guest list
     if (guest_list === "1") {
-      const query = `
+    const { event_id } = req.query;
+
+    const query = `
         SELECT cb.*
         FROM contact_book cb
-        INNER JOIN event_guest_list egl ON egl.contact_book_id = cb.id
-        WHERE cb.phone IS NOT NULL
+        INNER JOIN event_guest_list egl
+        ON egl.contact_book_id = cb.id
+        WHERE egl.event_id = ?
         ORDER BY cb.id DESC
-      `;
-      const result = db.prepare(query).all();
-      return res.status(200).json({ status: true, data: result });
+    `;
+
+    const result = db.prepare(query).all(event_id);
+
+    return res.status(200).json({ status: true, data: result });
     }
 
     // Handle default + blacklist
