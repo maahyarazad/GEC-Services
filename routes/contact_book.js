@@ -122,10 +122,10 @@ router.get("/api/contacts", (req, res) => {
 
     // Handle guest list
     if (guest_list === "1") {
-    const { event_id } = req.query;
+      const { event_id } = req.query;
 
-    const query = `
-        SELECT cb.*
+      const query = `
+        SELECT cb.*, egl.complete_attendance 
         FROM contact_book cb
         INNER JOIN event_guest_list egl
         ON egl.contact_book_id = cb.id
@@ -133,9 +133,9 @@ router.get("/api/contacts", (req, res) => {
         ORDER BY cb.id DESC
     `;
 
-    const result = db.prepare(query).all(event_id);
+      const result = db.prepare(query).all(event_id);
 
-    return res.status(200).json({ status: true, data: result });
+      return res.status(200).json({ status: true, data: result });
     }
 
     // Handle default + blacklist
@@ -192,13 +192,13 @@ router.get("/api/contacts/add-to-guest-list", async (req, res) => {
 ) AS exists_flag;
         
       `;
-    const stmt = db.prepare(duplicateQuery)
+    const stmt = db.prepare(duplicateQuery);
     const duplicateCheck = await stmt.get(contactId, eventId);
 
-    if(duplicateCheck.exists_flag === 1){
-        return res.status(404).json({
-      status: false,
-    });
+    if (duplicateCheck.exists_flag === 1) {
+      return res.status(404).json({
+        status: false,
+      });
     }
 
     const result = dbService.create("event_guest_list", {
@@ -215,6 +215,47 @@ router.get("/api/contacts/add-to-guest-list", async (req, res) => {
     res.status(500).json({
       status: false,
       message: "Failed to fetch contacts",
+    });
+  }
+});
+
+router.patch("/api/contacts/complete-attendance", async (req, res) => {
+  try {
+    const { contactId, eventId } = req.query;
+
+    if (!contactId || !eventId) {
+      return res.status(400).json({
+        status: false,
+        message: "contactId and eventId are required",
+      });
+    }
+
+    const completeAttendanceQuery = `
+        UPDATE event_guest_list 
+        SET complete_attendance = 1
+        WHERE contact_book_id = ?
+        AND event_id = ?
+    `;
+
+    const stmt = db.prepare(completeAttendanceQuery);
+    const result = stmt.run(contactId, eventId);
+
+    if (result.changes === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "No matching guest found",
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "Attendance marked complete",
+    });
+  } catch (error) {
+    console.error("Failed to update attendance:", error);
+    res.status(500).json({
+      status: false,
+      message: "Failed to update attendance",
     });
   }
 });

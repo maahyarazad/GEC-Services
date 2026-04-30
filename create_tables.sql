@@ -284,7 +284,8 @@ CREATE TABLE IF NOT EXISTS event_guest_list (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   contact_book_id INTEGER,
   event_id INTEGER,
-  FOREIGN KEY (contact_book_id) REFERENCES contact_book(id)
+  complete_attendance BOOLEAN DEFAULT 0,
+  FOREIGN KEY (contact_book_id) REFERENCES contact_book(id),
   FOREIGN KEY (event_id) REFERENCES events(id)
 );
 
