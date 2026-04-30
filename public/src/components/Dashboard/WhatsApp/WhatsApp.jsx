@@ -40,7 +40,7 @@ import ViewModeButtonGroup from "./ViewModeButtonGroup";
 import EventSection from '../../Sections/EventSection';
 import EventSpeedDial from "./EventSpeedDial";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
-import { setEvents, getShouldRefetch, clearRefetch } from "../../../features/eventSlice";
+import { setEvents, getShouldRefetch, clearRefetch, getSelectedEvent, triggerRefetchGuestList } from "../../../features/eventSlice";
 
 
 const WhatsappBroadcast = () => {
@@ -57,7 +57,7 @@ const WhatsappBroadcast = () => {
     const [viewJsonModal, setViewJsonModal] = useState(false);
     const [JSON_Value_Response_Log, setJSON_Value_Response_Log] = useState(null);
     const [viewCreateNewContact, setViewCreateNewContact] = useState(false);
-    
+
     const dispatch = useAppDispatch();
     const shouldRefetch = useAppSelector(getShouldRefetch);
 
@@ -84,7 +84,7 @@ const WhatsappBroadcast = () => {
         } catch (error) {
             console.error(error);
         }
-        finally{
+        finally {
             dispatch(clearRefetch());
         }
     }, [dispatch]);
@@ -93,12 +93,12 @@ const WhatsappBroadcast = () => {
 
 
 
-useEffect(() => {
-    if (shouldRefetch) {
-        debugger;
-        fetchEvents();
-    }
-}, [shouldRefetch, fetchEvents]);
+    useEffect(() => {
+        if (shouldRefetch) {
+
+            fetchEvents();
+        }
+    }, [shouldRefetch, fetchEvents]);
 
 
     const [contactList, setContactList] = useState([]);
@@ -149,7 +149,7 @@ useEffect(() => {
     useEffect(() => {
         fetchData();
         fetchEvents();
-    }, [fetchData]);
+    }, []);
 
     const fetchContactData = useCallback(async () => {
         try {
@@ -315,6 +315,44 @@ useEffect(() => {
         }
     };
 
+    const eventId = useAppSelector(getSelectedEvent);
+
+    const onGuestAttend = async (row) => {
+        const { id } = row;
+
+        if (!eventId?.id) return;
+
+        try {
+
+            const params = new URLSearchParams({
+                contactId: String(id),
+                eventId: String(eventId.id),
+            });
+
+            const response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/contacts/complete-attendance?${params}`,
+                {
+                    method: 'PATCH',
+                    credentials: 'include',
+                }
+            );
+
+            const responseData = await response.json();
+
+            if (!response.ok) {
+                showSnackbar(responseData.message, 'error');
+            } else {
+                dispatch(triggerRefetchGuestList());
+                showSnackbar(responseData.message || 'Attendance marked complete', 'success');
+            }
+
+        } catch (err) {
+            console.error('Failed to update attendance:', err);
+            showSnackbar(err.message, 'error');
+        } finally {
+            setloading_logs(false);
+        }
+    };
 
 
     const clearContactBook = () => {
@@ -872,7 +910,7 @@ useEffect(() => {
                             onModifyContact={onModifyContact}
                             onDeleteContact={onDeleteContact}
                             onSwitchBlacklist={onSwitchBlacklist}
-
+                            onGuestAttend={onGuestAttend}
                         />
 
                     )}

@@ -1,6 +1,6 @@
 
 
-import { IconButton, Switch } from "@mui/material";
+import { IconButton, Switch, Tooltip } from "@mui/material";
 import 'react-json-pretty/themes/monikai.css'; // optional styling
 import { IoMdOpen } from "react-icons/io";
 import { RiEditLine } from "react-icons/ri";
@@ -8,7 +8,8 @@ import { IoTrashOutline } from "react-icons/io5";
 import { FaHistory } from "react-icons/fa";
 import { TbClipboardCheck } from "react-icons/tb";
 import ActionCell from './ActionCell';
-
+import { BiSolidCheckCircle } from "react-icons/bi";
+import { BsDashCircle } from "react-icons/bs";
 export const columns = ({ onViewJson }) => [
     { field: 'id', headerName: 'ID', width: 70, hide: true },
     { field: 'metadata_createdAt', headerName: 'Created At', width: 160, filterable: true },
@@ -137,7 +138,6 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
     { field: 'first_name', headerName: 'First Name', width: 160, filterable: true },
     { field: 'last_name', headerName: 'Last Name', width: 160, filterable: true },
     { field: 'phone', headerName: 'Phone Number', width: 160, filterable: true },
-
     { field: 'club_partner_name', headerName: 'Club Patner Name', width: 160, filterable: true },
     { field: 'gender', headerName: 'Gender', width: 90, filterable: true },
     {
@@ -158,7 +158,39 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
                 </div>
             );
         },
+    }
 
+];
+export const guestListColumns = ({ onGuestAttend }) => [
+    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'type', headerName: 'Type', width: 110, filterable: true },
+    { field: 'title', headerName: 'Title', width: 70, filterable: true },
+    { field: 'language', headerName: 'language', width: 80, filterable: true },
+    { field: 'first_name', headerName: 'First Name', width: 160, filterable: true },
+    { field: 'last_name', headerName: 'Last Name', width: 160, filterable: true },
+    { field: 'club_partner_name', headerName: 'Club Patner Name', width: 160, filterable: true },
+    {
+        field: '_',
+        headerName: 'Attendance Completed',
+        width: 300,
+
+        filterable: true,
+        renderCell: (params) => {
+            return (
+                <Tooltip title="Complete Attendance">
+                    <IconButton
+                        //   size="small"
+                        onClick={() => onGuestAttend(params.row)}
+                        sx={{
+                            color: params.row.complete_attendance === 0 ? "" : "green",
+                            "&:hover": { backgroundColor: "#e3f2fd" },
+                        }}
+                    >
+                        {params.row.complete_attendance === 0 ? <BsDashCircle size={20}/> : <BiSolidCheckCircle size={24} />}
+                    </IconButton>
+                </Tooltip>
+            );
+        },
     }
 
 ];

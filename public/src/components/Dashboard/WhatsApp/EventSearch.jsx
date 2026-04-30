@@ -1,23 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
-import { getEvents } from "../../../features/eventSlice";
+import { getEvents, setSelectedEvent, getShouldRefetchGuestList, clearRefetchGuestList, getSelectedEvent, setSelectedGuestList } from "../../../features/eventSlice";
 
-const EventSearch = ({ setContactList }) => {
+const EventSearch = () => {
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedItem, setSelectedItem] = useState('');
+    const dispatch = useAppDispatch();
 
-    const [eventId, setEventId] = useState();
+    const shouldRefetch = useAppSelector(getShouldRefetchGuestList);
+    const eventId = useAppSelector(getSelectedEvent);
+
+
+
     const events = useAppSelector(getEvents);
     const filteredList = events.filter(item =>
         item.title.toLowerCase().includes(searchTerm.toLowerCase())
 
     );
 
-    const handleSelect = (x) => {
-        fetchGuestList(x.id);
-        setSelectedItem(x.id);
-    }
+
 
 
     const handleSearch = (selectedEvent) => {
@@ -33,11 +35,11 @@ const EventSearch = ({ setContactList }) => {
     };
 
 
-    const fetchGuestList = async (eventId) => {
+    const fetchGuestList = async (id) => {  // 👈 accept id as param
         try {
             setLoading(true);
             const response = await fetch(
-                `${import.meta.env.VITE_SERVERURL}/api/contacts?guest_list=1&event_id=${eventId}`,
+                `${import.meta.env.VITE_SERVERURL}/api/contacts?guest_list=1&event_id=${id}`,
                 { credentials: "include" }
             );
 
@@ -47,15 +49,29 @@ const EventSearch = ({ setContactList }) => {
                 return;
             }
 
-            setContactList(responseData.data ?? []);
+            dispatch(setSelectedGuestList(responseData.data ?? []));
 
         } catch (error) {
             console.error(error);
-        }
-        finally {
+        } finally {
             setLoading(false);
+            dispatch(clearRefetchGuestList());
         }
     };
+
+    const handleSelect = (x) => {
+        setSelectedItem(x.id);              // 👈 you were never setting this — fixes highlight
+        dispatch(setSelectedEvent(x));
+        fetchGuestList(x.id);               // 👈 pass id directly, don't rely on selector
+    };
+
+    useEffect(() => {
+        if (shouldRefetch && eventId?.id) {
+            fetchGuestList(eventId.id);     // 👈 use the selector value here since this is a refetch
+        }
+    }, [shouldRefetch]);
+
+
 
 
 
@@ -95,8 +111,8 @@ const EventSearch = ({ setContactList }) => {
                                         overflow: 'hidden',
                                         whiteSpace: 'nowrap',
                                         fontSize: 14,
-                                            backgroundColor: selectedItem === k.id ? '#0d6efd' : '',
-        color: selectedItem === k.id ? '#fff' : '#212529',
+                                        backgroundColor: selectedItem === k.id ? '#0d6efd' : '',
+                                        color: selectedItem === k.id ? '#fff' : '#212529',
                                     }}
                                 >
                                     {k.title}

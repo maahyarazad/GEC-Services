@@ -1,8 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { DataGrid } from '@mui/x-data-grid';
-import { contactBookColumn, corruptedContactBookColumn } from './WhatsAppComponentConfig';
+import { contactBookColumn, corruptedContactBookColumn, guestListColumns } from './WhatsAppComponentConfig';
 import EventSearch from './EventSearch';
 import { Box } from "@mui/material";
+import { getSelectedGuestList} from "../../../features/eventSlice";
+import { useAppSelector } from '../../../store/hooks';
 
 const ContactBookDataGrid = ({
     contactList,
@@ -12,8 +14,9 @@ const ContactBookDataGrid = ({
     onModifyContact,
     onDeleteContact,
     onSwitchBlacklist,
+    onGuestAttend
 }) => {
-    const [_contactList, setContactList] = useState(contactList);
+    
 
     const commonProps = {
         paginationModel: paginationModel,
@@ -27,11 +30,9 @@ const ContactBookDataGrid = ({
 
     const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: false };
     const contactBookColumnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: true };
+    const _contactList = useAppSelector(getSelectedGuestList);
 
 
-    useEffect(() => {
-
-    }, [_contactList])
 
     switch (viewMode) {
         case "blacklist":
@@ -42,13 +43,13 @@ const ContactBookDataGrid = ({
             return (
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
                     <Box sx={{ flexShrink: 0, width: 280 }}>
-                        <EventSearch setContactList={setContactList} />
+                        <EventSearch />
                     </Box>
-                    <Box sx={{ flex: 1, minWidth: 0, height: '85dvh' }}>  {/* minWidth: 0 prevents flex overflow */}
+                    <Box sx={{ flex: 1, minWidth: 0, height: '85dvh' }}>
                         <DataGrid
                             {...commonProps}
                             rows={_contactList}
-                            columns={contactBookColumn(contactBookColumnProps)}
+                            columns={guestListColumns({ onGuestAttend: onGuestAttend })} 
                         />
                     </Box>
                 </Box>
