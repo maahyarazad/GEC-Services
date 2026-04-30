@@ -8,7 +8,6 @@ const ContactBookDataGrid = ({
     onModifyContact,
     onDeleteContact,
     onSwitchBlacklist,
-    events,
 }) => {
     const commonProps = {
         rows: contactList,
@@ -22,8 +21,8 @@ const ContactBookDataGrid = ({
         
     };
 
-    const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, events, viewEventSpeedDial: false };
-    const contactBookColumnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, events, viewEventSpeedDial: true };
+    const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: false };
+    const contactBookColumnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: true };
 
    switch (viewMode) {
         case "blacklist":

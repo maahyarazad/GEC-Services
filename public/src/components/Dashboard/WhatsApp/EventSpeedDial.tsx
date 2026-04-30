@@ -36,9 +36,9 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
                 setSuccessEventId(eventId);
                 if (successTimer.current) clearTimeout(successTimer.current); // clear any existing
                 successTimer.current = setTimeout(() => setSuccessEventId(undefined), 3000);
-            }else{
+            } else {
                 setFailedEventId(eventId)
-                 if (failTimer.current) clearTimeout(failTimer.current); // clear any existing
+                if (failTimer.current) clearTimeout(failTimer.current); // clear any existing
                 failTimer.current = setTimeout(() => setFailedEventId(undefined), 3000);
             }
         } catch (err) {
@@ -51,7 +51,7 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
             if (successTimer.current) clearTimeout(successTimer.current); // cleanup on unmount
             if (failTimer.current) clearTimeout(failTimer.current); // cleanup on unmount
         };
-        
+
     }, []);
 
     // /api/contacts/add-to-guest-list
@@ -71,7 +71,7 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
         cancelClose();
         if (anchorRef.current) {
             const rect = anchorRef.current.getBoundingClientRect();
-            setPos({ top: rect.bottom - 102, left: rect.left });
+            setPos({ top: rect.top - 100, left: rect.left });
         }
         setOpen(true);
     };
@@ -98,12 +98,19 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
                             display: 'flex',
                             flexDirection: 'column',
                             gap: 0.5,
-                            backgroundColor: '',
+                            backgroundColor: '', maxHeight: 100,
+                            overflowY: "auto",
+                            overflowX: "hidden",
+                            whiteSpace: "nowrap",
+                            textOverflow: "ellipsis",
+                            background: '#d9dcde',
+                            padding: 1,
+                            borderRadius: 5
                         }}
                         onMouseEnter={cancelClose}
                         onMouseLeave={scheduleClose}
                     >
-                      {_events?.length > 0 && _events.map((event) => (
+                        {_events?.length > 0 && _events.map((event) => (
                             <div key={event.id}>
                                 <Box onClick={() => handleAddToGuestList(params.row.id, event.id)}
                                     sx={{
@@ -112,7 +119,7 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
                                         gap: 1,
                                         px: 1.5,
                                         py: 0.75,
-                                        backgroundColor: '#585E62',
+                                        backgroundColor: '#888c8f',
                                         border: '0.5px solid',
                                         borderColor: 'divider',
                                         borderRadius: 1.5,

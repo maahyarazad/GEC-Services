@@ -14,10 +14,10 @@ import IconButton from '@mui/material/IconButton';
 import { useSnackbar } from '../Providers/Snackbar';
 import { BsFiletypeCsv } from 'react-icons/bs';
 import { MdOutlineAddCircleOutline, MdOutlineEdit, MdDeleteOutline } from 'react-icons/md';
-
 import FilterParams from '../Dashboard/FilterParams';
 import { config } from '../../ui_config';
-
+import {useAppSelector, useAppDispatch} from '../../store/hooks';
+import {triggerRefetch} from '../../features/eventSlice';
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const EMPTY_FORM = {
@@ -89,6 +89,7 @@ const buildColumns = (onEdit, onDelete) => [
 // ─── component ──────────────────────────────────────────────────────────────
 
 const EventSection = () => {
+    const dispatch = useAppDispatch();
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];
     const { showSnackbar } = useSnackbar();
     const [eventList, setEventList] = useState([]);
@@ -115,6 +116,8 @@ const EventSection = () => {
 
     // ── fetch ──────────────────────────────────────────────────────────────
 
+
+    
     const fetchData = useCallback(async (pagination, sort = [], filter = {}) => {
         setLoading(true);
         try {
@@ -231,19 +234,20 @@ const EventSection = () => {
                 body: JSON.stringify(formData),
             });
 
+            
             const json = await response.json();
             if (!json.status) throw new Error(json.message);
             showSnackbar(response.statusText, "success");
             setModalOpen(false);
             fetchData(paginationModel, sortModel, filterModel);
-
-
+            
         } catch (err) {
             
             showSnackbar(err.message, "error");
             console.error('Save failed:', err);
         } finally {
             setSaving(false);
+            dispatch(triggerRefetch());
         }
     };
 
@@ -273,6 +277,7 @@ const EventSection = () => {
             showSnackbar(err.message, "error");
         } finally {
             setDeleting(false);
+            dispatch(triggerRefetch());
         }
     };
 

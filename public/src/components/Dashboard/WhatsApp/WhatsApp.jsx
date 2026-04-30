@@ -39,6 +39,8 @@ import ContactBookDataGrid from './ContactBookDataGrid';
 import ViewModeButtonGroup from "./ViewModeButtonGroup";
 import EventSection from '../../Sections/EventSection';
 import EventSpeedDial from "./EventSpeedDial";
+import { useAppDispatch, useAppSelector } from "../../../store/hooks";
+import { setEvents, getShouldRefetch, clearRefetch } from "../../../features/eventSlice";
 
 
 const WhatsappBroadcast = () => {
@@ -55,30 +57,48 @@ const WhatsappBroadcast = () => {
     const [viewJsonModal, setViewJsonModal] = useState(false);
     const [JSON_Value_Response_Log, setJSON_Value_Response_Log] = useState(null);
     const [viewCreateNewContact, setViewCreateNewContact] = useState(false);
-    const [events, setEvents] = useState();
+    
+    const dispatch = useAppDispatch();
+    const shouldRefetch = useAppSelector(getShouldRefetch);
+
     const fetchEvents = useCallback(async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SERVERURL}/api/events/latest`,
-          {
-            method: "GET",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-        const responseData = await response.json();
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/events/latest`,
+                {
+                    method: "GET",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
 
-        if (!response.ok) {
-          console.error(responseData.error);
-          return;
+            const responseData = await response.json();
+
+            if (!response.ok) {
+                console.error(responseData.error);
+                return;
+            }
+
+            dispatch(setEvents(responseData.rows ?? []));
+
+        } catch (error) {
+            console.error(error);
         }
+        finally{
+            dispatch(clearRefetch());
+        }
+    }, [dispatch]);
 
-            setEvents(responseData.rows ?? []);    
-      } catch (error) {
-        console.error(error);
-      }
-    },[]);
 
+
+
+
+useEffect(() => {
+    if (shouldRefetch) {
+        debugger;
+        fetchEvents();
+    }
+}, [shouldRefetch, fetchEvents]);
 
 
     const [contactList, setContactList] = useState([]);
@@ -672,7 +692,7 @@ const WhatsappBroadcast = () => {
         );
     }
 
-    
+
 
 
 
@@ -845,7 +865,6 @@ const WhatsappBroadcast = () => {
                     ) : (
 
                         <ContactBookDataGrid
-                            events={events}
                             contactList={contactList}
                             viewMode={viewMode}
                             paginationModel={_paginationModel}
@@ -853,7 +872,7 @@ const WhatsappBroadcast = () => {
                             onModifyContact={onModifyContact}
                             onDeleteContact={onDeleteContact}
                             onSwitchBlacklist={onSwitchBlacklist}
-                            
+
                         />
 
                     )}
