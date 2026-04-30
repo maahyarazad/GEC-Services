@@ -597,4 +597,64 @@ router.get("/api/whatsapp/download-media", async (req, res) => {
   }
 });
 
+router.patch("/api/whatsapp/update-map-url", async (req, res) => {
+  try {
+    const { google_map_url } = req.query;
+
+    if (!google_map_url) {
+      return res.status(400).json({
+        status: false,
+        message: "google_map_url is required",
+      });
+    }
+
+    const filePath = path.resolve(__dirname, "..","data", "google_data.json");
+
+    // Read existing file
+    const fileContent = fs.readFileSync(filePath, "utf-8");
+    const jsonData = JSON.parse(fileContent);
+
+    // Update the value
+    jsonData.google_map_url = google_map_url;
+
+    // Write back to file
+    fs.writeFileSync(filePath, JSON.stringify(jsonData, null, 2), "utf-8");
+
+    return res.status(200).json({
+      status: true,
+      message: "Map URL updated successfully",
+      data: jsonData,
+    });
+
+  } catch (error) {
+    console.error("Update map URL error:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Failed to update map URL",
+    });
+  }
+});
+
+
+router.get("/api/whatsapp/get-map-url", async (req, res) => {
+  try {
+    const filePath = path.resolve(__dirname, "..", "data", "google_data.json");
+
+    const fileContent = fs.readFileSync(filePath, "utf-8");
+    const jsonData = JSON.parse(fileContent);
+
+    return res.status(200).json({
+      status: true,
+      data: jsonData,
+    });
+
+  } catch (error) {
+    console.error("Get map URL error:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Failed to get map URL",
+    });
+  }
+});
+
 module.exports = router;

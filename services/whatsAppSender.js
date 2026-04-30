@@ -6,7 +6,8 @@ const twilioClient = require("twilio")(
 const { parsePhoneNumberFromString } = require("libphonenumber-js");
 const dbService = require("../services/dbService");
 const db = dbService.getDB();
-
+const fs = require("fs");
+const path = require("path");
 
 const otpSender = async (req) => {
   let { mobile_number, otp } = req.body;
@@ -74,6 +75,8 @@ const contactBookData = (conditions, useAudience) => {
           : `AND language = '${conditions?.language?.slice(0, 2)}'`
       }
       AND contentSid IS NULL
+      AND id NOT IN (SELECT contact_book_id FROM event_guest_list) 
+      AND type != 'medical_society'
       GROUP BY phone 
         ORDER BY
             CASE type
@@ -93,6 +96,7 @@ const contactBookData = (conditions, useAudience) => {
       SELECT *
       FROM contact_book
       WHERE phone IS NOT NULL AND blacklist = 0
+      AND id NOT IN (SELECT contact_book_id FROM event_guest_list) 
        AND type IN ('${useAudience}')
       ${
         Object.keys(conditions).length === 0
@@ -504,9 +508,6 @@ async function fetchHistory(phone) {
         allSentMessages
       );
 
-
-    
-
       detailedBodies = detailedMessages
         .filter((item) => item.twilioMessage)
         .map((item) => ({
@@ -585,22 +586,30 @@ async function handleAutoResponse(From, ButtonPayload) {
         phone: contact.phone,
       });
 
+      const filePath = path.resolve(
+        __dirname,
+        "..",
+        "data",
+        "google_data.json"
+      );
+
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const google_map_link_json = JSON.parse(fileContent);
+      const google_map_link = google_map_link_json.google_map_url;
+
       const template_sid = "HXb1ce9479f3d42819bef456f00448afcc";
       template = templates.result.find((x) => x.sid === template_sid);
       if (guest_Types.includes(contact.type)) {
         if (contact.language === "de") {
-          const message =
-            "Super, du stehst auf der Gästeliste! Wir freuen uns auf dich. Kommst du allein oder in Begleitung? Wenn du in Begleitung kommst, schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\n\nHier noch der Google link zur Location, damit du es besser findest: https://maps.app.goo.gl/UGWk2JaUJrspoQpE6\n\nHerzliche Grüße,\nSylvia";
+          const message = `Super, du stehst auf der Gästeliste! Wir freuen uns auf dich. Kommst du allein oder in Begleitung?Super, du stehst auf der Gästeliste! Wir freuen uns, dich zu sehen.\nKommst du alleine oder in Begleitung?\nSchick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nHier der Location-Link:\n${google_map_link}\nHerzliche Grüße\nSylvia`;
           payload[1] = message;
         } else {
-          const message =
-            "Great, you're on the guest list! We're looking forward to seeing you. Are you coming alone or with a guest? Please send me the full name of your guest for our guest list.\n\nHere's the Google Maps link to the location to help you find it: https://maps.app.goo.gl/UGWk2JaUJrspoQpE6\n\nBest regards,\nSylvia";
+          const message = `Great, you're on the guest list! We're looking forward to seeing you.\nWill you be coming alone or with a guest?\nPlease send me the full name of your guest for the guest list.\nHere’s the location link:\n${google_map_link}\nBest regards,\Sylvia`;
           payload[1] = message;
         }
       } else {
         if (contact.language === "de") {
-          const message =
-            "Super, du stehst auf der Gästeliste! Wir freuen uns auf dich. Kommst du allein oder in Begleitung? Schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\n\nDie genaue Location bekommst du gleich.\n\nHerzliche Grüße,\nSylvia";
+          const message = `Super, du stehst auf der Gästeliste! Wir freuen uns, dich zu sehen. Kommst du alleine oder in Begleitung? Schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nOrt: Shangri-La Hotel Qaryat Al Beri, @Al Hana Bar\nHier der Location-Link:\n${google_map_link}\nHerzliche Grüße\nSylvia`;
           payload[1] = message;
         }
       }
@@ -608,6 +617,13 @@ async function handleAutoResponse(From, ButtonPayload) {
       const result = await messageSender({
         body: { template, phoneList, payload },
       });
+
+      dbService.create("event_guest_list", {
+            contact_book_id: Number(contact.id),
+            event_id: Number(1),
+        });
+
+
     } else {
     }
   } catch (e) {
