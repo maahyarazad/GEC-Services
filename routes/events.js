@@ -82,7 +82,7 @@ router.get('/api/events/latest', async (req, res) => {
     const dataQuery = `
       SELECT id, title
       FROM events
-      ORDER BY metadata_createdAt DESC LIMIT 3
+      ORDER BY metadata_createdAt DESC LIMIT 10
     `;
          const dataStmt = db.prepare(dataQuery);
         const rows = dataStmt.all();

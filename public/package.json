@@ -17,6 +17,7 @@
     "@mui/x-date-pickers": "^8.11.0",
     "@preact/signals-react": "^3.3.0",
     "@react-pdf/renderer": "^4.3.1",
+    "@reduxjs/toolkit": "^2.11.2",
     "@tiptap/core": "^2.24.2",
     "@tiptap/extension-blockquote": "^2.24.2",
     "@tiptap/extension-bullet-list": "^2.24.2",
@@ -59,6 +60,7 @@
     "react-icons": "^5.5.0",
     "react-json-pretty": "^2.2.0",
     "react-modal": "^3.16.3",
+    "react-redux": "^9.2.0",
     "react-router": "^7.1.5",
     "react-router-dom": "^7.6.2",
     "slugify": "^1.6.6",
@@ -81,9 +83,9 @@
     "terser": "^5.44.1",
     "vite": "^6.1.0"
   },
-    "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "*",
+  "optionalDependencies": {
     "@rollup/rollup-darwin-arm64": "*",
-    "@rollup/rollup-darwin-x64": "*"
+    "@rollup/rollup-darwin-x64": "*",
+    "@rollup/rollup-linux-x64-gnu": "*"
   }
 }

@@ -25,17 +25,13 @@ jobs:
           cache-dependency-path: public/package.json
 
       - name: Install dependencies
-        working-directory: public
-        run: |
-            rm -f package-lock.json
-            npm install
-            npm install @rollup/rollup-linux-x64-gnu --save-optional
+        run: npm install
+            
 
       - name: Build client
         working-directory: public
         env:
-          CI: false  
-          VITE_SERVERURL: 'https://services.german-emirates-club.com'
+          VITE_SERVERURL: ${{ secrets.VITE_SERVERURL }}
         run: npm run build
 
       - name: Setup SSH
