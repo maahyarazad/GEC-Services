@@ -21,104 +21,106 @@ import { SnackbarProvider } from "./components/Providers/Snackbar";
 import { AlertDialogProvider } from "./components/Providers/AlertProvider";
 import { SlideModalProvider } from "./components/Providers/SlideModalProvider";
 import AccountDeletionRequestPage from "./components/pages/AccountDeletionRequestPage";
-
-
-
-
+import { Provider } from "react-redux";
+import { store } from "./store/store";
 
 const RouteLoader = () => {
-  const location = useLocation();
-  const prevPathRef = useRef(location.pathname);
+    const location = useLocation();
+    const prevPathRef = useRef(location.pathname);
 
-  useEffect(() => {
-    if (location.pathname !== prevPathRef.current) {
-      NProgress.start();
-    }
+    useEffect(() => {
+        if (location.pathname !== prevPathRef.current) {
+            NProgress.start();
+        }
 
-    // Let the DOM update before stopping
-    requestAnimationFrame(() => {
-      NProgress.done();
-      prevPathRef.current = location.pathname;
-    });
-  }, [location]);
+        // Let the DOM update before stopping
+        requestAnimationFrame(() => {
+            NProgress.done();
+            prevPathRef.current = location.pathname;
+        });
+    }, [location]);
 
-  return null;
+    return null;
 };
 
 function TitleManager() {
-const location = useLocation();
+    const location = useLocation();
 
-  useEffect(() => {
-    const segments = location.pathname.split("/").filter(Boolean); // remove empty strings
-    const capitalizedSegments = segments.map(
-      (segment) => segment.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase())
-    );
-    const formattedPath = capitalizedSegments.join(" | ");
+    useEffect(() => {
+        const segments = location.pathname.split("/").filter(Boolean); // remove empty strings
+        const capitalizedSegments = segments.map(
+            (segment) => segment.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase())
+        );
+        const formattedPath = capitalizedSegments.join(" | ");
 
-    document.title = formattedPath
-      ? `GEC - Services | ${formattedPath}`
-      : "GEC - Services";
-  }, [location.pathname]);
+        document.title = formattedPath
+            ? `GEC - Services | ${formattedPath}`
+            : "GEC - Services";
+    }, [location.pathname]);
 
-  return null;
+    return null;
 }
 
 function AppRoutes() {
-  return (
-    <>
-      <RouteLoader />
-      <TitleManager />
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/account-deletion" element={<AccountDeletionRequestPage />} />
-        <Route path="/registration/:event" element={<TemplateForm />} />
-        <Route path="/registration/:event/success" element={<SuccessTemplatePage />} />
-        <Route path="/guest-registration/:eventSlug" element={<GuestRegistration />} />
-        <Route path="/membership" element={<PurchaseMemberShip />} />
-        <Route
-          path="/admin"
-          element={
-            <WebSocketProvider>
-              <Dashboard />
-            </WebSocketProvider>
-          }
-        />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </>
-  );
+    return (
+        <>
+            <RouteLoader />
+            <TitleManager />
+            <Routes>
+                <Route path="/" element={<Login />} />
+                <Route path="/account-deletion" element={<AccountDeletionRequestPage />} />
+                <Route path="/registration/:event" element={<TemplateForm />} />
+                <Route path="/registration/:event/success" element={<SuccessTemplatePage />} />
+                <Route path="/guest-registration/:eventSlug" element={<GuestRegistration />} />
+                <Route path="/membership" element={<PurchaseMemberShip />} />
+                <Route
+                    path="/admin"
+                    element={
+                        <WebSocketProvider>
+                            <Dashboard />
+                        </WebSocketProvider>
+                    }
+                />
+                <Route path="*" element={<NotFound />} />
+            </Routes>
+        </>
+    );
 }
 
 function App() {
-  useEffect(() => {
-    const setVhVar = () => {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty("--vh", `${vh}px`);
-    };
 
-    // Run at start
-    setVhVar();
 
-    // Update on resize / orientation change
-    window.addEventListener("resize", setVhVar);
+    useEffect(() => {
+        const setVhVar = () => {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty("--vh", `${vh}px`);
+        };
 
-    return () => {
-      window.removeEventListener("resize", setVhVar);
-    };
+        // Run at start
+        setVhVar();
 
-  }, []);
-  return (
-    <BrowserRouter>
-      <SnackbarProvider>
-        <AlertDialogProvider>
-          <SlideModalProvider>
+        // Update on resize / orientation change
+        window.addEventListener("resize", setVhVar);
 
-            <AppRoutes />
-          </SlideModalProvider>
-        </AlertDialogProvider>
-      </SnackbarProvider>
-    </BrowserRouter>
-  );
+        return () => {
+            window.removeEventListener("resize", setVhVar);
+        };
+
+    }, []);
+    return (
+        <BrowserRouter>
+            <SnackbarProvider>
+                <AlertDialogProvider>
+                    <SlideModalProvider>
+                        <Provider store={store}>
+
+                            <AppRoutes />
+                        </Provider>
+                    </SlideModalProvider>
+                </AlertDialogProvider>
+            </SnackbarProvider>
+        </BrowserRouter>
+    );
 }
 
 export default App;
