@@ -43,7 +43,7 @@ const SlideMenu = ({ isOpen, onClose, children, headerTitle }) => {
 
 
       {/* Sliding menu */}
-      <div className={`slide-menu ${isOpen ? "open" : ""}`} style={{ width: isMobile ? "100%" : "85%" }} role="dialog" aria-modal="true">
+      <div className={`slide-menu ${isOpen ? "open" : ""}`} style={{ width: isMobile ? "100%" : "90%" }} role="dialog" aria-modal="true">
         {/* Sticky header */}
         <div className="slide-menu__header">
 

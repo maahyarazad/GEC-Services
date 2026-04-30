@@ -1,49 +1,66 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useAppSelector, useAppDispatch } from '../../../store/hooks';
+import { getEvents } from "../../../features/eventSlice";
 
-const RegistrationConfigSearch = ({ onSelect }) => {
+const EventSearch = ({ setContactList }) => {
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedItem, setSelectedItem] = useState('');
-    const [registrationConfigList, setRegistrationConfigList] = useState([]);
 
-    const filteredList = registrationConfigList.filter(item =>
+    const [eventId, setEventId] = useState();
+    const events = useAppSelector(getEvents);
+    const filteredList = events.filter(item =>
         item.title.toLowerCase().includes(searchTerm.toLowerCase())
-
 
     );
 
-
-
-    const handleSelect = (k) => {
-        setSelectedItem(k.page);
-        onSelect(k.page);
+    const handleSelect = (x) => {
+        fetchGuestList(x.id);
+        setSelectedItem(x.id);
     }
 
-    const fetchConfigData = useCallback(async () => {
 
+    const handleSearch = (selectedEvent) => {
+        if (!selectedEvent) {
+            onFilter(contactList); // reset to full list
+            return;
+        }
+
+        const filtered = contactList.filter(
+            (contact) => contact.eventId === selectedEvent.id // adjust to your data shape
+        );
+        onFilter(filtered);
+    };
+
+
+    const fetchGuestList = async (eventId) => {
         try {
+            setLoading(true);
+            const response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/contacts?guest_list=1&event_id=${eventId}`,
+                { credentials: "include" }
+            );
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration-config-list`, { credentials: "include" });
-            const response_data = await response.json();
+            const responseData = await response.json();
+            if (!response.ok) {
+                console.error(responseData.error);
+                return;
+            }
 
-            setRegistrationConfigList(response_data.rows);
+            setContactList(responseData.data ?? []);
 
-
-
-        } catch (err) {
-            console.error('Failed to fetch:', err);
-        } finally {
+        } catch (error) {
+            console.error(error);
+        }
+        finally {
             setLoading(false);
         }
-    }, [])
+    };
 
-    useEffect(() => {
 
-        fetchConfigData();
-    }, []);
 
     return (
-        <div style={{ height: '82dvh' }}>
+        <div style={{ height: '85dvh' }}>
             <div className='rounded border p-2'>
                 {/* Search box */}
                 <input
@@ -60,7 +77,7 @@ const RegistrationConfigSearch = ({ onSelect }) => {
                 />
 
                 {/* List */}
-                <div style={{ overflow: 'scroll', height: '75.5vh' }}>
+                <div style={{ overflow: 'scroll', height: 'calc(85dvh - 60px)' }}>
 
                     <ul className="list-unstyled p-0 m-0 list-group" >
                         {filteredList.length > 0 ? (
@@ -69,7 +86,7 @@ const RegistrationConfigSearch = ({ onSelect }) => {
                                     onClick={() => handleSelect(k)}
                                     title={k.title}
                                     key={k.page}
-                                    className={`p-1 mb-1 mt-1 rounded list-group-item ${selectedItem === k.page ? "active" : ""} hover-li`}
+                                    className={`p-1 mb-1 mt-1 rounded list-group-item ${selectedItem === k.id ? "active" : ""} hover-li`}
                                     style={{
                                         transition: 'all 0.2s ease-in-out',
                                         cursor: 'pointer',
@@ -78,8 +95,8 @@ const RegistrationConfigSearch = ({ onSelect }) => {
                                         overflow: 'hidden',
                                         whiteSpace: 'nowrap',
                                         fontSize: 14,
-                                        backgroundColor: selectedItem === k.id ? '#0d6efd' : '',
-                                        color: selectedItem === k.id ? '#fff' : '#212529',
+                                            backgroundColor: selectedItem === k.id ? '#0d6efd' : '',
+        color: selectedItem === k.id ? '#fff' : '#212529',
                                     }}
                                 >
                                     {k.title}
@@ -97,4 +114,4 @@ const RegistrationConfigSearch = ({ onSelect }) => {
     );
 };
 
-export default RegistrationConfigSearch;
+export default EventSearch;

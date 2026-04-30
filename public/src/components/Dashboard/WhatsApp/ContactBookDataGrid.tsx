@@ -1,5 +1,9 @@
+import { useState, useMemo, useEffect } from "react";
 import { DataGrid } from '@mui/x-data-grid';
-import { contactBookColumn, corruptedContactBookColumn } from './WhatsAppComponentConfig'
+import { contactBookColumn, corruptedContactBookColumn } from './WhatsAppComponentConfig';
+import EventSearch from './EventSearch';
+import { Box } from "@mui/material";
+
 const ContactBookDataGrid = ({
     contactList,
     viewMode,
@@ -9,8 +13,9 @@ const ContactBookDataGrid = ({
     onDeleteContact,
     onSwitchBlacklist,
 }) => {
+    const [_contactList, setContactList] = useState(contactList);
+
     const commonProps = {
-        rows: contactList,
         paginationModel: paginationModel,
         onPaginationModelChange: setPaginationModel,
         pageSizeOptions: [25, 50, 100],
@@ -18,28 +23,40 @@ const ContactBookDataGrid = ({
         disableRowSelectionOnClick: true,
         disableSelectionOnClick: true,
         showToolbar: true,
-        
     };
 
     const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: false };
     const contactBookColumnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: true };
 
-   switch (viewMode) {
+
+    useEffect(() => {
+
+    }, [_contactList])
+
+    switch (viewMode) {
         case "blacklist":
-            //@ts-ignore
-            return <DataGrid {...commonProps} columns={contactBookColumn(columnProps)} />;
+            return <DataGrid {...commonProps} rows={contactList} columns={contactBookColumn(columnProps)} />;
         case "corrupted":
-            //@ts-ignore
-            return <DataGrid {...commonProps} columns={corruptedContactBookColumn(columnProps)} />;
+            return <DataGrid {...commonProps} rows={contactList} columns={corruptedContactBookColumn(columnProps)} />;
         case "guest_list":
-            //@ts-ignore
-            return <DataGrid {...commonProps} columns={contactBookColumn(columnProps)} />;
+            return (
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                    <Box sx={{ flexShrink: 0, width: 280 }}>
+                        <EventSearch setContactList={setContactList} />
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0, height: '85dvh' }}>  {/* minWidth: 0 prevents flex overflow */}
+                        <DataGrid
+                            {...commonProps}
+                            rows={_contactList}
+                            columns={contactBookColumn(contactBookColumnProps)}
+                        />
+                    </Box>
+                </Box>
+            );
         case "default":
-            //@ts-ignore
-            return <DataGrid {...commonProps} columns={contactBookColumn(contactBookColumnProps)} />;
-            default:
-                //@ts-ignore
-                return null;
+            return <DataGrid {...commonProps} rows={contactList} columns={contactBookColumn(contactBookColumnProps)} />;
+        default:
+            return null;
     }
 };
 
