@@ -191,6 +191,7 @@ const CreateContact = ({ CloseModal, initialValues = null }) => {
                             <option value="club_partner">Club Partner</option>
                             <option value="club_member">Club Member</option>
                             <option value="expert">Expert</option>
+                            <option value="medical_society">Medical Society</option>
                             <option value="expert_guest">Expert Guest</option>
                             <option value="difa">Difa</option>
                             <option value="only_guest">Guest</option>

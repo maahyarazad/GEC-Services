@@ -41,8 +41,8 @@ import EventSection from '../../Sections/EventSection';
 import EventSpeedDial from "./EventSpeedDial";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { setEvents, getShouldRefetch, clearRefetch, getSelectedEvent, triggerRefetchGuestList } from "../../../features/eventSlice";
-
-
+import { SiGooglemaps } from "react-icons/si";
+import UpdateMapUrl from './UpdateMapUrl';
 const WhatsappBroadcast = () => {
 
     const location = useLocation();
@@ -519,9 +519,6 @@ const WhatsappBroadcast = () => {
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
 
-
-
-
     const fetchResponses = useCallback(
         async () => {
             setloading_logs(true);
@@ -621,12 +618,6 @@ const WhatsappBroadcast = () => {
     }, [openPanel, paginationModel, sortModel, applyFilterTrigger, startDate, endDate]);
 
 
-
-
-
-
-
-
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
@@ -652,6 +643,7 @@ const WhatsappBroadcast = () => {
             "delivery-logs": "delivery-logs",
             "contact-book": "contact-book",
             "event-list": "event-list",
+            "update-map-url": "update-map-url",
         };
 
         setOpenPanel(panelMap[modalView] ?? null);
@@ -720,6 +712,25 @@ const WhatsappBroadcast = () => {
     };
 
 
+    const REPORT_MODALS = [
+        {
+            panel: 'report',
+            title: 'Delivery Status',
+            Component: WhastAppReport,
+        },
+        {
+            panel: 'report-type',
+            title: 'Delivery Status By Contact Type',
+            Component: WhastAppTypeReport,
+        },
+        {
+            panel: 'report-type-attendance',
+            title: 'Attendance Status By Contact Type',
+            Component: WhastAppAttendanceTypeReport,
+        },
+    ];
+
+
     if (loading) {
         return (
             <div className="d-flex justify-content-center align-items-center" style={{ height: '80%' }}>
@@ -731,43 +742,33 @@ const WhatsappBroadcast = () => {
     }
 
 
-
-
-
     return (
 
         <Box sx={{ padding: 1, position: 'relative' }}>
 
-            <Modal
-                isOpen={openPanel === 'report'}
-                onRequestClose={() => handleSetOpenPanel(null)}
-                title="Delivery Status"
-            >
-                <div className="d-lg-flex justify-content-between align-items-center">
-                    {showChart && <WhastAppReport />}
-                </div>
-            </Modal>
 
-            <Modal
-                isOpen={openPanel === 'report-type'}
-                onRequestClose={() => handleSetOpenPanel(null)}
-                title="Delivery Status By Contact Type"
-            >
-                <div className="d-lg-flex justify-content-between align-items-center">
-                    {showChart && <WhastAppTypeReport />}
-                </div>
-            </Modal>
 
-            <Modal
-                isOpen={openPanel === 'report-type-attendance'}
-                onRequestClose={() => handleSetOpenPanel(null)}
-                title="Attendance Status By Contact Type"
-            >
-                <div className="d-lg-flex justify-content-between align-items-center">
-                    {showChart && <WhastAppAttendanceTypeReport />}
-                </div>
-            </Modal>
+            {REPORT_MODALS.map(({ panel, title, Component }) => (
+                <Modal
+                    key={panel}
+                    isOpen={openPanel === panel}
+                    onRequestClose={() => handleSetOpenPanel(null)}
+                    title={title}
+                >
+                    <div className="d-lg-flex justify-content-between align-items-center">
+                        {showChart && <Component />}
+                    </div>
+                </Modal>
+            ))}
 
+                {/* Google Map URL Modal */}
+                <Modal
+                    isOpen={openPanel === 'update-map-url'}
+                    onRequestClose={() => handleSetOpenPanel(null)}
+                    title="Update Google Map URL"
+                >
+                    <UpdateMapUrl />
+                </Modal>
 
             <SlideMenu id={`${openPanel === 'response-logs' ? "response-logs" : "delivery-logs"}`}
                 isOpen={openPanel === 'response-logs' || openPanel === 'delivery-logs'}
@@ -957,6 +958,10 @@ const WhatsappBroadcast = () => {
 
                 <IconButton title='Reset ClubTime invitation data from Contact Book' onClick={clearContactBook}>
                     <AiOutlineClear style={{ marginRight: 2 }} />
+                </IconButton>
+
+                <IconButton title='Reset ClubTime invitation data from Contact Book' onClick={()=> handleSetOpenPanel('update-map-url')}>
+                    <SiGooglemaps style={{ marginRight: 2 }} />
                 </IconButton>
 
                 <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { handleMessageStateChange('massAction', true); }} disabled={messageState.content === null}>
