@@ -1,0 +1,105 @@
+@keyframes dropdownOpen {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scaleY(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+.event-dropdown {
+  position: relative;
+
+  &__trigger {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .chevron {
+      display: inline-block;
+      font-size: 0.7rem;
+      opacity: 0.6;
+      transition: transform 0.2s ease;
+
+      &--open {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  &__panel {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    max-height: 260px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform-origin: top;
+    animation: dropdownOpen 0.2s ease forwards;
+
+    // Bootstrap shadow & border override
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+  }
+
+  &__search {
+    padding: 0.5rem;
+    background-color: var(--bs-light);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+
+    input {
+      width: 100%;
+    }
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    max-height: 200px;
+
+    // Scrollbar styling
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.15);
+      border-radius: 4px;
+    }
+  }
+
+  &__item {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &--selected {
+      background-color: var(--bs-primary);
+      color: #fff;
+    }
+
+    &:not(&--selected):hover {
+      background-color: var(--bs-light);
+    }
+  }
+
+  &__empty {
+    padding: 0.5rem 1rem;
+    color: var(--bs-secondary);
+    font-style: italic;
+  }
+}

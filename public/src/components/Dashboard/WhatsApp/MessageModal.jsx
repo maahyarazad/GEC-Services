@@ -1,9 +1,12 @@
 import React from "react";
-import { Button, CircularProgress, Switch, IconButton } from "@mui/material";
+import { Button, CircularProgress, Switch, IconButton, Tooltip } from "@mui/material";
 import { IoMdAdd } from "react-icons/io";
 import { TiDelete } from "react-icons/ti";
 import Modal from "../../Modal"
-
+import { useAppSelector } from "../../../store/hooks";
+import { getEvents } from "../../../features/eventSlice";
+import EventDropdownSearch from "./EventDropdownSearch";
+import { BsExclamationTriangleFill } from "react-icons/bs";
 const MessageModal = ({
     state,
     handleMessageStateChange,
@@ -24,7 +27,11 @@ const MessageModal = ({
         phoneList,
         loadingMassSend,
         senderLimit,
+        eventId,
     } = state;
+
+
+    const events = useAppSelector(getEvents);
 
     return (
         <Modal
@@ -39,98 +46,140 @@ const MessageModal = ({
         >
             <div className="">
 
-                <div className="row mx-0 px-0 my-2 card pb-2 pt-2">
+                <div className="d-flex flex-column mx-0 px-0 my-2 card pb-2 pt-1">
+                    <div className="row g-3 px-3">
 
-                    <div className="col-12 justify-self-center align-self-center">
-                        <label htmlFor="test-input">Use Contact Book</label>
+                        {/* LEFT COLUMN */}
+                        <div className="col-12 col-lg-6 d-flex flex-column gap-1">
 
-                        <Switch
-                            size="small"
-                            title="Use Contact Book"
-                            checked={useContactBook}
-                            onChange={(e) => handleMessageStateChange('useContactBook', e.target.checked)}
-                            color="primary"
-                        />
-
-                    </div>
-                    <div className="col-12 justify-self-center align-self-center">
-
-
-                        <label htmlFor="test-input">Use Test Book</label>
-
-                        <Switch
-                            size="small"
-                            title="Use Contact Book"
-                            checked={useTestBook}
-                            onChange={(e) => handleMessageStateChange('useTestBook', e.target.checked)}
-                            color="primary"
-                        />
-                    </div>
-                    <div className="col-12 justify-self-center align-self-center">
-
-                        <div className="row mx-0 px-0 ">
-
-                        </div>
-
-                        <div className="col-6 justify-self-center align-self-center">
-
-                            <label htmlFor="test-input">Pick Language From Contact Book</label>
-                            <Switch
-                                size="small"
-                                title="Language"
-                                checked={state.useLanguage}
-                                onChange={(e) => handleMessageStateChange('useLanguage', e.target.checked)}
-                                color="primary"
+                            <EventDropdownSearch
+                                events={events}
+                                eventId={eventId}
+                                onSelect={handleMessageStateChange}
                             />
+
+                            <div>
+                                <label className="form-label">Audience:</label>
+                                <select
+                                    name="type"
+                                    value={useAudience}
+                                    onChange={(e) => handleMessageStateChange("useAudience", e.target.value)}
+                                    required
+                                    className="form-select"
+                                >
+                                    <option value="all">All</option>
+                                    <option value="gec_staff">GEC Staff</option>
+                                    <option value="club_partner">Club Partner</option>
+                                    <option value="club_member">Club Member</option>
+                                    <option value="expert">Expert</option>
+                                    <option value="expert_guest">Expert Guest</option>
+                                    <option value="difa">Difa</option>
+                                    <option value="only_guest">Guest</option>
+                                    <option value="Wüstenkinder">Wüstenkinder</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="form-label">Set Limit for Sender:</label>
+
+
+
+                                {
+                                    useAudience === 'all' && (
+                                        <Tooltip style={{ marginLeft: 10, fontWeight: 800 }}
+                                            title={
+                                                <>
+                                                    Select All Ignore the limit and use the entire Whastapp Sender bandwidth
+                                                </>
+                                            }
+                                        >
+
+                                            <BsExclamationTriangleFill color="orange" size={20} />
+                                        </Tooltip>
+                                    )
+                                }
+
+
+
+                                <select
+                                    name="type"
+                                    value={senderLimit}
+                                    onChange={(e) => handleMessageStateChange("senderLimit", e.target.value)}
+                                    required
+                                    className="form-select"
+                                >
+                                    <option value={500}>500</option>
+                                    <option value={200}>200</option>
+                                    <option value={100}>100</option>
+                                    <option value={50}>50</option>
+                                    <option value={10}>10</option>
+                                </select>
+                            </div>
+
                         </div>
-                        <div className="col-6 justify-self-center align-self-center">
-                            <label>Audience:</label>
-                            <select
-                                name="type"
-                                value={useAudience}
-                                onChange={(e) => {
-                                    handleMessageStateChange("useAudience", e.target.value);
-                                }}
-                                required
-                                className="form-select"
-                            >
-                                <option value="all">All</option>
-                                <option value="gec_staff">GEC Staff</option>
-                                <option value="club_partner">Club Partner</option>
-                                <option value="club_member">Club Member</option>
-                                <option value="expert">Expert</option>
-                                <option value="expert_guest">Expert Guest</option>
-                                <option value="difa">Difa</option>
 
-                                <option value="only_guest">Guest</option>
-                                <option value="Wüstenkinder">Wüstenkinder</option>
-                            </select>
+                        {/* RIGHT COLUMN */}
+                        <div className="col-12 col-lg-6 d-flex flex-column justify-content-center gap-1 mt-2">
+                            <label className="form-label">Sender Settings:</label>
+                            <div className="d-flex align-items-center justify-content-between border rounded px-3 py-2">
+
+
+                                <span>
+
+                                    <label className="form-label mb-0">Use Contact Book</label>
+                                    {
+                                        useContactBook && (
+                                            <Tooltip style={{ marginLeft: 10, fontWeight: 800 }}
+                                                title={
+                                                    <>
+                                                        ⚠️ Sending to Contact Book.<br />
+                                                        • Only contacts with a phone number will receive this message<br />
+                                                        • Anyone already invited to this event will be skipped<br />
+                                                        • Previously messaged contacts will be skipped<br />
+                                                        • Blacklisted contacts will be skipped<br />
+                                                        • If the same phone number appears twice, only one message will be sent
+                                                    </>
+                                                }
+                                            >
+
+                                                <BsExclamationTriangleFill color="red" size={20} />
+                                            </Tooltip>
+                                        )
+                                    }
+                                </span>
+
+
+                                <Switch
+                                    size="small"
+                                    checked={useContactBook}
+                                    onChange={(e) => handleMessageStateChange("useContactBook", e.target.checked)}
+                                    color="primary"
+                                />
+                            </div>
+
+                            <div className="d-flex align-items-center justify-content-between border rounded px-3 py-2">
+                                <label className="form-label mb-0">Use Test Book</label>
+                                <Switch
+                                    size="small"
+                                    checked={useTestBook}
+                                    onChange={(e) => handleMessageStateChange("useTestBook", e.target.checked)}
+                                    color="primary"
+                                />
+                            </div>
+
+                            <div className="d-flex align-items-center justify-content-between border rounded px-3 py-2">
+                                <label className="form-label mb-0">Pick Language From Contact Book</label>
+                                <Switch
+                                    size="small"
+                                    checked={state.useLanguage}
+                                    onChange={(e) => handleMessageStateChange("useLanguage", e.target.checked)}
+                                    color="primary"
+                                />
+                            </div>
+
                         </div>
 
-                        <div className="col-6 justify-self-center align-self-center">
-                            <label>Set Limit for Sender:</label>
-                            <select
-                                name="type"
-                                value={senderLimit}
-                                onChange={(e) => {
-                                    handleMessageStateChange("senderLimit", e.target.value);
-                                }}
-                                required
-                                className="form-select"
-                            >
-                                <option value={500}>500</option>
-                                <option value={200}>200</option>
-                                <option value={100}>100</option>
-                                <option value={50}>50</option>
-                                <option value={10}>10</option>
-
-
-                            </select>
-                        </div>
                     </div>
-
-
-
                 </div>
 
 
@@ -138,7 +187,7 @@ const MessageModal = ({
 
                     {/* VARIABLES */}
                     <div className="row mx-0 p-0 w-100">
-                        
+
                         <div
                             className={`col-lg-4 col-12 p-0 mx-0 card ${Object.keys(content?.variables ?? {}).length === 0
                                 ? " d-none"
