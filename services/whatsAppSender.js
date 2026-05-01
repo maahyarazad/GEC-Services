@@ -61,36 +61,39 @@ function hasPlaceholders(text) {
   return /{{\s*[^}]+\s*}}/.test(text);
 }
 
-const contactBookData = (conditions, useAudience) => {
+const contactBookData = (conditions, useAudience, eventId) => {
   let query = "";
+
 
   if (useAudience === "all") {
     query = `
-      SELECT *
-      FROM contact_book
-      WHERE phone IS NOT NULL AND blacklist = 0
-      ${
-        Object.keys(conditions).length === 0
-          ? ``
-          : `AND language = '${conditions?.language?.slice(0, 2)}'`
-      }
-      AND contentSid IS NULL
-      AND id NOT IN (SELECT contact_book_id FROM event_guest_list) 
-      AND type != 'medical_society'
-      GROUP BY phone 
+        WITH excluded_guests AS (
+            SELECT contact_book_id
+            FROM event_guest_list WHERE event_id = ${Number(eventId)}
+        )
+        SELECT *
+        FROM contact_book
+        WHERE phone     IS NOT NULL
+        AND blacklist = 0
+            ${
+              Object.keys(conditions).length === 0
+                ? ``
+                : `AND language = '${conditions?.language?.slice(0, 2)}'`
+            }
+            AND contentSid IS NULL
+        AND id        NOT IN (SELECT contact_book_id FROM excluded_guests)
+        AND type      NOT IN ('medical_society', 'expert_guest', 'only_guest', 'Wüstenkinder')
+        GROUP BY phone
         ORDER BY
             CASE type
-                WHEN 'gec_staff' THEN 1
+                WHEN 'gec_staff'    THEN 1
                 WHEN 'club_partner' THEN 2
-                WHEN 'club_member' THEN 3
-                WHEN 'expert' THEN 4
-                WHEN 'difa' THEN 5
-                WHEN 'expert_guest' THEN 6
-                WHEN 'only_guest' THEN 7
-                ELSE 8
-            END
-       LIMIT ${conditions.senderLimit}
-    `;
+                WHEN 'club_member'  THEN 3
+                WHEN 'expert'       THEN 4
+                WHEN 'difa'         THEN 5
+                ELSE                     6
+            END;
+            `;
   } else {
     query = `
       SELECT *
@@ -156,6 +159,7 @@ const messageSender = async (req) => {
       template,
       payload,
       senderLimit,
+      eventId
     } = req.body;
 
     // Helper function to safely send message and swallow errors
@@ -173,11 +177,14 @@ const messageSender = async (req) => {
           return null;
         }
 
-        return await sendMessageToPhone(el.phone, template, payload, el);
-      } catch (error) {
-        console.error(`Error sending message to ${el.phone}:`, error);
+        if(process.env.ENVIRONMENT === 'PRODUCTION'){
+            return await sendMessageToPhone(el.phone, template, payload, el);
+        }
+
+      } catch (err) {
+        console.error(`Error sending message to ${el.phone}:`, err);
         dbService.create("error_log", {
-          error: error.toString(),
+          error: `Error sending message to ${el.phone} - ${err.toString()}`,
           origin_function: "sendMessageToPhone",
         });
 
@@ -207,7 +214,7 @@ const messageSender = async (req) => {
         conditions.language = template.language;
       }
 
-      const contactBook = contactBookData(conditions, useAudience);
+      const contactBook = contactBookData(conditions, useAudience, eventId);
 
       const batchSize = 10; // safe batch size below max throughput
       const delayMs = 1 * 60 * 1000; // 1 minute
@@ -599,19 +606,20 @@ async function handleAutoResponse(From, ButtonPayload) {
 
       const template_sid = "HXb1ce9479f3d42819bef456f00448afcc";
       template = templates.result.find((x) => x.sid === template_sid);
+      
       if (guest_Types.includes(contact.type)) {
-        if (contact.language === "de") {
-          const message = `Super, du stehst auf der Gästeliste! Wir freuen uns auf dich. Kommst du allein oder in Begleitung?Super, du stehst auf der Gästeliste! Wir freuen uns, dich zu sehen.\nKommst du alleine oder in Begleitung?\nSchick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nHier der Location-Link:\n${google_map_link}\nHerzliche Grüße\nSylvia`;
-          payload[1] = message;
+          if (contact.language === "de") {
+              const message = `Super, du stehst auf der Gästeliste! Wir freuen uns, dich zu sehen. Kommst du alleine oder in Begleitung? Schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nOrt: Shangri-La Hotel Qaryat Al Beri, @Al Hana Bar\nHier der Location-Link:\n${google_map_link}\nHerzliche Grüße\nSylvia`;
+              payload[1] = message;
+            }
         } else {
-          const message = `Great, you're on the guest list! We're looking forward to seeing you.\nWill you be coming alone or with a guest?\nPlease send me the full name of your guest for the guest list.\nHere’s the location link:\n${google_map_link}\nBest regards,\Sylvia`;
-          payload[1] = message;
-        }
-      } else {
-        if (contact.language === "de") {
-          const message = `Super, du stehst auf der Gästeliste! Wir freuen uns, dich zu sehen. Kommst du alleine oder in Begleitung? Schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nOrt: Shangri-La Hotel Qaryat Al Beri, @Al Hana Bar\nHier der Location-Link:\n${google_map_link}\nHerzliche Grüße\nSylvia`;
-          payload[1] = message;
-        }
+          if (contact.language === "de") {
+            const message = `Super, du stehst auf der Gästeliste! Wir freuen uns auf dich. Kommst du allein oder in Begleitung?Super, du stehst auf der Gästeliste! Wir freuen uns, dich zu sehen.\nKommst du alleine oder in Begleitung?\nSchick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nHier der Location-Link:\n${google_map_link}\nHerzliche Grüße\nSylvia`;
+            payload[1] = message;
+          } else {
+            const message = `Great, you're on the guest list! We're looking forward to seeing you.\nWill you be coming alone or with a guest?\nPlease send me the full name of your guest for the guest list.\nHere’s the location link:\n${google_map_link}\nBest regards,\Sylvia`;
+            payload[1] = message;
+          }
       }
 
       const result = await messageSender({
@@ -619,11 +627,9 @@ async function handleAutoResponse(From, ButtonPayload) {
       });
 
       dbService.create("event_guest_list", {
-            contact_book_id: Number(contact.id),
-            event_id: Number(1),
-        });
-
-
+        contact_book_id: Number(contact.id),
+        event_id: Number(1),
+      });
     } else {
     }
   } catch (e) {

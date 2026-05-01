@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS contact_book (
   gender VARCHAR(8),
   phone VARCHAR(50) NOT NULL,
   language VARCHAR(2) NOT NULL,
-  type VARCHAR(20) NOT NULL CHECK (type IN ('club_member', 'club_partner', 'expert', 'gec_staff', 'difa', 'expert_guest', 'only_guest', 'medical_society')),
+  type VARCHAR(20) NOT NULL CHECK (type IN ('club_member', 'club_partner', 'expert', 'gec_staff', 'difa', 'expert_guest', 'only_guest', 'medical_society', 'Wüstenkinder')),
   club_partner_name VARCHAR(255),
   blacklist BOOLEAN DEFAULT FALSE,
   contentSid VARCHAR(255)
