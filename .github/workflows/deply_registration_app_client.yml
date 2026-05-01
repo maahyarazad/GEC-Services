@@ -25,6 +25,7 @@ jobs:
           cache-dependency-path: public/package.json
 
       - name: Install dependencies
+        working-directory: public 
         run: npm install
             
 
