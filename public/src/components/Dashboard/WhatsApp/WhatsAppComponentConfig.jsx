@@ -4,7 +4,7 @@ import { IconButton, Switch, Tooltip } from "@mui/material";
 import 'react-json-pretty/themes/monikai.css'; // optional styling
 import { IoMdOpen } from "react-icons/io";
 import { RiEditLine } from "react-icons/ri";
-import { IoTrashOutline } from "react-icons/io5";
+import { TbTrashX } from "react-icons/tb";
 import { FaHistory } from "react-icons/fa";
 import { TbClipboardCheck } from "react-icons/tb";
 import ActionCell from './ActionCell';
@@ -110,8 +110,11 @@ export const corruptedContactBookColumn = ({ onModifyContact, onDeleteContact, o
                     <IconButton onClick={() => onModifyContact(params.row)}>
                         <RiEditLine />
                     </IconButton>
-                    <IconButton onClick={() => onDeleteContact(params.row)}>
-                        <IoTrashOutline color="red" />
+                    <IconButton onClick={() => onDeleteContact(params.row)} sx={{
+                        color: "#d32f2f",
+                        "&:hover": { backgroundColor: "#ffebee" },
+                    }}>
+                        <TbTrashX size={20} />
                     </IconButton>
 
                     <Switch
@@ -161,7 +164,7 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
     }
 
 ];
-export const guestListColumns = ({ onGuestAttend }) => [
+export const guestListColumns = ({ onGuestAttend, onRemoveGuest }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'type', headerName: 'Type', width: 110, filterable: true },
     { field: 'title', headerName: 'Title', width: 70, filterable: true },
@@ -171,24 +174,38 @@ export const guestListColumns = ({ onGuestAttend }) => [
     { field: 'club_partner_name', headerName: 'Club Patner Name', width: 160, filterable: true },
     {
         field: '_',
-        headerName: 'Attendance Completed',
+        headerName: 'Actions',
         width: 300,
 
         filterable: true,
         renderCell: (params) => {
             return (
-                <Tooltip title="Complete Attendance">
-                    <IconButton
-                        //   size="small"
-                        onClick={() => onGuestAttend(params.row)}
-                        sx={{
-                            color: params.row.complete_attendance === 0 ? "" : "green",
-                            "&:hover": { backgroundColor: "#e3f2fd" },
-                        }}
-                    >
-                        {params.row.complete_attendance === 0 ? <BsDashCircle size={20}/> : <BiSolidCheckCircle size={24} />}
-                    </IconButton>
-                </Tooltip>
+                <>
+                    <Tooltip title="Complete Attendance">
+                        <IconButton
+                            //   size="small"
+                            onClick={() => onGuestAttend(params.row)}
+                            sx={{
+                                color: params.row.complete_attendance === 0 ? "" : "green",
+                                "&:hover": { backgroundColor: "#e3f2fd" },
+                            }}
+                        >
+                            {params.row.complete_attendance === 0 ? <BsDashCircle size={20} /> : <BiSolidCheckCircle size={24} />}
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title={`Remove ${params.row.first_name} from guest list`}>
+                        <IconButton
+                            //   size="small"
+                            onClick={() => onRemoveGuest(params.row)}
+                            sx={{
+                                color: "#d32f2f",
+                                "&:hover": { backgroundColor: "#ffebee" },
+                            }}
+                        >
+                            <TbTrashX size={22} />
+                        </IconButton>
+                    </Tooltip>
+                </>
             );
         },
     }

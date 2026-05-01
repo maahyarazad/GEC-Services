@@ -215,10 +215,6 @@ const Admin = ({ data }) => {
             label: "Member Cards",
         },
         {
-            icon: <GrCatalog size={20} />,
-            label: "GIC Data",
-        },
-        {
             icon: <BsPeopleFill size={20} />,
             label: "Member Data",
         },
@@ -329,15 +325,12 @@ const Admin = ({ data }) => {
             content = <MemberCardDataGrid />;
             break;
         case 5:
-            content = <GICDataGrid />;
-            break;
-        case 6:
             content = <MemberDataGrid />;
             break;
-        case 7:
+        case 6:
             content = <PDFGenerator />;
             break;
-        case 8:
+        case 7:
             content = <WhatsappBroadcast />;
             break;
     }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../WebSocketContext';
-import { IoTrashOutline, IoDownloadOutline } from "react-icons/io5";
+import { TbTrashX } from "react-icons/tb";
 // import MyDocument from './MyDocument';
 const MyDocument = React.lazy(() => import('./MyDocument'));
 
@@ -295,8 +295,11 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
 
                                         {k.project.project_name}
                                     </span>
-                                    <IconButton onClick={() => confirmDelete(k.project.project_name)}>
-                                        <IoTrashOutline color="red" size={18} />
+                                    <IconButton onClick={() => confirmDelete(k.project.project_name)}  sx={{
+                        color: "#1976d2",
+                        "&:hover": { backgroundColor: "#e3f2fd" },
+                    }}>
+                                        <TbTrashX size={20} />
                                     </IconButton>
                                 </li>
                             ))

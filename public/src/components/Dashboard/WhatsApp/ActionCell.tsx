@@ -2,8 +2,7 @@
 
 import { IconButton, Switch, Tooltip, Box } from "@mui/material";
 import { RiEditLine } from "react-icons/ri";
-
-import { MdDeleteOutline } from 'react-icons/md';
+import { TbTrashX } from "react-icons/tb";
 import EventSpeedDial from "./EventSpeedDial";
 import { useAppSelector } from "../../../store/hooks";
 import { getEvents } from "../../../features/eventSlice";
@@ -53,7 +52,7 @@ export default function ActionCell({
                         "&:hover": { backgroundColor: "#ffebee" },
                     }}
                 >
-                    <MdDeleteOutline size={22} />
+                    <TbTrashX size={22} />
                 </IconButton>
             </Tooltip>
 

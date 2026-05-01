@@ -8,7 +8,7 @@ import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 
 import {BsFiletypeCsv} from 'react-icons/bs';
-import {IoTrashOutline} from 'react-icons/io5';
+import { TbTrashX } from "react-icons/tb";
 import {FaRegEdit} from 'react-icons/fa';
 
 import { config } from '../../ui_config';
@@ -44,14 +44,17 @@ const getColumns = ({ onEdit, onDelete }) => [
                         title="Edit"
                         onClick={() => onEdit(params.row)}
                     >
-                        <FaRegEdit color="dark" size={18} />
+                        <FaRegEdit color="dark" size={20} />
                     </IconButton>
 
 
 
 
-                    <IconButton onClick={() => onDelete(params.row)} title="Delete record">
-                        <IoTrashOutline color="red" size={18} />
+                    <IconButton onClick={() => onDelete(params.row)} title="Delete record" sx={{
+                        color: "#d32f2f",
+                        "&:hover": { backgroundColor: "#ffebee" },
+                    }}>
+                        <TbTrashX size={20} />
                     </IconButton>
 
                 </Box>

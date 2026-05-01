@@ -14,7 +14,8 @@ const ContactBookDataGrid = ({
     onModifyContact,
     onDeleteContact,
     onSwitchBlacklist,
-    onGuestAttend
+    onGuestAttend,
+    onRemoveGuest
 }) => {
 
     const selectedGuestList = useAppSelector(getSelectedGuestList);
@@ -66,7 +67,7 @@ const ContactBookDataGrid = ({
                         <DataGrid
                             {...commonProps}
                             rows={selectedGuestList}
-                            columns={guestListColumns({ onGuestAttend: onGuestAttend })}
+                            columns={guestListColumns({ onGuestAttend: onGuestAttend, onRemoveGuest:onRemoveGuest  })}
                         />
                     </Box>
                 </Box>

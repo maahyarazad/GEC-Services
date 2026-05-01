@@ -356,6 +356,74 @@ const WhatsappBroadcast = () => {
     };
 
 
+
+
+const onRemoveGuestRequest = (id) => {
+    openDialog(
+        <>
+            <strong>⚠️ Warning:</strong>
+            <br />
+            This action will permanently remove this guest from the guest list.
+            <br /><br />
+
+            <strong>This action cannot be undone.</strong>
+            <br /><br />
+
+            <strong>When to use:</strong>
+            <br />
+            Use this option if you want to remove a guest who should no longer be part of the event.
+        </>,
+        'Remove Guest',
+        {
+            text: 'Remove',
+            color: 'error',
+        },
+        () => { onRemoveGuest(id) },
+        () => {}
+    );
+};
+
+
+
+
+    const onRemoveGuest = async (row) => {
+       const { id } = row;
+
+        if (!eventId?.id) return;
+
+        try {
+
+            const params = new URLSearchParams({
+                contactId: String(id),
+                eventId: String(eventId.id),
+            });
+
+            const response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/contacts/remove-guest?${params}`,
+                {
+                    method: 'DELETE',
+                    credentials: 'include',
+                }
+            );
+
+            const responseData = await response.json();
+
+            if (!response.ok) {
+                showSnackbar(responseData.message || 'Failed to remove guest', 'error');
+            } else {
+                dispatch(triggerRefetchGuestList());
+                showSnackbar(responseData.message || 'Guest removed successfully', 'success');
+            }
+
+        } catch (err) {
+            console.error('Failed to remove guest:', err);
+            showSnackbar(err.message || 'Unexpected error occurred', 'error');
+        } finally {
+            
+        }
+    };
+
+
     const clearContactBook = () => {
         openDialog(
             <>
@@ -923,6 +991,7 @@ const WhatsappBroadcast = () => {
                             onDeleteContact={onDeleteContact}
                             onSwitchBlacklist={onSwitchBlacklist}
                             onGuestAttend={onGuestAttend}
+                            onRemoveGuest={onRemoveGuestRequest}
                         />
 
                     )}
