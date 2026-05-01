@@ -64,7 +64,6 @@ function hasPlaceholders(text) {
 const contactBookData = (conditions, useAudience, eventId) => {
   let query = "";
 
-
   if (useAudience === "all") {
     query = `
         WITH excluded_guests AS (
@@ -96,10 +95,14 @@ const contactBookData = (conditions, useAudience, eventId) => {
             `;
   } else {
     query = `
+     WITH excluded_guests AS (
+            SELECT contact_book_id
+            FROM event_guest_list WHERE event_id = ${Number(eventId)}
+        )
       SELECT *
       FROM contact_book
       WHERE phone IS NOT NULL AND blacklist = 0
-      AND id NOT IN (SELECT contact_book_id FROM event_guest_list) 
+      AND id NOT IN (SELECT contact_book_id FROM excluded_guests)
        AND type IN ('${useAudience}')
       ${
         Object.keys(conditions).length === 0
@@ -159,7 +162,7 @@ const messageSender = async (req) => {
       template,
       payload,
       senderLimit,
-      eventId
+      eventId,
     } = req.body;
 
     // Helper function to safely send message and swallow errors
@@ -177,10 +180,9 @@ const messageSender = async (req) => {
           return null;
         }
 
-        if(process.env.ENVIRONMENT === 'PRODUCTION'){
-            return await sendMessageToPhone(el.phone, template, payload, el);
+        if (process.env.ENVIRONMENT === "PRODUCTION") {
+          return await sendMessageToPhone(el.phone, template, payload, el);
         }
-
       } catch (err) {
         console.error(`Error sending message to ${el.phone}:`, err);
         dbService.create("error_log", {
@@ -606,20 +608,20 @@ async function handleAutoResponse(From, ButtonPayload) {
 
       const template_sid = "HXb1ce9479f3d42819bef456f00448afcc";
       template = templates.result.find((x) => x.sid === template_sid);
-      
+
       if (guest_Types.includes(contact.type)) {
-          if (contact.language === "de") {
-              const message = `Super, du stehst auf der Gästeliste! Wir freuen uns, dich zu sehen. Kommst du alleine oder in Begleitung? Schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nOrt: Shangri-La Hotel Qaryat Al Beri, @Al Hana Bar\nHier der Location-Link:\n${google_map_link}\nHerzliche Grüße\nSylvia`;
-              payload[1] = message;
-            }
+        if (contact.language === "de") {
+          const message = `Super, du stehst auf der Gästeliste! Wir freuen uns, dich zu sehen. Kommst du alleine oder in Begleitung? Schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nOrt: Shangri-La Hotel Qaryat Al Beri, @Al Hana Bar\nHier der Location-Link:\n${google_map_link}\nHerzliche Grüße\nSylvia`;
+          payload[1] = message;
+        }
+      } else {
+        if (contact.language === "de") {
+          const message = `Super, du stehst auf der Gästeliste! Wir freuen uns auf dich. Kommst du allein oder in Begleitung?Super, du stehst auf der Gästeliste! Wir freuen uns, dich zu sehen.\nKommst du alleine oder in Begleitung?\nSchick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nHier der Location-Link:\n${google_map_link}\nHerzliche Grüße\nSylvia`;
+          payload[1] = message;
         } else {
-          if (contact.language === "de") {
-            const message = `Super, du stehst auf der Gästeliste! Wir freuen uns auf dich. Kommst du allein oder in Begleitung?Super, du stehst auf der Gästeliste! Wir freuen uns, dich zu sehen.\nKommst du alleine oder in Begleitung?\nSchick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nHier der Location-Link:\n${google_map_link}\nHerzliche Grüße\nSylvia`;
-            payload[1] = message;
-          } else {
-            const message = `Great, you're on the guest list! We're looking forward to seeing you.\nWill you be coming alone or with a guest?\nPlease send me the full name of your guest for the guest list.\nHere’s the location link:\n${google_map_link}\nBest regards,\Sylvia`;
-            payload[1] = message;
-          }
+          const message = `Great, you're on the guest list! We're looking forward to seeing you.\nWill you be coming alone or with a guest?\nPlease send me the full name of your guest for the guest list.\nHere’s the location link:\n${google_map_link}\nBest regards,\Sylvia`;
+          payload[1] = message;
+        }
       }
 
       const result = await messageSender({

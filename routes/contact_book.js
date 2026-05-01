@@ -119,33 +119,53 @@ router.get("/api/contacts", (req, res) => {
       const result = corruptedContactBookData();
       return res.status(200).json({ status: true, data: result });
     }
+    // Type ordering shared across queries
+    const TYPE_ORDER_SQL = `
+  CASE type
+    WHEN 'gec_staff'       THEN 1
+    WHEN 'club_partner'    THEN 2
+    WHEN 'club_member'     THEN 3
+    WHEN 'difa'            THEN 4
+    WHEN 'expert'          THEN 5
+    WHEN 'expert_guest'    THEN 6
+    WHEN 'only_guest'      THEN 7
+    WHEN 'medical_society' THEN 8
+    ELSE                        9
+  END
+`;
 
     // Handle guest list
     if (guest_list === "1") {
       const { event_id } = req.query;
 
+      if (!event_id) {
+        return res
+          .status(400)
+          .json({ status: false, error: "event_id is required" });
+      }
+
       const query = `
-        SELECT cb.*, egl.complete_attendance 
-        FROM contact_book cb
-        INNER JOIN event_guest_list egl
-        ON egl.contact_book_id = cb.id
-        WHERE egl.event_id = ?
-        ORDER BY cb.id DESC
-    `;
+    SELECT cb.*, egl.complete_attendance 
+    FROM contact_book cb
+    INNER JOIN event_guest_list egl ON egl.contact_book_id = cb.id
+    WHERE egl.event_id = ?
+    ORDER BY ${TYPE_ORDER_SQL}
+  `;
 
       const result = db.prepare(query).all(event_id);
-
       return res.status(200).json({ status: true, data: result });
     }
 
     // Handle default + blacklist
     const blacklistValue = blacklist === "1" || blacklist === "true" ? 1 : 0;
+
     const query = `
-      SELECT *
-      FROM contact_book
-      WHERE phone IS NOT NULL AND blacklist = ?
-      ORDER BY id DESC
-    `;
+  SELECT *
+  FROM contact_book
+  WHERE phone IS NOT NULL AND blacklist = ?
+  ORDER BY ${TYPE_ORDER_SQL}
+`;
+
     const result = db.prepare(query).all(blacklistValue);
 
     return res.status(200).json({ status: true, data: result });
@@ -259,5 +279,44 @@ router.patch("/api/contacts/complete-attendance", async (req, res) => {
     });
   }
 });
+
+router.delete("/api/contacts/remove-guest", (req, res) => {
+  try {
+    const { contactId, eventId } = req.query;
+
+    if (!contactId || !eventId) {
+      return res.status(400).json({
+        status: false,
+        message: "contactId and eventId are required",
+      });
+    }
+
+     const completeAttendanceQuery = `
+        DELETE FROM event_guest_list 
+        WHERE contact_book_id = ? AND event_id = ?
+        
+    `;
+
+    const stmt = db.prepare(completeAttendanceQuery);
+    const result = stmt.run(contactId, eventId);
+
+    if (result.changes === 0) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Guest not found" });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "Guest deleted successfully",
+    });
+  } catch (error) {
+    console.error("Failed to delete guest:", error.message);
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to remove guest" });
+  }
+});
+
 
 module.exports = router;
