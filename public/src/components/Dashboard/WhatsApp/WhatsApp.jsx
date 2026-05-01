@@ -118,6 +118,7 @@ const WhatsappBroadcast = () => {
         loadingMassSend: false,
         phone: '',
         senderLimit: 500,
+        eventId: 0
     });
 
 
@@ -491,6 +492,7 @@ const WhatsappBroadcast = () => {
                                 payload: messageState.inputValue,
                                 template: messageState.content,
                                 senderLimit: messageState.senderLimit,
+                                eventId: messageState.eventId,
                             }),
                         }
                     );
@@ -761,14 +763,14 @@ const WhatsappBroadcast = () => {
                 </Modal>
             ))}
 
-                {/* Google Map URL Modal */}
-                <Modal
-                    isOpen={openPanel === 'update-map-url'}
-                    onRequestClose={() => handleSetOpenPanel(null)}
-                    title="Update Google Map URL"
-                >
-                    <UpdateMapUrl />
-                </Modal>
+            {/* Google Map URL Modal */}
+            <Modal
+                isOpen={openPanel === 'update-map-url'}
+                onRequestClose={() => handleSetOpenPanel(null)}
+                title="Update Google Map URL"
+            >
+                <UpdateMapUrl />
+            </Modal>
 
             <SlideMenu id={`${openPanel === 'response-logs' ? "response-logs" : "delivery-logs"}`}
                 isOpen={openPanel === 'response-logs' || openPanel === 'delivery-logs'}
@@ -886,15 +888,24 @@ const WhatsappBroadcast = () => {
 
                 <div style={{ width: '100%', height: 'calc(100vh - 125px)' }} className={`${openPanel === 'contact-book' ? "" : "hidden"}`}>
                     <div className="col-12 d-flex flex-start align-items-center">
-                        <div className="d-flex">
-                            <Button className="me-2"
-                                variant="contained" color="primary" size="small"
-                                sx={{ textTransform: 'none', marginBottom: 1 }}
-                                onClick={() => { setViewCreateNewContact(true); }}>
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: { xs: 'column', md: 'row' },  // 👈 stack on mobile
+                            alignItems: { xs: 'flex-start', md: 'center' },
+                            gap: 1,
+                            mb: 1,
+                        }}>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                size="small"
+                                sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
+                                onClick={() => { setViewCreateNewContact(true); }}
+                            >
                                 <IoAddCircleOutline size={17} style={{ marginRight: 2 }} /> Create New Contact
                             </Button>
                             <ViewModeButtonGroup viewMode={viewMode} setViewMode={setViewMode} />
-                        </div>
+                        </Box>
                     </div>
 
                     {loading_logs ? (
@@ -960,7 +971,7 @@ const WhatsappBroadcast = () => {
                     <AiOutlineClear style={{ marginRight: 2 }} />
                 </IconButton>
 
-                <IconButton title='Reset ClubTime invitation data from Contact Book' onClick={()=> handleSetOpenPanel('update-map-url')}>
+                <IconButton title='Reset ClubTime invitation data from Contact Book' onClick={() => handleSetOpenPanel('update-map-url')}>
                     <SiGooglemaps style={{ marginRight: 2 }} />
                 </IconButton>
 

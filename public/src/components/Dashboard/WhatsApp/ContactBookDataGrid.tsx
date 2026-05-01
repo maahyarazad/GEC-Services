@@ -1,9 +1,9 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useLayoutEffect } from "react";
 import { DataGrid } from '@mui/x-data-grid';
 import { contactBookColumn, corruptedContactBookColumn, guestListColumns } from './WhatsAppComponentConfig';
 import EventSearch from './EventSearch';
 import { Box } from "@mui/material";
-import { getSelectedGuestList} from "../../../features/eventSlice";
+import { getSelectedGuestList, getSelectedEvent } from "../../../features/eventSlice";
 import { useAppSelector } from '../../../store/hooks';
 
 const ContactBookDataGrid = ({
@@ -16,7 +16,9 @@ const ContactBookDataGrid = ({
     onSwitchBlacklist,
     onGuestAttend
 }) => {
-    
+
+    const selectedGuestList = useAppSelector(getSelectedGuestList);
+
 
     const commonProps = {
         paginationModel: paginationModel,
@@ -28,9 +30,10 @@ const ContactBookDataGrid = ({
         showToolbar: true,
     };
 
+
+
     const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: false };
     const contactBookColumnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: true };
-    const _contactList = useAppSelector(getSelectedGuestList);
 
 
 
@@ -41,15 +44,29 @@ const ContactBookDataGrid = ({
             return <DataGrid {...commonProps} rows={contactList} columns={corruptedContactBookColumn(columnProps)} />;
         case "guest_list":
             return (
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                    <Box sx={{ flexShrink: 0, width: 280 }}>
+                <Box sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', md: 'row' },  // 👈 stack on mobile, side by side on desktop
+                    alignItems: 'flex-start',
+                    gap: 2
+                }}>
+                    <Box sx={{
+                        flexShrink: 0,
+                        
+                        width: { xs: '100%', md: 280 },  // 👈 full width on mobile
+                    }}>
                         <EventSearch />
                     </Box>
-                    <Box sx={{ flex: 1, minWidth: 0, height: '85dvh' }}>
+                    <Box sx={{
+                        flex: 1,
+                        minWidth: 0,
+                        height: { xs: '60dvh', md: '85dvh' },  // 👈 shorter on mobile
+                        width: { xs: '100%', md: 'auto' },      // 👈 full width on mobile
+                    }}>
                         <DataGrid
                             {...commonProps}
-                            rows={_contactList}
-                            columns={guestListColumns({ onGuestAttend: onGuestAttend })} 
+                            rows={selectedGuestList}
+                            columns={guestListColumns({ onGuestAttend: onGuestAttend })}
                         />
                     </Box>
                 </Box>

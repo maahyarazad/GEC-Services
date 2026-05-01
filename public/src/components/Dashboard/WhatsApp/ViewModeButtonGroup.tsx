@@ -7,27 +7,30 @@ interface ViewModeButtonGroupProps {
   setViewMode: (mode: ViewMode) => void;
 }
 
-const buttons: { label: string; mode: ViewMode }[] = [
-  { label: "Main Contact Book", mode: "default" },
-  { label: "Blacklist",         mode: "blacklist" },
-  { label: "Corrupted Contacts",mode: "corrupted" },
-  { label: "Guest List",        mode: "guest_list" },
+const buttons: { label: string; mode: ViewMode; shortLabel: string }[] = [
+  { label: "Main Contact Book",  shortLabel: "Contacts",  mode: "default" },
+  { label: "Blacklist",          shortLabel: "Blacklist", mode: "blacklist" },
+  { label: "Corrupted Contacts", shortLabel: "Corrupted", mode: "corrupted" },
+  { label: "Guest List",         shortLabel: "Guests",    mode: "guest_list" },
 ];
-
-
 
 export default function ViewModeButtonGroup({ viewMode, setViewMode }: ViewModeButtonGroupProps) {
   return (
-    <div className="btn-group" role="group">
-      {buttons.map(({ label, mode }) => (
+    <div
+      className="btn-group flex-wrap"  // 👈 allows wrapping on small screens
+      role="group"
+    >
+      {buttons.map(({ label, shortLabel, mode }) => (
         <button
           key={mode}
           type="button"
+          className={`btn ${viewMode === mode ? "btn-secondary active" : "btn-outline-secondary"} d-flex align-items-center justify-content-center`}
           style={{ height: 32, fontSize: '0.8rem' }}
-          className={`btn ${viewMode === mode ? "btn-secondary active" : "btn-outline-secondary"}`}
           onClick={() => setViewMode(mode)}
         >
-          {label}
+          {/* 👇 show short label on mobile, full label on desktop */}
+          <span className="d-inline d-md-none align-self-center">{shortLabel}</span>
+          <span className="d-none d-md-inline align-self-center">{label}</span>
         </button>
       ))}
     </div>

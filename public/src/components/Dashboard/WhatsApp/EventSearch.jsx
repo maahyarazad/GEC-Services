@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
 import { getEvents, setSelectedEvent, getShouldRefetchGuestList, clearRefetchGuestList, getSelectedEvent, setSelectedGuestList } from "../../../features/eventSlice";
-
+import { Box } from '@mui/material'
 const EventSearch = () => {
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -76,7 +76,12 @@ const EventSearch = () => {
 
 
     return (
-        <div style={{ height: '85dvh' }}>
+        <Box sx={{
+            flex: 1,
+            minWidth: 0,
+            height: { xs: '20dvh', md: '85dvh' },  // 👈 shorter on mobile
+            width: { xs: '100%', md: 'auto' },      // 👈 full width on mobile
+        }}>
             <div className='rounded border p-2'>
                 {/* Search box */}
                 <input
@@ -93,15 +98,18 @@ const EventSearch = () => {
                 />
 
                 {/* List */}
-                <div style={{ overflow: 'scroll', height: 'calc(85dvh - 60px)' }}>
+                <Box sx={{
+                    overflow: 'scroll',
+                    height: { xs: 'calc(20dvh - 60px)', md: 'calc(85dvh - 60px)' } // 👈 matches parent height
+                }}>
 
                     <ul className="list-unstyled p-0 m-0 list-group" >
                         {filteredList.length > 0 ? (
                             filteredList.map((k) => (
-                                <li
+                                <li id={k.id}
                                     onClick={() => handleSelect(k)}
                                     title={k.title}
-                                    key={k.page}
+                                    key={k.id}
                                     className={`p-1 mb-1 mt-1 rounded list-group-item ${selectedItem === k.id ? "active" : ""} hover-li`}
                                     style={{
                                         transition: 'all 0.2s ease-in-out',
@@ -122,11 +130,11 @@ const EventSearch = () => {
                             <li className="text-muted fst-italic ">No matches found</li>
                         )}
                     </ul>
-                </div>
+                </Box>
             </div>
 
 
-        </div>
+        </Box>
     );
 };
 
