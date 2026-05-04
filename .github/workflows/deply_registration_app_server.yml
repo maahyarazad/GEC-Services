@@ -1,7 +1,7 @@
 name: Deploy Registration App
 
 on:
-    workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
   # ─────────────────────────────────────────────
@@ -21,6 +21,16 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Upload server files
+        run: |
+          scp -i ~/.ssh/id_rsa -P ${{ secrets.SSH_PORT }} \
+            server.js package.json \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/node/services.german-emirates-club.com/
+
+          scp -i ~/.ssh/id_rsa -P ${{ secrets.SSH_PORT }} -r \
+            services routes websocket middleware \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/node/services.german-emirates-club.com/
 
       - name: Install dependencies & restart server
         run: |
