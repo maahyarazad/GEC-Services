@@ -1,4 +1,4 @@
-name: Deploy Registration App
+name: Deploy SERVER 
 
 on:
   workflow_dispatch:

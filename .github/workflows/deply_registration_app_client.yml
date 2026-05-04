@@ -1,9 +1,7 @@
-name: Deploy Registration App
+name: Deploy Registration App CLIENT
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   # ─────────────────────────────────────────────
