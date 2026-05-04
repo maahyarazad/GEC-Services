@@ -91,10 +91,10 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
 
 
     const handleSelect = (k) => {
-        
+
         if (temp) {
 
-            
+
             // Reference length to compare against — adjust as needed
             const referenceLength = temp.items.length;
 
@@ -239,7 +239,7 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
                         title="Save"
                         onClick={Save}
                     >
-                        <IoSave color="dark" size={iconSize} />
+                        <IoSave color="#5C6BC0" size={iconSize} />
                     </IconButton>
                     <IconButton
                         title="New Document"
@@ -258,7 +258,7 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
                 <input
                     type="text"
                     className="form-control mb-1 shadow-sm"
-                    placeholder="Search events..."
+                    placeholder="Search files..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={{
@@ -295,10 +295,10 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
 
                                         {k.project.project_name}
                                     </span>
-                                    <IconButton onClick={() => confirmDelete(k.project.project_name)}  sx={{
-                        color: "#1976d2",
-                        "&:hover": { backgroundColor: "#e3f2fd" },
-                    }}>
+                                    <IconButton onClick={() => confirmDelete(k.project.project_name)} sx={{
+                                        color: "#1976d2",
+                                        "&:hover": { backgroundColor: "#e3f2fd" },
+                                    }}>
                                         <TbTrashX size={20} />
                                     </IconButton>
                                 </li>
