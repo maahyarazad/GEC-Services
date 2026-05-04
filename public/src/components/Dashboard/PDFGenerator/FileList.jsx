@@ -8,6 +8,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { IoSave } from "react-icons/io5";
 import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
 import { VscNewFile } from "react-icons/vsc";
 import { useSnackbar } from '../../Providers/Snackbar';
 import { useAlertDialog } from '../../Providers/AlertProvider';
@@ -241,12 +242,17 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
                     >
                         <IoSave color="#5C6BC0" size={iconSize} />
                     </IconButton>
-                    <IconButton
-                        title="New Document"
-                        onClick={() => { handleSelect(initialFormData) }}
-                    >
-                        <VscNewFile color="success" size={iconSize} />
-                    </IconButton>
+                                                <Button
+                    color="success"
+                                                    variant="contained"
+                                                    startIcon={<VscNewFile size={20} />}
+                                                    onClick={() => { handleSelect(initialFormData) }}
+                                                    sx={{ fontSize: 12, textTransform: 'none', wordBreak: 'break-all', paddingY: '1px', paddingX: '10px' }}
+                                                >
+                                                    New File
+                                                </Button>
+
+                  
                 </div>
 
                 <InvoiceDownload iconSize={iconSize} formData={formData} loadingFlag={loadingFlag} />
