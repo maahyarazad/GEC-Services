@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useRef, useEffect} from "react";
 import "./ChatView.css";
 import { CircularProgress } from '@mui/material';
 const isSameDay = (d1, d2) =>
@@ -22,69 +22,77 @@ const getDateLabel = (date) => {
 };
 
 const ChatView = ({ messages, loadingHistory }) => {
-    let lastDate = null;
+        let lastDate = null;
+    const bottomRef = useRef(null);
+
+    useEffect(() => {
+        if (!loadingHistory && messages?.length) {
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages, loadingHistory]);
 
     // backgroundImage: `url(${WABackground})`,
     // backgroundSize: 'cover',
     // backgroundPosition: 'center',
     // <div className="chat-container" style={alignItems: 'center', justifyContent: 'center' }}>
-    
+
     return (
         <div className="chat-container">
 
-            {loadingHistory ? 
-            <div className="d-flex justify-content-center align-items-center w-100 h-100">
+            {loadingHistory ?
+                <div className="d-flex justify-content-center align-items-center w-100 h-100">
 
-  <CircularProgress size={30} color="inherit" /> 
-</div>
+                    <CircularProgress size={30} color="inherit" />
+                </div>
 
-            
-            : messages?.map((msg, index) => {
-                const messageDate = new Date(msg.received_at);
-                const showDate =
-                    !lastDate || !isSameDay(messageDate, lastDate);
 
-                lastDate = messageDate;
-                const isSent = msg.type === "s";
+                : messages?.map((msg, index) => {
+                    const messageDate = new Date(msg.received_at);
+                    const showDate =
+                        !lastDate || !isSameDay(messageDate, lastDate);
 
-                return (
-                    <React.Fragment key={index}>
-                        {showDate && (
-                            <div className="date-separator">
-                                {getDateLabel(messageDate)}
-                            </div>
-                        )}
+                    lastDate = messageDate;
+                    const isSent = msg.type === "s";
 
-                        <div
-                            className={`chat-message ${isSent ? "sent" : "received"}`}
-                        >
-                            <div className="bubble">
-                                <p className="text">
-                                    {msg.body.split("\n").map((line, i) => (
-                                        <React.Fragment key={i}>
-                                            {line}
-                                            <br />
-                                        </React.Fragment>
-                                    ))}
-                                </p>
+                    return (
+                        <React.Fragment key={index}>
+                            {showDate && (
+                                <div className="date-separator">
+                                    {getDateLabel(messageDate)}
+                                </div>
+                            )}
 
-                                <div className="meta">
-                                    <span className="time">
-                                        {messageDate.toLocaleTimeString([], {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                        })}
-                                    </span>
+                            <div
+                                className={`chat-message ${isSent ? "sent" : "received"}`}
+                            >
+                                <div className="bubble">
+                                    <p className="text">
+                                        {msg.body.split("\n").map((line, i) => (
+                                            <React.Fragment key={i}>
+                                                {line}
+                                                <br />
+                                            </React.Fragment>
+                                        ))}
+                                    </p>
 
-                                    {isSent && <span className="ticks">✔✔</span>}
+                                    <div className="meta">
+                                        <span className="time">
+                                            {messageDate.toLocaleTimeString([], {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })}
+                                        </span>
+
+                                        {isSent && <span className="ticks">✔✔</span>}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </React.Fragment>
-                );
-            })}
+                        </React.Fragment>
+                    );
+                })}
 
-            { }
+                        {/* Scroll anchor */}
+            <div ref={bottomRef} />
         </div>
     );
 };

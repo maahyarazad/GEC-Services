@@ -358,36 +358,36 @@ const WhatsappBroadcast = () => {
 
 
 
-const onRemoveGuestRequest = (id) => {
-    openDialog(
-        <>
-            <strong>⚠️ Warning:</strong>
-            <br />
-            This action will permanently remove this guest from the guest list.
-            <br /><br />
+    const onRemoveGuestRequest = (id) => {
+        openDialog(
+            <>
+                <strong>⚠️ Warning:</strong>
+                <br />
+                This action will permanently remove this guest from the guest list.
+                <br /><br />
 
-            <strong>This action cannot be undone.</strong>
-            <br /><br />
+                <strong>This action cannot be undone.</strong>
+                <br /><br />
 
-            <strong>When to use:</strong>
-            <br />
-            Use this option if you want to remove a guest who should no longer be part of the event.
-        </>,
-        'Remove Guest',
-        {
-            text: 'Remove',
-            color: 'error',
-        },
-        () => { onRemoveGuest(id) },
-        () => {}
-    );
-};
+                <strong>When to use:</strong>
+                <br />
+                Use this option if you want to remove a guest who should no longer be part of the event.
+            </>,
+            'Remove Guest',
+            {
+                text: 'Remove',
+                color: 'error',
+            },
+            () => { onRemoveGuest(id) },
+            () => { }
+        );
+    };
 
 
 
 
     const onRemoveGuest = async (row) => {
-       const { id } = row;
+        const { id } = row;
 
         if (!eventId?.id) return;
 
@@ -419,7 +419,7 @@ const onRemoveGuestRequest = (id) => {
             console.error('Failed to remove guest:', err);
             showSnackbar(err.message || 'Unexpected error occurred', 'error');
         } finally {
-            
+
         }
     };
 
@@ -745,7 +745,7 @@ const onRemoveGuestRequest = (id) => {
                 return "Content SID";
 
             case "history":
-                return "History";
+                return "Payload";
 
             case "instant_reply":
                 return "Instant Reply";
@@ -1064,8 +1064,8 @@ const onRemoveGuestRequest = (id) => {
                 </Button>
 
             </div>
-            
-{groupedByTypeKey && <TwilioTemplateDataGrid groupedByTypeKey={groupedByTypeKey} messageState={messageState} handleMessageStateChange={handleMessageStateChange}/>}
+
+            {groupedByTypeKey && <TwilioTemplateDataGrid groupedByTypeKey={groupedByTypeKey} messageState={messageState} handleMessageStateChange={handleMessageStateChange} />}
 
 
             <MessageModal

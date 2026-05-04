@@ -10,6 +10,7 @@ import { TbClipboardCheck } from "react-icons/tb";
 import ActionCell from './ActionCell';
 import { BiSolidCheckCircle } from "react-icons/bi";
 import { BsDashCircle } from "react-icons/bs";
+import { VscDebugAlt } from "react-icons/vsc";
 export const columns = ({ onViewJson }) => [
     { field: 'id', headerName: 'ID', width: 70, hide: true },
     { field: 'metadata_createdAt', headerName: 'Created At', width: 160, filterable: true },
@@ -69,11 +70,11 @@ export const responseColumns = ({ onViewJson, onViewHistory }) => [
                 <div>
 
                     <IconButton onClick={() => onViewJson(JSON.parse(params.row.payload), 'instant_reply', params.row.full_name)} title="Open Instant Resopne">
-                        <IoMdOpen />
+                        <IoMdOpen size={22} color="#5C6BC0" />
                     </IconButton>
 
                     <IconButton onClick={() => onViewHistory(JSON.parse(params.row.payload), 'history')}>
-                        <FaHistory />
+                        <VscDebugAlt size={20} color="#EF5350"/>
                     </IconButton>
 
                 </div>
