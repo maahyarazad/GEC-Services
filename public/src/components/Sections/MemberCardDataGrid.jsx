@@ -14,6 +14,9 @@ import { GrVirtualMachine } from "react-icons/gr";
 import Modal from '../Modal';
 import { IconButton } from '@mui/material';
 import { FaUsersViewfinder } from "react-icons/fa6";
+
+
+
 const paidBlue = '#0f0faf';
 const nonpaidBlue = '#55729e';
 const red = '#cc0000';;
@@ -86,7 +89,7 @@ const columns = ({ onResendPasswordReset, loadingRowId, onSendInvitationEmail })
             return (
                 <div style={containerStyle}>
                     <Tooltip title={`Send invitation email to ${params.row.email}`}>
-                        <IconButton onClick={()=> onSendInvitationEmail(params.row)}>
+                        <IconButton onClick={() => onSendInvitationEmail(params.row)}>
                             <SiMinutemailer color={'gray'} size={22} />
                         </IconButton>
                     </Tooltip>
@@ -127,31 +130,31 @@ const MemberCardDataGrid = () => {
     });
     const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
-const { openDialog } = useAlertDialog();
-const { showSnackbar } = useSnackbar();
+    const { openDialog } = useAlertDialog();
+    const { showSnackbar } = useSnackbar();
 
 
-const confirmSendInvitationEmail = (member_data) => {
-    openDialog(
-        <>
-            Are you sure you want to send an invitation email to <strong>{member_data?.email || "this member"}</strong>?
-        </>,
-        'Send Invitation Email', {
+    const confirmSendInvitationEmail = (member_data) => {
+        openDialog(
+            <>
+                Are you sure you want to send an invitation email to <strong>{member_data?.email || "this member"}</strong>?
+            </>,
+            'Send Invitation Email', {
             text: 'Send',
             color: 'primary'
         },
-        () => {
-            handleSendInvitationEmail(member_data)
-        },
-        () => {
-            // Cancelled: do nothing
-        }
-    );
-}
+            () => {
+                handleSendInvitationEmail(member_data)
+            },
+            () => {
+                // Cancelled: do nothing
+            }
+        );
+    }
 
 
     const handleSendInvitationEmail = async (member_data) => {
-        
+
         try {
             setLoadingRowId(member_data.id);
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/send-invitation-email`, {
@@ -160,7 +163,7 @@ const confirmSendInvitationEmail = (member_data) => {
                     "Content-Type": "application/json",
                 },
                 credentials: "include",
-                body: JSON.stringify({ data : member_data }),
+                body: JSON.stringify({ data: member_data }),
             });
 
             const data = await response.json();
@@ -171,7 +174,7 @@ const confirmSendInvitationEmail = (member_data) => {
                 throw new Error(response.message);
             }
 
-             showSnackbar(data.message);
+            showSnackbar(data.message);
         } catch (error) {
             console.error("Error:", error);
 
@@ -305,46 +308,39 @@ const confirmSendInvitationEmail = (member_data) => {
 
     return (
         <Box sx={{ padding: 1 }}>
-            <Modal isOpen={viewStatus}
-                onRequestClose={() => { setViewStatus(false); }}
-                title={`MemberShip Status`}>
 
-                <div className="d-lg-flex justify-content-between align-items-center">
-
-                    <DashboardCards />
-                </div>
-            </Modal>
-            <div className="row mb-1">
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
 
 
-                <div className=''>
-                    <IconButton title='View MemberShip Status' onClick={() => setViewStatus(true)}>
-                        <FaUsersViewfinder />
-                    </IconButton>
-                    <Button
 
-                        variant="outlined"
-                        startIcon={<BsFiletypeCsv size={20} />}
-                        onClick={handleExport}
-                        sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all', marginRight: 1 }}
-                    >
-                        {isDownloading ? (
-                            <CircularProgress size={20} color="inherit" />
-                        ) : (
-                            "Download (All Records) CSV"
-                        )}
+                <Button
 
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
-                        sx={{ fontSize: 13, textTransform: 'none' }}
-                    >
-                        Apply Filters
-                    </Button>
+                    variant="outlined"
+                    startIcon={<BsFiletypeCsv size={20} />}
+                    onClick={handleExport}
+                    sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all' }}
+                >
+                    {isDownloading ? (
+                        <CircularProgress size={20} color="inherit" />
+                    ) : (
+                        "Download (All Records) CSV"
+                    )}
 
-                    {/* <div className='mt-2'>
+                </Button>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
+                    sx={{ fontSize: 13, textTransform: 'none' }}
+                >
+                    Apply Filters
+                </Button>
+
+                <IconButton title='View MemberShip Status' onClick={() => setViewStatus(true)} style={{padding: 0 , margin:0}}>
+                    <FaUsersViewfinder size={30}/>
+                </IconButton>
+
+                {/* <div className='mt-2'>
 
                         <Button
                             variant="contained"
@@ -355,43 +351,51 @@ const confirmSendInvitationEmail = (member_data) => {
                             Send Email to Red
                         </Button>
                        </div> */}
-                </div>
-
-            </div>
+            </Box>
 
 
 
-            {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                    <CircularProgress />
-                </Box>
-            ) : (
-                <div style={{ width: '100%', height: 'calc(100vh - 180px)' }}>
-                    <DataGrid
-                        rows={members}
-                        columns={columns({ onResendPasswordReset: handleResetPassword, loadingRowId: loadingRowId, onSendInvitationEmail:  confirmSendInvitationEmail})}
-                        rowCount={rowCount}
-                        rowsPerPageOptions={[25, 50, 100]}
-                        paginationMode="server"
-                        sortingMode="server"
-                        filterMode="server"
-                        paginationModel={paginationModel}
-                        sortModel={sortModel}
-                        onPaginationModelChange={setPaginationModel}
-                        onSortModelChange={setSortModel}
-                        filterModel={filterModel}              // ✅ Pass full model
-                        onFilterModelChange={(newModel) => {
-                            setFilterModel(newModel); // use the raw model now
-                        }}
-                        // ✅ Accept full model
-                        disableRowSelectionOnClick
-                        disableSelectionOnClick
-                        showToolbar
-                    />
-                </div>
-            )}
+
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+                {loading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <Box sx={{ width: '100%', height: { xs: '60vh', md: 'calc(100vh - 175px)' } }}>
+                        <DataGrid
+                            rows={members}
+                            columns={columns({ onResendPasswordReset: handleResetPassword, loadingRowId: loadingRowId, onSendInvitationEmail: confirmSendInvitationEmail })}
+                            rowCount={rowCount}
+                            rowsPerPageOptions={[25, 50, 100]}
+                            paginationMode="server"
+                            sortingMode="server"
+                            filterMode="server"
+                            paginationModel={paginationModel}
+                            sortModel={sortModel}
+                            onPaginationModelChange={setPaginationModel}
+                            onSortModelChange={setSortModel}
+                            filterModel={filterModel}              // ✅ Pass full model
+                            onFilterModelChange={(newModel) => {
+                                setFilterModel(newModel); // use the raw model now
+                            }}
+                            // ✅ Accept full model
+                            disableRowSelectionOnClick
+                            disableSelectionOnClick
+                            showToolbar
+                        />
+                    </Box>
+                )}
+            </Box>
+            <Modal isOpen={viewStatus}
+                onRequestClose={() => { setViewStatus(false); }}
+                title={`MemberShip Status`}>
 
 
+
+                <DashboardCards />
+
+            </Modal>
         </Box>
     );
 };

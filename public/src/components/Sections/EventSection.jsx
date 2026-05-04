@@ -18,6 +18,9 @@ import FilterParams from '../Dashboard/FilterParams';
 import { config } from '../../ui_config';
 import {useAppSelector, useAppDispatch} from '../../store/hooks';
 import {triggerRefetch} from '../../features/eventSlice';
+import { RiEditLine } from "react-icons/ri";
+import { TbTrashX } from "react-icons/tb";
+
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const EMPTY_FORM = {
@@ -70,7 +73,7 @@ const buildColumns = (onEdit, onDelete) => [
                         color: "#1976d2",
                         "&:hover": { backgroundColor: "#e3f2fd" },
                     }}>
-                        <MdOutlineEdit size={22} />
+                        <RiEditLine size={22} />
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="Delete event" componentsProps={config.tooltip_config}>
@@ -78,7 +81,7 @@ const buildColumns = (onEdit, onDelete) => [
                         color: "#d32f2f",
                         "&:hover": { backgroundColor: "#ffebee" },
                     }}>
-                        <MdDeleteOutline size={22} />
+                        <TbTrashX size={22} />
                     </IconButton>
                 </Tooltip>
             </div>

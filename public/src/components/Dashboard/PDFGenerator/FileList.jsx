@@ -245,7 +245,7 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
                         title="New Document"
                         onClick={() => { handleSelect(initialFormData) }}
                     >
-                        <VscNewFile color="dark" size={iconSize} />
+                        <VscNewFile color="success" size={iconSize} />
                     </IconButton>
                 </div>
 

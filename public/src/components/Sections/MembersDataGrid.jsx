@@ -2,8 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 
 // Direct import from x-data-grid main entry is usually fine, but to optimize:
 import {DataGrid} from '@mui/x-data-grid';
-import {GridToolbar} from '@mui/x-data-grid/components';  // or import from '@mui/x-data-grid' if issues
-import {GridToolbarFilterButton} from '@mui/x-data-grid/components';
+import { RiEditLine } from "react-icons/ri";
 
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -20,6 +19,7 @@ import Modal from '../Modal';
 import debounce from 'lodash/debounce';
 import { config } from '../../ui_config';
 import FilterParams from '../Dashboard/FilterParams';
+import { IconButton } from '@mui/material';
 
 
 const columns = ({ onEdit, onSwitchActive }) => [
@@ -40,15 +40,14 @@ const columns = ({ onEdit, onSwitchActive }) => [
         filterable: false,
         renderCell: (params) => (
             <Box>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                    style={{ marginRight: 8, textTransform: 'none' }}
-                    onClick={() => onEdit(params.row)}
-                >
-                    Edit
-                </Button>
+                 <Tooltip title="Edit Member" componentsProps={config.tooltip_config}>
+                                    <IconButton size="small" onClick={() => onEdit(params.row)} sx={{
+                                        color: "#1976d2",
+                                        "&:hover": { backgroundColor: "#e3f2fd" },
+                                    }}>
+                                        <RiEditLine size={22} />
+                                    </IconButton>
+                                </Tooltip>
                 <Tooltip title="Switch Active Member" componentsProps={config.tooltip_config}>
                     <Switch
                         checked={params.row.active_member === true || params.row.active_member === "true"}
@@ -234,39 +233,40 @@ const MemberDataGrid = () => {
         <Box sx={{ padding: 1 }}>
 
 
-            <div className='row mb-1'>
-                <div className='col-12 d-lg-flex justify-content-between'>
-                    <div className='d-lg-flex'>
+            
 
-                        <div className='me-1'>
+            <div className="d-flex justify-content-start mb-1">
+                    <div className='me-2'>
 
                             <Button
-
-                                variant="outlined"
+color="success"
+                                variant="contained"
                                 startIcon={<MdAddCircleOutline size={20} />}
                                 onClick={() => setNewReg(true)}
                                 sx={{ fontSize: 13, textTransform: 'none', wordBreak: 'break-all' }}
                             >
-                                Add Member
+                                New Member
                             </Button>
-                        </div>
-                        <div className='me-1'>
-                            <Button
-
-                                variant="outlined"
-                                startIcon={<BsFiletypeCsv size={20} />}
-                                onClick={handleExport}
-                                sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all' }}
-                            >
-                                {isDownloading ? (
-                                    <CircularProgress size={20} color="inherit" />
-                                ) : (
-                                    "Download (All Records) CSV"
-                                )}
-
-                            </Button>
-                        </div>
+                        
                     </div>
+                    
+                    <div className='me-2'>
+                        <Button
+
+                            variant="outlined"
+                            startIcon={<BsFiletypeCsv size={20} />}
+                            onClick={handleExport}
+                            sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all' }}
+                        >
+                            {isDownloading ? (
+                                <CircularProgress size={20} color="inherit" />
+                            ) : (
+                                "Download (All Records) CSV"
+                            )}
+
+                        </Button>
+                    </div>
+
                     <div className=''>
 
                         <Button
@@ -279,12 +279,15 @@ const MemberDataGrid = () => {
                             Apply Filters
                         </Button>
                     </div>
+                    </div>
 
 
 
-                </div>
+                
 
-            </div>
+            
+
+     <div className='col-12 p-0'>
 
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -315,7 +318,7 @@ const MemberDataGrid = () => {
                     />
                 </div>
             )}
-
+        </div>
             <Modal isOpen={newReg}
                 onRequestClose={() => setNewReg(false)}
                 title={"New Member"}>
@@ -337,6 +340,7 @@ const MemberDataGrid = () => {
                 />
             </Modal>
         </Box>
+
     );
 };
 

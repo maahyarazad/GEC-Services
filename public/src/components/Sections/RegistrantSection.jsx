@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import {DataGrid} from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -7,11 +7,11 @@ import Tooltip from '@mui/material/Tooltip';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
-import {BsFiletypeCsv} from 'react-icons/bs';
-import {FaCircleCheck} from 'react-icons/fa6';
-import {FcFlashAuto} from 'react-icons/fc';
-import {TfiWrite} from 'react-icons/tfi';
-import {GrVirtualMachine} from 'react-icons/gr';
+import { BsFiletypeCsv } from 'react-icons/bs';
+import { FaCircleCheck } from 'react-icons/fa6';
+import { FcFlashAuto } from 'react-icons/fc';
+import { TfiWrite } from 'react-icons/tfi';
+import { GrVirtualMachine } from 'react-icons/gr';
 
 import MessageModalTrigger from '../utils/MessageModalTrigger';
 import { config } from '../../ui_config';
@@ -143,14 +143,14 @@ const RegistrantSection = () => {
     const fetchData = useCallback(async (_selectedEvent, paginationModel, sortModel = [], filterModel = {}) => {
         setLoading(true);
         try {
-            
+
             const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
             const sortField = sort.field || '';
             const sortOrder = sort.sort || '';
 
             // Parse filters from filterModel.items
             const filterParams = FilterParams(filterModel);
-            
+
 
             const queryParams = [
                 `page=${paginationModel.page + 1}`,
@@ -159,7 +159,7 @@ const RegistrantSection = () => {
                 sortOrder ? `sortOrder=${sortOrder}` : '',
                 filterParams
             ].filter(Boolean).join('&');
-            
+
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/registration?${queryParams}&filter_event=${_selectedEvent}`, { credentials: "include" });
             const response_data = await response.json();
 
@@ -174,7 +174,7 @@ const RegistrantSection = () => {
     }, [])
 
     const handleCheck = (e) => {
-        
+
         setSelectedEvent(e);
     };
 
@@ -230,96 +230,71 @@ const RegistrantSection = () => {
 
         <Box sx={{ padding: 1 }}>
 
-            <div className='row mb-1'>
-                <div className='col-lg-12 d-lg-flex justify-content-between'>
-                    <div className="">
-                        <Tooltip title="Download CSV data" componentsProps={config.tooltip_config}>
-                        </Tooltip>
-                        <Button
+            {/* Top buttons row */}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                <Button
+                    variant="outlined"
+                    startIcon={<BsFiletypeCsv size={20} />}
+                    onClick={handleExport}
+                    sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none' }}
+                >
+                    {isDownloading ? <CircularProgress size={20} color="inherit" /> : "Download (All Records) CSV"}
+                </Button>
 
-                            variant="outlined"
-                            startIcon={<BsFiletypeCsv size={20} />}
-                            onClick={handleExport}
-                            sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all' }}
-                        >
-                            {isDownloading ? (
-                                <CircularProgress size={20} color="inherit" />
-                            ) : (
-                                "Download (All Records) CSV"
-                            )}
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
+                    sx={{ fontSize: 13, textTransform: 'none' }}
+                >
+                    Apply Filters
+                </Button>
+            </Box>
 
-                        </Button>
-
-                    </div>
-                    <div className="">
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
-                            sx={{ fontSize: 13, textTransform: 'none' }}
-                        >
-                            Apply Filters
-                        </Button>
-                    </div>
-
-                </div>
-            </div>
-
-            <div className='row'>
-                <div className='col-2' style={{overflowX: 'hidden'}}>
+            {/* Main content: sidebar + datagrid */}
+            <Box sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                gap: 1,
+                alignItems: 'flex-start',
+            }}>
+                {/* Sidebar */}
+                <Box sx={{ width: { xs: '100%', md: '220px' }, flexShrink: 0 }}>
                     <RegistrationConfigSearch onSelect={handleCheck} />
-                </div>
-                <div className='col-10'>
+                </Box>
 
+                {/* DataGrid */}
+                <Box sx={{ flex: 1, minWidth: 0 }}>
                     {loading ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                             <CircularProgress />
                         </Box>
                     ) : (
-                        <div style={{ width: '100%', height: 'calc(100vh - 175px)' }}>
-
+                        <Box sx={{ width: '100%', height: { xs: '60vh', md: 'calc(100vh - 175px)' } }}>
                             <DataGrid
                                 rows={registrationList}
                                 columns={columns}
-                                getRowHeight={(params) => {
-                                    const companyData = params?.row?.company_data;
-
-                                    if (companyData) {
-                                        return 200;
-                                    }
-                                    return 52;
-                                }}
-                                // getRowClassName={(params) =>
-                                //     params.row.company_data ? "companyRow" : ""
-                                // }
+                                getRowHeight={(params) => params?.row?.company_data ? 200 : 52}
                                 rowsPerPageOptions={[25, 50, 100]}
                                 paginationMode="server"
                                 sortingMode="server"
                                 filterMode="server"
                                 rowCount={rowCount}
                                 paginationModel={paginationModel}
-                                onPaginationModelChange={(newModel) => {
-                                    setPaginationModel(newModel);
-                                }}
-                                onSortModelChange={(newModel) => {
-
-                                    setSortModel(newModel)
-                                }}
+                                onPaginationModelChange={(newModel) => setPaginationModel(newModel)}
+                                onSortModelChange={(newModel) => setSortModel(newModel)}
                                 filterModel={filterModel}
-                                onFilterModelChange={(newModel) => {
-                                    setFilterModel(newModel); // use the raw model now
-                                }}
+                                onFilterModelChange={(newModel) => setFilterModel(newModel)}
                                 sortModel={sortModel}
                                 disableRowSelectionOnClick
                                 disableSelectionOnClick
                                 showToolbar
                                 pagination
                             />
-
-                        </div>
+                        </Box>
                     )}
-                </div>
-            </div>
+                </Box>
+            </Box>
         </Box>
     );
 };

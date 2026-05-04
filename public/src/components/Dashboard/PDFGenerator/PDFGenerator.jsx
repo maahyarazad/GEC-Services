@@ -132,7 +132,7 @@ const PDFGenerator = () => {
 
 
 
-    
+
 
     const _objectChanged = () => { return objectChanged };
 
@@ -222,367 +222,300 @@ const PDFGenerator = () => {
     }
     return (
         <Box sx={{ padding: 1 }}>
-            <div className="row">
 
-                <div className='col-2' style={{overflowX: 'hidden'}}>
 
+            {/* Form + Invoice: side by side on lg, stacked on sm */}
+            <Box sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', lg: 'row' },
+                gap: 1,
+                alignItems: 'flex-start',
+            }}>
+                {/* File list on top, full width */}
+                <Box sx={{ width: { xs: '100%', md: '15%' }, flexShrink: 0, mb: 1 }}>
                     <FileList onSelect={UpdateForm} formData={formData} initialFormData={_initial_formData} />
+                </Box>
 
-                </div>
-                <div className="col-10">
+                {/* Left: Form */}
+                <Box sx={{
+                    width: { xs: '100%', md: '35%' },
+                    height: { lg: 'calc(100vh - 155px)' },
+                    overflowY: { lg: 'scroll' },
+                    flexShrink: 0,
+                }}>
+                    <form style={{ display: 'block' }}>
 
-                    <div className="row" >
-
-                        {/* Form to update PDF content */}
-                        <div className="col-lg-6 col-12 left-panel" style={{ height: 'calc(100vh - 155px)', overflow: 'scroll' }}>
-
-                            <form style={{ display: 'block' }}>
-                                <Accordion>
-                                    <AccordionSummary
-                                        expandIcon={<ExpandMoreIcon />}
-                                        aria-controls="panel2-content"
-                                        id="panel2-header"
-                                        sx={tabstyle}
-                                    >
-                                        <Typography component="span">Project & Company Details</Typography>
-                                    </AccordionSummary>
-                                    <AccordionDetails>
-                                        <Box sx={{ width: "100%" }}>
-                                            <div className="d-flex">
-                                                <div className="col form-control">
-                                                    {Object.entries(formData.project).map(([key, value]) => (
-                                                        <div key={key} className="input-group">
-                                                            <input
-                                                                name={`project.${key}`}
-                                                                value={value}
-                                                                onChange={handleChange} // use nested handler to update nested state
-                                                                placeholder={key.replace(/_/g, " ")}
-                                                                style={{ width: "100%", padding: 4 }}
-                                                            />
-                                                            <label>
-                                                                {key.replace(/_/g, " ")}
-                                                            </label>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                <div className="col form-control">
-
-                                                    {Object.entries(formData.company).map(([key, value]) => (
-                                                        <div key={key} className="input-group">
-                                                            <input
-                                                                name={`company.${key}`}
-                                                                value={value}
-                                                                onChange={handleChange} // use nested handler to update nested state
-                                                                placeholder={key.replace(/_/g, " ")}
-                                                                style={{ width: "100%", padding: 4 }}
-                                                            />
-                                                            <label>
-                                                                {key.replace(/_/g, " ")}
-                                                            </label>
-                                                        </div>
-                                                    ))}
-                                                </div>
+                        <Accordion>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={tabstyle}>
+                                <Typography component="span">Project & Company Details</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Box sx={{ width: '100%', display: 'flex', gap: 2 }}>
+                                    <Box sx={{ flex: 1 }}>
+                                        {Object.entries(formData.project).map(([key, value]) => (
+                                            <div key={key} style={{ marginBottom: 12 }}>
+                                                <label style={{ display: 'block', fontSize: 14, color: '#888', marginBottom: 0 }}>
+                                                    {key
+                                                        .replace(/_/g, ' ')
+                                                        .replace(/\b\w/g, c => c.toUpperCase())}
+                                                </label>
+                                                <input
+                                                    name={`project.${key}`}
+                                                    value={value}
+                                                    onChange={handleChange}
+                                                    placeholder={key
+                                                        .replace(/_/g, ' ')
+                                                        .replace(/\b\w/g, c => c.toUpperCase())}
+                                                    style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
+                                                />
                                             </div>
+                                        ))}
+                                    </Box>
+                                    <Box sx={{ flex: 1 }}>
+                                        {Object.entries(formData.company).map(([key, value]) => (
+                                            <div key={key} style={{ marginBottom: 12 }}>
+                                                <label style={{ display: 'block', fontSize: 14, color: '#888', marginBottom: 0 }}>
+                                                    {key
+                                                        .replace(/_/g, ' ')
+                                                        .replace(/\b\w/g, c => c.toUpperCase())}
+                                                </label>
+                                                <input
+                                                    name={`company.${key}`}
+                                                    value={value}
+                                                    onChange={handleChange}
+                                                    placeholder={key
+                                                        .replace(/_/g, ' ')
+                                                        .replace(/\b\w/g, c => c.toUpperCase())}
+                                                    style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </Box>
+                                </Box>
+                            </AccordionDetails>
+                        </Accordion>
 
+                        <Accordion>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={tabstyle}>
+                                <Typography component="span">Project Reference</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Box sx={{ width: '100%' }}>
+                                    {Object.entries(formData.reference).map(([key, value]) => (
+                                        <div key={key} style={{ marginBottom: 12 }}>
+                                            <label style={{ display: 'block', fontSize: 14, color: '#888', marginBottom: 0 }}>
+                                                {key
+                                                    .replace(/_/g, ' ')
+                                                    .replace(/\b\w/g, c => c.toUpperCase())}
+                                            </label>
+                                            <input
+                                                name={`reference.${key}`}
+                                                value={value}
+                                                onChange={handleChange}
+                                                placeholder={key
+                                                    .replace(/_/g, ' ')
+                                                    .replace(/\b\w/g, c => c.toUpperCase())}
+                                                style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
+                                            />
+                                        </div>
+                                    ))}
+                                </Box>
+                            </AccordionDetails>
+                        </Accordion>
 
+                        <Accordion>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={tabstyle}>
+                                <Typography component="span">Descriptions</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Box sx={{ width: '100%' }}>
 
+                                    {/* Toggles */}
+                                    <Box sx={{ mb: 1, pb: 1, borderBottom: '1px solid #ccc' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                                            <Switch
+                                                size="small"
+                                                onChange={(e) => setFormData((prev) => ({ ...prev, items_price: e.target.checked }))}
+                                                checked={!!formData?.items_price}
+                                                color="primary"
+                                            />
+                                            <small style={{ fontSize: 13 }}>Enable (Dummy String) Price Column</small>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                                            <Switch
+                                                size="small"
+                                                color="primary"
+                                                checked={!!formData.currency?.currency_enable}
+                                                onChange={(e) => setFormData((prev) => ({
+                                                    ...prev,
+                                                    currency: { ...prev.currency, currency_enable: e.target.checked }
+                                                }))}
+                                            />
+                                            <small style={{ fontSize: 14 }}>Enable Currency</small>
                                         </Box>
 
-                                    </AccordionDetails>
-                                </Accordion>
+                                        {/* Currency fields */}
+                                        {formData.currency?.currency_enable && (
+                                            <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+                                                {Object.entries(formData.currency).map(([key, value]) =>
+                                                    key !== 'currency_enable' && (
+                                                        <div key={key} style={{ flex: 1 }}>
+                                                            <label style={{ display: 'block', fontSize: 14, color: '#888', marginBottom: 0 }}>
+                                                                {key
+                                                                    .replace(/_/g, ' ')
+                                                                    .replace(/\b\w/g, c => c.toUpperCase())}
+                                                            </label>
+                                                            <input
+                                                                name={`currency.${key}`}
+                                                                value={value}
+                                                                onChange={handleChange}
+                                                                placeholder={key
+                                                                    .replace(/_/g, ' ')
+                                                                    .replace(/\b\w/g, c => c.toUpperCase())}
+                                                                style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
+                                                            />
+                                                        </div>
+                                                    )
+                                                )}
+                                            </Box>
+                                        )}
+                                    </Box>
 
-
-                                <Accordion >
-                                    <AccordionSummary
-                                        expandIcon={<ExpandMoreIcon />}
-                                        aria-controls="panel3-content"
-                                        id="panel3-header"
-                                        sx={tabstyle}
-                                    >
-                                        <Typography component="span">Project Reference</Typography>
-                                    </AccordionSummary>
-                                    <AccordionDetails>
-                                        <Box sx={{ width: "100%" }}>
-                                            <div className="form-control">
-
-                                                {Object.entries(formData.reference).map(([key, value]) => (
-                                                    <div key={key} className="input-group">
-                                                        <input
-                                                            name={`reference.${key}`}
-                                                            value={value}
-                                                            onChange={handleChange} // use nested handler to update nested state
-                                                            placeholder={key.replace(/_/g, " ")}
-                                                            style={{ width: "100%", padding: 4 }}
-                                                        />
-                                                        <label>
-                                                            {key.replace(/_/g, " ")}
-                                                        </label>
-                                                    </div>
-                                                ))}
-                                            </div>
-
-
-                                        </Box>
-                                    </AccordionDetails>
-
-                                </Accordion>
-
-
-                                <Accordion>
-                                    <AccordionSummary
-                                        expandIcon={<ExpandMoreIcon />}
-                                        aria-controls="panel2-content"
-                                        id="panel2-header"
-                                        sx={tabstyle}
-                                    >
-                                        <Typography component="span">Descriptions
-
-                                        </Typography>
-                                    </AccordionSummary>
-                                    <AccordionDetails>
-                                        <Box sx={{ width: "100%" }}>
-
-
-                                            <div className="d-flex flex-column" style={{ marginBottom: 10, borderBottom: "1px solid #ccc", paddingBottom: 8 }}>
-                                                <div>
-
-
-                                                    <Switch size="small"
-                                                        title="Enable (Dummy String) Price Column"
-                                                        onChange={(e) => {
-                                                            const checked = e.target.checked;
-                                                            setFormData((prev) => ({
-                                                                ...prev,
-                                                                items_price: checked
-                                                            }));
-                                                        }}
-                                                        checked={!!formData?.items_price}
-                                                        color="primary"
-
-                                                    />
-
-                                                    <small style={{ fontSize: 13, paddingRight: 10 }}>Enable (Dummy String) Price Column</small>
-                                                </div>
-                                                <div>
-
-                                                    <Switch
-                                                        size="small"
-                                                        title="Add Currency"
-                                                        color="primary"
-                                                        checked={formData.currency?.currency_enable}
-                                                        onChange={(e) => {
-                                                            const checked = e.target.checked;
-                                                            setFormData((prev) => ({
-                                                                ...prev,
-                                                                currency: {
-                                                                    ...prev.currency,
-                                                                    currency_enable: checked
-                                                                }
-                                                            }));
-
-
-                                                        }}
-                                                    />
-                                                    <small style={{ fontSize: 14, paddingRight: 10 }}>Enable Currency</small>
-                                                </div>
-
-                                                <div className={`${formData.currency?.currency_enable ? "d-flex" : "d-none"} mt-3`}>
-
-                                                    {formData.currency && Object.entries(formData.currency).map(([key, value]) =>
-                                                        key !== 'currency_enable' &&
-                                                        (
-
-                                                            <div key={key} className="input-group">
-                                                                <input
-                                                                    name={`currency.${key}`}
-                                                                    value={value}
-                                                                    onChange={handleChange} // use nested handler to update nested state
-                                                                    placeholder={key.replace(/_/g, " ")}
-                                                                    style={{ width: "100%", padding: 4 }}
-                                                                />
-                                                                <label>
-                                                                    {key.replace(/_/g, " ")}
-                                                                </label>
-                                                            </div>
-                                                        ))}
-                                                </div>
-                                            </div>
-
-                                            <div className="form-control">
-
-                                                {formData.items.map((item, index) => {
-                                                    // Use item.id if available, else fallback to index (less ideal if items can reorder)
-                                                    const key = item.id ?? index;
+                                    {/* Items */}
+                                    {formData.items.map((item, index) => {
+                                        const itemKey = item.id ?? index;
+                                        if (item.deleted) return null;
+                                        return (
+                                            <Box
+                                                key={itemKey}
+                                                sx={{ mb: 1.5, pb: 1.5, borderBottom: '1px solid #eee' }}
+                                            >
+                                                {Object.keys(item).map((key) => {
+                                                    if (key === 'deleted') return null;
+                                                    if (key === 'price' && !formData.items_price) return null;
 
                                                     return (
-                                                        <div
-                                                            key={key}
-                                                            className={`d-flex flex-column ${item.deleted ? "d-none":  ""}`}
-                                                            style={{
-                                                                marginBottom: 10,
-                                                                borderBottom: "1px solid #ccc",
-                                                                paddingBottom: 8,
-                                                            }}
-                                                        >
-                                                            {Object.keys(item).map((key) => {
-                                                                switch (key) {
-                                                                    case "deleted":
-                                                                        return (
-                                                                           null
-                                                                        );
-                                                                    case "body":
-                                                                        return (
-                                                                            <div className="input-group" key={`${index}-${key}`}>
-                                                                                <textarea
-                                                                                    rows={3}
-                                                                                    name={`items.${index}.${key}`}
-                                                                                    value={item[key]}
-                                                                                    onChange={handleChange}
-                                                                                    placeholder={key.replace(/_/g, " ")}
-                                                                                />
-                                                                                <label>{key.replace(/_/g, " ")}</label>
-                                                                            </div>
-                                                                        );
-
-                                                                    case "price":
-                                                                        return formData.items_price ? (
-                                                                            <div className="input-group" key={`${index}-${key}`}>
-                                                                                <input
-                                                                                    name={`items.${index}.${key}`}
-                                                                                    value={item[key]}
-                                                                                    onChange={handleChange}
-                                                                                    placeholder={key.replace(/_/g, " ")}
-                                                                                />
-                                                                                <label>{key.replace(/_/g, " ")}</label>
-                                                                            </div>
-                                                                        ) : null;
-
-                                                                    default:
-                                                                        return (
-                                                                            <div className="input-group" key={`${index}-${key}`}>
-                                                                                <input
-                                                                                    name={`items.${index}.${key}`}
-                                                                                    value={item[key]}
-                                                                                    onChange={handleChange}
-                                                                                    placeholder={key.replace(/_/g, " ")}
-                                                                                />
-                                                                                <label>{key.replace(/_/g, " ")}</label>
-                                                                            </div>
-                                                                        );
-                                                                }
-                                                            })}
-
-                                                            <Button
-                                                                variant="contained"
-                                                                sx={{ textTransform: "none" }}
-                                                                size="small"
-                                                                type="button"
-                                                                color="error"
-                                                                onClick={() => removeItem(index)}
-                                                                style={{ marginTop: 4 }}
-                                                            >
-                                                                Remove
-                                                            </Button>
+                                                        <div key={`${index}-${key}`} style={{ marginBottom: 10 }}>
+                                                            <label style={{ display: 'block', fontSize: 14, color: '#888', marginBottom: 0 }}>
+                                                                {key
+                                                                    .replace(/_/g, ' ')
+                                                                    .replace(/\b\w/g, c => c.toUpperCase())}
+                                                            </label>
+                                                            {key === 'body' ? (
+                                                                <textarea
+                                                                    rows={3}
+                                                                    name={`items.${index}.${key}`}
+                                                                    value={item[key]}
+                                                                    onChange={handleChange}
+                                                                    placeholder={key
+                                                                        .replace(/_/g, ' ')
+                                                                        .replace(/\b\w/g, c => c.toUpperCase())}
+                                                                    style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
+                                                                />
+                                                            ) : (
+                                                                <input
+                                                                    name={`items.${index}.${key}`}
+                                                                    value={item[key]}
+                                                                    onChange={handleChange}
+                                                                    placeholder={key
+                                                                        .replace(/_/g, ' ')
+                                                                        .replace(/\b\w/g, c => c.toUpperCase())}
+                                                                    style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
+                                                                />
+                                                            )}
                                                         </div>
                                                     );
                                                 })}
-
-
-
-                                                <Button type="button"
-                                                    variant="outlined"
-                                                    color="info"
-                                                    size="small"
+                                                <Button
+                                                    variant="contained"
                                                     sx={{ textTransform: 'none' }}
-                                                    onClick={addItem}>
-                                                    Add Item
+                                                    size="small"
+                                                    type="button"
+                                                    color="error"
+                                                    onClick={() => removeItem(index)}
+                                                >
+                                                    Remove
                                                 </Button>
-                                            </div>
-                                        </Box>
-                                    </AccordionDetails>
-                                </Accordion>
+                                            </Box>
+                                        );
+                                    })}
 
+                                    <Button type="button" variant="outlined" color="info" size="small" sx={{ textTransform: 'none' }} onClick={addItem}>
+                                        Add Item
+                                    </Button>
 
-                                <Accordion>
-                                    <AccordionSummary
-                                        expandIcon={<ExpandMoreIcon />}
-                                        aria-controls="panel2-content"
-                                        id="panel2-header"
-                                        sx={tabstyle}
-                                    >
-                                        <Typography component="span">Bank Details</Typography>
-                                    </AccordionSummary>
-                                    <AccordionDetails>
-                                        <Box style={{ width: '100%' }}>
-                                            <div className="d-flex">
-                                                <div className="col form-control">
-                                                    {Object.entries(formData.bank_detail).map(([key, value]) => (
-                                                        <div key={key} className="input-group">
-                                                            <input
-                                                                name={`bank_detail.${key}`}
-                                                                value={value}
-                                                                onChange={handleChange} // use nested handler to update nested state
-                                                                placeholder={key.replace(/_/g, " ")}
-                                                                style={{ width: "100%", padding: 4 }}
-                                                            />
-                                                            <label>
-                                                                {key.replace(/_/g, " ")}
-                                                            </label>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </Box>
+                                </Box>
+                            </AccordionDetails>
+                        </Accordion>
 
+                        <Accordion>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={tabstyle}>
+                                <Typography component="span">Bank Details</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Box sx={{ width: '100%' }}>
+                                    {Object.entries(formData.bank_detail).map(([key, value]) => (
+                                        <div key={key} style={{ marginBottom: 12 }}>
+                                            <label style={{ display: 'block', fontSize: 14, color: '#888', marginBottom: 0 }}>
+                                                {key
+                                                    .replace(/_/g, ' ')
+                                                    .replace(/\b\w/g, c => c.toUpperCase())}
+                                            </label>
+                                            <input
+                                                name={`bank_detail.${key}`}
+                                                value={value}
+                                                onChange={handleChange}
+                                                placeholder={key
+                                                    .replace(/_/g, ' ')
+                                                    .replace(/\b\w/g, c => c.toUpperCase())}
+                                                style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
+                                            />
+                                        </div>
+                                    ))}
+                                </Box>
+                            </AccordionDetails>
+                        </Accordion>
 
-                                    </AccordionDetails>
-                                </Accordion>
+                        <Accordion>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={tabstyle}>
+                                <Typography component="span">Payment Terms</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Box sx={{ width: '100%' }}>
+                                    {Object.entries(formData.payment_terms).map(([key, value]) => (
+                                        <div key={key} style={{ marginBottom: 12 }}>
+                                            <label style={{ display: 'block', fontSize: 14, color: '#888', marginBottom: 0 }}>
+                                                {key
+                                                    .replace(/_/g, ' ')
+                                                    .replace(/\b\w/g, c => c.toUpperCase())}
+                                            </label>
+                                            <input
+                                                name={`payment_terms.${key}`}
+                                                value={value}
+                                                onChange={handleChange}
+                                                placeholder={key
+                                                    .replace(/_/g, ' ')
+                                                    .replace(/\b\w/g, c => c.toUpperCase())}
+                                                style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
+                                            />
+                                        </div>
+                                    ))}
+                                </Box>
+                            </AccordionDetails>
+                        </Accordion>
 
+                    </form>
+                </Box>
 
-                                <Accordion>
-                                    <AccordionSummary
-                                        expandIcon={<ExpandMoreIcon />}
-                                        aria-controls="panel2-content"
-                                        id="panel2-header"
-                                        sx={tabstyle}
-                                    >
-                                        <Typography component="span">Payment Terms</Typography>
-                                    </AccordionSummary>
-                                    <AccordionDetails>
-                                        <Box style={{ width: '100%' }}>
-                                            <div className="d-flex">
-                                                <div className="col form-control">
-                                                    {Object.entries(formData.payment_terms).map(([key, value]) => (
-                                                        <div key={key} className="input-group">
-                                                            <input
-                                                                name={`payment_terms.${key}`}
-                                                                value={value}
-                                                                onChange={handleChange} // use nested handler to update nested state
-                                                                placeholder={key.replace(/_/g, " ")}
-                                                                style={{ width: "100%", padding: 4 }}
-                                                            />
-                                                            <label>
-                                                                {key.replace(/_/g, " ")}
-                                                            </label>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </Box>
+                {/* Right: Invoice Preview */}
+                <Box sx={{
+                    width: { xs: '100%', md: '50%' },
+                    flexShrink: 0,
+                }}>
+                    <Invoice formData={formData} />
+                </Box>
 
-
-                                    </AccordionDetails>
-                                </Accordion>
-                            </form>
-
-                        </div>
-
-                        <div className="col-lg-6 col-12">
-                            <Invoice formData={formData} />
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </Box>
         </Box>
     );
 };

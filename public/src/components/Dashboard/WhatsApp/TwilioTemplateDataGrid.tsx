@@ -10,7 +10,8 @@ import { MdDeleteOutline } from 'react-icons/md';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material';
 import { MdQuickreply } from "react-icons/md";
-
+import { RiEditLine } from "react-icons/ri";
+import { TbTrashX } from "react-icons/tb";
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface TwilioTemplateItem {
@@ -423,7 +424,7 @@ export default function TwilioTemplateDataGrid({
                             color: "#d32f2f",
                             "&:hover": { backgroundColor: "#ffebee" },
                         }}>
-                            <MdDeleteOutline size={22} />
+                            <TbTrashX size={22} />
                         </IconButton>
                     </Tooltip>
 

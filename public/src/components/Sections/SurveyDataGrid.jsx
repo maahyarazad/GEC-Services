@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import {DataGrid} from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -7,9 +7,9 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 
-import {BsFiletypeCsv} from 'react-icons/bs';
+import { BsFiletypeCsv } from 'react-icons/bs';
+import { RiEditLine } from "react-icons/ri";
 import { TbTrashX } from "react-icons/tb";
-import {FaRegEdit} from 'react-icons/fa';
 
 import { config } from '../../ui_config';
 import FilterParams from '../Dashboard/FilterParams';
@@ -17,8 +17,8 @@ import FilterParams from '../Dashboard/FilterParams';
 import { useAlertDialog } from '../Providers/AlertProvider';
 import { useSnackbar } from '../Providers/Snackbar';
 import { useSlideModal } from '../Providers/SlideModalProvider';
-
-import {SurveyTemplateForm} from '../templates/SurveyTemplateForm';
+import { MdOutlineEdit, MdDeleteOutline } from 'react-icons/md';
+import { SurveyTemplateForm } from '../templates/SurveyTemplateForm';
 
 
 import { Form, Formik } from 'formik';
@@ -38,26 +38,28 @@ const getColumns = ({ onEdit, onDelete }) => [
 
             return (
 
-                <Box>
-
-                    <IconButton
-                        title="Edit"
-                        onClick={() => onEdit(params.row)}
-                    >
-                        <FaRegEdit color="dark" size={20} />
-                    </IconButton>
 
 
 
+                <div>
+                    <Tooltip title="Edit Record" componentsProps={config.tooltip_config}>
+                        <IconButton size="small" onClick={() => onEdit(params.row)} sx={{
+                            color: "#1976d2",
+                            "&:hover": { backgroundColor: "#e3f2fd" },
+                        }}>
+                            <RiEditLine size={22} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete Record" componentsProps={config.tooltip_config}>
+                        <IconButton size="small" color="error" onClick={() => onDelete(params.row)} sx={{
+                            color: "#d32f2f",
+                            "&:hover": { backgroundColor: "#ffebee" },
+                        }}>
+                            <TbTrashX size={22} />
+                        </IconButton>
+                    </Tooltip>
+                </div>
 
-                    <IconButton onClick={() => onDelete(params.row)} title="Delete record" sx={{
-                        color: "#d32f2f",
-                        "&:hover": { backgroundColor: "#ffebee" },
-                    }}>
-                        <TbTrashX size={20} />
-                    </IconButton>
-
-                </Box>
             )
         }
     },
@@ -139,7 +141,7 @@ const SurveyDataGrid = () => {
             //     },
             //     body: JSON.stringify({page:"partner-contact-update"}),
             // });
-    
+
             // const _configResponse = await config.json();
             // setEditConfig(_configResponse.rows[0]);
 
@@ -165,15 +167,15 @@ const SurveyDataGrid = () => {
             const response_data = await response.json();
 
 
-        // if (sortField) {
-        //     response_data.data.sort((a, b) => {
-        //         debugger;
-        //         const aValue = a[sortField]?.toLowerCase() || "";
-        //         const bValue = b[sortField]?.toLowerCase() || "";
-        //         debugger;
-        //         return aValue.localeCompare(bValue, 'en', { sensitivity: 'base' });
-        //     });
-        // }
+            // if (sortField) {
+            //     response_data.data.sort((a, b) => {
+            //         debugger;
+            //         const aValue = a[sortField]?.toLowerCase() || "";
+            //         const bValue = b[sortField]?.toLowerCase() || "";
+            //         debugger;
+            //         return aValue.localeCompare(bValue, 'en', { sensitivity: 'base' });
+            //     });
+            // }
 
 
 
@@ -195,12 +197,12 @@ const SurveyDataGrid = () => {
     const handleEdit = (row) => {
         const _row = {};
 
-        Object.entries(row).map(([k,v])=>{
+        Object.entries(row).map(([k, v]) => {
             const newKey = `company_${k}`;
             _row[newKey] = v;
         })
 
-        
+
 
         openModal(`Edit ${row.partnerName}`,
             <Box sx={{ display: 'flex', justifyContent: 'center', marginBottom: 2 }}>
@@ -210,7 +212,7 @@ const SurveyDataGrid = () => {
                         ..._row
                     }}
 
-                    onSubmit={async (values) => {await editRow(values);}}
+                    onSubmit={async (values) => { await editRow(values); }}
                 >
                     {({
                         setFieldValue,
@@ -222,10 +224,10 @@ const SurveyDataGrid = () => {
                         setFieldTouched
                     }) => (
                         <Form>
-                            <SurveyTemplateForm errors={errors} touched={touched} target={row} gridView={true} values={values}/>
+                            <SurveyTemplateForm errors={errors} touched={touched} target={row} gridView={true} values={values} />
 
                             <Button
-                               
+
                                 variant="contained"
                                 color="primary"
 
@@ -248,21 +250,21 @@ const SurveyDataGrid = () => {
     }
 
     const editRow = async (values) => {
-        
-        
-                const _edited = {};
-
-            Object.entries(values).map(([k,v])=>{
-                if(k.includes("company_")){
-                    const newKey = k.replace("company_", "");
-                    _edited[newKey] = v;
-                }else{
-                    _edited[k] = v;
-                }
-            })
 
 
-            try {
+        const _edited = {};
+
+        Object.entries(values).map(([k, v]) => {
+            if (k.includes("company_")) {
+                const newKey = k.replace("company_", "");
+                _edited[newKey] = v;
+            } else {
+                _edited[k] = v;
+            }
+        })
+
+
+        try {
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/update-survey`, {
                 method: 'POST',
@@ -270,20 +272,20 @@ const SurveyDataGrid = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({data: _edited}),
+                body: JSON.stringify({ data: _edited }),
             });
-    
-             const respnse_data = await response.json();
+
+            const respnse_data = await response.json();
             if (!response.ok) {
                 showSnackbar(respnse_data.message);
                 throw new Error(response.message);
             }
-            
-            
+
+
             if (respnse_data) {
                 closeModal();
                 showSnackbar(respnse_data.message, 'success');
-                
+
             }
 
 
@@ -378,47 +380,40 @@ const SurveyDataGrid = () => {
 
 
         <Box sx={{ padding: 1 }}>
-            <div className='row mb-1'>
-                <div className='col-lg-12 d-lg-flex justify-content-between'>
-                    <div className="">
-                        <Tooltip title="Download CSV data" componentsProps={config.tooltip_config}>
-                        </Tooltip>
-                        <Button
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+              
+                <Button
 
-                            variant="outlined"
-                            startIcon={<BsFiletypeCsv size={20} />}
-                            onClick={handleExport}
-                            sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all' }}
-                        >
-                            {isDownloading ? (
-                                <CircularProgress size={20} color="inherit" />
-                            ) : (
-                                "Download (All Records) CSV"
-                            )}
+                    variant="outlined"
+                    startIcon={<BsFiletypeCsv size={20} />}
+                    onClick={handleExport}
+                    sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all' }}
+                >
+                    {isDownloading ? (
+                        <CircularProgress size={20} color="inherit" />
+                    ) : (
+                        "Download (All Records) CSV"
+                    )}
 
-                        </Button>
+                </Button>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
+                    sx={{ fontSize: 13, textTransform: 'none' }}
+                >
+                    Apply Filters
+                </Button>
 
-                    </div>
-                    <div className="">
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => setApplyFilterTrigger((prev) => prev + 1)}
-                            sx={{ fontSize: 13, textTransform: 'none' }}
-                        >
-                            Apply Filters
-                        </Button>
-                    </div>
-
-                </div>
-            </div>
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
             {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                     <CircularProgress />
                 </Box>
             ) : (
 
-                <div style={{ width: '100%', height: 'calc(100vh - 175px)' }}>
+                <Box sx={{ width: '100%', height: { xs: '60vh', md: 'calc(100vh - 175px)' } }}>
                     <DataGrid
                         rows={surveyList}
                         columns={getColumns({
@@ -460,8 +455,9 @@ const SurveyDataGrid = () => {
                         pagination
                     />
 
-                </div>
+                </Box>
             )}
+            </Box>
         </Box>
     );
 };

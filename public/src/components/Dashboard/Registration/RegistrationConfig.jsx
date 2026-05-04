@@ -29,6 +29,7 @@ import { PercentageBar } from "../PercentageBar";
 import { StatData } from "../StatData";
 import { MdCleaningServices } from "react-icons/md";
 import ErrorBoundary from "../../utils/ErrorBoundary";
+import { MdOutlineEdit } from 'react-icons/md';
 
 const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate, onArchive, onAutoRgister, onCleanUp, requestloading, localData }) => [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -283,15 +284,15 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
 
                 <Box>
 
-                    <IconButton
-                        title="Edit"
-                        onClick={() => onEdit(params.row)}
-                    >
-                        <FaRegEdit color="dark" size={18} />
-                    </IconButton>
 
-
-
+                    <Tooltip title="Edit Configuration">
+                        <IconButton size="small" onClick={() => onEdit(params.row)} sx={{
+                            color: "#1976d2",
+                            "&:hover": { backgroundColor: "#e3f2fd" },
+                        }}>
+                            <MdOutlineEdit size={22} />
+                        </IconButton>
+                    </Tooltip>
 
                     <IconButton
                         onClick={() => onDuplicate(params.row)}
@@ -299,6 +300,7 @@ const getColumns = ({ onEdit, onLock, onShowCode, onShowBookingData, onDuplicate
                     >
                         <IoDuplicate color="primary" size={18} />
                     </IconButton>
+
                     <IconButton
                         onClick={() => onArchive(params.row)}
                         title="Archive registration page"
@@ -777,12 +779,14 @@ const RegistrationConfig = () => {
                     <Tooltip title="Add New Registration Page" componentsProps={config.tooltip_config}>
                     </Tooltip>
                     <Button
-                        variant="outlined"
+                    
+color="success"
+                                variant="contained"
                         startIcon={<MdAddCircleOutline size={20} />}
                         onClick={() => setNewReg(true)}
                         sx={{ fontSize: 13, textTransform: 'none' }}
                     >
-                        Add Registration
+                        New Registration
                     </Button>
                 </div>
             </div>

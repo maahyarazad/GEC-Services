@@ -943,8 +943,6 @@ const onRemoveGuestRequest = (id) => {
                     </>
                 )}
 
-
-
             </SlideMenu>
 
             <SlideMenu id={'contact-book'}
@@ -965,7 +963,7 @@ const onRemoveGuestRequest = (id) => {
                         }}>
                             <Button
                                 variant="contained"
-                                color="primary"
+                                color="success"
                                 size="small"
                                 sx={{ textTransform: 'none', whiteSpace: 'nowrap' }}
                                 onClick={() => { setViewCreateNewContact(true); }}
