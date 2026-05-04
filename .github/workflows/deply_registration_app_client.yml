@@ -39,9 +39,14 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Clear old build on server
+        run: |
+            ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "rm -rf ~/node/services.german-emirates-club.com/public/* && mkdir -p ~/node/services.german-emirates-club.com/public"
+
       - name: Upload new build to server
         run: |
-          rsync -avz --delete \
+            rsync -avz \
             -e "ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }}" \
             public/dist/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/node/services.german-emirates-club.com/public/
