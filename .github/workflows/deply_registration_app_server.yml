@@ -7,32 +7,15 @@ on:
 
 jobs:
   # ─────────────────────────────────────────────
-  # JOB 1: Build & Deploy Client (Vite)
+  # JOB 1: Deploy Server (Node.js)
   # ─────────────────────────────────────────────
-  deploy-client:
-    name: Build & Deploy Client
+  deploy-server:
+    name: Build & Deploy Server
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: public/package.json
-
-      - name: Install dependencies
-        working-directory: public
-        run: npm install
-
-      - name: Build client
-        working-directory: public
-        env:
-          VITE_SERVERURL: ${{ secrets.VITE_SERVERURL }}
-        run: npm run build
 
       - name: Setup SSH
         run: |
@@ -41,14 +24,20 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Upload new build to server
+      - name: Upload server files
         run: |
           rsync -avz --delete \
             -e "ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }}" \
-            public/dist/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/node/services.german-emirates-club.com/public/
+            server.js package.json \
+            services/ routes/ websocket/ middleware/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/node/services.german-emirates-club.com/
+
+      - name: Install dependencies & restart server
+        run: |
+          ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "cd ~/node/services.german-emirates-club.com && npm install --omit=dev && sudo systemctl restart pm2-services.german-emirates-club.com.service"
 
       - name: Verify deployment
         run: |
           ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "ls -la ~/node/services.german-emirates-club.com/public/"
+            "systemctl list-units | grep 'pm2'"
