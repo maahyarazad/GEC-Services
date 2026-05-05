@@ -769,7 +769,7 @@ async function membership_pass_email({ data }) {
                                 For any queries or clarifications, please send us a message on
                                 <a href="mailto:office2@german-emirates-club.com?subject=GEC%20Mobile%20App%20inquiries">Email</a>
                                 or
-                                <a href="https://wa.me/971563998300">Whatsapp</a>
+                                <a href="https://wa.me/971562050066">Whatsapp</a>
                             </p>
                             <p>
                                 Best regards,<br />
@@ -874,8 +874,8 @@ Thank you,
                                 <br />
 
                                 WhatsApp:
-                                <a href="https://wa.me/971563998300">
-                                    +971 56 399 8300
+                                <a href="https://wa.me/971562050066">
+                                    +971 56 205 0066
                                 </a>
                             </p>
 
@@ -1833,3 +1833,6 @@ module.exports = {
   membership_pass_email,
   membership__invitation,
 };
+
+
+// +971 56 205 0066
