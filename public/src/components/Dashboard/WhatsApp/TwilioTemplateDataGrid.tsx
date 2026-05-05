@@ -433,12 +433,16 @@ export default function TwilioTemplateDataGrid({
         },
     ];
 
+
+
+    const [selectedRow, setSelectedRow] = React.useState<FlatRow | null>(null);
+
     const handleRowClick = (params: GridRowParams<FlatRow>) => {
+        setSelectedRow(params.row);
+
         handleMessageStateChange("inputValue", {});
         handleMessageStateChange("content", params.row._raw);
     };
-
-
 
 
     const handleQuickView = (row: FlatRow, e: React.MouseEvent<HTMLButtonElement>) => {
@@ -483,7 +487,11 @@ export default function TwilioTemplateDataGrid({
                                 pagination: { paginationModel: { pageSize: 25 } },
                             }}
                             onRowClick={handleRowClick}
-
+                            localeText={{
+                                footerRowSelected: () => {
+                                    return `Selected template: ${selectedRow?.friendlyName}` || "";
+                                }
+                            }}
                             getRowId={(row) => row.sid}
                             sx={{
                                 cursor: "pointer",
@@ -493,6 +501,11 @@ export default function TwilioTemplateDataGrid({
                                 "& .MuiDataGrid-row.Mui-selected": {
                                     backgroundColor: "action.selected",
                                 },
+                                 "& .MuiDataGrid-selectedRowCount": {
+        fontWeight: "bold",
+        color: "primary.main",
+        fontSize: "14px",
+    },
                             }}
                         />
                     ) : (
