@@ -43,6 +43,8 @@ import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { setEvents, getShouldRefetch, clearRefetch, getSelectedEvent, triggerRefetchGuestList } from "../../../features/eventSlice";
 import { SiGooglemaps } from "react-icons/si";
 import UpdateMapUrl from './UpdateMapUrl';
+import TwilioCreditWarning from './TwilioCreditWarning';
+
 import TwilioTemplateDataGrid from "./TwilioTemplateDataGrid";
 const WhatsappBroadcast = () => {
 
@@ -131,16 +133,29 @@ const WhatsappBroadcast = () => {
 
 
     const { showSnackbar } = useSnackbar();
-
+    const [twilioCreditLow, setTwilioCreditLow] = useState(false);
+    const [twilioCreditLowMessage, setTwilioCreditLowMessage] = useState(null);
     const fetchData = useCallback(async () => {
         try {
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/list`, { credentials: "include" });
+            
+            if (response.status === 401) {
+                const response_data = await response.json();
+                setTwilioCreditLowMessage(response_data);
+                setTwilioCreditLow(true)
+
+           }
             if (response.status === 200) {
                 const response_data = await response.json();
+                
                 setData(response_data.templates);
+                
+                setTwilioCreditLowMessage(null);
+                setTwilioCreditLow(false)
             }
         } catch (err) {
+          
             console.error('Failed to fetch:', err);
         } finally {
             setLoading(false);
@@ -1066,6 +1081,10 @@ const WhatsappBroadcast = () => {
             </div>
 
             {groupedByTypeKey && <TwilioTemplateDataGrid groupedByTypeKey={groupedByTypeKey} messageState={messageState} handleMessageStateChange={handleMessageStateChange} />}
+
+{twilioCreditLow && <TwilioCreditWarning twilioCreditLow={twilioCreditLow} twilioCreditLowMessage={twilioCreditLowMessage}/>}
+
+
 
 
             <MessageModal

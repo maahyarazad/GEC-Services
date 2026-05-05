@@ -82,11 +82,12 @@ router.post("/api/whatsapp/quick-reply", async (req, res) => {
 
 router.get("/api/whatsapp/list", async (req, res) => {
   try {
+
     const result = await fetchContentTemplates(req, res);
     if (result.status) {
       res.status(200).json({ status: true, templates: result.result });
     } else {
-      res.status(500).json({ status: false, error: result.result });
+        if(result.result.status === 401) res.status(401).json({ status: false, ...result.result });
     }
   } catch (error) {
     console.error("Failed to send message", error);
