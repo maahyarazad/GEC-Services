@@ -610,16 +610,16 @@ async function handleAutoResponse(From, ButtonPayload) {
       template = templates.result.find((x) => x.sid === template_sid);
 
       if (guest_Types.includes(contact.type)) {
-        if (contact.language === "de") {
-          const message = `Super, du stehst auf der Gästeliste! Wir freuen uns, dich zu sehen. Kommst du alleine oder in Begleitung? Schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nOrt: Shangri-La Hotel Qaryat Al Beri, @Al Hana Bar\nHier der Location-Link:\n${google_map_link}\nHerzliche Grüße\nSylvia`;
-          payload[1] = message;
-        }
+        // if (contact.language === "de") {
+        //   const message = `Super, du stehst auf der Gästeliste! Wir freuen uns, dich zu sehen. Kommst du alleine oder in Begleitung? Schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nOrt: Shangri-La Hotel Qaryat Al Beri, @Al Hana Bar\nHier der Location-Link:\n${google_map_link}\nHerzliche Grüße\nSylvia`;
+        //   payload[1] = message;
+        // }
       } else {
         if (contact.language === "de") {
-          const message = `Super, du stehst auf der Gästeliste! Wir freuen uns auf dich. Kommst du allein oder in Begleitung?Super, du stehst auf der Gästeliste! Wir freuen uns, dich zu sehen.\nKommst du alleine oder in Begleitung?\nSchick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nHier der Location-Link:\n${google_map_link}\nHerzliche Grüße\nSylvia`;
+          const message = `Super, du stehst auf der Gästeliste! Wir freuen uns sehr, dich beim BusinessBreakfast HR-Forum zu sehen.\nKommst du alleine oder in Begleitung?\nSchick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\n\nHier der Location-Link zum Marriott Resort Palm Jumeirah:\n${google_map_link}\nHerzliche Grüße, Sylvia und das Team vom German Emirates Club`;
           payload[1] = message;
         } else {
-          const message = `Great, you're on the guest list! We're looking forward to seeing you.\nWill you be coming alone or with a guest?\nPlease send me the full name of your guest for the guest list.\nHere’s the location link:\n${google_map_link}\nBest regards,\Sylvia`;
+          const message = `Great, you're on the guest list! We're looking forward to seeing you at the BusinessBreakfast HR Forum.\n\nWill you be coming alone or with a guest?\nPlease send me the full name of your guest for the guest list.\n\nHere’s the location link to the Marriott Resort Palm Jumeirah:\n${google_map_link}\n\nBest regards,\nSylvia`;
           payload[1] = message;
         }
       }
