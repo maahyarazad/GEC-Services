@@ -160,11 +160,11 @@ router.get("/api/contacts", (req, res) => {
     const blacklistValue = blacklist === "1" || blacklist === "true" ? 1 : 0;
 
     const query = `
-  SELECT *
-  FROM contact_book
-  WHERE phone IS NOT NULL AND blacklist = ?
-  ORDER BY ${TYPE_ORDER_SQL}
-`;
+        SELECT *
+        FROM contact_book
+        WHERE phone IS NOT NULL AND blacklist = ?
+        ORDER BY ${TYPE_ORDER_SQL}
+        `;
 
     const result = db.prepare(query).all(blacklistValue);
 
@@ -291,7 +291,7 @@ router.delete("/api/contacts/remove-guest", (req, res) => {
       });
     }
 
-     const completeAttendanceQuery = `
+    const completeAttendanceQuery = `
         DELETE FROM event_guest_list 
         WHERE contact_book_id = ? AND event_id = ?
         
@@ -312,11 +312,8 @@ router.delete("/api/contacts/remove-guest", (req, res) => {
     });
   } catch (error) {
     console.error("Failed to delete guest:", error.message);
-    res
-      .status(500)
-      .json({ status: false, message: "Failed to remove guest" });
+    res.status(500).json({ status: false, message: "Failed to remove guest" });
   }
 });
-
 
 module.exports = router;
