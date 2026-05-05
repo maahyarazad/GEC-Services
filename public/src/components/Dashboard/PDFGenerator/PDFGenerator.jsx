@@ -232,18 +232,19 @@ const PDFGenerator = () => {
                 alignItems: 'flex-start',
             }}>
                 {/* File list on top, full width */}
-                <Box sx={{ width: { xs: '100%', md: '15%' }, flexShrink: 0, mb: 1 }}>
+                <Box sx={{ width: { xs: '100%', lg: '15%' , height: { lg: 'calc(100vh - 125px)' }}, flexShrink: 0, mb: 1 }}>
                     <FileList onSelect={UpdateForm} formData={formData} initialFormData={_initial_formData} />
                 </Box>
 
                 {/* Left: Form */}
                 <Box sx={{
                     width: { xs: '100%', md: '35%' },
-                    height: { lg: 'calc(100vh - 155px)' },
+                    height: { lg: 'calc(100vh - 125px)' },
                     overflowY: { lg: 'scroll' },
                     flexShrink: 0,
-                }}>
-                    <form style={{ display: 'block' }}>
+                }} className='rounded border p-1'>
+                                
+                    <form style={{ display: 'block' }} >
 
                         <Accordion>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={tabstyle}>
@@ -511,8 +512,15 @@ const PDFGenerator = () => {
                 <Box sx={{
                     width: { xs: '100%', md: '50%' },
                     flexShrink: 0,
-                }}>
+                     height: { lg: 'calc(100vh - 125px)' },
+                    overflowY: { lg: 'scroll' },
+                }}
+                className='rounded border p-1'
+                >
+                    
+
                     <Invoice formData={formData} />
+                    
                 </Box>
 
             </Box>

@@ -79,3 +79,7 @@ Thumbs.db
 *.sqlite3
 
 *.pkpass
+
+twilio_media/
+invoice_json_storage/
+invoice_storage/
