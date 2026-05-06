@@ -81,7 +81,7 @@ const contactBookData = (conditions, useAudience, eventId) => {
             }
             AND contentSid IS NULL
         AND id        NOT IN (SELECT contact_book_id FROM excluded_guests)
-        AND type      NOT IN ('medical_society', 'expert_guest', 'only_guest', 'Wüstenkinder')
+        AND type      NOT IN ('medical_society','Wüstenkinder')
         GROUP BY phone
         ORDER BY
             CASE type
@@ -90,7 +90,9 @@ const contactBookData = (conditions, useAudience, eventId) => {
                 WHEN 'club_member'  THEN 3
                 WHEN 'expert'       THEN 4
                 WHEN 'difa'         THEN 5
-                ELSE                     6
+                WHEN 'expert_guest' THEN 6
+                WHEN 'only_guest'   THEN 7
+                ELSE                     8
             END;
             `;
   } else {
@@ -615,14 +617,15 @@ async function handleAutoResponse(From, ButtonPayload) {
         //   payload[1] = message;
         // }
       } else {
-        if (contact.language === "de") {
-          const message = `Super, du stehst auf der Gästeliste! Wir freuen uns sehr, dich beim BusinessBreakfast HR-Forum zu sehen.\nKommst du alleine oder in Begleitung?\nSchick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\n\nHier der Location-Link zum Marriott Resort Palm Jumeirah:\n${google_map_link}\nHerzliche Grüße, Sylvia und das Team vom German Emirates Club`;
-          payload[1] = message;
-        } else {
-          const message = `Great, you're on the guest list! We're looking forward to seeing you at the BusinessBreakfast HR Forum.\n\nWill you be coming alone or with a guest?\nPlease send me the full name of your guest for the guest list.\n\nHere’s the location link to the Marriott Resort Palm Jumeirah:\n${google_map_link}\n\nBest regards,\nSylvia`;
-          payload[1] = message;
         }
-      }
+
+        if (contact.language === "de") {
+        const message = `Super, du stehst auf der Gästeliste! Wir freuen uns sehr, dich beim BusinessBreakfast HR-Forum zu sehen.\nKommst du alleine oder in Begleitung?\nSchick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\n\nHier der Location-Link zum Marriott Resort Palm Jumeirah:\n${google_map_link}\nHerzliche Grüße, Sylvia und das Team vom German Emirates Club`;
+        payload[1] = message;
+        } else {
+        const message = `Great, you're on the guest list! We're looking forward to seeing you at the BusinessBreakfast HR Forum.\n\nWill you be coming alone or with a guest?\nPlease send me the full name of your guest for the guest list.\n\nHere’s the location link to the Marriott Resort Palm Jumeirah:\n${google_map_link}\n\nBest regards,\nSylvia`;
+        payload[1] = message;
+        }
 
       const result = await messageSender({
         body: { template, phoneList, payload },
