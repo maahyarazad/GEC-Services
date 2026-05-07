@@ -139,23 +139,23 @@ const WhatsappBroadcast = () => {
         try {
 
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/list`, { credentials: "include" });
-            
+
             if (response.status === 401) {
                 const response_data = await response.json();
                 setTwilioCreditLowMessage(response_data);
                 setTwilioCreditLow(true)
 
-           }
+            }
             if (response.status === 200) {
                 const response_data = await response.json();
-                
+
                 setData(response_data.templates);
-                
+
                 setTwilioCreditLowMessage(null);
                 setTwilioCreditLow(false)
             }
         } catch (err) {
-          
+
             console.error('Failed to fetch:', err);
         } finally {
             setLoading(false);
@@ -563,8 +563,9 @@ const WhatsappBroadcast = () => {
                         {
                             method: 'POST',
                             credentials: 'include',
+
                             headers: {
-                                'Content-Type': 'application/json',
+                                'Content-Type': 'application/json; charset=UTF-8',
                             },
                             body: JSON.stringify({
                                 useContactBook: messageState.useContactBook,
@@ -1082,7 +1083,7 @@ const WhatsappBroadcast = () => {
 
             {groupedByTypeKey && <TwilioTemplateDataGrid groupedByTypeKey={groupedByTypeKey} messageState={messageState} handleMessageStateChange={handleMessageStateChange} />}
 
-{twilioCreditLow && <TwilioCreditWarning twilioCreditLow={twilioCreditLow} twilioCreditLowMessage={twilioCreditLowMessage}/>}
+            {twilioCreditLow && <TwilioCreditWarning twilioCreditLow={twilioCreditLow} twilioCreditLowMessage={twilioCreditLowMessage} />}
 
 
 
