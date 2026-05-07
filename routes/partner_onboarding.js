@@ -1,47 +1,173 @@
-
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
+const multer = require("multer");
+const { parse } = require("csv-parse/sync");
 const dbService = require("../services/dbService");
 require("dotenv").config();
-const multer = require("multer");
-const authorization_middleware = require("../middleware/auth");
-const { exportTableAsCSV } = require("../services/csvParser");
-const { generateMemberPass } = require("../services/applePassService");
-const { generateMemberGooglePass } = require("../services/googlePassService");
-const { membership_pass_email } = require("../services/emailService");
-const uniqid = require("uniqid");
-const path = require("path");
 const db = dbService.getDB();
-
-
-router.post(
-  "/partner-auto-login",
-  async (req, res) => {
-    try {
-      
-      const partnerToken = req.cookies["partner-usr"];
-      if (!partnerToken) {
-        return res.status(401).json({
-          status: false,
-          message: "No authentication token found. Please login.",
-          user: null,
-        });
-      }
-
-      const verifyToken = jwt.verify(partnerToken, process.env.JWT_SECRET);
-         
-      
-          return res.status(200).json({
-            status: true,
-            message: "Verification successful",
-            data: {...verifyToken.partner},
-          });
-    } catch (error) {
-      res.status(500).json({ status: false, message: "Server error" });
+// ── Multer: keep file in memory, CSV only ──────────────────────────────────
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === "text/csv" || file.originalname.endsWith(".csv")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only .csv files are allowed"));
     }
-  }
-);
+  },
+});
 
+// Valid values per CHECK constraints
+const VALID_TITLES = ["Mr.", "Ms.", "Mrs.", "Dr.", ""];
+const VALID_GENDERS = ["", "m", "f"];
+const VALID_LANGUAGES = ["en", "de"];
+
+// Prepared insert statement (INSERT OR IGNORE skips duplicate emails)
+
+const insertMany = db.transaction((contacts, partner) => {
+  let inserted = 0;
+
+  for (const row of contacts) {
+    // Normalise keys to lowercase
+    const r = Object.fromEntries(
+      Object.entries(row).map(([k, v]) => [
+        k.toLowerCase().trim(),
+        String(v ?? "").trim(),
+      ])
+    );
+
+    // Sanitise CHECK constraint fields — fall back to "" if value is invalid
+    const title = VALID_TITLES.includes(r.title) ? r.title : "";
+    const gender = VALID_GENDERS.includes(r.gender) ? r.gender : "";
+    const language = VALID_LANGUAGES.includes(r.language) ? r.language : "en";
+
+    let birthday = null;
+    if (r["date of birth"]) {
+      const ddmmyyyy = r["date of birth"].match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (ddmmyyyy) {
+        birthday = `${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`; // → YYYY-MM-DD
+      } else if (/^\d{4}-\d{2}-\d{2}/.test(r["date of birth"])) {
+        birthday = r["date of birth"];
+      }
+    }
+
+    const insertContact = db.prepare(`
+    INSERT OR IGNORE INTO partner_onboarding_data (
+        title,
+        firstname,
+        lastname,
+        gender,
+        mobile_number,
+        email,
+        partner,
+        birthday,
+        language
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+    const info = insertContact.run(
+      title,
+      r["first name"],
+      r["last name"],
+      gender,
+      r["mobile number"],
+      r.email,
+      partner,
+      birthday,
+      language
+    );
+
+    if (info.changes > 0) inserted++;
+  }
+
+  return inserted;
+});
+
+// ── Existing endpoint ──────────────────────────────────────────────────────
+router.post("/partner-auto-login", async (req, res) => {
+  try {
+    const partnerToken = req.cookies["partner-usr"];
+    if (!partnerToken) {
+      return res.status(401).json({
+        status: false,
+        message: "No authentication token found. Please login.",
+        user: null,
+      });
+    }
+
+    const verifyToken = jwt.verify(partnerToken, process.env.JWT_SECRET);
+
+    return res.status(200).json({
+      status: true,
+      message: "Verification successful",
+      data: { ...verifyToken.partner },
+    });
+  } catch (error) {
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
+// ── New CSV upload endpoint ────────────────────────────────────────────────
+router.post("/upload-csv", upload.single("file"), (req, res) => {
+  try {
+    // 1. Auth guard — reuse the same partner cookie
+    const partnerToken = req.cookies["partner-usr"];
+    if (!partnerToken) {
+      return res.status(401).json({ status: false, message: "Unauthorized" });
+    }
+
+    const partner = req.body.partner;
+
+    if (!partner) {
+      return res
+        .status(400)
+        .json({ status: false, message: "Partner is required" });
+    }
+
+    jwt.verify(partnerToken, process.env.JWT_SECRET); // throws if invalid
+
+    // 2. Check a file was actually attached
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ status: false, message: "No file uploaded" });
+    }
+
+    // 3. Parse CSV bytes → array of row objects
+    //    csv-parse reads the first row as column headers automatically
+    const rows = parse(req.file.buffer, {
+      columns: true, // use header row as keys
+      skip_empty_lines: true,
+      trim: true, // strip whitespace from values
+    });
+
+    if (rows.length === 0) {
+      return res
+        .status(400)
+        .json({ status: false, message: "CSV file is empty" });
+    }
+
+    const inserted = insertMany(rows, partner);
+
+    return res.status(200).json({
+      status: true,
+      message: "CSV imported successfully",
+      total: rows.length,
+      inserted, // rows actually written
+      skipped: rows.length - inserted, // duplicates ignored
+    });
+  } catch (error) {
+    console.error("CSV upload error:", error);
+
+    // Multer file-type rejection
+    if (error.message === "Only .csv files are allowed") {
+      return res.status(400).json({ status: false, message: error.message });
+    }
+
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
 
 module.exports = router;

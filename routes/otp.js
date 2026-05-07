@@ -116,6 +116,12 @@ router.post(
       set_limiter_map(req);
 
       const data = req.body;
+
+      if (data?.event === "Partner Onboarding Authentication") {
+        const result = await fetchPartnerFromGEC(req);
+        if(result.error) return res.status(404).json({ status: false, message: "Partner not found" });
+      }
+
       //    const response = await sendOtpToPhone(data.whatsapp, req, res);
       const response = await sendOtpToEmail(data, req, res);
 
@@ -239,43 +245,56 @@ router.post("/otp-check", async (req, res) => {
   }
 });
 
+async function fetchPartnerFromGEC(req) {
+    const data = req.body;
+  // ── 1. Fetch partner ──────────────────────────────────────────
+  const fetchRes = await fetch(
+    `${process.env.GEC__ORIGIN}partners/get-partner-with-email?email=${data.email}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        services_secret: process.env.SERVICES_SECRET,
+      },
+    }
+  );
+
+  const partnerData = await fetchRes.json();
+
+  if (!fetchRes.ok || !partnerData.success || !partnerData?.data?.length) {
+  return {error: true};
+  }
+
+  return {error: false, data: partnerData?.data};
+}
+
 router.post("/partner-otp-check", async (req, res) => {
   try {
     const data = req.body;
 
-    // ── 1. Fetch partner ──────────────────────────────────────────
-    const fetchRes = await fetch(
-      `${process.env.GEC__ORIGIN}partners/get-partner-with-email?email=${data.email}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          services_secret: process.env.SERVICES_SECRET,
-        },
-      }
-    );
-
-    const partnerData = await fetchRes.json();
-
-    if (!fetchRes.ok || !partnerData.success || !partnerData?.data?.length) {
-      return res.status(404).json({ status: false, message: "Partner not found" });
-    }
-
+    const partnerData = await fetchPartnerFromGEC(req);
     // ── 2. OTP validation (PRODUCTION only) ──────────────────────
     if (process.env.ENVIRONMENT === "PRODUCTION") {
       if (Date.now() > req.session.otpExpires) {
-        return res.status(401).json({ status: false, message: "OTP has expired, please try again" });
+        return res
+          .status(401)
+          .json({
+            status: false,
+            message: "OTP has expired, please try again",
+          });
       }
 
       if (data.otp !== req.session.otp) {
-        return res.status(401).json({ status: false, message: "Invalid OTP code" });
+        return res
+          .status(401)
+          .json({ status: false, message: "Invalid OTP code" });
       }
     }
 
     // ── 3. Persist registration data ─────────────────────────────
     delete data.otp;
-          data.mobile_number = data.email;
-      delete data.email;
+    data.mobile_number = data.email;
+    delete data.email;
     if (Object.keys(data).length > 0) {
       dbService.create("registration_client_access", data);
     }
@@ -297,9 +316,8 @@ router.post("/partner-otp-check", async (req, res) => {
     return res.status(200).json({
       status: true,
       message: "Verification successful",
-      data: {...partnerData.data[0]},
+      data: { ...partnerData.data[0] },
     });
-
   } catch (error) {
     console.error(error);
     return res.status(500).json({ status: false, message: "Server error" });
