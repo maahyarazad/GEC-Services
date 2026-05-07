@@ -288,6 +288,38 @@ export const toastAlertSx = {
     "& .MuiAlert-icon": { color: GEC.gold },
 };
 
+export const toastAlertErrorSx = {
+  background: "linear-gradient(135deg, #fff8f6 0%, #fff3ef 100%)",
+  border: `1px solid rgba(211, 84, 54, 0.28)`,
+  borderLeft: `4px solid #d35436`,
+  color: "#8b2e18",
+  fontWeight: 500,
+  alignItems: "center",
+  borderRadius: "10px",
+  boxShadow: "0 4px 20px rgba(211, 84, 54, 0.12), 0 1px 4px rgba(0,0,0,0.06)",
+  padding: "10px 16px",
+
+  "& .MuiAlert-icon": {
+    color: "#d35436",
+    fontSize: "20px",
+  },
+
+  "& .MuiAlert-message": {
+    padding: 0,
+    fontSize: "0.875rem",
+    lineHeight: 1.5,
+  },
+
+  "& .MuiAlert-action": {
+    paddingTop: 0,
+    "& .MuiIconButton-root": {
+      color: "#b94a2c",
+      opacity: 0.7,
+      "&:hover": { opacity: 1 },
+    },
+  },
+};
+
 // ── Footer link sx ────────────────────────────────────────────────────────
 export const footerLinkSx = {
     color: GEC.goldDark,

@@ -45,7 +45,9 @@ function normalizeHeader(h: unknown): string {
 function cellToString(val: unknown): string {
   if (val === null || val === undefined) return "";
   // ExcelJS may return rich-text objects
+
   if (typeof val === "object" && "richText" in (val as object)) {
+    
     return (val as { richText: { text: string }[] }).richText
       .map((r) => r.text)
       .join("");
@@ -75,8 +77,22 @@ export async function validateAndConvertXlsx(
     // ── Extract rows ─────────────────────────────────────────────────────
     const rows: unknown[][] = [];
     worksheet.eachRow((row) => {
-      // row.values[0] is always undefined in ExcelJS (1-indexed), so slice from 1
-      rows.push(Array.isArray(row.values) ? (row.values as unknown[]).slice(1) : []);
+        const rawValues = Array.isArray(row.values) ? (row.values as unknown[]).slice(1) : [];
+
+        const normalizedValues = rawValues.map((cell) => {
+            // ExcelJS hyperlink cells come as { text, hyperlink } — unwrap to plain value
+            if (
+                cell !== null &&
+                typeof cell === "object" &&
+                "text" in (cell as object) &&
+                "hyperlink" in (cell as object)
+            ) {
+                return (cell as { text: string; hyperlink: string }).text;
+            }
+            return cell;
+        });
+
+        rows.push(normalizedValues);
     });
 
     if (rows.length === 0) {
@@ -171,6 +187,7 @@ export async function validateAndConvertXlsx(
     ];
     const csvContent = csvLines.join("\n");
 
+    
     const csvBlob = new Blob([csvContent], { type: "text/csv" });
     const csvFile = new File(
       [csvBlob],
