@@ -19,7 +19,7 @@ const MessageModal = ({
         testAction,
         content,
         useContactBook,
-        useTestBook,
+        useGuestList,
         useLanguage,
         useAudience,
         inputValue,
@@ -32,6 +32,48 @@ const MessageModal = ({
 
 
     const events = useAppSelector(getEvents);
+
+
+    const slotPropsStyle = {
+        tooltip: {
+            sx: {
+                backgroundColor: "#1e1e1e",
+                color: "#fff",
+                fontSize: "14px",
+                padding: "12px 16px",
+                borderRadius: "12px",
+                maxWidth: 350,
+                lineHeight: 1.8,
+                boxShadow: 3,
+            },
+        },
+        arrow: {
+            sx: {
+                color: "#1e1e1e",
+            },
+        },
+    }
+
+    const isSendButtonDisabled = () => {
+        // Disable while sending
+        if (loadingMassSend) {
+            return true;
+        }
+
+        // Guest list requires an event
+        if (useGuestList && Number(eventId) === 0) {
+            return true;
+        }
+
+        // Enable when using Contact Book or Guest List
+        if (useContactBook || useGuestList) {
+            return false;
+        }
+
+        // Disable if no phone numbers exist
+        return phoneList.length === 0;
+    };
+
 
     return (
         <Modal
@@ -86,7 +128,7 @@ const MessageModal = ({
 
                                 {
                                     useAudience === 'all' && (
-                                        <Tooltip style={{ marginLeft: 10, fontWeight: 800 }}
+                                        <Tooltip style={{ marginLeft: 10 }} slotProps={slotPropsStyle} arrow
                                             title={
                                                 <>
                                                     Select All Ignore the limit and use the entire Whastapp Sender bandwidth
@@ -130,7 +172,8 @@ const MessageModal = ({
                                     <label className="form-label mb-0">Use Contact Book</label>
                                     {
                                         useContactBook && (
-                                            <Tooltip style={{ marginLeft: 10, fontWeight: 800 }}
+                                            <Tooltip
+                                                style={{ marginLeft: 10 }}
                                                 title={
                                                     <>
                                                         ⚠️ Sending to Contact Book.<br />
@@ -141,6 +184,8 @@ const MessageModal = ({
                                                         • If the same phone number appears twice, only one message will be sent
                                                     </>
                                                 }
+                                                slotProps={slotPropsStyle}
+                                                arrow
                                             >
 
                                                 <BsExclamationTriangleFill color="red" size={20} />
@@ -153,17 +198,49 @@ const MessageModal = ({
                                 <Switch
                                     size="small"
                                     checked={useContactBook}
-                                    onChange={(e) => handleMessageStateChange("useContactBook", e.target.checked)}
+                                    onChange={(e) => {
+                                        handleMessageStateChange("useContactBook", e.target.checked);
+                                        if (useGuestList && e.target.checked) {
+                                            handleMessageStateChange("useGuestList", !useGuestList);
+                                        }
+                                    }}
                                     color="primary"
                                 />
                             </div>
 
                             <div className="d-flex align-items-center justify-content-between border rounded px-3 py-2">
-                                <label className="form-label mb-0">Use Test Book</label>
+                                <label className="form-label mb-0">Use Guest List
+
+                                    {useGuestList && (
+                                        <Tooltip
+                                            style={{ marginLeft: 10 }}
+                                            title={
+                                                <>
+                                                    ⚠️ Sending to guest list.<br />
+                                                    • Messages will only be sent to contacts in the selected guest list<br />
+                                                    • You must select the event assigned to this guest list before sending<br />
+                                                    • If the same phone number appears twice, only one message will be sent
+                                                </>
+                                            }
+                                            slotProps={slotPropsStyle}
+                                            arrow
+                                        >
+
+                                            <BsExclamationTriangleFill color="red" size={20} />
+                                        </Tooltip>
+                                    )}
+
+
+                                </label>
                                 <Switch
                                     size="small"
-                                    checked={useTestBook}
-                                    onChange={(e) => handleMessageStateChange("useTestBook", e.target.checked)}
+                                    checked={useGuestList}
+                                    onChange={(e) => {
+                                        handleMessageStateChange("useGuestList", e.target.checked);
+                                        if (useContactBook && e.target.checked) {
+                                            handleMessageStateChange("useContactBook", !useContactBook);
+                                        }
+                                    }}
                                     color="primary"
                                 />
                             </div>
@@ -224,7 +301,7 @@ const MessageModal = ({
                         {/* PHONE INPUT */}
                         <div
                             className={`col-lg-8 col-12 m-0 px-4 py-2 card${massAction ? "" : "d-none"
-                                } ${useContactBook || useTestBook ? "d-none" : ""}`}
+                                } ${useContactBook || useGuestList ? "d-none" : ""}`}
                         >
                             <div className="p-2">
 
@@ -297,7 +374,7 @@ const MessageModal = ({
 
                         {/* CONTACT BOOK INFO */}
                         <div
-                            className={` ${useContactBook || useTestBook ? "col-lg-8 col-12 m-0 px-4 py-2 card" : "d-none"
+                            className={` ${useContactBook || useGuestList ? "col-lg-8 col-12 m-0 px-4 py-2 card" : "d-none"
                                 }`}
                         >
                             <div className="p-0">
@@ -345,7 +422,7 @@ const MessageModal = ({
                                 color="primary"
                                 sx={{ textTransform: "none", width: "100%" }}
                                 type="submit"
-                                disabled={loadingMassSend ? true : useContactBook || useTestBook ? false : phoneList.length === 0}
+                                disabled={isSendButtonDisabled()}
                                 startIcon={
                                     loadingMassSend ? (
                                         <CircularProgress size={20} color="inherit" />

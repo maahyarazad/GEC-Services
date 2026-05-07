@@ -109,7 +109,7 @@ const WhatsappBroadcast = () => {
     const [debouncedViewMode, setDebouncedViewMode] = useState(viewMode);
     const [messageState, setMessageState] = useState({
         useContactBook: false,
-        useTestBook: false,
+        useGuestList: false,
         useLanguage: true,
         useAudience: 'club_member',
         phoneList: [],
@@ -568,7 +568,7 @@ const WhatsappBroadcast = () => {
                             },
                             body: JSON.stringify({
                                 useContactBook: messageState.useContactBook,
-                                useTestBook: messageState.useTestBook,
+                                useGuestList: messageState.useGuestList,
                                 useLanguage: messageState.useLanguage,
                                 useAudience: messageState.useAudience,
                                 phoneList: messageState.phoneList,

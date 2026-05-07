@@ -158,7 +158,7 @@ const messageSender = async (req) => {
     const {
       phoneList,
       useContactBook,
-      useTestBook,
+      useGuestList,
       useLanguage,
       useAudience,
       template,
@@ -196,19 +196,15 @@ const messageSender = async (req) => {
       }
     };
 
-    if (useTestBook) {
-      const conditions = { type: "gec_staff" };
-      if (useLanguage) {
-        conditions.language = template.language;
-      }
 
-      const testBook = dbService.findExactWithConditions(
-        "contact_book",
-        conditions
-      );
-      await Promise.all(testBook.map(safeSendMessage));
+    if (useGuestList) {
+      
+        const query = `SELECT * FROM contact_book WHERE id IN(
+             SELECT contact_book_id FROM event_guest_list WHERE event_id = ?)`;
+        const stmt = db.prepare(query);
+        const result = stmt.all([Number(eventId)]);
 
-      return { status: true };
+        await Promise.all(result.map(safeSendMessage));
     }
 
     if (useContactBook) {
