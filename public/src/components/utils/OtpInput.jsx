@@ -1,20 +1,21 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import { Box, TextField } from "@mui/material";
 
 const OtpInput = forwardRef(({ length = 5, onChange, onComplete }, ref) => {
     const [otp, setOtp] = useState(new Array(length).fill(""));
     const inputsRef = useRef([]);
     const completedRef = useRef(false);
 
-    const handleChange = (element, index) => {
-        const value = element.value.replace(/[^0-9]/g, "");
-        if (!value) return;
+    const handleChange = (value, index) => {
+        const sanitized = value.replace(/[^0-9]/g, "");
+        if (!sanitized) return;
 
         const newOtp = [...otp];
-        newOtp[index] = value;
+        newOtp[index] = sanitized;
         setOtp(newOtp);
         onChange?.(newOtp.join(""));
 
-        if (value && index < length - 1) {
+        if (index < length - 1) {
             inputsRef.current[index + 1]?.focus();
         }
     };
@@ -40,7 +41,6 @@ const OtpInput = forwardRef(({ length = 5, onChange, onComplete }, ref) => {
         }
     }, [otp, onComplete]);
 
-    // Expose `clear` function to parent via ref
     useImperativeHandle(ref, () => ({
         clear: () => {
             const cleared = new Array(length).fill("");
@@ -49,36 +49,52 @@ const OtpInput = forwardRef(({ length = 5, onChange, onComplete }, ref) => {
             onChange?.("");
             inputsRef.current[0]?.focus();
         },
-
         blurAll: () => {
             inputsRef.current.forEach((input) => input?.blur());
-        }
-
+        },
     }));
 
     return (
-        <div style={{ display: "flex", gap: "8px" }}>
+        <Box sx={{ display: "flex", gap: 1, }}>
             {otp.map((digit, idx) => (
-                <input
+                <TextField
                     key={idx}
-                    type="text"                // keep as text
-                    inputMode="numeric"        // tells mobile to show number keypad
-                    pattern="[0-9]*"           // restricts input to digits
-                    maxLength="1"
                     value={digit}
-                    ref={(el) => (inputsRef.current[idx] = el)}
-                    onChange={(e) => handleChange(e.target, idx)}
+                    onChange={(e) => handleChange(e.target.value, idx)}
                     onKeyDown={(e) => handleKeyDown(e, idx)}
-                    className="otp-box"
-                    style={{
-                        width: "2em",
-                        height: "2em",
-                        fontSize: "1.25em",
-                        textAlign: "center",
+                    inputRef={(el) => (inputsRef.current[idx] = el)}
+                    inputProps={{
+                        maxLength: 1,
+                        inputMode: "numeric",
+                        pattern: "[0-9]*",
+                    }}
+                    sx={{
+
+                        width: 48,
+                        "& .MuiOutlinedInput-notchedOutline": {
+                            bottom: 2,
+                            top: -14
+                        },
+                        // Height lives on the root, not the wrapper
+                        "& .MuiOutlinedInput-root": {
+                            height: 48,
+                            fontSize: "1.3rem",
+                            fontWeight: 600,
+                            borderRadius: 1.5,
+                            // Make the inner <input> fill the root completely
+                            "& input": {
+                                height: "100%",
+                                boxSizing: "border-box",
+                                p: 0,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                textAlign: 'center',
+                            },
+                        },
                     }}
                 />
             ))}
-        </div>
+        </Box>
     );
 });
 

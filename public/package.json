@@ -44,6 +44,7 @@
     "crypto-js": "^4.2.0",
     "dayjs": "^1.x",
     "dayjs-plugin-utc": "^0.1.2",
+    "exceljs": "^4.4.0",
     "formik": "^2.4.6",
     "framer-motion": "^12.23.5",
     "js-cookie": "^3.0.5",
