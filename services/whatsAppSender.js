@@ -200,9 +200,9 @@ const messageSender = async (req) => {
     if (useGuestList) {
       
         const query = `SELECT * FROM contact_book WHERE id IN(
-             SELECT contact_book_id FROM event_guest_list WHERE event_id = ?)`;
+             SELECT contact_book_id FROM event_guest_list WHERE event_id = ? and language = ? )`;
         const stmt = db.prepare(query);
-        const result = stmt.all([Number(eventId)]);
+        const result = stmt.all([Number(eventId), template.language]);
 
         await Promise.all(result.map(safeSendMessage));
     }

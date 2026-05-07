@@ -249,7 +249,7 @@ async function fetchPartnerFromGEC(req) {
     const data = req.body;
   // ── 1. Fetch partner ──────────────────────────────────────────
   const fetchRes = await fetch(
-    `${process.env.GEC__ORIGIN}partners/get-partner-with-email?email=${data.email}`,
+    `${process.env.GEC__ORIGIN}api/partners/get-partner-with-email?email=${data.email}`,
     {
       method: "GET",
       headers: {
