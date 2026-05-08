@@ -342,7 +342,7 @@ router.post(
       res.end(response.toString());
       const { From, Body, ButtonPayload, ButtonText } = req.body;
 
-      await handleAutoResponse(From, ButtonPayload);
+      await handleAutoResponse(From, ButtonPayload, req);
 
       // Fire and forget: save raw payload + log message to DB
       dbService.create("twilio_responses", {

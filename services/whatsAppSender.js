@@ -564,8 +564,9 @@ async function fetchTwilioMessagesDetails(sentMessages) {
   return results;
 }
 
-async function handleAutoResponse(From, ButtonPayload) {
+async function handleAutoResponse(From, ButtonPayload, req) {
   try {
+    console.log(req);
     const from = From.replace("whatsapp:", "");
 
     if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
