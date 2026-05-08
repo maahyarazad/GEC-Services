@@ -463,7 +463,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                        </Box>
        
                                        {/* ── First Name ───────────────────────────── */}
-                                       <Box sx={{ mb: 2, width: '48.5%' }}>
+                                       <Box  sx={{mb: 2,width: {xs: "100%",sm: "48.5%"}}}>
                                            <FieldLabel>First Name</FieldLabel>
                                            <TextField
                                                type="text"
@@ -487,7 +487,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                        </Box>
        
                                        {/* ── Last Name ────────────────────────────── */}
-                                       <Box sx={{ mb: 2, width: '48.5%' }}>
+                                       <Box  sx={{mb: 2,width: {xs: "100%",sm: "48.5%"}}}>
                                            <FieldLabel>Last Name</FieldLabel>
                                            <TextField
                                                type="text"
