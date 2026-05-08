@@ -7,19 +7,20 @@ const OtpInput = forwardRef(({ length = 5, onChange, onComplete, useGECStyle = f
     const inputsRef = useRef([]);
     const completedRef = useRef(false);
 
-    const handleChange = (value, index) => {
-        const sanitized = value.replace(/[^0-9]/g, "");
-        if (!sanitized) return;
+const handleChange = (value, index) => {
+    const sanitized = value.replace(/[^0-9]/g, "");
+    if (!sanitized) return;
 
-        const newOtp = [...otp];
-        newOtp[index] = sanitized;
-        setOtp(newOtp);
-        onChange?.(newOtp.join(""));
+    const newOtp = [...otp];
+    newOtp[index] = sanitized;
+    setOtp(newOtp);
+    onChange?.(newOtp.join(""));
 
-        if (index < length - 1) {
-            inputsRef.current[index + 1]?.focus();
-        }
-    };
+    if (index < length - 1) {
+         
+        inputsRef.current[index + 1]?.focus();
+    }
+};
 
     const handleKeyDown = (e, index) => {
         if (e.key === "Backspace") {
@@ -30,6 +31,7 @@ const OtpInput = forwardRef(({ length = 5, onChange, onComplete, useGECStyle = f
                 onChange?.(newOtp.join(""));
                 completedRef.current = false;
             } else if (index > 0) {
+                
                 inputsRef.current[index - 1]?.focus();
             }
         }
@@ -106,15 +108,15 @@ const OtpInput = forwardRef(({ length = 5, onChange, onComplete, useGECStyle = f
                 borderColor: GEC.gold,
             },
 
-            // ── Focused — kill blue, apply gold ───────────────────────
-            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                borderColor: `${GEC.gold} !important`,
-                borderWidth: "1px !important",
-            },
-            "&.Mui-focused": {
-                boxShadow: `0 0 0 3px ${GEC.goldMuted}`,
-                borderRadius: 1.5,
-            },
+         // ── Focused — driven by real DOM focus, not MUI class ─────
+"&:focus-within .MuiOutlinedInput-notchedOutline": {
+    borderColor: `${GEC.gold} !important`,
+    borderWidth: "1px !important",
+},
+"&:focus-within": {
+    boxShadow: `0 0 0 3px ${GEC.goldMuted}`,
+    borderRadius: 1.5,
+},
         },
     };
 
