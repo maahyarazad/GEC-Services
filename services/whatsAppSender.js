@@ -361,11 +361,11 @@ async function sendMessageToPhone(
         throw new Error(`Unsupported template type: ${templateType}`);
     }
 
-    if (eventId) {
-      const callbackUrl = new URL(process.env.TWILIO_STATUS_CALLBACK_URL);
-      callbackUrl.searchParams.set("eventId", eventId);
-      messageOptions.statusCallback = callbackUrl.toString();
-    }
+    // if (eventId) {
+    //   const callbackUrl = new URL(process.env.TWILIO_STATUS_CALLBACK_URL);
+    //   callbackUrl.searchParams.set("eventId", eventId);
+    //   messageOptions.statusCallback = callbackUrl.toString();
+    // }
 
     const result = await twilioClient.messages.create(messageOptions);
     dbService.create("twilio_template_message", {
