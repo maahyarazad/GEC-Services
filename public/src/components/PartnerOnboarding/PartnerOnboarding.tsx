@@ -29,7 +29,7 @@ import { validateAndConvertXlsx } from './validateAndConvertXlsx.tsx';
 import { IoMdCloseCircleOutline } from "react-icons/io";
 import ResultPanel from "./ResultPanel";
 import {
-    GEC,
+    GEC, wizardCompletedBannerSx,
     GoldConnector,
     GoldStepIconRoot,
     FieldLabel,
@@ -95,6 +95,7 @@ const INITIAL_WIZARD_STATE = {
     csvFile: null,
     rowCount: 0,
     faultyRecords: null,
+    startProcessingXLSX: false,
     // Step 2 — Review
     toastOpen: false,           // submission success toast
     toastErrorOpen: false,           // submission success toast
@@ -246,45 +247,55 @@ export default function PartnerOnboarding() {
     };
 
     // ── File handling ─────────────────────────────────────────────────────
+    
     const handleFileDrop = async (dropped: File) => {
-        const isXlsx =
-            dropped.type ===
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-            dropped.name.toLowerCase().endsWith(".xlsx");
+        try {
+            setWiz({ startProcessingXLSX: true });
+            const isXlsx =
+                dropped.type ===
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+                dropped.name.toLowerCase().endsWith(".xlsx");
 
-        if (!isXlsx) {
+            if (!isXlsx) {
+                setWiz({
+                    toastOpen: true,
+                    toastErrorOpen: true,
+                    ErrorToastMessage: 'Only .xlsx files are allowed',
+                });
+                return;
+            }
+
+            if (dropped) setWiz({ uploadedFile: dropped, uploadComplete: true });
+            debugger;
+            const result = await validateAndConvertXlsx(dropped);
+
+            if (!result.valid) {
+
+
+                setWiz({
+                    uploadedFile: null,
+                    uploadError: result.error,
+                });
+                return;
+            }
+
+            // Store the ready-to-post CSV file alongside the original
             setWiz({
-                toastOpen: true,
-                toastErrorOpen: true,
-                ErrorToastMessage: 'Only .xlsx files are allowed',
+
+                csvBlob: result?.csvBlob,
+                csvFile: result?.csvFile,
+                rowCount: result?.rowCount,
+                valid: result?.valid,
+                faultyRecords: result.faultyRecords,
+                startProcessingXLSX: false
             });
-            return;
+            debugger;
+        } catch (e) {
+
+        } finally {
+            setWiz({ startProcessingXLSX: false });
         }
 
-        if (dropped) setWiz({ uploadedFile: dropped, uploadComplete: true });
-        const result = await validateAndConvertXlsx(dropped);
-
-        if (!result.valid) {
-
-
-            setWiz({
-                uploadedFile: null,
-                uploadError: result.error,
-            });
-            return;
-        }
-
-        // Store the ready-to-post CSV file alongside the original
-        setWiz({
-
-
-            csvBlob: result?.csvBlob,
-            csvFile: result?.csvFile,
-            rowCount: result?.rowCount,
-            valid: result?.valid,
-            faultyRecords: result.faultyRecords
-
-        });
     }
 
 
@@ -299,7 +310,7 @@ export default function PartnerOnboarding() {
             const formData = new FormData();
 
             formData.append("file", wizardState.csvFile!);
-            
+
             //@ts-ignore
             formData.append("partner", wizardState.partner?.title);
 
@@ -311,18 +322,18 @@ export default function PartnerOnboarding() {
                     body: formData,
                 }
             );
-            if(res.ok){
+            if (res.ok) {
                 setWiz({ wizardCompleted: true, toastOpen: true });
             }
-            
+
             if (res.status === 401) {
                 const data = await res.json();
-                
-                 setWiz({
-                toastOpen: true,
-                toastErrorOpen: true,
-                ErrorToastMessage: data.message
-            });
+
+                setWiz({
+                    toastOpen: true,
+                    toastErrorOpen: true,
+                    ErrorToastMessage: data.message
+                });
 
                 return;
             }
@@ -333,14 +344,14 @@ export default function PartnerOnboarding() {
         } catch (err) {
             console.error("Error fetching data:", err);
         }
-        finally{
-             setWiz({ uploading: false });
+        finally {
+            setWiz({ uploading: false });
         }
     }
 
 
     const handleNext = async () => {
-        
+
         if (activeStep === STEPS.length - 1) {
 
             setWiz({ uploading: true });
@@ -348,7 +359,7 @@ export default function PartnerOnboarding() {
             return;
         }
         if (activeStep === STEPS.length) {
-            
+
         }
 
 
@@ -460,15 +471,16 @@ export default function PartnerOnboarding() {
 
 
 
+
             {!wizardState.uploadedFile &&
                 (
-
                     <Box
                         onDragOver={(e) => e.preventDefault()}
                         onDrop={(e) => { e.preventDefault(); handleFileDrop(e.dataTransfer.files[0]); }}
                         onClick={() => document.getElementById("gec-file-input").click()}
                         sx={dropZoneSx}
-                    >
+                        >
+                                    <>
                         <CloudUploadOutlinedIcon sx={{ fontSize: 48, color: GEC.goldDark, transition: "color 0.2s" }} />
                         <Typography sx={{ fontWeight: 600, color: GEC.textPrimary, fontSize: 15 }}>
                             {wizardState.uploadedFile ? wizardState.uploadedFile.name : "Drag & drop your document here"}
@@ -485,6 +497,17 @@ export default function PartnerOnboarding() {
                             hidden
                             onChange={(e) => handleFileDrop(e.target.files[0] || null)}
                         />
+                                    </>
+                    </Box>
+                    )
+                }
+            {wizardState.startProcessingXLSX && wizardState.uploadedFile &&
+                (
+                    <Box sx={{ ...dropZoneSx, pointerEvents: "none" }}>
+                        <CircularProgress size={24} sx={{ color: GEC.gold }} />
+                        <Typography sx={{ fontWeight: 600, color: GEC.textSecondary, fontSize: 15 }}>
+                            Processing file…
+                        </Typography>
                     </Box>
                 )
             }
@@ -500,7 +523,11 @@ export default function PartnerOnboarding() {
                     <Typography variant="body2" sx={{ color: GEC.textSecondary }}>
                         File ready:{" "}
                         <strong style={{ color: GEC.textPrimary }}>{wizardState.uploadedFile.name}</strong>
-                        <IconButton onClick={() => { setWiz({ uploadedFile: null }) }} >
+                        <IconButton onClick={() => { setWiz({ uploadedFile: null,  csvBlob: null,
+                csvFile: null,
+                rowCount: 0,
+                valid: false,
+                faultyRecords: 0 }) }} >
                             <IoMdCloseCircleOutline />
                         </IconButton>
                     </Typography>
@@ -515,11 +542,13 @@ export default function PartnerOnboarding() {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {[
                 { label: "Company Name", value: wizardState?.partner?.title || null, empty: "-" },
-                { label: "Total rows", value: (wizardState.rowCount ?? 0) + (wizardState.faultyRecords?.length ?? 0), color: "text.primary" },
-        { label: "Valid rows", value: wizardState.rowCount ?? 0, color: "success.main" },
-        { label: "Faulty rows", value: wizardState.faultyRecords?.length ?? 0, color: wizardState.faultyRecords?.length ? "warning.main" : "success.main" },
-            ].map(({ label, value, empty }) => (
-                 <Box key={label} sx={infoCardSx}>
+                { label: "Total rows", value: (wizardState.rowCount ?? 0) + (wizardState.faultyRecords?.length ?? 0) },
+                { label: "Valid rows", value: wizardState.rowCount ?? 0 },
+                { label: "Faulty rows", value: wizardState.faultyRecords?.length ?? 0 },
+            ]
+                .filter((_, index) => !wizardState.wizardCompleted || index === 0)
+                .map(({ label, value, empty }) => (
+                    <Box key={label} sx={infoCardSx}>
                         <Typography
                             variant="caption"
                             sx={{
@@ -542,16 +571,46 @@ export default function PartnerOnboarding() {
                             {value ?? empty}
                         </Typography>
                     </Box>
-            ))}
+                ))}
 
 
-            <Box sx={termsBannerSx}>
-                <CheckCircleOutlineIcon sx={{ color: GEC.gold, fontSize: 18, mt: "2px", flexShrink: 0 }} />
-                <Typography variant="body2" sx={{ color: GEC.textSecondary, lineHeight: 1.65 }}>
-                    By submitting, you confirm that the information above is accurate and you agree to the GEC
-                    Partner terms and conditions.
-                </Typography>
-            </Box>
+
+            {wizardState.wizardCompleted ? (
+                <Box sx={wizardCompletedBannerSx}>
+                    <CheckCircleOutlineIcon
+                        sx={{ color: GEC.goldLight, fontSize: 20, mt: "1px", flexShrink: 0 }}
+                    />
+                    <Box>
+                        <Typography
+                            variant="body2"
+                            sx={{ color: 'white', fontWeight: 600, lineHeight: 1.5 }}
+                        >
+                            Onboarding Completed
+                        </Typography>
+                        <Typography
+                            variant="body2"
+                            sx={{ color: 'white', lineHeight: 1.65, mt: 0.25 }}
+                        >
+                            {wizardState.rowCount}{" "}
+                            {wizardState.rowCount === 1 ? "record has" : "records have"} been
+                            successfully submitted.
+                        </Typography>
+                    </Box>
+                </Box>
+            ) : (
+                <Box sx={termsBannerSx}>
+                    <CheckCircleOutlineIcon
+                        sx={{ color: GEC.gold, fontSize: 18, mt: "2px", flexShrink: 0 }}
+                    />
+                    <Typography
+                        variant="body2"
+                        sx={{ color: GEC.textSecondary, lineHeight: 1.65 }}
+                    >
+                        By submitting, you confirm that the information above is accurate and
+                        you agree to the GEC Partner terms and conditions.
+                    </Typography>
+                </Box>
+            )}
 
         </Box>
     );
@@ -575,15 +634,17 @@ export default function PartnerOnboarding() {
 
 
     const isNextButtonDisabled = () => {
+
         if (activeStep === 0 && !wizardState.authenticate) {
             return true;
         }
 
-        if (activeStep === 1 && !wizardState.valid) {
+        if (activeStep === 1 && wizardState.rowCount === 0) {
             return true;
         }
 
         if (activeStep === 2 && wizardState.wizardCompleted) {
+
             return true;
         }
 
@@ -671,7 +732,9 @@ export default function PartnerOnboarding() {
                             sx={{ display: "block", textAlign: "center", mt: 3, color: "#a89b7a" }}
                         >
                             Need help?{" "}
-                            <Box component="span" sx={footerLinkSx}>
+                            <Box component="span" sx={footerLinkSx} onClick={() => {
+                                window.location.href = "mailto:development3@german-emirates-club.com";
+                            }}>
                                 Contact partner support
                             </Box>
                         </Typography>

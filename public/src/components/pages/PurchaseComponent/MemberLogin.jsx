@@ -405,264 +405,359 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
     }
 
     return (
-        <div className="w-100 d-flex justify-content-center align-items-center flex-column" >
-            <Typography style={{ textAlign: "center", maxWidth: 600, fontSize: isMobile ? 15 : 20 }} className="pb-2 pt-0">
+ <Box
+            className="w-100 d-flex justify-content-center align-items-center flex-column"
+        >
+            {/* ── Intro text ─────────────────────────────────────────────── */}
+            <Typography
+                sx={{
+                    textAlign: "center",
+                    maxWidth: 560,
+                    fontSize: isMobile ? 14 : 17,
+                    color: GEC.textSecondary,
+                    lineHeight: 1.65,
+                    mb: 3,
+                    fontFamily: "'Georgia', serif",
+                }}
+            >
                 Welcome! Verify your account details to receive your Membership Pass.
-                <br></br>
+                <br />
                 Please enter your email address.
             </Typography>
-            <div className="w-100 d-flex justify-content-center align-items-center flex-column" >
-                <div style={{ width: "100%", maxWidth: 400 }}>
+
+            {/* ── Form wrapper ───────────────────────────────────────────── */}
+            <Box
+                className="w-100 d-flex justify-content-center align-items-center flex-column"
+            >
+                <Box sx={{ width: "100%", maxWidth: 420 }}>
                     <Formik
                         innerRef={formikRef}
                         initialValues={initialValues}
                         validationSchema={validationSchema}
-                        onSubmit={(values, formikHelpers) => searchMember(values)}
+                        onSubmit={(values) => searchMember(values)}
                     >
-                        {({ setFieldValue, errors, touched, isSubmitting }) => (
+                        {({ errors, touched, isSubmitting }) => (
                             <Form>
+                                {/* ── Email Field ──────────────────────────── */}
+                                <Box sx={{ mb: 2 }}>
+                                    <FieldLabel>Email Address</FieldLabel>
+                                    <Field
+                                        as={TextField}
+                                        type="email"
+                                        name="email"
+                                        fullWidth
+                                        placeholder="you@example.com"
+                                        disabled={wizardState.authenticate}
+                                        helperText={<ErrorMessage name="email" />}
+                                        error={touched.email && Boolean(errors.email)}
+                                        sx={fieldSx}
+                                        InputProps={{
+                                            endAdornment: wizardState.authenticate ? (
+                                                <InputAdornment position="end">
+                                                    <IconButton
+                                                        onClick={confirmClear}
+                                                        edge="end"
+                                                        size="small"
+                                                        sx={{ color: GEC.textSecondary }}
+                                                    >
+                                                        <MdClear />
+                                                    </IconButton>
+                                                </InputAdornment>
+                                            ) : null,
+                                        }}
+                                    />
+                                </Box>
 
-
-                                {/* Email Field */}
-                                <Field
-                                    as={TextField}
-                                    type="email"
-                                    name="email"
-                                    fullWidth
-                                    label="E-mail"
-                                    disabled={wizardState.authenticate}
-                                    helperText={<ErrorMessage name="email" />}
-                                    error={touched.email && Boolean(errors.email)}
-                                    InputProps={{
-                                        endAdornment: !wizardState.authenticate ? (<></>) : (
-                                            <InputAdornment position="end">
-                                                <IconButton
-                                                    onClick={confirmClear}
-                                                    edge="end"
-                                                    size="small"
-                                                >
-                                                    <MdClear />
-                                                </IconButton>
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-                                <div className="full position-relative w-100">
-
-                                </div>
-                                {/* Card Number Field */}
-                                {/* <div className="full position-relative mb-3">
-                            <Field
-                                as={TextField}
-                                type="password"
-                                name="card_number"
-                                size="small"
-                                fullWidth
-                                label="Card Number"
-                                helperText={<ErrorMessage name="card_number" />}
-                                className="pb-2"
-                                error={touched.email && Boolean(errors.email)}
-                                
-                            />
-                            
-                        </div> */}
-
-
-                                {/* Submit Button */}
-
+                                {/* ── Submit Button ────────────────────────── */}
                                 <Button
-                                    className="mt-1"
                                     type="submit"
-                                    variant={wizardState.member === null ? "contained" : "outlined"}
+                                    variant="contained"
+                                    fullWidth
                                     disabled={wizardState.authenticate}
-                                    style={{ textTransform: "none", width: "100%" }}
-
+                                    sx={{
+                                        ...primaryBtnSx,
+                                        ...(wizardState.member !== null && {
+                                            background: "transparent",
+                                            border: `1px solid ${GEC.goldBorder}`,
+                                            color: GEC.textSecondary,
+                                            boxShadow: "none",
+                                            "&:hover": {
+                                                borderColor: GEC.gold,
+                                                color: GEC.goldDark,
+                                                background: GEC.goldMuted,
+                                                boxShadow: "none",
+                                                transform: "none",
+                                            },
+                                        }),
+                                    }}
                                 >
-                                    <span style={{ minWidth: 60, minHeight: 25 }} className="d-flex justify-content-center align-items-center">
-
+                                    <Box
+                                        sx={{
+                                            minWidth: 60,
+                                            minHeight: 25,
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                        }}
+                                    >
                                         {isSubmitting ? (
                                             <CircularProgress size={20} color="inherit" />
                                         ) : (
-                                            <>
-                                                Search
-                                            </>
+                                            "Search"
                                         )}
-
-                                    </span>
-
+                                    </Box>
                                 </Button>
-
                             </Form>
-
                         )}
                     </Formik>
-                </div>
+                </Box>
 
-                <div
-                    className={`fade-in ${responseMessage ? "visible" : ""} mt-1 mb-1`}
-                    style={{
-
+                {/* ── Response message ───────────────────────────────────── */}
+                <Box
+                    sx={{
                         minHeight: 50,
-                        maxWidth: 300,
+                        maxWidth: 320,
                         opacity: responseMessage ? 1 : 0,
                         transition: "opacity 0.5s ease",
-                        // color: responseMessage.includes("success") ? "green" : "red",
                         textAlign: "center",
-                        marginTop: "0rem",
+                        mt: 1,
+                        mb: 1,
                         whiteSpace: "normal",
                         wordBreak: "break-word",
-                        overflowWrap: "break-word"
+                        overflowWrap: "break-word",
+                        color: GEC.textSecondary,
+                        fontSize: 14,
+                        ...(responseMessage && toastAlertSx),
+                        borderRadius: 2,
+                        px: responseMessage ? 2 : 0,
+                        py: responseMessage ? 1 : 0,
                     }}
                 >
                     {responseMessage}
-                </div>
+                </Box>
 
+                {/* ── Member card ─────────────────────────────────────────── */}
                 {wizardState?.member && (
-                    <Card sx={{ minWidth: isMobile ? 'auto' : 400, boxShadow: 3, cursor: 'pointer', textAlign: 'start', width: isMobile ? "100%" : "" }}>
-                        <CardContent>
-                            {/* Helper to mask text */}
+                    <Card
+                        sx={{
+                            ...infoCardSx,
+                            minWidth: isMobile ? "auto" : 420,
+                            width: isMobile ? "100%" : "auto",
+                            cursor: "pointer",
+                            textAlign: "start",
+                            mt: 1,
+                            transition: "box-shadow 0.2s ease",
+                            "&:hover": {
+                                boxShadow: `0 8px 32px rgba(185,150,43,0.18)`,
+                            },
+                        }}
+                    >
+                        <CardContent sx={{ p: 3, "&:last-child": { pb: 3 } }}>
                             {(() => {
                                 const maskText = (text) => {
-                                    if (!text) return '';
-                                    // Split words, keep first letter, replace rest with *
+                                    if (!text) return "";
                                     return text
-                                        .split(' ')
+                                        .split(" ")
                                         .map((word) =>
                                             authorized
-                                                ? word // if authorized, show full text
-                                                : word[0] + '*'.repeat(word.length - 1)
+                                                ? word
+                                                : word[0] + "*".repeat(word.length - 1)
                                         )
-                                        .join(' ');
+                                        .join(" ");
                                 };
+
+                                const fullName = wizardState?.member?.title
+                                    ? `${wizardState.member.title} ${wizardState.member.firstname} ${wizardState.member.lastname}`
+                                    : `${wizardState.member.firstname} ${wizardState.member.lastname}`;
 
                                 return (
                                     <>
-                                        <div className="d-flex justify-content-between align-items-top">
-                                            {/* Header */}
-                                            <Typography variant="h6" gutterBottom>
-                                                {wizardState?.authenticate
-                                                    ? (wizardState?.member?.title
-                                                        ? `${wizardState?.member?.title} ${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`
-                                                        : `${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`)
-                                                    : maskText(
-                                                        wizardState?.member?.title
-                                                            ? `${wizardState?.member?.title} ${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`
-                                                            : `${wizardState?.member?.firstname} ${wizardState?.member?.lastname}`
-                                                    )}
+                                        {/* ── Header row ──────────────────── */}
+                                        <Box
+                                            sx={{
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                alignItems: "flex-start",
+                                                mb: 0.5,
+                                            }}
+                                        >
+                                            <Typography
+                                                variant="h6"
+                                                sx={{
+                                                    fontFamily: "'Georgia', serif",
+                                                    fontWeight: 700,
+                                                    color: GEC.textPrimary,
+                                                    lineHeight: 1.3,
+                                                }}
+                                            >
+                                                {wizardState.authenticate
+                                                    ? fullName
+                                                    : maskText(fullName)}
                                             </Typography>
 
-                                            {wizardState?.authenticate && (
-                                                <IconButton onClick={confirmClear}>
+                                            {wizardState.authenticate && (
+                                                <IconButton
+                                                    onClick={confirmClear}
+                                                    size="small"
+                                                    sx={{
+                                                        color: GEC.textSecondary,
+                                                        "&:hover": { color: GEC.goldDark },
+                                                    }}
+                                                >
                                                     <GrLogout />
                                                 </IconButton>
                                             )}
-                                        </div>
-
-                                        <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-                                            Member ID:{" "}
-                                            {wizardState?.authenticate
-                                                ? wizardState?.member?.memberId
-                                                : maskText(wizardState?.member?.memberId?.toString())}
-                                        </Typography>
-
-                                        <Box sx={{ mt: 2 }}>
-                                            <Grid container spacing={1}>
-                                                <Grid item xs={6}>
-                                                    <Typography variant="body2" color="textSecondary">
-                                                        Card Number
-                                                    </Typography>
-                                                    <Typography variant="body1">
-                                                        {wizardState?.authenticate
-                                                            ? wizardState?.member?.card_number
-                                                            : maskText(wizardState?.member?.card_number?.toString())}
-                                                    </Typography>
-                                                </Grid>
-
-                                                <Grid item xs={6}>
-                                                    <Typography variant="body2" color="textSecondary">
-                                                        Expiry Date
-                                                    </Typography>
-                                                    <Typography variant="body1">
-                                                        {wizardState?.authenticate
-                                                            ? wizardState?.member?.card_expiry_date?.split(" ")?.[0]
-                                                            : maskText(wizardState?.member?.card_expiry_date?.split(" ")?.[0])}
-                                                    </Typography>
-                                                </Grid>
-                                            </Grid>
-
-                                            <Box sx={{ mt: 2 }}>
-                                                <Typography variant="body2" color="textSecondary">
-                                                    Email
-                                                </Typography>
-                                                <Typography variant="body1">
-                                                    {wizardState?.authenticate
-                                                        ? wizardState?.member?.email
-                                                        : maskEmail(wizardState?.member?.email)}
-                                                </Typography>
-                                            </Box>
                                         </Box>
 
-                                        <Divider sx={{ borderBottomWidth: 1, borderColor: "#000", my: 2 }} />
-
-                                        <>
-                                            <Button
-                                                variant="contained"
-                                                color="primary"
-                                                disabled={wizardState?.authenticate === true}
-                                                type="button"
-                                                onClick={handleSendOtp}
-                                                style={{
-                                                    pointerEvents: "auto",
-                                                    opacity: 1,
-                                                    width: "100%",
-                                                    textTransform: "none",
-                                                }}
+                                        {/* ── Member ID ───────────────────── */}
+                                        <Typography
+                                            variant="subtitle2"
+                                            sx={{ color: GEC.textSecondary, mb: 2 }}
+                                        >
+                                            Member ID:{" "}
+                                            <Box
+                                                component="span"
+                                                sx={{ color: GEC.textPrimary, fontWeight: 600 }}
                                             >
-                                                <p>
-                                                    {wizardState?.authenticate === true
-                                                        ? "Verified"
-                                                        : "Verify your email to confirm your account details"}
-                                                </p>
-                                            </Button>
+                                                {wizardState.authenticate
+                                                    ? wizardState.member.memberId
+                                                    : maskText(wizardState.member.memberId?.toString())}
+                                            </Box>
+                                        </Typography>
 
-                                            <div className={`otp-slide ${showOtpInput ? "show" : ""} mt-2`}>
-                                                <div ref={statusRef}></div>
+                                        {/* ── Grid fields ─────────────────── */}
+                                        <Grid container spacing={2} sx={{ mb: 2 }}>
+                                            <Grid item xs={6}>
+                                                <Typography
+                                                    variant="caption"
+                                                    sx={{
+                                                        display: "block",
+                                                        color: GEC.textSecondary,
+                                                        textTransform: "uppercase",
+                                                        letterSpacing: "0.06em",
+                                                        fontWeight: 600,
+                                                        mb: 0.4,
+                                                    }}
+                                                >
+                                                    Card Number
+                                                </Typography>
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{ color: GEC.textPrimary, fontWeight: 500 }}
+                                                >
+                                                    {wizardState.authenticate
+                                                        ? wizardState.member.card_number
+                                                        : maskText(wizardState.member.card_number?.toString())}
+                                                </Typography>
+                                            </Grid>
 
-                                                {currentResponseStatus && (
-                                                    <>
-                                                        <OtpInput
-                                                            ref={otpRef}
-                                                            onComplete={(val) => {
-                                                                handlePostOTP(val);
-                                                            }}
-                                                        />
-                                                        {validOtp && (
-                                                            <OtpTimer
-                                                                initialSeconds={300}
-                                                                loginResponseData={currentResponseStatus}
-                                                                onExpiredChange={handleExpiredChange}
-                                                            />
+                                            <Grid item xs={6}>
+                                                <Typography
+                                                    variant="caption"
+                                                    sx={{
+                                                        display: "block",
+                                                        color: GEC.textSecondary,
+                                                        textTransform: "uppercase",
+                                                        letterSpacing: "0.06em",
+                                                        fontWeight: 600,
+                                                        mb: 0.4,
+                                                    }}
+                                                >
+                                                    Expiry Date
+                                                </Typography>
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{ color: GEC.textPrimary, fontWeight: 500 }}
+                                                >
+                                                    {wizardState.authenticate
+                                                        ? wizardState.member.card_expiry_date?.split(" ")?.[0]
+                                                        : maskText(
+                                                            wizardState.member.card_expiry_date?.split(" ")?.[0]
                                                         )}
-                                                    </>
-                                                )}
-                                            </div>
-                                            <span ref={otpFocus}></span>
-                                        </>
+                                                </Typography>
+                                            </Grid>
+
+                                            <Grid item xs={12}>
+                                                <Typography
+                                                    variant="caption"
+                                                    sx={{
+                                                        display: "block",
+                                                        color: GEC.textSecondary,
+                                                        textTransform: "uppercase",
+                                                        letterSpacing: "0.06em",
+                                                        fontWeight: 600,
+                                                        mb: 0.4,
+                                                    }}
+                                                >
+                                                    Email
+                                                </Typography>
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{ color: GEC.textPrimary, fontWeight: 500 }}
+                                                >
+                                                    {wizardState.authenticate
+                                                        ? wizardState.member.email
+                                                        : maskEmail(wizardState.member.email)}
+                                                </Typography>
+                                            </Grid>
+                                        </Grid>
+
+                                        {/* ── Divider ─────────────────────── */}
+                                        <Divider
+                                            sx={{
+                                                height: 1,
+                                                background: `linear-gradient(90deg, transparent, ${GEC.goldBorder}, transparent)`,
+                                                border: "none",
+                                                my: 2,
+                                            }}
+                                        />
+
+                                        {/* ── Verify button ───────────────── */}
+                                        <Button
+                                            variant="contained"
+                                            fullWidth
+                                            disabled={wizardState.authenticate === true}
+                                            onClick={handleSendOtp}
+                                            sx={primaryBtnSx}
+                                        >
+                                            {wizardState.authenticate === true
+                                                ? "✓ Verified"
+                                                : "Verify your email to confirm your account details"}
+                                        </Button>
+
+                                        {/* ── OTP input ───────────────────── */}
+                                        <Box
+                                            className={`otp-slide ${showOtpInput ? "show" : ""}`}
+                                            sx={{ mt: 2 }}
+                                        >
+                                            <Box ref={statusRef} />
+
+                                            {currentResponseStatus && (
+                                                <>
+                                                    <OtpInput
+                                                        ref={otpRef}
+                                                        onComplete={(val) => handlePostOTP(val)}
+                                                    />
+                                                    {validOtp && (
+                                                        <OtpTimer
+                                                            initialSeconds={300}
+                                                            loginResponseData={currentResponseStatus}
+                                                            onExpiredChange={handleExpiredChange}
+                                                        />
+                                                    )}
+                                                </>
+                                            )}
+                                        </Box>
+
+                                        <Box ref={otpFocus} />
                                     </>
-
-                                )
-
+                                );
                             })()}
                         </CardContent>
-
                     </Card>
                 )}
-
-
-
-
-            </div>
-        </div>
+            </Box>
+        </Box>
     );
 });
 

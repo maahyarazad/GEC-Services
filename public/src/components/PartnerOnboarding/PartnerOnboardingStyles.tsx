@@ -279,6 +279,17 @@ export const termsBannerSx = {
     borderRadius: 2,
 };
 
+// ── Wizard Completed banner sx ───────────────────────────────────────────────────────
+export const wizardCompletedBannerSx = {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 1.5,
+    p: 2,
+    background: GEC.goldDark,
+    border: `1px solid ${GEC.goldLight}`,
+    borderRadius: 2,
+};
+
 // ── Toast / Alert sx ──────────────────────────────────────────────────────
 export const toastAlertSx = {
     background: "#fffbec",

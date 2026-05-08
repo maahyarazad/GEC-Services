@@ -250,7 +250,7 @@ router.post("/otp-check", async (req, res) => {
 
 async function fetchPartnerFromGEC(req) {
     const data = req.body;
-    const baseUrl = process.env.ENVIRONMENT ? `${process.env.GEC__ORIGIN}/api/`: `${process.env.GEC__ORIGIN}`
+    const baseUrl = process.env.ENVIRONMENT === "PRODUCTION" ? `${process.env.GEC__ORIGIN}/api/`: `${process.env.GEC__ORIGIN}`
   // ── 1. Fetch partner ──────────────────────────────────────────
   const fetchRes = await fetch(
     
