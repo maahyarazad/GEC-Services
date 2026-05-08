@@ -8,6 +8,22 @@ const dbService = require("../services/dbService");
 const db = dbService.getDB();
 const fs = require("fs");
 const path = require("path");
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone');
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const UAE_TZ = 'Asia/Dubai';
+
+// Helper: parse any date string → UAE dayjs object
+const toUAE = (dateStr) => {
+  if (!dateStr) return null;
+  
+  return dayjs.utc(dateStr).tz(UAE_TZ);
+};
+
 
 const otpSender = async (req) => {
   let { mobile_number, otp } = req.body;
@@ -509,35 +525,40 @@ async function fetchHistory(phone) {
       WHERE json_extract(tr.payload, '$.WaId') = ?
     `;
 
-    const sentStmt = db.prepare(sentQuery);
-    const receivedStmt = db.prepare(receivedQuery);
-
-    const allSentMessages = sentStmt.all(toNumber);
-    const receivedMessages = receivedStmt.all(phone);
+    const allSentMessages = db.prepare(sentQuery).all(toNumber);
+    const receivedMessages = db.prepare(receivedQuery).all(phone);
 
     let detailedBodies = [];
 
     if (allSentMessages.length > 0) {
-      const detailedMessages = await fetchTwilioMessagesDetails(
-        allSentMessages
-      );
+      const detailedMessages = await fetchTwilioMessagesDetails(allSentMessages);
 
       detailedBodies = detailedMessages
         .filter((item) => item.twilioMessage)
         .map((item) => ({
           body: item.twilioMessage.body,
-          received_at: item.twilioMessage.dateSent,
-          type: "s",
+          received_at: toUAE(item.twilioMessage.dateSent),  // Twilio ISO → UAE
+          type: 's',
         }));
     }
 
-    const combined = [...receivedMessages, ...detailedBodies].sort(
-      (a, b) => new Date(a.received_at) - new Date(b.received_at)
+    const normalizedReceived = receivedMessages.map((msg) => ({
+      ...msg,
+      received_at: toUAE(msg.received_at),  // SQLite UTC bare string → UAE
+    }));
+
+    const combined = [...normalizedReceived, ...detailedBodies].sort(
+      (a, b) => a.received_at.valueOf() - b.received_at.valueOf()  // dayjs .valueOf() for ms comparison
     );
 
-    return combined;
+    // Optional: format for display
+    return combined.map((msg) => ({
+      ...msg,
+      received_at: msg.received_at.format('YYYY-MM-DD HH:mm:ss'),
+    }));
+
   } catch (error) {
-    console.error("Failed to fetch message:", error);
+    console.error('Failed to fetch message:', error);
     throw error;
   }
 }
