@@ -169,7 +169,7 @@ const messageSender = async (req) => {
 
     // Helper function to safely send message and swallow errors
 
-    const safeSendMessage = async (el) => {
+    const safeSendMessage = async (el, eventId) => {
       try {
         const phoneNumber = parsePhoneNumberFromString(el.phone);
 
@@ -183,7 +183,7 @@ const messageSender = async (req) => {
         }
 
         if (process.env.ENVIRONMENT === "PRODUCTION") {
-          return await sendMessageToPhone(el.phone, template, payload, el);
+          return await sendMessageToPhone(el.phone, template, payload, el, eventId);
         }
       } catch (err) {
         console.error(`Error sending message to ${el.phone}:`, err);
@@ -204,7 +204,7 @@ const messageSender = async (req) => {
         const stmt = db.prepare(query);
         const result = stmt.all([Number(eventId), template.language]);
 
-        await Promise.all(result.map(safeSendMessage));
+        await Promise.all(result.map((x)=> safeSendMessage(x, eventId)));
     }
 
     if (useContactBook) {
@@ -225,7 +225,7 @@ const messageSender = async (req) => {
         const batch = batches[i];
 
         console.log(`Sending batch ${i + 1} of ${batches.length}...`);
-        await Promise.all(batch.map(safeSendMessage));
+        await Promise.all(batch.map((x)=> safeSendMessage(x, eventId)));
         console.log(`Batch ${i + 1} sent.`);
 
         // Delay before sending next batch except after last batch
@@ -237,7 +237,7 @@ const messageSender = async (req) => {
         }
       }
     } else {
-      await Promise.all(phoneList.map(safeSendMessage));
+      await Promise.all(phoneList.map((x)=> safeSendMessage(x, eventId)));
     }
 
     return { status: true };
@@ -251,7 +251,8 @@ async function sendMessageToPhone(
   phone,
   template,
   payload,
-  contactPayload = null
+  contactPayload = null,
+  eventId
 ) {
   try {
     // Determine template type key (e.g., "twilio/text", "twilio/media", etc.)
@@ -342,6 +343,12 @@ async function sendMessageToPhone(
         break;
       default:
         throw new Error(`Unsupported template type: ${templateType}`);
+    }
+
+    if (eventId) {
+      const callbackUrl = new URL(process.env.TWILIO_STATUS_CALLBACK_URL);
+      callbackUrl.searchParams.set("eventId", eventId);
+      messageOptions.statusCallback = callbackUrl.toString();
     }
 
     const result = await twilioClient.messages.create(messageOptions);
@@ -564,9 +571,9 @@ async function fetchTwilioMessagesDetails(sentMessages) {
   return results;
 }
 
-async function handleAutoResponse(From, ButtonPayload, req) {
+async function handleAutoResponse(From, ButtonPayload, eventId) {
   try {
-    console.log(req);
+    console.log(eventId);
     const from = From.replace("whatsapp:", "");
 
     if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {

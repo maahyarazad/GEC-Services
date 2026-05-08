@@ -335,6 +335,7 @@ router.post(
   express.urlencoded({ extended: false }),
   async (req, res) => {
     try {
+      const eventId = req.query.eventId; 
       const response = new MessagingResponse();
       response.message("");
 
@@ -342,7 +343,7 @@ router.post(
       res.end(response.toString());
       const { From, Body, ButtonPayload, ButtonText } = req.body;
 
-      await handleAutoResponse(From, ButtonPayload, req);
+      await handleAutoResponse(From, ButtonPayload, eventId);
 
       // Fire and forget: save raw payload + log message to DB
       dbService.create("twilio_responses", {
