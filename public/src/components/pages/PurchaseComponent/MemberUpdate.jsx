@@ -634,6 +634,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                            {wizardState.otpState?.currentResponseStatus && (
                                                <>
                                                    <OtpInput
+                                                       useGECStyle={true}
                                                        ref={otpRef}
                                                        onComplete={(val) => handlePostOTP(val)}
                                                    />

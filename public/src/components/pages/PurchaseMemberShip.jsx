@@ -255,11 +255,13 @@ const PurchaseMemberShip = () => {
                                                             <MemberLogin
                                                                 wizardState={wizardState}
                                                                 setWizardState={setWizardState}
+                                                                setActiveStep={setActiveStep}
                                                             />
                                                         );
                                                     case 1:
                                                         return (
                                                             <MemberUpdate
+                                                                setActiveStep={setActiveStep}
                                                                 wizardState={wizardState}
                                                                 setWizardState={setWizardState}
                                                             />
