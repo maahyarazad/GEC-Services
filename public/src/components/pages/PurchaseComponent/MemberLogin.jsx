@@ -1,4 +1,4 @@
-import React, { useImperativeHandle, useRef, forwardRef, useState, useCallback, useEffect } from "react";
+import { useImperativeHandle, useRef, forwardRef, useState, useCallback, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 
@@ -14,13 +14,18 @@ import InputAdornment from "@mui/material/InputAdornment";
 import Divider from "@mui/material/Divider";
 import CircularProgress from "@mui/material/CircularProgress";
 
-import { IoIosSearch } from "react-icons/io";
 import { MdClear } from "react-icons/md";
 import { GrLogout } from "react-icons/gr";
 
 import OtpTimer from "../../utils/OtpTimer";
 import OtpInput from "../../utils/OtpInput";
-
+import {
+    GEC, 
+    FieldLabel,
+    fieldSx,
+    primaryBtnSx,
+    infoCardSx,
+    toastAlertSx} from "../../PartnerOnboarding/PartnerOnboardingStyles";
 import { useSnackbar } from "../../Providers/Snackbar";
 import { useAlertDialog } from '../../Providers/AlertProvider';
 import { parsePhoneNumberFromString } from "libphonenumber-js";
@@ -253,7 +258,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
             if (otp_response.status === 429) {
 
                 const response_data = await otp_response.json();
-                showSnackbar(response_data.error, "");
+                showSnackbar(response_data.error, "error");
                 return;
 
             }
@@ -329,7 +334,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
             } else {
                 statusRef.current.textContent = otp_response_data.message;
                 statusRef.current.classList.add("text-danger");
-
+                
             }
         } catch (err) {
 
@@ -439,7 +444,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                         {({ errors, touched, isSubmitting }) => (
                             <Form>
                                 {/* ── Email Field ──────────────────────────── */}
-                                <Box sx={{ mb: 2 }}>
+                                <Box sx={{ mb: 2, width: '100%' }}>
                                     <FieldLabel>Email Address</FieldLabel>
                                     <Field
                                         as={TextField}
@@ -735,6 +740,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                             {currentResponseStatus && (
                                                 <>
                                                     <OtpInput
+                                                        useGECStyle={true}
                                                         ref={otpRef}
                                                         onComplete={(val) => handlePostOTP(val)}
                                                     />

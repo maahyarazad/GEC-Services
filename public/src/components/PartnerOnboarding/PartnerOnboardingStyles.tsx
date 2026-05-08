@@ -104,7 +104,11 @@ export const pageWrapperSx = {
     alignItems: "center",
     justifyContent: "center",
     background: GEC.bg,
-    p: 2,
+    px: {
+        xs: 0, // mobile
+        sm: 2, // small screens and above
+    },
+py: 2,
     position: "relative",
     overflow: "hidden",
     "&::before": {
@@ -131,6 +135,13 @@ export const containerSx = {
 export const paperSx = {
     borderRadius: "20px",
     overflow: "hidden",
+    border: `1px solid ${GEC.goldBorder}`,
+    boxShadow: "0 8px 40px rgba(185,150,43,0.12), 0 2px 8px rgba(0,0,0,0.06)",
+};
+// ── Paper sx ──────────────────────────────────────────────────────────────
+export const memberpaperSx = {
+    borderRadius: "20px",
+    overflow: "scroll",
     border: `1px solid ${GEC.goldBorder}`,
     boxShadow: "0 8px 40px rgba(185,150,43,0.12), 0 2px 8px rgba(0,0,0,0.06)",
 };

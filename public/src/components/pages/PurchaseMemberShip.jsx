@@ -5,18 +5,35 @@ import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import Divider from '@mui/material/Divider';
+import Container from '@mui/material/Container';
+import Paper from '@mui/material/Paper';
 import Slide from '@mui/material/Slide';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material';
-import { useRef } from "react";
 import GECLogo from '../../assets/background.webp'
 const MemberLogin = React.lazy(() => import("./PurchaseComponent/MemberLogin"));
 const MemberUpdate = React.lazy(() => import("./PurchaseComponent/MemberUpdate"));
+import { GoldStepIcon, GoldConnector } from './PurchaseComponent/GoldStepIcon'
+import { SnackbarProvider } from "../../components/Providers/Snackbar";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import {
+    GEC,
+    pageWrapperSx,
+    containerSx,
+    memberpaperSx,
+    topAccentBarSx,
+    bottomAccentBarSx,
+    logoSx,
+    titleSx,
+    stepLabelSx,
+    dividerSx,
+    primaryBtnSx,
+    secondaryBtnSx,
+    footerLinkSx
+} from "../PartnerOnboarding/PartnerOnboardingStyles";
 
-
-import applePass from '../../../../file_storage/apple-wallet.png';
-import googlePass from '../../../../file_storage/enUS_add_to_google_wallet_add-wallet-badge.png';
 import AppStore from '../../assets/download-app-store.png';
 import PlayStore from '../../assets/download-play-store.png';
 
@@ -107,217 +124,337 @@ const PurchaseMemberShip = () => {
 
 
     return (
-        <div
-            className="d-flex justify-content-center align-items-start"
-            style={{
-                backgroundColor: ' var(--light)',
-                padding: isMobile ? '0rem' : '1rem',
-                height: '100vh',
-                width: '100vw',
-                boxSizing: 'border-box',
-            }}
-        >
-            <Box
+        <SnackbarProvider useGECStyle>
+        <Box sx={pageWrapperSx}>
+            <Container
+                maxWidth="md"
                 sx={{
-                    boxShadow: 10,
-                    backgroundColor: 'white',
-                    borderRadius: isMobile ? 0 : 5,
-                    padding: isMobile ? '1rem' : '2rem',
-                    width: '100vw',
-                    maxWidth: '1000px',
-                    height: isMobile ? '100dvh' : '97vh',
+
+                    ...containerSx,
+                    // slightly wider than partner onboarding to fit the stepper
+                    "@media (min-width: 900px)": { maxWidth: "860px" },
                 }}
             >
-                <img src={GECLogo} height={55} />
-                {/* Stepper Header */}
-                <Stepper
-                    activeStep={activeStep}
-                    orientation={isMobile ? 'vertical' : 'horizontal'}
-                    sx={{
-                        '& .MuiStepLabel-label': {
-                            fontSize: isMobile ? '0.85rem' : '1rem',
-                        },
-                        mb: 3,
-                    }}
-                >
-                    {steps.map((label, index) => {
-                        const stepProps = {};
-                        const labelProps = {};
-                        if (isStepOptional(index)) {
-                            labelProps.optional = (
-                                <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
-                                    Optional
-                                </Typography>
-                            );
-                        }
-                        if (isStepSkipped(index)) stepProps.completed = false;
+                <Paper elevation={0} sx={memberpaperSx}>
+                    {/* ── Top accent bar ──────────────────────────────── */}
+                    <Box sx={topAccentBarSx} />
 
-                        return (
-                            <Step key={label} {...stepProps}>
-                                <StepLabel {...labelProps}>{label}</StepLabel>
-                            </Step>
-                        );
-                    })}
-                </Stepper>
+                    <Box sx={{ px: { xs: 3, sm: 5 }, pt: 4, pb: 5 }}>
 
-                <Divider sx={{ borderBottomWidth: 1, borderColor: '#000', my: 2 }} />
+                        {/* ── Logo ────────────────────────────────────── */}
+                        <Box
+                            component="img"
+                            src={GECLogo}
+                            alt="GEC Logo"
+                            sx={{ ...logoSx, height: 100 }}
+                        />
+
+                        {/* ── Title ───────────────────────────────────── */}
+                        <Typography variant="h5" sx={{ ...titleSx, mb: 0.5 }}>
+                            Membership{" "}
+                            <Box component="span" sx={{ color: GEC.goldDark }}>
+                                Pass Verification
+                            </Box>
+                        </Typography>
+                        <Typography
+                            variant="body2"
+                            sx={{ color: GEC.textSecondary, mb: 4, lineHeight: 1.7 }}
+                        >
+                            Complete the steps below to verify your account and receive your
+                            Membership Pass.
+                        </Typography>
+
+                        {/* ── Stepper ─────────────────────────────────── */}
+<Stepper
+    activeStep={activeStep}
+    alternativeLabel
+    connector={<GoldConnector />}  
+    sx={{ mb: 4 }}
+>
+                            {steps.map((label, index) => {
+                                const stepProps = {};
+                                const labelProps = {};
+                                if (isStepOptional(index)) {
+                                    labelProps.optional = (
+                                        <Typography
+                                            variant="caption"
+                                            sx={{ color: GEC.textSecondary, fontSize: "0.7rem" }}
+                                        >
+                                            Optional
+                                        </Typography>
+                                    );
+                                }
+                                if (isStepSkipped(index)) stepProps.completed = false;
+
+                                return (
+                                    <Step key={label} {...stepProps}>
+                                        <StepLabel
+                                            StepIconComponent={GoldStepIcon}
+                                            sx={stepLabelSx}
+                                            {...labelProps}
+                                        >
+                                            {label}
+                                        </StepLabel>
+                                    </Step>
+                                );
+                            })}
+                        </Stepper>
+
+                        {/* ── Divider ─────────────────────────────────── */}
+                        <Box sx={dividerSx} />
 
 
-                {/* Step Content with Slide Animation */}
-                <Box
-                    sx={{
-                        position: 'relative',
-                        overflow: 'scroll',
-                        //    display:'inline-block',
-
-                        // height: '65vh',
-                        minHeight: isMobile ? '50vh' : '60vh',
-                    }}
-                >
-                    <Slide
-                        key={activeStep}
-                        direction={slideDirection}
-                        in
-                        mountOnEnter
-                        unmountOnExit
-                        timeout={400}
-                    >
+                        {/* ── Step content ────────────────────────────────────────────── */}
                         <Box
                             sx={{
-                                display: 'flex',
-                                justifyContent: 'center', // horizontal centering
-                                alignItems: 'center',     // vertical centering
-                                position: 'absolute',
-                                width: '100%',
-                                minHeight: isMobile ? '50vh' : '65vh',
-                                padding: isMobile ? '0.5rem' : '1rem',
-                                left: 0,
-                                overflow: 'scroll',
-                                textAlign: isMobile ? 'center' : 'left',
+                                overflowY: "auto",
+                                maxHeight: isMobile ? "55vh" : "62vh",
+                                // smooth scrollbar styling
+                                "&::-webkit-scrollbar": { width: 4 },
+                                "&::-webkit-scrollbar-track": { background: "transparent" },
+                                "&::-webkit-scrollbar-thumb": {
+                                    background: GEC.goldBorder,
+                                    borderRadius: 2,
+                                },
+                                "&::-webkit-scrollbar-thumb:hover": { background: GEC.gold },
                             }}
                         >
-                            {activeStep === steps.length ? (
-                                <>
-                                    <Typography sx={{ mb: 2 }}>
-                                        All steps completed — you're finished!
-                                    </Typography>
-                                    <Button onClick={handleReset} variant="outlined">
-                                        Reset
-                                    </Button>
-                                </>
-                            ) : (
+                            <Slide
+                                key={activeStep}
+                                direction={slideDirection}
+                                in
+                                mountOnEnter
+                                unmountOnExit
+                                timeout={400}
+                            >
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        justifyContent: "center",
+                                        alignItems: "flex-start",
+                                        width: "100%",
+                                        px: isMobile ? 0.5 : 1,
+                                        py: 2,
+                                    }}
+                                >
+                                    {activeStep === steps.length ? (
+                                        <Box sx={{ textAlign: "center" }}>
+                                            <Typography sx={{ mb: 2, color: GEC.textSecondary }}>
+                                                All steps completed — you're finished!
+                                            </Typography>
+                                            <Button onClick={handleReset} sx={secondaryBtnSx} variant="outlined">
+                                                Reset
+                                            </Button>
+                                        </Box>
+                                    ) : (
+                                        <>
+                                            {(() => {
+                                                switch (activeStep) {
+                                                    case 0:
+                                                        return (
+                                                            <MemberLogin
+                                                                wizardState={wizardState}
+                                                                setWizardState={setWizardState}
+                                                            />
+                                                        );
+                                                    case 1:
+                                                        return (
+                                                            <MemberUpdate
+                                                                wizardState={wizardState}
+                                                                setWizardState={setWizardState}
+                                                            />
+                                                        );
+                                                    case 2:
+                                                        return (
+                                                            <Box
+                                                                sx={{
+                                                                    width: "100%",
+                                                                    display: "flex",
+                                                                    flexDirection: "column",
+                                                                    alignItems: "center",
+                                                                    gap: 2,
+                                                                    py: 2,
+                                                                }}
+                                                            >
+                                                                <Box
+                                                                    sx={{
+                                                                        width: 72,
+                                                                        height: 72,
+                                                                        borderRadius: "50%",
+                                                                        background: GEC.goldMuted,
+                                                                        border: `2px solid ${GEC.gold}`,
+                                                                        display: "flex",
+                                                                        alignItems: "center",
+                                                                        justifyContent: "center",
+                                                                        mb: 1,
+                                                                    }}
+                                                                >
+                                                                    <CheckCircleOutlineIcon
+                                                                        sx={{ fontSize: 38, color: GEC.goldDark }}
+                                                                    />
+                                                                </Box>
 
-                                <>
+                                                                <Typography
+                                                                    sx={{
+                                                                        fontFamily: "'Georgia', serif",
+                                                                        fontWeight: 700,
+                                                                        fontSize: isMobile ? 18 : 22,
+                                                                        color: GEC.textPrimary,
+                                                                        textAlign: "center",
+                                                                        lineHeight: 1.4,
+                                                                    }}
+                                                                >
+                                                                    Your account has been verified!
+                                                                </Typography>
 
+                                                                <Typography
+                                                                    sx={{
+                                                                        fontSize: isMobile ? 14 : 16,
+                                                                        color: GEC.textSecondary,
+                                                                        textAlign: "center",
+                                                                        lineHeight: 1.7,
+                                                                        maxWidth: 480,
+                                                                    }}
+                                                                >
+                                                                    Please check your email for a personalised Membership
+                                                                    Pass.{" "}
+                                                                    <Box
+                                                                        component="span"
+                                                                        sx={{ color: GEC.textPrimary, fontWeight: 700 }}
+                                                                    >
+                                                                        Don't forget to download the GEC Mobile App
+                                                                    </Box>{" "}
+                                                                    to avail your benefits.
+                                                                </Typography>
 
-
-                                    {/* Put JS logic outside JSX */}
-                                    {(() => {
-                                        switch (activeStep) {
-                                            case 0:
-                                                return <MemberLogin wizardState={wizardState} setWizardState={setWizardState} setActiveStep={setActiveStep} />
-
-                                            case 1:
-                                                return <MemberUpdate wizardState={wizardState} setWizardState={setWizardState} setActiveStep={setActiveStep} />
-
-
-                                            case 2:
-                                                const passStyle = { border: 0, borderRadius: 12, display: "block" };
-                                                return (
-                                                    <div className="w-100 d-flex justify-content-center align-items-center flex-column" style={{ width: "100%" }}>
-                                                        <Typography className='py-1 pb-5 text-center' style={{ fontSize: isMobile ? 15 : 20, lineHeight: 1.7, maxWidth: 600 }}>
-                                                            Your account has been verified!
-                                                            <br></br>
-                                                            Please check your email for a personalised Membership Pass.<br></br>
-
-                                                            <strong style={{}}>Don't forget to download the GEC Mobile App </strong>
-                                                            to avail your benefits.
-                                                        </Typography>
-                                                        <div className='py-2'>
-                                                            <a href="https://play.google.com/store/apps/details?id=com.buenapublica.GECRewards" target="_blank" rel="noopener noreferrer" style={{ minHeight: '70px', display: 'block' }}>
-                                                                <img src={PlayStore} alt="Get it on Google Play" class="download-img" width="300" />
-                                                            </a>
-                                                        </div>
-                                                        <div className='py-2'>
-
-                                                            <a href="https://apps.apple.com/ae/app/gec-rewards/id6444924851" target="_blank" rel="noopener noreferrer" style={{ minHeight: '70px', display: 'block' }}>
-                                                                <img src={AppStore} alt="Download on the App Store" class="download-img" width="300" />
-                                                            </a>
-
-                                                        </div>
-
-                                                    </div>
-                                                );
-
-                                                break;
-
-                                            default:
-                                                break;
-                                        }
-                                        return null;
-                                    })()}
-
-
-
-
-
-                                </>
-                            )}
+                                                                <Box
+                                                                    sx={{
+                                                                        display: "flex",
+                                                                        flexDirection: "column",
+                                                                        alignItems: "center",
+                                                                        gap: 1.5,
+                                                                        mt: 1,
+                                                                    }}
+                                                                >
+                                                                    <Box
+                                                                        component="a"
+                                                                        href="https://play.google.com/store/apps/details?id=com.buenapublica.GECRewards"
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        sx={{
+                                                                            display: "block",
+                                                                            transition: "opacity 0.2s ease, transform 0.2s ease",
+                                                                            "&:hover": { opacity: 0.85, transform: "translateY(-2px)" },
+                                                                        }}
+                                                                    >
+                                                                        <img src={PlayStore} alt="Get it on Google Play" width="220" />
+                                                                    </Box>
+                                                                    <Box
+                                                                        component="a"
+                                                                        href="https://apps.apple.com/ae/app/gec-rewards/id6444924851"
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        sx={{
+                                                                            display: "block",
+                                                                            transition: "opacity 0.2s ease, transform 0.2s ease",
+                                                                            "&:hover": { opacity: 0.85, transform: "translateY(-2px)" },
+                                                                        }}
+                                                                    >
+                                                                        <img src={AppStore} alt="Download on the App Store" width="220" />
+                                                                    </Box>
+                                                                </Box>
+                                                            </Box>
+                                                        );
+                                                    default:
+                                                        return null;
+                                                }
+                                            })()}
+                                        </>
+                                    )}
+                                </Box>
+                            </Slide>
                         </Box>
-                    </Slide>
-                </Box>
 
-                {/* ✅ Static Navigation Buttons (outside the Slide) */}
-                <Divider sx={{ borderBottomWidth: 1, borderColor: '#000', my: 2 }} />
-                {activeStep < steps.length && (
-                    <Box sx={boxStyle}>
-                        <Button
-                            color="inherit"
-                            disabled={activeStep === 0}
-                            onClick={handleBack}
-                            fullWidth={isMobile}
-                            sx={{ textTransform: 'none' }}
+                        {/* ── Divider ─────────────────────────────────── */}
+                        <Box sx={dividerSx} />
+
+                        {/* ── Navigation buttons ──────────────────────── */}
+                        {activeStep < steps.length && (
+                            <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
+                                {activeStep > 0 && (
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<ArrowBackIcon />}
+                                        onClick={handleBack}
+                                        sx={secondaryBtnSx}
+                                    >
+                                        Back
+                                    </Button>
+                                )}
+
+                                {(() => {
+                                    switch (activeStep) {
+                                        case 0:
+                                            return (
+                                                <Button
+                                                    variant="contained"
+                                                    endIcon={<ArrowForwardIcon />}
+                                                    onClick={handleNext}
+                                                    disabled={!wizardState.authenticate}
+                                                    sx={{ flex: 1, ...primaryBtnSx }}
+                                                >
+                                                    Next
+                                                </Button>
+                                            );
+                                        case 1:
+                                            return (
+                                                <Button
+                                                    variant="contained"
+                                                    endIcon={<CheckCircleOutlineIcon />}
+                                                    onClick={handleNext}
+                                                    disabled={!wizardState?.otpState?.getMemberPass}
+                                                    sx={{ flex: 1, ...primaryBtnSx }}
+                                                >
+                                                    Get Your Pass
+                                                </Button>
+                                            );
+                                        default:
+                                            return null;
+                                    }
+                                })()}
+                            </Box>
+                        )}
+
+                        {/* ── Footer ──────────────────────────────────── */}
+                        <Typography
+                            variant="caption"
+                            sx={{
+                                display: "block",
+                                textAlign: "center",
+                                mt: 3,
+                                color: "#a89b7a",
+                            }}
                         >
-                            Back
-                        </Button>
-
-                        {(() => {
-                            switch (activeStep) {
-                                case 0:
-                                    return (
-                                        <Button
-                                            onClick={handleNext}
-                                            variant="contained"
-                                            fullWidth={isMobile}
-                                            disabled={!wizardState.authenticate}
-                                            sx={{ textTransform: 'none' }}
-                                        >
-                                            Next
-                                        </Button>
-                                    );
-
-                                case 1:
-                                    return (
-                                        <Button
-                                            onClick={handleNext}
-                                            variant="contained"
-                                            fullWidth={isMobile}
-                                            disabled={!wizardState?.otpState?.getMemberPass}
-                                            sx={{ textTransform: 'none' }}
-                                        >
-                                            Get Your Pass
-                                        </Button>
-                                    );
-
-                                default:
-                                    return null;
-                            }
-                        })()}
+                            Need help?{" "}
+                            <Box
+                                component="span"
+                                sx={footerLinkSx}
+                                onClick={() => {
+                                    window.location.href =
+                                        "mailto:development3@german-emirates-club.com";
+                                }}
+                            >
+                                Contact support
+                            </Box>
+                        </Typography>
                     </Box>
-                )}
 
-            </Box>
-        </div>
+                    {/* ── Bottom accent bar ───────────────────────────── */}
+                    <Box sx={bottomAccentBarSx} />
+                </Paper>
+            </Container>
+        </Box>
+        </SnackbarProvider>
     );
 
 

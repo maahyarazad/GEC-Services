@@ -418,7 +418,7 @@ export default function PartnerOnboarding() {
                     <div ref={statusRef} />
                     {wizardState.otpResponseStatus && (
                         <>
-                            <OtpInput ref={otpRef} onComplete={(val) => handlePostOTP(val)} />
+                            <OtpInput useGECStyle={true} ref={otpRef} onComplete={(val) => handlePostOTP(val)} />
                             {wizardState.otpValid && (
                                 <OtpTimer
                                     initialSeconds={300}

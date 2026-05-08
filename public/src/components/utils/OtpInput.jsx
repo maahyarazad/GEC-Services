@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Box, TextField } from "@mui/material";
+import { GEC } from "../PartnerOnboarding/PartnerOnboardingStyles";
 
-const OtpInput = forwardRef(({ length = 5, onChange, onComplete }, ref) => {
+const OtpInput = forwardRef(({ length = 5, onChange, onComplete, useGECStyle = false }, ref) => {
     const [otp, setOtp] = useState(new Array(length).fill(""));
     const inputsRef = useRef([]);
     const completedRef = useRef(false);
@@ -54,8 +55,71 @@ const OtpInput = forwardRef(({ length = 5, onChange, onComplete }, ref) => {
         },
     }));
 
+    const defaultSx = {
+        width: 48,
+        "& .MuiOutlinedInput-notchedOutline": {
+            bottom: 2,
+            top: -14,
+        },
+        "& .MuiOutlinedInput-root": {
+            height: 48,
+            fontSize: "1.3rem",
+            fontWeight: 600,
+            borderRadius: 1.5,
+            "& input": {
+                height: "100%",
+                boxSizing: "border-box",
+                p: 0,
+                textAlign: "center",
+            },
+        },
+    };
+
+    const gecSx = {
+        width: 48,
+
+        "& .MuiOutlinedInput-notchedOutline": {
+            bottom: 2,
+            top: -14,
+            borderColor: GEC.goldBorder,
+        },
+
+        "& .MuiOutlinedInput-root": {
+            height: 48,
+            fontSize: "1.3rem",
+            fontWeight: 700,
+            borderRadius: 1.5,
+            background: "#faf8f3",
+            color: GEC.textPrimary,
+            transition: "box-shadow 0.2s ease",
+
+            "& input": {
+                height: "100%",
+                boxSizing: "border-box",
+                p: 0,
+                textAlign: "center",
+                caretColor: GEC.gold,
+            },
+
+            // ── Hover ──────────────────────────────────────────────────
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+                borderColor: GEC.gold,
+            },
+
+            // ── Focused — kill blue, apply gold ───────────────────────
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: `${GEC.gold} !important`,
+                borderWidth: "1px !important",
+            },
+            "&.Mui-focused": {
+                boxShadow: `0 0 0 3px ${GEC.goldMuted}`,
+                borderRadius: 1.5,
+            },
+        },
+    };
+
     return (
-        <Box sx={{ display: "flex", gap: 1, }}>
+        <Box sx={{ display: "flex", gap: 1 }}>
             {otp.map((digit, idx) => (
                 <TextField
                     key={idx}
@@ -68,30 +132,7 @@ const OtpInput = forwardRef(({ length = 5, onChange, onComplete }, ref) => {
                         inputMode: "numeric",
                         pattern: "[0-9]*",
                     }}
-                    sx={{
-
-                        width: 48,
-                        "& .MuiOutlinedInput-notchedOutline": {
-                            bottom: 2,
-                            top: -14
-                        },
-                        // Height lives on the root, not the wrapper
-                        "& .MuiOutlinedInput-root": {
-                            height: 48,
-                            fontSize: "1.3rem",
-                            fontWeight: 600,
-                            borderRadius: 1.5,
-                            // Make the inner <input> fill the root completely
-                            "& input": {
-                                height: "100%",
-                                boxSizing: "border-box",
-                                p: 0,
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                textAlign: 'center',
-                            },
-                        },
-                    }}
+                    sx={useGECStyle ? gecSx : defaultSx}
                 />
             ))}
         </Box>
