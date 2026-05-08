@@ -335,13 +335,13 @@ router.post(
   express.urlencoded({ extended: false }),
   async (req, res) => {
     try {
-      const eventId = req.query.eventId; 
+      const eventId = req.query.eventId ?? undefined;
+      const { From, Body, ButtonPayload, ButtonText } = req.body;
       const response = new MessagingResponse();
       response.message("");
 
       res.writeHead(200, { "Content-Type": "text/xml" });
       res.end(response.toString());
-      const { From, Body, ButtonPayload, ButtonText } = req.body;
 
       await handleAutoResponse(From, ButtonPayload, eventId);
 
