@@ -8,22 +8,21 @@ const dbService = require("../services/dbService");
 const db = dbService.getDB();
 const fs = require("fs");
 const path = require("path");
-const dayjs = require('dayjs');
-const utc = require('dayjs/plugin/utc');
-const timezone = require('dayjs/plugin/timezone');
+const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc");
+const timezone = require("dayjs/plugin/timezone");
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const UAE_TZ = 'Asia/Dubai';
+const UAE_TZ = "Asia/Dubai";
 
 // Helper: parse any date string → UAE dayjs object
 const toUAE = (dateStr) => {
   if (!dateStr) return null;
-  
+
   return dayjs.utc(dateStr).tz(UAE_TZ);
 };
-
 
 const otpSender = async (req) => {
   let { mobile_number, otp } = req.body;
@@ -199,7 +198,13 @@ const messageSender = async (req) => {
         }
 
         if (process.env.ENVIRONMENT === "PRODUCTION") {
-            return await sendMessageToPhone(el.phone, template, payload, el, eventId);
+          return await sendMessageToPhone(
+            el.phone,
+            template,
+            payload,
+            el,
+            eventId
+          );
         }
       } catch (err) {
         console.error(`Error sending message to ${el.phone}:`, err);
@@ -212,15 +217,13 @@ const messageSender = async (req) => {
       }
     };
 
-
     if (useGuestList) {
-      
-        const query = `SELECT * FROM contact_book WHERE id IN(
+      const query = `SELECT * FROM contact_book WHERE id IN(
              SELECT contact_book_id FROM event_guest_list WHERE event_id = ? and language = ? )`;
-        const stmt = db.prepare(query);
-        const result = stmt.all([Number(eventId), template.language]);
+      const stmt = db.prepare(query);
+      const result = stmt.all([Number(eventId), template.language]);
 
-        await Promise.all(result.map((x)=> safeSendMessage(x, eventId)));
+      await Promise.all(result.map((x) => safeSendMessage(x, eventId)));
     }
 
     if (useContactBook) {
@@ -241,7 +244,7 @@ const messageSender = async (req) => {
         const batch = batches[i];
 
         console.log(`Sending batch ${i + 1} of ${batches.length}...`);
-        await Promise.all(batch.map((x)=> safeSendMessage(x, eventId)));
+        await Promise.all(batch.map((x) => safeSendMessage(x, eventId)));
         console.log(`Batch ${i + 1} sent.`);
 
         // Delay before sending next batch except after last batch
@@ -253,7 +256,7 @@ const messageSender = async (req) => {
         }
       }
     } else {
-      await Promise.all(phoneList.map((x)=> safeSendMessage(x, eventId)));
+      await Promise.all(phoneList.map((x) => safeSendMessage(x, eventId)));
     }
 
     return { status: true };
@@ -359,7 +362,7 @@ async function sendMessageToPhone(
         break;
       default:
         throw new Error(`Unsupported template type: ${templateType}`);
-    }   
+    }
 
     if (eventId) {
       const callbackUrl = new URL(process.env.TWILIO_STATUS_CALLBACK_URL);
@@ -369,10 +372,12 @@ async function sendMessageToPhone(
 
     const result = await twilioClient.messages.create(messageOptions);
 
-    await db.run(
-    `INSERT INTO twilio_template_message (messageSid, contentSid)
+    await Promise.resolve(
+      db.run(
+        `INSERT INTO twilio_template_message (messageSid, contentSid)
     VALUES (?, ?)`,
-    [result.sid, messageOptions.contentSid]
+        [result.sid, messageOptions.contentSid]
+      )
     );
 
     return result;
@@ -533,34 +538,35 @@ async function fetchHistory(phone) {
     let detailedBodies = [];
 
     if (allSentMessages.length > 0) {
-      const detailedMessages = await fetchTwilioMessagesDetails(allSentMessages);
+      const detailedMessages = await fetchTwilioMessagesDetails(
+        allSentMessages
+      );
 
       detailedBodies = detailedMessages
         .filter((item) => item.twilioMessage)
         .map((item) => ({
           body: item.twilioMessage.body,
-          received_at: toUAE(item.twilioMessage.dateSent),  // Twilio ISO → UAE
-          type: 's',
+          received_at: toUAE(item.twilioMessage.dateSent), // Twilio ISO → UAE
+          type: "s",
         }));
     }
 
     const normalizedReceived = receivedMessages.map((msg) => ({
       ...msg,
-      received_at: toUAE(msg.received_at),  // SQLite UTC bare string → UAE
+      received_at: toUAE(msg.received_at), // SQLite UTC bare string → UAE
     }));
 
     const combined = [...normalizedReceived, ...detailedBodies].sort(
-      (a, b) => a.received_at.valueOf() - b.received_at.valueOf()  // dayjs .valueOf() for ms comparison
+      (a, b) => a.received_at.valueOf() - b.received_at.valueOf() // dayjs .valueOf() for ms comparison
     );
 
     // Optional: format for display
     return combined.map((msg) => ({
       ...msg,
-      received_at: msg.received_at.format('YYYY-MM-DD HH:mm:ss'),
+      received_at: msg.received_at.format("YYYY-MM-DD HH:mm:ss"),
     }));
-
   } catch (error) {
-    console.error('Failed to fetch message:', error);
+    console.error("Failed to fetch message:", error);
     throw error;
   }
 }
@@ -596,7 +602,6 @@ async function fetchTwilioMessagesDetails(sentMessages) {
 
 async function handleAutoResponse(From, ButtonPayload) {
   try {
-    
     const from = From.replace("whatsapp:", "");
 
     if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
@@ -644,15 +649,15 @@ async function handleAutoResponse(From, ButtonPayload) {
         //   payload[1] = message;
         // }
       } else {
-        }
+      }
 
-        if (contact.language === "de") {
+      if (contact.language === "de") {
         const message = `Super, du stehst auf der Gästeliste! Wir freuen uns sehr, dich beim BusinessBreakfast HR-Forum zu sehen.\nKommst du alleine oder in Begleitung?\nSchick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\n\nHier der Location-Link zum Marriott Resort Palm Jumeirah:\n${google_map_link}\nHerzliche Grüße, Sylvia und das Team vom German Emirates Club`;
         payload[1] = message;
-        } else {
+      } else {
         const message = `Great, you're on the guest list! We're looking forward to seeing you at the BusinessBreakfast HR Forum.\n\nWill you be coming alone or with a guest?\nPlease send me the full name of your guest for the guest list.\n\nHere’s the location link to the Marriott Resort Palm Jumeirah:\n${google_map_link}\n\nBest regards,\nSylvia`;
         payload[1] = message;
-        }
+      }
 
       const result = await messageSender({
         body: { template, phoneList, payload },

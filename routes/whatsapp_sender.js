@@ -19,6 +19,7 @@ const fetch = require("node-fetch");
 const { getCountCacheKey, countCache } = require("../services/cacheService");
 const MessagingResponse = require("twilio").twiml.MessagingResponse;
 
+
 router.post("/api/whatsapp/send", (req, res) => {
   // Fire and forget: run messageSender but don't await
   messageSender(req).catch((error) => {
@@ -115,65 +116,60 @@ router.get("/api/whatsapp/history/:phone", async (req, res) => {
   }
 });
 
-router.post("/whatsapp/twilio-callback", (req, res) => {
+
+
+router.post("/whatsapp/twilio-callback", async (req, res) => {
   try {
     res.sendStatus(202);
-    dbService.create("twilio_delivery", {
-      response: JSON.stringify(req.body),
-    });
+
+    await Promise.resolve(
+      db.prepare(`INSERT INTO twilio_delivery (response) VALUES (?)`).run(JSON.stringify(req.body))
+    );
 
     const messageStatus = req.body?.MessageStatus;
     const messageSid = req.body?.MessageSid;
     const { eventId } = req.query;
 
     if (!eventId) {
-      dbService.create("error_log", {
-        error: "CRITICAL ERROR - event Id is null",
-        origin_function: "sendMessageToPhone",
-      });
-
+await Promise.resolve(
+        db.prepare(`INSERT INTO error_log (error, origin_function) VALUES (?, ?)`
+        ).run("CRITICAL ERROR - event Id is null", "sendMessageToPhone")
+      );
       return;
     }
 
-    if (messageStatus && messageStatus === "delivered") {
-      const row = db
-        .prepare(
-          `
-                        SELECT contentSid
-                        FROM twilio_template_message
-                        WHERE messageSid = ?
-                    `
-        )
-        .get(messageSid);
+    if (messageStatus === "delivered") {
+      const row = await Promise.resolve(
+        db.prepare(
+          `SELECT contentSid FROM twilio_template_message WHERE messageSid = ?`
+        ).get(messageSid)
+      );
 
-      db.prepare(
-        `
-      UPDATE twilio_template_message
-      SET event_id = ?
-      WHERE messageSid = ?
-    `
-      ).run(eventId, messageSid);
+      await Promise.resolve(
+        db.prepare(
+          `UPDATE twilio_template_message SET event_id = ? WHERE messageSid = ?`
+        ).run(eventId, messageSid)
+      );
 
       if (!row?.contentSid) {
-        dbService.create("error_log", {
-          error: "CRITICAL ERROR - Cannot fetch the contentSid for auto check",
-          origin_function: "sendMessageToPhone",
-        });
-
+        await Promise.resolve(
+          db.prepare(
+            `INSERT INTO error_log (error, origin_function) VALUES (?, ?)`
+          ).run("CRITICAL ERROR - Cannot fetch the contentSid for auto check", "sendMessageToPhone")
+        );
         return;
       }
 
       const phone = req.body?.To.replace(/^whatsapp:/, "");
 
-      dbService.updateWhere(
-        "contact_book",
-        { contentSid: row.contentSid },
-        { phone: phone }
+     await Promise.resolve(
+        db.prepare(
+          `UPDATE contact_book SET phone = ? WHERE contentSid = ?`
+        ).run(phone, row.contentSid)
       );
     }
   } catch (error) {
     console.error("Twilio callback error:", error);
-    res.sendStatus(200); // still 2xx
   }
 });
 
