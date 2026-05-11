@@ -82,12 +82,12 @@ router.post("/api/whatsapp/quick-reply", async (req, res) => {
 
 router.get("/api/whatsapp/list", async (req, res) => {
   try {
-
     const result = await fetchContentTemplates(req, res);
     if (result.status) {
       res.status(200).json({ status: true, templates: result.result });
     } else {
-        if(result.result.status === 401) res.status(401).json({ status: false, ...result.result });
+      if (result.result.status === 401)
+        res.status(401).json({ status: false, ...result.result });
     }
   } catch (error) {
     console.error("Failed to send message", error);
@@ -124,6 +124,16 @@ router.post("/whatsapp/twilio-callback", (req, res) => {
 
     const messageStatus = req.body?.MessageStatus;
     const messageSid = req.body?.MessageSid;
+    const { eventId } = req.query;
+
+    if (!eventId) {
+      dbService.create("error_log", {
+        error: "CRITICAL ERROR - event Id is null",
+        origin_function: "sendMessageToPhone",
+      });
+
+      return;
+    }
 
     if (messageStatus && messageStatus === "delivered") {
       const row = db
@@ -136,11 +146,20 @@ router.post("/whatsapp/twilio-callback", (req, res) => {
         )
         .get(messageSid);
 
+      db.prepare(
+        `
+      UPDATE twilio_template_message
+      SET event_id = ?
+      WHERE messageSid = ?
+    `
+      ).run(eventId, messageSid);
+
       if (!row?.contentSid) {
         dbService.create("error_log", {
           error: "CRITICAL ERROR - Cannot fetch the contentSid for auto check",
           origin_function: "sendMessageToPhone",
         });
+
         return;
       }
 
@@ -610,7 +629,7 @@ router.patch("/api/whatsapp/update-map-url", async (req, res) => {
       });
     }
 
-    const filePath = path.resolve(__dirname, "..","data", "google_data.json");
+    const filePath = path.resolve(__dirname, "..", "data", "google_data.json");
 
     // Read existing file
     const fileContent = fs.readFileSync(filePath, "utf-8");
@@ -627,7 +646,6 @@ router.patch("/api/whatsapp/update-map-url", async (req, res) => {
       message: "Map URL updated successfully",
       data: jsonData,
     });
-
   } catch (error) {
     console.error("Update map URL error:", error);
     return res.status(500).json({
@@ -636,7 +654,6 @@ router.patch("/api/whatsapp/update-map-url", async (req, res) => {
     });
   }
 });
-
 
 router.get("/api/whatsapp/get-map-url", async (req, res) => {
   try {
@@ -649,7 +666,6 @@ router.get("/api/whatsapp/get-map-url", async (req, res) => {
       status: true,
       data: jsonData,
     });
-
   } catch (error) {
     console.error("Get map URL error:", error);
     return res.status(500).json({
