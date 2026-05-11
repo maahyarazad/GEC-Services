@@ -153,11 +153,24 @@ router.post("/whatsapp/twilio-callback", async (req, res) => {
 
       const phone = req.body?.To.replace(/^whatsapp:/, "");
 
-      await Promise.resolve(
-        db
-          .prepare(`UPDATE contact_book SET phone = ? WHERE contentSid = ?`)
-          .run(phone, row.contentSid)
-      );
+    //   await Promise.resolve(
+
+    //      const contact_book_id = await Promise.resolve(
+    //     db
+    //       .prepare(
+    //         `SELECT id FROM contact_book SET phone = ? WHERE contentSid = ?`
+    //       )
+    //       .get(messageSid)
+    //   );
+
+    //     const contact_book_id = db
+    //       .prepare(`INSERT INTO contact_book_events (contact_book_id, event_id, contentSid) VALUES (?,?,?)`)
+    //       .run(phone, `${row.contentSid}${row}`)
+
+    //     db
+    //       .prepare(`INSERT INTO contact_book_events (contact_book_id, event_id, contentSid) VALUES (?,?,?)`)
+    //       .run(phone, `${row.contentSid}${row}`)
+    //   );
     }
   } catch (error) {
     console.error("Twilio callback error:", error);

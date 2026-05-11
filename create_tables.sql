@@ -62,13 +62,24 @@ CREATE TABLE IF NOT EXISTS contact_book (
   contentSid VARCHAR(255)
 );
 
-
-CREATE TABLE  IF NOT EXISTS twilio_template_message (
+CREATE TABLE contact_book_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  messageSid VARCHAR(100) NOT NULL,
-  contentSid VARCHAR(100) NOT NULL
+  contact_book_id INTEGER NOT NULL,
+  event_id INTEGER NOT NULL,
+  contentSid VARCHAR(100) NOT NULL,
+  FOREIGN KEY (contact_book_id) REFERENCES contact_book(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+
+
+
+CREATE TABLE IF NOT EXISTS twilio_template_message_new (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  messageSid VARCHAR(100) NOT NULL,
+  contentSid VARCHAR(100) NOT NULL,
+  event_id INTEGER
+);
 
 
 CREATE TABLE IF NOT EXISTS registration_config (
