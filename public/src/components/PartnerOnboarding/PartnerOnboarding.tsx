@@ -265,7 +265,7 @@ export default function PartnerOnboarding() {
             }
 
             if (dropped) setWiz({ uploadedFile: dropped, uploadComplete: true });
-            debugger;
+            
             const result = await validateAndConvertXlsx(dropped);
 
             if (!result.valid) {
@@ -288,7 +288,7 @@ export default function PartnerOnboarding() {
                 faultyRecords: result.faultyRecords,
                 startProcessingXLSX: false
             });
-            debugger;
+            
         } catch (e) {
 
         } finally {
