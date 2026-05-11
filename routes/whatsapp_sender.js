@@ -128,27 +128,13 @@ router.post("/whatsapp/twilio-callback", async (req, res) => {
 
     const messageStatus = req.body?.MessageStatus;
     const messageSid = req.body?.MessageSid;
-    const { eventId } = req.query;
 
-    if (!eventId) {
-await Promise.resolve(
-        db.prepare(`INSERT INTO error_log (error, origin_function) VALUES (?, ?)`
-        ).run("CRITICAL ERROR - event Id is null", "sendMessageToPhone")
-      );
-      return;
-    }
 
     if (messageStatus === "delivered") {
       const row = await Promise.resolve(
         db.prepare(
           `SELECT contentSid FROM twilio_template_message WHERE messageSid = ?`
         ).get(messageSid)
-      );
-
-      await Promise.resolve(
-        db.prepare(
-          `UPDATE twilio_template_message SET event_id = ? WHERE messageSid = ?`
-        ).run(eventId, messageSid)
       );
 
       if (!row?.contentSid) {
