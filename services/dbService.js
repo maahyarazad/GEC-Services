@@ -526,6 +526,178 @@ const dbService = {
     const row = db.prepare(sql).get(...values);
     return row.count;
   },
+
+
+  _QuerySqlConverter: (query, table_name, leftJoin = {}, columns) => {
+  const {
+    page = "1",
+    pageSize = "10",
+    sortField,
+    sortOrder,
+    filterField,
+    filterOperator,
+    filterValue,
+    ...queryFilters
+  } = query;
+
+  const pageNumber = Math.max(0, parseInt(page, 10) - 1);
+  const limit = parseInt(pageSize, 10);
+
+  const filters = {};
+  const jsonFilters = [];
+
+  // ── Operator → SQL mapping ────────────────────────────────────────────────
+  const operatorMap = {
+    contains:   (col, val) => ({ clause: `${col} LIKE ?`,  value: `%${val}%` }),
+    equals:     (col, val) => ({ clause: `${col} = ?`,     value: val }),
+    startsWith: (col, val) => ({ clause: `${col} LIKE ?`,  value: `${val}%` }),
+    endsWith:   (col, val) => ({ clause: `${col} LIKE ?`,  value: `%${val}` }),
+    eq:         (col, val) => ({ clause: `${col} = ?`,     value: Number(val) }),
+    neq:        (col, val) => ({ clause: `${col} != ?`,    value: Number(val) }),
+    gt:         (col, val) => ({ clause: `${col} > ?`,     value: Number(val) }),
+    gte:        (col, val) => ({ clause: `${col} >= ?`,    value: Number(val) }),
+    lt:         (col, val) => ({ clause: `${col} < ?`,     value: Number(val) }),
+    lte:        (col, val) => ({ clause: `${col} <= ?`,    value: Number(val) }),
+    isEmpty:    (col)      => ({ clause: `(${col} IS NULL OR ${col} = '')`, value: null }),
+    isNotEmpty: (col)      => ({ clause: `(${col} IS NOT NULL AND ${col} != '')`, value: null }),
+  };
+
+  // ── Parse filterField[] / filterOperator[] / filterValue[] arrays ─────────
+  const advancedClauses = [];   // { clause: string, value: any }
+  const fields    = [].concat(filterField    ?? []);
+  const operators = [].concat(filterOperator ?? []);
+  const values    = [].concat(filterValue    ?? []);
+
+  fields.forEach((field, i) => {
+    const operator = operators[i];
+    const value    = values[i];
+    if (!field || !operator) return;
+
+    // Skip value-required operators when value is empty
+    const noValueOps = ['isEmpty', 'isNotEmpty'];
+    if (!noValueOps.includes(operator) && (value == null || value === '')) return;
+
+    const alias = Object.keys(leftJoin).length
+      ? `${table_name[table_name.length - 1]}.${field}`
+      : field;
+
+    const builder = operatorMap[operator];
+    if (!builder) return;
+
+    advancedClauses.push(builder(alias, value));
+  });
+
+  // ── Legacy filter_ flat keys (unchanged behaviour) ────────────────────────
+  Object.entries(queryFilters).forEach(([key, value]) => {
+    let field = key.replace("filter_", "");
+
+    if (field.startsWith("payload_")) {
+      const jsonPath = field.replace("payload_", "").split("_").join(".");
+      jsonFilters.push({ column: "payload", path: `$.${jsonPath}`, value });
+    } else {
+      if (value === undefined || value === "") return;
+
+      if (Object.keys(leftJoin).length !== 0) {
+        const alias = table_name[table_name.length - 1];
+        filters[`${alias}.${field}`] = value;
+      } else {
+        filters[field] = value;
+      }
+    }
+  });
+
+  return {
+    pageNumber,
+    limit,
+    sortField,
+    sortOrder,
+    filters,       // legacy equality filters  → WHERE col = ?
+    jsonFilters,   // payload JSON path filters
+    advancedClauses, // new operator-aware filters → WHERE col LIKE ? etc.
+  };
+},
+
+
+_getTotalCount: (table, filters = {}, advancedClauses = [], leftJoin = null) => {
+  const [whereParts, params] = paramBuilder(filters);
+
+  // Operator-aware clauses
+  advancedClauses.forEach(({ clause, value }) => {
+    whereParts.push(clause);
+    if (value !== null) params.push(value);
+  });
+
+  const joinClause = leftJoin
+    ? `LEFT JOIN ${leftJoin.table} ON ${leftJoin.on}`
+    : "";
+
+  const whereClause = whereParts.length
+    ? `WHERE ${whereParts.join(" AND ")}`
+    : "";
+
+  const sql = `SELECT COUNT(*) AS count FROM ${table} ${joinClause} ${whereClause}`;
+  const row = db.prepare(sql).get(...params);
+  return row.count;
+},
+
+_getAll: (table, filters = {}, options = {}) => {
+  const {
+    columns = ["*"],
+    leftJoin = null,
+    advancedClauses = [],
+    jsonFilters = [],
+    sortField,
+    sortOrder,
+    pageNumber = 0,
+    limit = 10,
+  } = options;
+
+  const [whereParts, params] = paramBuilder(filters);
+
+  // Operator-aware filters (contains, eq, gt, etc.)
+  advancedClauses.forEach(({ clause, value }) => {
+    whereParts.push(clause);
+    if (value !== null) params.push(value);
+  });
+
+  // JSON path filters (payload_xxx keys)
+  jsonFilters.forEach(({ column, path, value }) => {
+    whereParts.push(`JSON_EXTRACT(${column}, ?) = ?`);
+    params.push(path, value);
+  });
+
+  const joinClause = leftJoin
+    ? `LEFT JOIN ${leftJoin.table} ON ${leftJoin.on}`
+    : "";
+
+  const whereClause = whereParts.length
+    ? `WHERE ${whereParts.join(" AND ")}`
+    : "";
+
+  const orderClause =
+    sortField && sortOrder
+      ? `ORDER BY ${sortField} ${sortOrder.toUpperCase() === "DESC" ? "DESC" : "ASC"}`
+      : "";
+
+  const paginationClause = `LIMIT ? OFFSET ?`;
+  params.push(limit, pageNumber * limit);
+
+  const sql = `
+    SELECT ${columns.join(", ")}
+    FROM ${table}
+    ${joinClause}
+    ${whereClause}
+    ${orderClause}
+    ${paginationClause}
+  `;
+
+  return db.prepare(sql).all(...params);
+},
+
 };
+
+
+
+
 
 module.exports = dbService;

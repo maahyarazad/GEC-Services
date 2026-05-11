@@ -197,14 +197,14 @@ const messageSender = async (req) => {
           return null;
         }
 
-        return await sendMessageToPhone(
-          el.phone,
-          template,
-          payload,
-          el,
-          eventId
-        );
         if (process.env.ENVIRONMENT === "PRODUCTION") {
+            return await sendMessageToPhone(
+            el.phone,
+            template,
+            payload,
+            el,
+            eventId
+            );
         }
       } catch (err) {
         console.error(`Error sending message to ${el.phone}:`, err);
