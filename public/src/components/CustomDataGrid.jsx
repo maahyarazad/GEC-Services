@@ -10,6 +10,8 @@ import {
   TableSortLabel,
   TablePagination,
   Paper,
+  Card,
+  CardContent,
   IconButton,
   Button,
   TextField,
@@ -475,6 +477,92 @@ function GridToolbar({ columns, filters, onFiltersChange, visibleFields, onVisib
   );
 }
 
+// ─── Mobile Card View ─────────────────────────────────────────────────────────
+
+function MobileCardView({ rows, columns, loading }) {
+  if (loading) return null; // loading overlay is rendered by the parent
+
+  if (rows.length === 0) {
+    return (
+      <Box sx={{ py: 6, textAlign: 'center' }}>
+        <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
+          No rows
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Stack spacing={1.5} sx={{ p: 1.5 }}>
+      {rows.map((row) => (
+        <Card
+          key={row.id}
+          variant="outlined"
+          sx={{
+            borderRadius: 2,
+            boxShadow: 'none',
+            transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
+            '&:hover': {
+              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+              borderColor: 'primary.light',
+            },
+          }}
+        >
+          <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+            <Stack spacing={1}>
+              {columns.map((col, idx) => (
+                <Box key={col.field}>
+                  {idx > 0 && (
+                    <Divider sx={{ mb: 1 }} />
+                  )}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      gap: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: 600,
+                        color: 'text.secondary',
+                        fontSize: 11,
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.4,
+                        flexShrink: 0,
+                        minWidth: 90,
+                        pt: '2px',
+                      }}
+                    >
+                      {col.headerName || col.field}
+                    </Typography>
+                    <Box
+                      sx={{
+                        fontSize: 13,
+                        color: 'text.primary',
+                        textAlign: 'right',
+                        flex: 1,
+                        minWidth: 0,
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {col.renderCell
+                        ? col.renderCell({ row, value: row[col.field] })
+                        : row[col.field] ?? '—'}
+                    </Box>
+                  </Box>
+                </Box>
+              ))}
+            </Stack>
+          </CardContent>
+        </Card>
+      ))}
+    </Stack>
+  );
+}
+
 // ─── Main CustomDataGrid ──────────────────────────────────────────────────────
 
 /**
@@ -648,7 +736,7 @@ const CustomDataGrid = ({
         />
       )}
 
-      {/* Table area */}
+      {/* Table / Card area */}
       <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
         {loading && (
           <Box
@@ -666,42 +754,22 @@ const CustomDataGrid = ({
           </Box>
         )}
 
-        {/*
-          On mobile the table scrolls horizontally inside this container.
-          The gradient overlay is a visual cue that content extends to the right.
-        */}
-        <Box
-          sx={{
-            position: 'relative',
-            height: '100%',
-            // Fade-out hint on the right edge when horizontally scrollable
-            '&::after': isMobile
-              ? {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  bottom: 0,
-                  width: 32,
-                  background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.85))',
-                  pointerEvents: 'none',
-                  zIndex: 2,
-                }
-              : {},
-          }}
-        >
+        {isMobile ? (
+          /* ── Mobile: card-per-row layout ── */
+          <Box sx={{ height: '100%', overflowY: 'auto' }}>
+            <MobileCardView
+              rows={pagedRows}
+              columns={visibleColumns}
+              loading={loading}
+            />
+          </Box>
+        ) : (
+          /* ── Desktop: standard table layout ── */
           <TableContainer sx={{ height: '100%', overflowX: 'auto', overflowY: 'auto' }}>
             <Table
               stickyHeader
               size="small"
-              sx={{
-                // Use auto layout on mobile so columns can shrink; fixed on desktop for performance
-                tableLayout: isMobile ? 'auto' : 'fixed',
-                // Ensure the table is never narrower than its content on mobile
-                minWidth: isMobile
-                  ? visibleColumns.reduce((acc, c) => acc + (c.width || 130), 0)
-                  : undefined,
-              }}
+              sx={{ tableLayout: 'fixed' }}
             >
               <TableHead>
                 <TableRow>
@@ -710,8 +778,7 @@ const CustomDataGrid = ({
                       key={col.field}
                       sx={{
                         width: col.width || 130,
-                        // On mobile allow columns narrower than their defined width
-                        minWidth: isMobile ? Math.min(col.width || 130, 100) : col.width || 130,
+                        minWidth: col.width || 130,
                         fontWeight: 600,
                         fontSize: 13,
                         bgcolor: 'background.paper',
@@ -719,7 +786,7 @@ const CustomDataGrid = ({
                         borderBottom: '1px solid',
                         borderColor: 'divider',
                         py: 1,
-                        px: isMobile ? 1 : 1.5,
+                        px: 1.5,
                         userSelect: 'none',
                       }}
                     >
@@ -771,9 +838,9 @@ const CustomDataGrid = ({
                             key={col.field}
                             sx={{
                               width: col.width || 130,
-                              minWidth: isMobile ? Math.min(col.width || 130, 100) : col.width || 130,
+                              minWidth: col.width || 130,
                               fontSize: 13,
-                              px: isMobile ? 1 : 1.5,
+                              px: 1.5,
                               py: 0.5,
                               overflow: 'hidden',
                               textOverflow: col.renderCell ? 'unset' : 'ellipsis',
@@ -792,7 +859,7 @@ const CustomDataGrid = ({
               </TableBody>
             </Table>
           </TableContainer>
-        </Box>
+        )}
       </Box>
 
       {/* Pagination */}
