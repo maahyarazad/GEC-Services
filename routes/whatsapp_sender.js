@@ -132,7 +132,7 @@ router.post("/whatsapp/twilio-callback", async (req, res) => {
       const row = await Promise.resolve(
         db
           .prepare(
-            `SELECT contentSid FROM twilio_template_message WHERE messageSid = ?`
+            `SELECT contentSid, event_id FROM twilio_template_message WHERE messageSid = ?`
           )
           .get(messageSid)
       );
@@ -153,26 +153,30 @@ router.post("/whatsapp/twilio-callback", async (req, res) => {
 
       const phone = req.body?.To.replace(/^whatsapp:/, "");
 
-    //   await Promise.resolve(
+      const contactRow = await Promise.resolve(
+        db
+          .prepare(`SELECT id FROM contact_book WHERE phone = ?`)
+          .get(phone)
+      );
 
-    //      const contact_book_id = await Promise.resolve(
-    //     db
-    //       .prepare(
-    //         `SELECT id FROM contact_book SET phone = ? WHERE contentSid = ?`
-    //       )
-    //       .get(messageSid)
-    //   );
+      const contact_book_id = contactRow?.id;
 
-    //     const contact_book_id = db
-    //       .prepare(`INSERT INTO contact_book_events (contact_book_id, event_id, contentSid) VALUES (?,?,?)`)
-    //       .run(phone, `${row.contentSid}${row}`)
+      await Promise.resolve(
+        db
+          .prepare(
+            `INSERT INTO contact_book_events (contact_book_id, event_id, contentSid) VALUES (?, ?, ?)`
+          )
+          .run(contact_book_id, row.event_id, row.contentSid)
+      );
 
-    //     db
-    //       .prepare(`INSERT INTO contact_book_events (contact_book_id, event_id, contentSid) VALUES (?,?,?)`)
-    //       .run(phone, `${row.contentSid}${row}`)
-    //   );
+      await Promise.resolve(
+        db
+          .prepare(`UPDATE contact_book SET contentSid = ? WHERE phone = ?`)
+          .run(row.contentSid, phone)
+      );
     }
   } catch (error) {
+    res.sendStatus(202);
     console.error("Twilio callback error:", error);
   }
 });
