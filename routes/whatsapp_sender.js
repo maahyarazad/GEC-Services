@@ -19,7 +19,6 @@ const fetch = require("node-fetch");
 const { getCountCacheKey, countCache } = require("../services/cacheService");
 const MessagingResponse = require("twilio").twiml.MessagingResponse;
 
-
 router.post("/api/whatsapp/send", (req, res) => {
   // Fire and forget: run messageSender but don't await
   messageSender(req).catch((error) => {
@@ -116,42 +115,48 @@ router.get("/api/whatsapp/history/:phone", async (req, res) => {
   }
 });
 
-
-
 router.post("/whatsapp/twilio-callback", async (req, res) => {
   try {
     res.sendStatus(202);
 
     await Promise.resolve(
-      db.prepare(`INSERT INTO twilio_delivery (response) VALUES (?)`).run(JSON.stringify(req.body))
+      db
+        .prepare(`INSERT INTO twilio_delivery (response) VALUES (?)`)
+        .run(JSON.stringify(req.body))
     );
 
     const messageStatus = req.body?.MessageStatus;
     const messageSid = req.body?.MessageSid;
 
-
     if (messageStatus === "delivered") {
       const row = await Promise.resolve(
-        db.prepare(
-          `SELECT contentSid FROM twilio_template_message WHERE messageSid = ?`
-        ).get(messageSid)
+        db
+          .prepare(
+            `SELECT contentSid FROM twilio_template_message WHERE messageSid = ?`
+          )
+          .get(messageSid)
       );
 
       if (!row?.contentSid) {
         await Promise.resolve(
-          db.prepare(
-            `INSERT INTO error_log (error, origin_function) VALUES (?, ?)`
-          ).run("CRITICAL ERROR - Cannot fetch the contentSid for auto check", "sendMessageToPhone")
+          db
+            .prepare(
+              `INSERT INTO error_log (error, origin_function) VALUES (?, ?)`
+            )
+            .run(
+              "CRITICAL ERROR - Cannot fetch the contentSid for auto check",
+              "sendMessageToPhone"
+            )
         );
         return;
       }
 
       const phone = req.body?.To.replace(/^whatsapp:/, "");
 
-     await Promise.resolve(
-        db.prepare(
-          `UPDATE contact_book SET phone = ? WHERE contentSid = ?`
-        ).run(phone, row.contentSid)
+      await Promise.resolve(
+        db
+          .prepare(`UPDATE contact_book SET phone = ? WHERE contentSid = ?`)
+          .run(phone, row.contentSid)
       );
     }
   } catch (error) {

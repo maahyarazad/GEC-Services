@@ -197,14 +197,14 @@ const messageSender = async (req) => {
           return null;
         }
 
+        return await sendMessageToPhone(
+          el.phone,
+          template,
+          payload,
+          el,
+          eventId
+        );
         if (process.env.ENVIRONMENT === "PRODUCTION") {
-          return await sendMessageToPhone(
-            el.phone,
-            template,
-            payload,
-            el,
-            eventId
-          );
         }
       } catch (err) {
         console.error(`Error sending message to ${el.phone}:`, err);
@@ -368,8 +368,8 @@ async function sendMessageToPhone(
 
     await Promise.resolve(
     db.prepare(
-        `INSERT INTO twilio_template_message (messageSid, contentSid) VALUES (?, ?, ?)`
-    ).run(result.sid, messageOptions.contentSid, eventId)
+        `INSERT INTO twilio_template_message (messageSid, contentSid, event_id) VALUES (?, ?, ?)`
+     ).run(result.sid, messageOptions.contentSid, Number(eventId))
     );
 
 
