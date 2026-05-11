@@ -373,12 +373,11 @@ async function sendMessageToPhone(
     const result = await twilioClient.messages.create(messageOptions);
 
     await Promise.resolve(
-      db.run(
-        `INSERT INTO twilio_template_message (messageSid, contentSid)
-    VALUES (?, ?)`,
-        [result.sid, messageOptions.contentSid]
-      )
+    db.prepare(
+        `INSERT INTO twilio_template_message (messageSid, contentSid) VALUES (?, ?)`
+    ).run(result.sid, messageOptions.contentSid)
     );
+
 
     return result;
   } catch (error) {
