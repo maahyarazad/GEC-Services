@@ -144,17 +144,19 @@ router.get("/api/contacts", (req, res) => {
           .json({ status: false, error: "event_id is required" });
       }
 
-    const query = `
-    SELECT cb.*, egl.complete_attendance
-    FROM contact_book cb
-    INNER JOIN (
-        SELECT *, ROW_NUMBER() OVER (PARTITION BY contact_book_id ORDER BY id) AS rn
-        FROM event_guest_list
-        WHERE event_id = ?
-    ) egl ON egl.contact_book_id = cb.id
-    WHERE egl.rn = 1
-    ORDER BY ${TYPE_ORDER_SQL}
-    `;
+const query = `
+  SELECT cb.*, egl.complete_attendance 
+  FROM contact_book cb
+  INNER JOIN event_guest_list egl ON egl.contact_book_id = cb.id
+  WHERE egl.event_id = ?
+    AND egl.id = (
+      SELECT MIN(id) 
+      FROM event_guest_list 
+      WHERE contact_book_id = egl.contact_book_id 
+        AND event_id = ?
+    )
+  ORDER BY ${TYPE_ORDER_SQL}
+`;
 
       const result = db.prepare(query).all(event_id);
       return res.status(200).json({ status: true, data: result });
