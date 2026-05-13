@@ -654,7 +654,7 @@ async function handleAutoResponse(From, ButtonPayload) {
 
       dbService.create("event_guest_list", {
         contact_book_id: Number(contact.id),
-        event_id: Number(3),
+        event_id: Number(2),
       });
     } else {
     }
