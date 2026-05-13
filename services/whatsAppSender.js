@@ -96,7 +96,7 @@ const contactBookData = (conditions, useAudience, eventId) => {
             }
             AND contentSid IS NULL
         AND id        NOT IN (SELECT contact_book_id FROM excluded_guests)
-        AND type      NOT IN ('medical_society','Wüstenkinder')
+        AND type      NOT IN ('medical_society','Wüstenkinder', 'expert_guest', 'only_guest')
         GROUP BY phone
         ORDER BY
             CASE type
@@ -105,9 +105,7 @@ const contactBookData = (conditions, useAudience, eventId) => {
                 WHEN 'club_member'  THEN 3
                 WHEN 'expert'       THEN 4
                 WHEN 'difa'         THEN 5
-                WHEN 'expert_guest' THEN 6
-                WHEN 'only_guest'   THEN 7
-                ELSE                     8
+                ELSE                     6
             END;
             `;
   } else {
@@ -221,7 +219,7 @@ const messageSender = async (req) => {
       const query = `SELECT * FROM contact_book WHERE id IN(
              SELECT contact_book_id FROM event_guest_list WHERE event_id = ? and language = ? )`;
       const stmt = db.prepare(query);
-      const result = stmt.all([Number(eventId), template.language.slice(0,2)]);
+      const result = stmt.all([Number(eventId), template.language.,(0,2)]);
 
       await Promise.all(result.map((x) => safeSendMessage(x, eventId)));
     }
@@ -637,19 +635,17 @@ async function handleAutoResponse(From, ButtonPayload) {
       template = templates.result.find((x) => x.sid === template_sid);
 
       if (guest_Types.includes(contact.type)) {
-        // if (contact.language === "de") {
-        //   const message = `Super, du stehst auf der Gästeliste! Wir freuen uns, dich zu sehen. Kommst du alleine oder in Begleitung? Schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\nOrt: Shangri-La Hotel Qaryat Al Beri, @Al Hana Bar\nHier der Location-Link:\n${google_map_link}\nHerzliche Grüße\nSylvia`;
-        //   payload[1] = message;
-        // }
-      } else {
-      }
-
-      if (contact.language === "de") {
-        const message = `Super, du stehst auf der Gästeliste! Wir freuen uns sehr, dich beim BusinessBreakfast HR-Forum zu sehen.\nKommst du alleine oder in Begleitung?\nSchick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\n\nHier der Location-Link zum Marriott Resort Palm Jumeirah:\n${google_map_link}\nHerzliche Grüße, Sylvia und das Team vom German Emirates Club`;
+        
+        const message = `Super, du stehst auf der Gästeliste! Wir freuen uns auf dich. Kommst du allein oder in Begleitung? Wenn du in Begleitung kommst, schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\n\nHier noch der Google link zur Location, damit du es besser findest: https://maps.app.goo.gl/MPpGCFyRee3kGsAB9\nKindly check the parking options below: \n\nSelf Parking Free (Recommended)\nhttps://goo.gl/maps/kZDENNEodHsnkhiP9 \nConvenient FREE parking across multiple levels  (P4–P10). Kindly take the lift to the ground floor. FRNDS entrance is located directly in front of the lift.\n\nTaxi Drop Off\nhttps://maps.app.goo.gl/WmPZwHYceZNcpEUw8\n\nComplimentary Valet Parking\nAvailable at Address Dubai Mall Hotel (approximately 200 metres walking distance)\nhttps://goo.gl/maps/iMzuzyhqp6PXAsay7\n\nHerzliche Grüße,\nSylvia`;
         payload[1] = message;
       } else {
-        const message = `Great, you're on the guest list! We're looking forward to seeing you at the BusinessBreakfast HR Forum.\n\nWill you be coming alone or with a guest?\nPlease send me the full name of your guest for the guest list.\n\nHere’s the location link to the Marriott Resort Palm Jumeirah:\n${google_map_link}\n\nBest regards,\nSylvia`;
-        payload[1] = message;
+          if (contact.language === "de") {
+            const message = `Super, du stehst auf der Gästeliste! Wir freuen uns auf dich. Kommst du allein oder in Begleitung? Wenn du in Begleitung kommst, schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\n\nHier noch der Link zur Location, damit du es besser findest: https://maps.app.goo.gl/MPpGCFyRee3kGsAB9\n\nKindly check the parking options below:\n\nSelf Parking Free (Recommended)\nhttps://goo.gl/maps/kZDENNEodHsnkhiP9\nConvenient FREE parking across multiple levels (P4–P10). Kindly take the lift to the ground floor. FRNDS entrance is located directly in front of the lift.\n\nTaxi Drop Off\nhttps://maps.app.goo.gl/WmPZwHYceZNcpEUw8\n\nComplimentary Valet Parking\nAvailable at Address Dubai Mall Hotel (approximately 200 metres walking distance)\nhttps://goo.gl/maps/iMzuzyhqp6PXAsay7\n\nHerzliche Grüße,\nSylvia`;
+            payload[1] = message;
+          } else {
+            const message = `Great, you're on the guest list! We're looking forward to seeing you. Are you coming alone or with a guest? Please send me the full name of your guest for our guest list.\n\nHere's the Google Maps link to the location to help you find it: https://maps.app.goo.gl/MPpGCFyRee3kGsAB9\nKindly check the parking options below: \n\nSelf Parking Free (Recommended)\nhttps://goo.gl/maps/kZDENNEodHsnkhiP9 \nConvenient FREE parking across multiple levels  (P4–P10). Kindly take the lift to the ground floor. FRNDS entrance is located directly in front of the lift.\n\nTaxi Drop Off\nhttps://maps.app.goo.gl/WmPZwHYceZNcpEUw8\n\nComplimentary Valet Parking\nAvailable at Address Dubai Mall Hotel (approximately 200 metres walking distance)\nhttps://goo.gl/maps/iMzuzyhqp6PXAsay7\n\nBest regards,\nSylvia`;
+            payload[1] = message;
+          }
       }
 
       const result = await messageSender({
