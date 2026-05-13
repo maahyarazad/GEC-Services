@@ -170,4 +170,58 @@ router.post("/upload-csv", upload.single("file"), (req, res) => {
   }
 });
 
+
+
+
+router.get("/api/partner-onboarding", async (req, res) => {
+  try {
+    const {pageNumber,limit,sortField,sortOrder,filters,jsonFilters,advancedClauses} = dbService._QuerySqlConverter(
+      req.query,
+      "partner_onboarding_data AS pod",
+      {
+        table: "member_card AS mc",
+        on: "pod.mobile_number = mc.mobile_number",
+      },
+      ["pod.*", "mc.id"]
+    );
+
+const total = dbService._getTotalCount(
+  "partner_onboarding_data AS pod LEFT JOIN member_card AS mc ON pod.mobile_number = mc.mobile_number",
+  filters,
+  advancedClauses
+);
+
+    const data = dbService._getAll(
+     "partner_onboarding_data AS pod",
+      filters, // legacy equality filters
+      {
+        columns: ["pod.*", "mc.id"],
+        leftJoin: {
+          table: "member_card AS mc",
+          on: "pod.mobile_number = mc.mobile_number",
+        },
+        advancedClauses, // operator-aware filters
+        jsonFilters, // JSON path filters
+        sortField,
+        sortOrder,
+        pageNumber,
+        limit,
+      }
+    );
+
+    return res.json({
+      success: true,
+      data,
+      total,
+      page: pageNumber + 1,
+      pageSize: limit,
+    });
+  } catch (error) {
+    console.error("Error in /registration:", error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
+
+
 module.exports = router;

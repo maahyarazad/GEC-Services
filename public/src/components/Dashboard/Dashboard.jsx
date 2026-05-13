@@ -11,25 +11,23 @@ import * as Yup from "yup";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
-import InputAdornment from "@mui/material/InputAdornment";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 
 // Icons
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
-import { BsCalendar2Event, BsPeopleFill } from "react-icons/bs";
+import { BsPeopleFill } from "react-icons/bs";
 import { FaWhatsapp } from "react-icons/fa";
 import { FcSurvey } from "react-icons/fc";
 import { GiArchiveRegister } from "react-icons/gi";
 import { GoShieldLock } from "react-icons/go";
-import { GrCatalog, GrCatalogOption } from "react-icons/gr";
+import { GrCatalogOption } from "react-icons/gr";
 import { IoIdCardOutline } from "react-icons/io5";
 import { MdPictureAsPdf } from "react-icons/md";
 import { MdOutlineHealthAndSafety } from "react-icons/md";
-
+import { IoPeopleSharp } from "react-icons/io5";
 // Utils
 import { Header } from "../utils/Header";
-import { getCookie, setEncryptedCookie } from "../utils/cookieUtils";
 
 // Context
 import { useWebSocket } from "./WebSocketContext";
@@ -41,7 +39,7 @@ const RegistrantSection = React.lazy(() => import("../Sections/RegistrantSection
 const MemberDataGrid = React.lazy(() => import("../Sections/MembersDataGrid"));
 const MemberCardDataGrid = React.lazy(() => import("../Sections/MemberCardDataGrid"));
 const SurveyDataGrid = React.lazy(() => import("../Sections/SurveyDataGrid"));
-const GICDataGrid = React.lazy(() => import("../Sections/GICDataGrid"));
+const PartnerOnboardingSection = React.lazy(() => import("../Sections/PartnerOnboardingSection"));
 const WhatsappBroadcast = React.lazy(() => import("./WhatsApp/WhatsApp"));
 const PDFGenerator = React.lazy(() => import("./PDFGenerator/PDFGenerator"));
 
@@ -215,6 +213,10 @@ const Admin = ({ data }) => {
             label: "Member Cards",
         },
         {
+            icon: <IoPeopleSharp size={24} />,
+            label: "Partner Onboarding",
+        },
+        {
             icon: <BsPeopleFill size={20} />,
             label: "Member Data",
         },
@@ -325,12 +327,15 @@ const Admin = ({ data }) => {
             content = <MemberCardDataGrid />;
             break;
         case 5:
-            content = <MemberDataGrid />;
+            content = <PartnerOnboardingSection />;
             break;
         case 6:
-            content = <PDFGenerator />;
+            content = <MemberDataGrid />;
             break;
         case 7:
+            content = <PDFGenerator />;
+            break;
+        case 8:
             content = <WhatsappBroadcast />;
             break;
     }
