@@ -119,64 +119,52 @@ router.post("/whatsapp/twilio-callback", async (req, res) => {
   try {
     res.sendStatus(202);
 
-    await Promise.resolve(
-      db
-        .prepare(`INSERT INTO twilio_delivery (response) VALUES (?)`)
-        .run(JSON.stringify(req.body))
-    );
-
+    
+    db.prepare(`INSERT INTO twilio_delivery (response) VALUES (?)`).run(JSON.stringify(req.body));
     const messageStatus = req.body?.MessageStatus;
     const messageSid = req.body?.MessageSid;
-
+    
     if (messageStatus === "delivered") {
-      const row = await Promise.resolve(
-        db
-          .prepare(
-            `SELECT contentSid, event_id FROM twilio_template_message WHERE messageSid = ?`
-          )
-          .get(messageSid)
-      );
+      const phone = req.body?.To?.replace(/^whatsapp:/, "");
 
-      if (!row?.contentSid) {
-        await Promise.resolve(
-          db
-            .prepare(
-              `INSERT INTO error_log (error, origin_function) VALUES (?, ?)`
-            )
-            .run(
-              "CRITICAL ERROR - Cannot fetch the contentSid for auto check",
-              "sendMessageToPhone"
-            )
-        );
-        return;
-      }
+      const handleDelivered = db.transaction(() => {
+        const row = db.prepare(
+          `SELECT contentSid, event_id FROM twilio_template_message WHERE messageSid = ?`
+        ).get(messageSid);
 
-      const phone = req.body?.To.replace(/^whatsapp:/, "");
+        if (!row?.contentSid) {
+          db.prepare(`INSERT INTO error_log (error, origin_function) VALUES (?, ?)`).run(
+            "CRITICAL ERROR - Cannot fetch the contentSid for auto check",
+            "twilio-callback"
+          );
+          return;
+        }
 
-      const contactRow = await Promise.resolve(
-        db
-          .prepare(`SELECT id FROM contact_book WHERE phone = ?`)
-          .get(phone)
-      );
+        const contactRow = db.prepare(`SELECT id FROM contact_book WHERE phone = ?`).get(phone);
 
-      const contact_book_id = contactRow?.id;
+        if (!contactRow?.id) {
+          db.prepare(`INSERT INTO error_log (error, origin_function) VALUES (?, ?)`).run(
+            `Contact not found for phone: ${phone}`,
+            "twilio-callback"
+          );
+          return;
+        }
 
-      await Promise.resolve(
-        db
-          .prepare(
-            `INSERT INTO contact_book_events (contact_book_id, event_id, contentSid) VALUES (?, ?, ?)`
-          )
-          .run(contact_book_id, row.event_id, row.contentSid)
-      );
+        db.prepare(
+          `INSERT INTO contact_book_events (contact_book_id, event_id, contentSid) VALUES (?, ?, ?)`
+        ).run(contactRow.id, row.event_id, row.contentSid);
 
-      await Promise.resolve(
-        db
-          .prepare(`UPDATE contact_book SET contentSid = ? WHERE phone = ?`)
-          .run(row.contentSid, phone)
-      );
+        db.prepare(`UPDATE contact_book SET contentSid = ? WHERE phone = ?`).run(row.contentSid, phone);
+      });
+
+      handleDelivered();
     }
   } catch (error) {
     console.error("Twilio callback error:", error);
+    db.prepare(`INSERT INTO error_log (error, origin_function) VALUES (?, ?)`).run(
+      error.message,
+      "twilio-callback"
+    );
   }
 });
 
