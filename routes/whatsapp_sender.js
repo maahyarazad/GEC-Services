@@ -176,7 +176,6 @@ router.post("/whatsapp/twilio-callback", async (req, res) => {
       );
     }
   } catch (error) {
-    res.sendStatus(202);
     console.error("Twilio callback error:", error);
   }
 });
