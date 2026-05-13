@@ -182,7 +182,7 @@ router.get("/api/partner-onboarding", async (req, res) => {
         table: "member_card AS mc",
         on: "pod.mobile_number = mc.mobile_number",
       },
-      ["pod.*", "mc.id"]
+      ["pod.*", "mc.id AS member_card_id"]
     );
 
 const total = dbService._getTotalCount(
@@ -195,7 +195,7 @@ const total = dbService._getTotalCount(
      "partner_onboarding_data AS pod",
       filters, // legacy equality filters
       {
-        columns: ["pod.*", "mc.id"],
+        columns: ["pod.*", "mc.id AS member_card_id"],
         leftJoin: {
           table: "member_card AS mc",
           on: "pod.mobile_number = mc.mobile_number",

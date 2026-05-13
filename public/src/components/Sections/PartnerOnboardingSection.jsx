@@ -127,6 +127,33 @@ const columns = [
             }
         },
     },
+    {
+        field: 'member_card_id',
+        headerName: 'Member Card',
+        width: 140,
+        sortable: false,
+        filterable: false,
+        renderCell: (params) => {
+            const cardId = params?.row?.member_card_id;
+            return cardId != null ? (
+                <Chip
+                    label="Matched"
+                    size="small"
+                    color="success"
+                    variant="filled"
+                    sx={{ fontSize: 11, fontWeight: 600 }}
+                />
+            ) : (
+                <Chip
+                    label="No Match"
+                    size="small"
+                    color="default"
+                    variant="outlined"
+                    sx={{ fontSize: 11 }}
+                />
+            );
+        },
+    },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -153,7 +180,6 @@ const PartnerOnboardingSection = () => {
     const defaultSortModel = [{ field: 'id', sort: 'desc' }];
 
     const [registrationList, setRegistrationList] = useState([]);
-    const [selectedEvent,    setSelectedEvent]    = useState(null);
     const [loading,          setLoading]          = useState(false);
     const [isDownloading,    setIsDownloading]    = useState(false);
     const [rowCount,         setRowCount]         = useState(0);
@@ -163,7 +189,7 @@ const PartnerOnboardingSection = () => {
 
     // ─── Fetch ────────────────────────────────────────────────────────────────
 
-    const fetchData = useCallback(async (_selectedEvent, pagination, sort = [], filters = []) => {
+    const fetchData = useCallback(async (pagination, sort = [], filters = []) => {
         setLoading(true);
         try {
             const { field: sortField = '', sort: sortOrder = '' } = sort[0] ?? {};
@@ -195,7 +221,7 @@ const PartnerOnboardingSection = () => {
     // ─── Effects ──────────────────────────────────────────────────────────────
 
     useEffect(() => {
-        fetchData(selectedEvent, paginationModel, sortModel, filterItems);
+        fetchData(paginationModel, sortModel, filterItems);
     }, [paginationModel, sortModel, filterItems]);
 
     // ─── Handlers ─────────────────────────────────────────────────────────────
