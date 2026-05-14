@@ -516,7 +516,9 @@ async function fetchHistory(phone) {
 
     const receivedQuery = `
       SELECT
-        json_extract(tr.payload, '$.Body') AS body,
+        json_extract(tr.payload, '$.Body')              AS body,
+        json_extract(tr.payload, '$.MediaUrl0')         AS media_url,
+        json_extract(tr.payload, '$.MediaContentType0') AS media_type,
         tr.received_at,
         'r' AS type
       FROM twilio_responses tr

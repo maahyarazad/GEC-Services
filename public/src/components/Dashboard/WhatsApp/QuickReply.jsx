@@ -1,25 +1,19 @@
-import React, { useEffect, useState, useRef , useCallback} from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useSnackbar } from '../../Providers/Snackbar';
-import { Button, CircularProgress, IconButton } from '@mui/material';
-import { IoPlayCircle } from "react-icons/io5";
-import { MdPauseCircleFilled } from "react-icons/md";
+import { Button, CircularProgress } from '@mui/material';
 import ChatView from './ChatView';
 import './QuickReply.css';
+
 const QuickReply = ({ CloseModal, incoming_message, contact_name }) => {
     const { showSnackbar } = useSnackbar();
     const [loading, setLoading] = useState(false);
     const [loadingHistory, setLoadingHistory] = useState(true);
     const [history, setHistory] = useState([]);
     const [message, setMessage] = useState('');
-    
-    // Audio playback state
-    const audioRef = useRef(null);
-    const [isPlaying, setIsPlaying] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        // debugger;
         try {
             if (!message.trim()) {
                 showSnackbar("Cannot send empty message", "warning");
@@ -54,25 +48,23 @@ const QuickReply = ({ CloseModal, incoming_message, contact_name }) => {
         }
     };
 
-    const fetchHistory = useCallback(async (e) => {
-       
+    const fetchHistory = useCallback(async () => {
         try {
             const response = await fetch(
-            `${import.meta.env.VITE_SERVERURL}/api/whatsapp/history/${incoming_message.WaId}`,
-            {
-                method: "GET",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-            }
+                `${import.meta.env.VITE_SERVERURL}/api/whatsapp/history/${incoming_message.WaId}`,
+                {
+                    method: "GET",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                }
             );
             const responseData = await response.json();
-             
+
             if (!response.ok) {
                 console.error(responseData.error);
                 showSnackbar(responseData.message, "error");
             } else {
-               
-               setHistory(responseData.result);
+                setHistory(responseData.result);
             }
         } catch (error) {
             console.error(error);
@@ -80,71 +72,25 @@ const QuickReply = ({ CloseModal, incoming_message, contact_name }) => {
         } finally {
             setLoadingHistory(false);
         }
-    },[]);
-
-useEffect(()=> {
-    fetchHistory();
-}, [fetchHistory])
-    const hasMedia =
-        Number(incoming_message?.NumMedia) > 0 &&
-        incoming_message?.MediaUrl0;
-
-    // Play/pause toggle for audio
-    const toggleAudio = () => {
-        if (!audioRef.current) return;
-
-        if (isPlaying) {
-            audioRef.current.pause();
-            setIsPlaying(false);
-        } else {
-            audioRef.current.play();
-            setIsPlaying(true);
-        }
-    };
-
-    // Pause audio on unmount
-    useEffect(() => {
-        return () => {
-            if (audioRef.current) {
-                audioRef.current.pause();
-            }
-        };
     }, []);
 
-    // Construct the backend URL to stream the media
-    const audioUrl = hasMedia
-        ? `${import.meta.env.VITE_SERVERURL}/api/whatsapp/download-media?mediaUrl=${encodeURIComponent(
-            incoming_message.MediaUrl0
-        )}`
-        : null;
+    useEffect(() => {
+        fetchHistory();
+    }, [fetchHistory]);
 
     return (
         <form onSubmit={handleSubmit}>
-            <div className="container pt-2" >
+            <div className="container pt-2">
                 <div className="container pt-2 d-flex align-items-center gap-2">
-                <div className="avatar-circle">
-                    {contact_name?.charAt(0).toUpperCase()}
-                </div>
-                <span className="contact-name">{contact_name}</span>
+                    <div className="avatar-circle">
+                        {contact_name?.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="contact-name">{contact_name}</span>
                 </div>
 
                 <div className="py-2 d-flex justify-content-start align-items-center">
-                    <ChatView messages={history} loadingHistory={loadingHistory}/>
-
+                    <ChatView messages={history} loadingHistory={loadingHistory} />
                 </div>
-                    {hasMedia && (
-                        <div >
-                            <IconButton onClick={toggleAudio} style={{ fontSize: 16 }}>
-
-                                {isPlaying ? <div><MdPauseCircleFilled size={20} /> Pause</div> : <div><IoPlayCircle size={20} /> Play</div>}
-                            </IconButton>
-
-
-
-                            {/* Hidden audio element */}
-                            <audio ref={audioRef} src={audioUrl} preload="auto" />
-                        </div>
-                    )}
 
                 <div className="row">
                     <div className="col mb-3">
