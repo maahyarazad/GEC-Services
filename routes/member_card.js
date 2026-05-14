@@ -267,23 +267,25 @@ router.post("/member-logout", (req, res) => {
   }
 });
 
-router.get("/api/member_card", async (req, res) => {
+router.get("/api/member_card", (req, res) => {
   try {
     const table_name = "member_card";
-    const { filters, data } = dbService.QuerySqlConverter(
-      req.query,
-      table_name
-    );
+    const { pageNumber, limit, sortField, sortOrder, filters, jsonFilters, advancedClauses } =
+      dbService._QuerySqlConverter(req.query, table_name);
 
-    const total = dbService.getTotalCount(table_name, filters);
-
-    return res.json({
-      status: true,
-      data,
-      total,
+    const total = dbService._getTotalCount(table_name, filters, advancedClauses);
+    const data  = dbService._getAll(table_name, filters, {
+      advancedClauses,
+      jsonFilters,
+      sortField: sortField || "id",
+      sortOrder: sortOrder || "desc",
+      pageNumber,
+      limit,
     });
+
+    return res.json({ status: true, data, total });
   } catch (error) {
-    console.error("Error in /member:", error);
+    console.error("Error in /api/member_card:", error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
