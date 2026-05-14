@@ -98,17 +98,17 @@ export default function WhastAppTypeReport() {
     datasets: [
       {
         label: "Delivered",
-        backgroundColor: "#2563eb",
+        backgroundColor: "#0fb500",
         data: deliveredData,
       },
       {
         label: "Read",
-        backgroundColor: "#0ce8d9",
+        backgroundColor: "#ff9d00",
         data: readData,
       },
       {
         label: "Undelivered",
-        backgroundColor: "#919191",
+        backgroundColor: "#c7c7c7",
         data: undeliveredData,
       },
     ],
@@ -122,7 +122,7 @@ export default function WhastAppTypeReport() {
       tooltip: { enabled: true },
       datalabels: {
         color: "#000",
-        font: { weight: "default" as const, size: 10},
+        font: { weight: "bold" as const, size: 14 },
         formatter: (v: number) => (v > 0 ? v : ""),
         anchor: "center" as const,
         align: "center" as const,

@@ -114,23 +114,23 @@ const undeliveredData = deliveryLabels.map((t) =>
 
 const deliveryData = {
   labels: deliveryLabels,
-  datasets: [
-    {
-      label: "Delivered",
-      backgroundColor: "#2563eb",
-      data: deliveredData,
-    },
-    {
-      label: "Read",
-      backgroundColor: "#0ce8d9",
-      data: readData,
-    },
-    {
-      label: "Undelivered",
-      backgroundColor: "#919191",
-      data: undeliveredData,
-    },
-  ],
+   datasets: [
+      {
+        label: "Delivered",
+        backgroundColor: "#0fb500",
+        data: deliveredData,
+      },
+      {
+        label: "Read",
+        backgroundColor: "#ff9d00",
+        data: readData,
+      },
+      {
+        label: "Undelivered",
+        backgroundColor: "#c7c7c7",
+        data: undeliveredData,
+      },
+    ],
 };
 
 
@@ -157,7 +157,7 @@ const deliveryData = {
         datasets: [
             {
                 label: "Attend",
-                backgroundColor: "#44e00b",
+                backgroundColor: "#16a34a",
                 stack: "responses",
                 data: [attend],
             },
@@ -181,10 +181,10 @@ const deliveryData = {
         maintainAspectRatio: false,
         plugins: {
             legend: { position: "top" as const },
-            tooltip: { enabled: false },
+            tooltip: { enabled: true },
             datalabels: {
                 color: "#000",
-                font: { weight: "default" as const, size: 11 },
+                font: { weight: "bold" as const, size: 14 },
                 formatter: (v: number) => (v > 0 ? v : ""),
                 anchor: "center" as const,
                 align: "center" as const,
@@ -229,7 +229,7 @@ const deliveryData = {
                 }}
             >
                 {/* Deliveries – 2x width */}
-                <div style={{ flex: 4, height: 400 }}>
+                <div style={{ flex: 4, height: 500 }}>
                     <h4 style={{ textAlign: "center" }}>Delivery Status</h4>
                     <div style={{ width: "100%", height: "100%" }}>
                         <Bar
@@ -249,7 +249,7 @@ const deliveryData = {
                 </div>
 
                 {/* Responses – 1x width */}
-                <div style={{ flex: 1, height: 150 }} className="pt-4">
+                <div style={{ flex: 1, height: 125 }} className="pt-4">
                     <h4 style={{ textAlign: "center" }}>User Responses</h4>
                     <div style={{ width: "100%", height: "100%" }}>
                         <Bar

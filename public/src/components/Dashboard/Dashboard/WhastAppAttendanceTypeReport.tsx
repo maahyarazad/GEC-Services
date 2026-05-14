@@ -135,7 +135,7 @@ export default function WhastAppAttendanceTypeReport() {
         color: "#000",
         font: {
           weight: "bold" as const,
-          size: 10,
+          size: 14,
         },
         formatter: (value: number) => (value > 0 ? value : ""),
         anchor: "center" as const,
