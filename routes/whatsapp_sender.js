@@ -300,42 +300,70 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
 
 router.get("/api/whatsapp/twilio-response-logs", async (req, res) => {
   try {
-    const query = `
-WITH ranked AS (
-  SELECT 
-    tr.id,
-    tr.received_at,
-    (cb.first_name || ' ' || cb.last_name) AS full_name,  
-    	cb.type,
-    json_extract(tr.payload, '$.WaId') AS WaId,
-    json_extract(tr.payload, '$.ProfileName') AS ProfileName,
-    json_extract(tr.payload, '$.MessageType') AS MessageType,
-    json_extract(tr.payload, '$.Body') AS Body,
-    tr.payload,
-    ROW_NUMBER() OVER (
-      PARTITION BY tr.id
-      ORDER BY tr.received_at DESC
-    ) AS rn
-  FROM twilio_responses tr
-  LEFT JOIN contact_book cb
-    ON cb.phone = '+' || json_extract(tr.payload, '$.WaId')
-)
-SELECT *
-FROM ranked where rn = 1
-ORDER BY id DESC;
+    const { pageNumber, limit, sortField, sortOrder, advancedClauses } =
+      dbService._QuerySqlConverter(req.query, "twilio_responses");
 
+    // Build parameterised WHERE clause from user filters
+    const whereParts = [];
+    const filterParams = [];
+    advancedClauses.forEach(({ clause, value }) => {
+      whereParts.push(clause);
+      if (value !== null) filterParams.push(value);
+    });
+    const whereClause = whereParts.length ? `WHERE ${whereParts.join(" AND ")}` : "";
 
-            `;
+    // Allowlist sort field to prevent injection
+    const ALLOWED_SORT = ["id", "received_at", "full_name", "type", "WaId", "ProfileName", "MessageType", "Body"];
+    const safeSortField = ALLOWED_SORT.includes(sortField) ? sortField : "id";
+    const safeSortOrder = sortOrder?.toUpperCase() === "ASC" ? "ASC" : "DESC";
 
-    const stmt = db.prepare(query);
-    const _result = stmt.all();
+    // CTE that deduplicates rows and joins contact names
+    const baseCTE = `
+      WITH ranked AS (
+        SELECT
+          tr.id,
+          tr.received_at,
+          (cb.first_name || ' ' || cb.last_name) AS full_name,
+          cb.type,
+          json_extract(tr.payload, '$.WaId')         AS WaId,
+          json_extract(tr.payload, '$.ProfileName')  AS ProfileName,
+          json_extract(tr.payload, '$.MessageType')  AS MessageType,
+          json_extract(tr.payload, '$.Body')         AS Body,
+          tr.payload,
+          ROW_NUMBER() OVER (PARTITION BY tr.id ORDER BY tr.received_at DESC) AS rn
+        FROM twilio_responses tr
+        LEFT JOIN contact_book cb
+          ON cb.phone = '+' || json_extract(tr.payload, '$.WaId')
+      ),
+      base AS (
+        SELECT id, received_at, full_name, type, WaId, ProfileName, MessageType, Body, payload
+        FROM ranked WHERE rn = 1
+      )
+    `;
+
+    const total = db
+      .prepare(`${baseCTE} SELECT COUNT(*) AS count FROM base ${whereClause}`)
+      .get(...filterParams).count;
+
+    const data = db
+      .prepare(
+        `${baseCTE}
+         SELECT * FROM base
+         ${whereClause}
+         ORDER BY ${safeSortField} ${safeSortOrder}
+         LIMIT ? OFFSET ?`
+      )
+      .all(...filterParams, limit, pageNumber * limit);
 
     return res.json({
       status: true,
-      data: _result,
+      data,
+      total,
+      page: pageNumber + 1,
+      pageSize: limit,
     });
   } catch (error) {
-    console.error("Error in /member:", error);
+    console.error("Error in /twilio-response-logs:", error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });

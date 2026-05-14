@@ -13,6 +13,7 @@ import { Button } from '@mui/material'
 import Modal from '../../Modal';
 import SlideMenu from '../../SlideMenu/SlideMenu';
 import { DataGrid } from '@mui/x-data-grid';
+import CustomDataGrid from '../../CustomDataGrid';
 import JSONPretty from 'react-json-pretty';
 import 'react-json-pretty/themes/monikai.css'; // optional styling
 import { useSnackbar } from '../../Providers/Snackbar';
@@ -662,18 +663,40 @@ const WhatsappBroadcast = () => {
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
 
+    const buildResponsesFilterParams = (filterItems = []) => {
+        const active = filterItems.filter(
+            (f) => f.value !== '' || ['isEmpty', 'isNotEmpty'].includes(f.operator)
+        );
+        if (active.length === 0) return '';
+        return active.map((f) =>
+            `filterField[]=${encodeURIComponent(f.field)}` +
+            `&filterOperator[]=${encodeURIComponent(f.operator)}` +
+            `&filterValue[]=${encodeURIComponent(f.value ?? '')}`
+        ).join('&');
+    };
+
     const fetchResponses = useCallback(
-        async () => {
+        async (pagination, sort, filters) => {
             setloading_logs(true);
             try {
+                const { field: sortField = '', sort: sortOrder = '' } = (sort ?? [])[0] ?? {};
+                const filterParams = buildResponsesFilterParams(filters ?? []);
 
-                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-response-logs?`, { credentials: "include" });
+                const queryParams = [
+                    `page=${(pagination?.page ?? 0) + 1}`,
+                    `pageSize=${pagination?.pageSize ?? 25}`,
+                    sortField  ? `sortField=${sortField}`   : '',
+                    sortOrder  ? `sortOrder=${sortOrder}`   : '',
+                    filterParams,
+                ].filter(Boolean).join('&');
 
+                const response = await fetch(
+                    `${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-response-logs?${queryParams}`,
+                    { credentials: 'include' }
+                );
                 const data = await response.json();
-
-
                 setResponses(data.data || []);
-                setRowCount(data.length || 0);
+                setResponsesRowCount(data.total || 0);
             } catch (err) {
                 console.error('Failed to fetch:', err);
             } finally {
@@ -697,13 +720,13 @@ const WhatsappBroadcast = () => {
     });
     const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
-    const [_paginationModel, _setPaginationModel] = useState({
-        page: 0,
-        pageSize: 100,
-    });
-
     const [logs, setLogs] = useState([]);
     const [responses, setResponses] = useState([]);
+    const [responsesRowCount, setResponsesRowCount] = useState(0);
+    const [responsesPaginationModel, setResponsesPaginationModel] = useState({ page: 0, pageSize: 25 });
+    const [responsesSortModel, setResponsesSortModel] = useState([{ field: 'id', sort: 'desc' }]);
+    const [responsesFilterItems, setResponsesFilterItems] = useState([]);
+    const [debouncedResponsesFilterItems, setDebouncedResponsesFilterItems] = useState([]);
 
     const now = new Date();
     const defaultStart = new Date();
@@ -755,11 +778,32 @@ const WhatsappBroadcast = () => {
 
     useEffect(() => {
         if (openPanel === 'delivery-logs') fetchLogs(paginationModel, sortModel, applyFilterTrigger, startDate, endDate);
-        if (openPanel === 'response-logs') fetchResponses();
+        if (openPanel === 'response-logs') fetchResponses(responsesPaginationModel, responsesSortModel, debouncedResponsesFilterItems);
+
+    }, [openPanel, paginationModel, sortModel, applyFilterTrigger, startDate, endDate, responsesPaginationModel, responsesSortModel, debouncedResponsesFilterItems]);
 
 
-    }, [openPanel, paginationModel, sortModel, applyFilterTrigger, startDate, endDate]);
+    // Smart debounce for response-logs filters — same pattern as contact-book
+    const responsesFilterSentRef = useRef([]);
 
+    const getResponsesEffectiveFilterKey = (items) =>
+        items
+            .filter((f) => f.value !== '' || ['isEmpty', 'isNotEmpty'].includes(f.operator))
+            .map(({ field, operator, value }) => `${field}:${operator}:${value ?? ''}`)
+            .sort()
+            .join('|');
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const currentKey = getResponsesEffectiveFilterKey(responsesFilterItems);
+            const sentKey    = getResponsesEffectiveFilterKey(responsesFilterSentRef.current);
+            if (currentKey === sentKey) return;
+            responsesFilterSentRef.current = responsesFilterItems;
+            setDebouncedResponsesFilterItems(responsesFilterItems);
+            setResponsesPaginationModel((prev) => ({ ...prev, page: 0 }));
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [responsesFilterItems]);
 
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
@@ -998,16 +1042,28 @@ const WhatsappBroadcast = () => {
 
                         {openPanel === 'response-logs' && (
                             <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
-                                <DataGrid
+                                <CustomDataGrid
                                     rows={responses}
                                     columns={responseColumns({ onViewJson, onViewHistory })}
-                                    paginationModel={_paginationModel}
-                                    onPaginationModelChange={_setPaginationModel}
-                                    rowsPerPageOptions={[25, 50, 100]}
-                                    pagination
-                                    disableRowSelectionOnClick
-                                    disableSelectionOnClick
+                                    loading={loading_logs}
                                     showToolbar
+
+                                    filterMode='server'
+                                    sortingMode='server'
+                                    paginationMode='server'
+
+                                    rowCount={responsesRowCount}
+                                    paginationModel={responsesPaginationModel}
+                                    onPaginationModelChange={setResponsesPaginationModel}
+                                    rowsPerPageOptions={[25, 50, 100]}
+
+                                    sortModel={responsesSortModel}
+                                    onSortModelChange={setResponsesSortModel}
+
+                                    filterItems={responsesFilterItems}
+                                    onFilterItemsChange={setResponsesFilterItems}
+
+                                    disableRowSelectionOnClick
                                 />
                             </div>
                         )}
