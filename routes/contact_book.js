@@ -340,4 +340,20 @@ router.delete("/api/contacts/remove-guest", (req, res) => {
   }
 });
 
+router.get("/api/contacts/report/missing-content-sid", (_req, res) => {
+  try {
+    const query = `
+      SELECT cb.type, COUNT(*) AS count
+      FROM contact_book AS cb
+      WHERE cb.contentSid IS NULL
+      GROUP BY cb.type
+    `;
+    const result = db.prepare(query).all();
+    res.status(200).json({ status: true, data: result });
+  } catch (error) {
+    console.error("Failed to fetch missing content SID report:", error);
+    res.status(500).json({ status: false, message: "Failed to fetch report" });
+  }
+});
+
 module.exports = router;

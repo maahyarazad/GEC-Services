@@ -32,9 +32,10 @@ import { IoStatsChartSharp } from "react-icons/io5";
 import WhastAppReport from '../Dashboard/WhastAppReport';
 import WhastAppTypeReport from '../Dashboard/WhastAppTypeReport';
 import WhastAppAttendanceTypeReport from '../Dashboard/WhastAppAttendanceTypeReport';
+import ContactBookMissingContentSidReport from '../Dashboard/ContactBookMissingContentSidReport';
 import { useNavigate, useLocation } from "react-router-dom";
 import FilterParams from '../FilterParams';
-import { MdInsights } from "react-icons/md";
+import { MdInsights, MdPersonSearch } from "react-icons/md";
 import { PiUserCircleCheckDuotone } from "react-icons/pi";
 import ContactBookDataGrid from './ContactBookDataGrid';
 import ViewModeButtonGroup from "./ViewModeButtonGroup";
@@ -810,7 +811,7 @@ const WhatsappBroadcast = () => {
     ////////////////////////////////////////////////////////////////////////////////
     const [showChart, setShowChart] = useState(false);
     useEffect(() => {
-        if (openPanel === 'report' || openPanel === 'report-type' || openPanel === 'report-type-attendance') {
+        if (openPanel === 'report' || openPanel === 'report-type' || openPanel === 'report-type-attendance' || openPanel === 'report-missing-sid') {
             const timer = setTimeout(() => setShowChart(true), 200);
             return () => clearTimeout(timer);
         } else {
@@ -831,6 +832,7 @@ const WhatsappBroadcast = () => {
             "contact-book": "contact-book",
             "event-list": "event-list",
             "update-map-url": "update-map-url",
+            "report-missing-sid": "report-missing-sid",
         };
 
         setOpenPanel(panelMap[modalView] ?? null);
@@ -914,6 +916,11 @@ const WhatsappBroadcast = () => {
             panel: 'report-type-attendance',
             title: 'Attendance Status By Contact Type',
             Component: WhastAppAttendanceTypeReport,
+        },
+        {
+            panel: 'report-missing-sid',
+            title: 'Remaining Invitations for the Current Event',
+            Component: ContactBookMissingContentSidReport,
         },
     ];
 
@@ -1166,6 +1173,10 @@ const WhatsappBroadcast = () => {
 
                 <IconButton title='Open Attendance Insight by Contact Type' onClick={() => handleSetOpenPanel('report-type-attendance')}>
                     <PiUserCircleCheckDuotone />
+                </IconButton>
+
+                <IconButton title='Remaining Invitations for the Current Event' onClick={() => handleSetOpenPanel('report-missing-sid')}>
+                    <MdPersonSearch />
                 </IconButton>
 
                 <IconButton title='Reset ClubTime invitation data from Contact Book' onClick={clearContactBook}>
