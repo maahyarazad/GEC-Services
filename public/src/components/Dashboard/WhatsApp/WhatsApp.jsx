@@ -105,6 +105,11 @@ const WhatsappBroadcast = () => {
 
 
     const [contactList, setContactList] = useState([]);
+    const [contactRowCount, setContactRowCount] = useState(0);
+    const [contactPaginationModel, setContactPaginationModel] = useState({ page: 0, pageSize: 25 });
+    const [contactSortModel, setContactSortModel] = useState([{ field: 'id', sort: 'asc' }]);
+    const [contactFilterItems, setContactFilterItems] = useState([]);
+    const [debouncedContactFilterItems, setDebouncedContactFilterItems] = useState([]);
     const [viewMode, setViewMode] = useState("default"); // "default" | "corrupted" | "guest_list"
     const [debouncedViewMode, setDebouncedViewMode] = useState(viewMode);
     const [messageState, setMessageState] = useState({
@@ -167,54 +172,70 @@ const WhatsappBroadcast = () => {
         fetchEvents();
     }, []);
 
-    const fetchContactData = useCallback(async () => {
+    const buildContactFilterParams = (filterItems = []) => {
+        const active = filterItems.filter(
+            (f) => f.value !== '' || ['isEmpty', 'isNotEmpty'].includes(f.operator)
+        );
+        if (active.length === 0) return '';
+        return active.map((f) =>
+            `filterField[]=${encodeURIComponent(f.field)}` +
+            `&filterOperator[]=${encodeURIComponent(f.operator)}` +
+            `&filterValue[]=${encodeURIComponent(f.value ?? '')}`
+        ).join('&');
+    };
+
+    const fetchContactData = useCallback(async (pagination, sort, filters) => {
         try {
-            setloading_logs(true)
+            setloading_logs(true);
 
-            const modeQueryMap = {
-                blacklist: "?blacklist=1",
-                corrupted: "?corrupted=1",
-                guest_list: "?guest_list=1",
-                default: "",
-            };
+            // Corrupted contacts: simple full-fetch, no server-side params
+            if (debouncedViewMode === 'corrupted') {
+                const response = await fetch(
+                    `${import.meta.env.VITE_SERVERURL}/api/contacts?corrupted=1`,
+                    { credentials: 'include' }
+                );
+                if (response.status === 200) {
+                    const response_data = await response.json();
+                    setContactList(response_data.data);
+                }
+                return;
+            }
 
-            const query = modeQueryMap[viewMode];
+            // Build mode flag
+            const modeFlag = debouncedViewMode === 'blacklist' ? 'blacklist=1'
+                : debouncedViewMode === 'guest_list' ? 'guest_list=1'
+                : '';
+
+            // Server-side params for default / blacklist only
+            const { field: sortField = '', sort: sortOrder = '' } = (sort ?? [])[0] ?? {};
+            const filterParams = buildContactFilterParams(filters ?? []);
+
+            const queryParams = [
+                modeFlag,
+                `page=${(pagination?.page ?? 0) + 1}`,
+                `pageSize=${pagination?.pageSize ?? 25}`,
+                sortField  ? `sortField=${sortField}`   : '',
+                sortOrder  ? `sortOrder=${sortOrder}`   : '',
+                filterParams,
+            ].filter(Boolean).join('&');
 
             const response = await fetch(
-                `${import.meta.env.VITE_SERVERURL}/api/contacts${modeQueryMap[viewMode] ?? ""}`,
-                { credentials: "include" }
+                `${import.meta.env.VITE_SERVERURL}/api/contacts?${queryParams}`,
+                { credentials: 'include' }
             );
-
 
             if (response.status === 200) {
                 const response_data = await response.json();
-
                 setContactList(response_data.data);
+                if (response_data.total !== undefined) setContactRowCount(response_data.total);
             }
         } catch (err) {
             console.error('Failed to fetch:', err);
         } finally {
-            setloading_logs(false)
+            setloading_logs(false);
         }
     }, [debouncedViewMode]);
 
-    const fetchCorruptedContactData = useCallback(async () => {
-        try {
-            setloading_logs(true)
-
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts/corrupted-contact-book`, { method: "GET", credentials: "include" });
-
-
-            if (response.status === 200) {
-                const response_data = await response.json();
-                setContactList(response_data.data);
-            }
-        } catch (err) {
-            console.error('Failed to fetch:', err);
-        } finally {
-            setloading_logs(false)
-        }
-    }, [])
 
 
 
@@ -226,9 +247,45 @@ const WhatsappBroadcast = () => {
     }, [viewMode]);
 
 
+    // Tracks the last effective filter state that was actually sent to the server
+    const contactFilterSentRef = useRef([]);
+
+    // Returns a stable string fingerprint of the filters that matter server-side
+    // (only filters with a non-empty value, or no-value operators like isEmpty/isNotEmpty)
+    const getEffectiveFilterKey = (items) =>
+        items
+            .filter((f) => f.value !== '' || ['isEmpty', 'isNotEmpty'].includes(f.operator))
+            .map(({ field, operator, value }) => `${field}:${operator}:${value ?? ''}`)
+            .sort()
+            .join('|');
+
+    // Reset pagination + filters when the view mode changes
     useEffect(() => {
-        if (openPanel === 'contact-book') fetchContactData();
-    }, [openPanel, fetchContactData]);
+        setContactPaginationModel({ page: 0, pageSize: 25 });
+        setContactFilterItems([]);
+        setDebouncedContactFilterItems([]);
+        contactFilterSentRef.current = [];
+    }, [viewMode]);
+
+    // Debounce filter changes — only sends to server when the effective
+    // filter values change, not when the user is just picking a column or operator
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const currentKey = getEffectiveFilterKey(contactFilterItems);
+            const sentKey    = getEffectiveFilterKey(contactFilterSentRef.current);
+            if (currentKey === sentKey) return; // field/operator change with no value — skip
+            contactFilterSentRef.current = contactFilterItems;
+            setDebouncedContactFilterItems(contactFilterItems);
+            setContactPaginationModel((prev) => ({ ...prev, page: 0 }));
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [contactFilterItems]);
+
+    useEffect(() => {
+        if (openPanel === 'contact-book') {
+            fetchContactData(contactPaginationModel, contactSortModel, debouncedContactFilterItems);
+        }
+    }, [openPanel, fetchContactData, contactPaginationModel, contactSortModel, debouncedContactFilterItems]);
 
     const onViewJson = (value, type, full_name) => {
 
@@ -271,7 +328,7 @@ const WhatsappBroadcast = () => {
                 showSnackbar(responseData.message, "error");
             }
 
-            await fetchContactData();
+            await fetchContactData(contactPaginationModel, contactSortModel, debouncedContactFilterItems);
 
 
         } catch (err) {
@@ -499,7 +556,7 @@ const WhatsappBroadcast = () => {
 
             } else {
                 showSnackbar(responseData.message, "success");
-                await fetchContactData();
+                await fetchContactData(contactPaginationModel, contactSortModel, debouncedContactFilterItems);
             }
         } catch (error) {
             console.error(error);
@@ -999,13 +1056,18 @@ const WhatsappBroadcast = () => {
                         <ContactBookDataGrid
                             contactList={contactList}
                             viewMode={viewMode}
-                            paginationModel={_paginationModel}
-                            setPaginationModel={_setPaginationModel}
+                            paginationModel={contactPaginationModel}
+                            setPaginationModel={setContactPaginationModel}
                             onModifyContact={onModifyContact}
                             onDeleteContact={onDeleteContact}
                             onSwitchBlacklist={onSwitchBlacklist}
                             onGuestAttend={onGuestAttend}
                             onRemoveGuest={onRemoveGuestRequest}
+                            rowCount={contactRowCount}
+                            sortModel={contactSortModel}
+                            onSortModelChange={setContactSortModel}
+                            filterItems={contactFilterItems}
+                            onFilterItemsChange={setContactFilterItems}
                         />
 
                     )}
@@ -1102,7 +1164,11 @@ const WhatsappBroadcast = () => {
                 title={`${contactModifyVal ? `Modify ${contactModifyVal.first_name} ${contactModifyVal.last_name}` : "Create a New Contact"}`}>
                 <CreateContact
                     initialValues={contactModifyVal}
-                    CloseModal={async () => { setViewCreateNewContact(false); setContactModifyVal(null); await fetchContactData(); }}
+                    CloseModal={async () => {
+                        setViewCreateNewContact(false);
+                        setContactModifyVal(null);
+                        await fetchContactData(contactPaginationModel, contactSortModel, debouncedContactFilterItems);
+                    }}
                 />
             </Modal>
 

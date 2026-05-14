@@ -160,19 +160,39 @@ router.get("/api/contacts", (req, res) => {
       return res.status(200).json({ status: true, data: result });
     }
 
-    // Handle default + blacklist
+    // Handle default + blacklist: server-side pagination, sorting, filtering
     const blacklistValue = blacklist === "1" || blacklist === "true" ? 1 : 0;
 
-    const query = `
-        SELECT *
-        FROM contact_book
-        WHERE phone IS NOT NULL AND blacklist = ?
-        ORDER BY ${TYPE_ORDER_SQL}
-        `;
+    // Strip mode flags so _QuerySqlConverter doesn't pick them up as legacy filters
+    const { blacklist: _bl, corrupted: _cor, guest_list: _gl, ...paginatedQuery } = req.query;
 
-    const result = db.prepare(query).all(blacklistValue);
+    const { pageNumber, limit, sortField, sortOrder, filters, jsonFilters, advancedClauses } =
+      dbService._QuerySqlConverter(paginatedQuery, "contact_book");
 
-    return res.status(200).json({ status: true, data: result });
+    const baseFilters = { ...filters, blacklist: blacklistValue };
+    const baseAdvancedClauses = [
+      { clause: "phone IS NOT NULL", value: null },
+      ...advancedClauses,
+    ];
+
+    const total = dbService._getTotalCount("contact_book", baseFilters, baseAdvancedClauses);
+
+    const data = dbService._getAll("contact_book", baseFilters, {
+      advancedClauses: baseAdvancedClauses,
+      jsonFilters,
+      sortField: sortField || "id",
+      sortOrder: sortOrder || "asc",
+      pageNumber,
+      limit,
+    });
+
+    return res.status(200).json({
+      status: true,
+      data,
+      total,
+      page: pageNumber + 1,
+      pageSize: limit,
+    });
   } catch (error) {
     console.error("Failed to fetch contacts:", error);
     res
