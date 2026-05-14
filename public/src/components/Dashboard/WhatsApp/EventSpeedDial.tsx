@@ -94,6 +94,7 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
                             position: 'fixed',
                             top: pos.top,
                             left: pos.left,
+                            transform: 'translateX(-100%)',
                             zIndex: 99999,
                             display: 'flex',
                             flexDirection: 'column',
