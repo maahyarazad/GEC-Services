@@ -1,14 +1,9 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { FaWhatsapp } from "react-icons/fa";
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import Typography from '@mui/material/Typography';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import { Switch, IconButton, Paper, Divider } from "@mui/material";
+import { Divider } from "@mui/material";
 import { Button } from '@mui/material'
 import Modal from '../../Modal';
 import SlideMenu from '../../SlideMenu/SlideMenu';
@@ -24,7 +19,7 @@ import { RiCheckDoubleFill } from "react-icons/ri";
 import { BsCalendar2Event } from "react-icons/bs";
 import CreateContact from "./CreateContact";
 import { IoAddCircleOutline } from "react-icons/io5";
-import { columns, responseColumns, tabstyle, normalizePhone } from './WhatsAppComponentConfig'
+import { columns, responseColumns, normalizePhone } from './WhatsAppComponentConfig'
 import MessageModal from "./MessageModal";
 import { useAlertDialog } from "../../Providers/AlertProvider";
 import QuickReply from "./QuickReply";
@@ -40,13 +35,12 @@ import { PiUserCircleCheckDuotone } from "react-icons/pi";
 import ContactBookDataGrid from './ContactBookDataGrid';
 import ViewModeButtonGroup from "./ViewModeButtonGroup";
 import EventSection from '../../Sections/EventSection';
-import EventSpeedDial from "./EventSpeedDial";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { setEvents, getShouldRefetch, clearRefetch, getSelectedEvent, triggerRefetchGuestList } from "../../../features/eventSlice";
 import { SiGooglemaps } from "react-icons/si";
 import UpdateMapUrl from './UpdateMapUrl';
 import TwilioCreditWarning from './TwilioCreditWarning';
-
+import { blueGrey } from '@mui/material/colors';
 import TwilioTemplateDataGrid from "./TwilioTemplateDataGrid";
 const WhatsappBroadcast = () => {
 
@@ -1187,7 +1181,7 @@ const WhatsappBroadcast = () => {
                         <FaWhatsapp size={17} style={{ marginRight: 4 }} /> Send Message
                     </Button>
 
-                    <Divider sx={{ my: 0.5, borderColor: 'grey.300' }} />
+                    <Divider sx={{ my: 1 }} component="div"/>
 
                     {/* MIDDLE — navigation & utility buttons */}
                     <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('contact-book')}>
@@ -1196,6 +1190,7 @@ const WhatsappBroadcast = () => {
                     <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('event-list')}>
                         <BsCalendar2Event size={17} style={{ marginRight: 4 }} /> Event List
                     </Button>
+                    <Divider sx={{ my: 1 }} component="div"/>
                     <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('response-logs')}>
                         <RiUserReceivedFill style={{ marginRight: 4 }} /> Response Logs
                     </Button>
@@ -1203,31 +1198,54 @@ const WhatsappBroadcast = () => {
                         <RiCheckDoubleFill style={{ marginRight: 4 }} /> Delivery Logs
                     </Button>
 
-                    <IconButton title='Reset ClubTime invitation data from Contact Book' onClick={clearContactBook}>
-                        <AiOutlineClear />
-                    </IconButton>
-                    <IconButton title='Update Google Map URL' onClick={() => handleSetOpenPanel('update-map-url')}>
-                        <SiGooglemaps />
-                    </IconButton>
+                    <Divider sx={{ my: 1 }} component="div"/>
+                     <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        sx={{ textTransform: 'none', justifyContent: 'flex-start' }} title='Clear Delivery Flag from Contact Book' onClick={clearContactBook}>
+                        <AiOutlineClear /> Clear Delivery Flag
+                    </Button>
+                    <Divider sx={{ my: 1 }} component="div"/>
+                    <Button
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        sx={{ textTransform: 'none', justifyContent: 'flex-start' }} title='Update Google Map URL' onClick={() => handleSetOpenPanel('update-map-url')}>
+                        <SiGooglemaps size={17} style={{ marginRight: 4 }} /> Update Google Map
+                    </Button>
 
                     {/* SPACER — pushes report icons to bottom */}
-                    <Box sx={{ flexGrow: 1 }} />
+                    
 
-                    <Divider sx={{ my: 0.5, borderColor: 'grey.300' }} />
+                    <Divider sx={{ my: 1 }} component="div"/>
 
                     {/* BOTTOM — report icon buttons */}
-                    <IconButton title='Open Delivery Report' onClick={() => handleSetOpenPanel('report')}>
-                        <IoStatsChartSharp />
-                    </IconButton>
-                    <IconButton title='Open Delivery Insight by Contact Type' onClick={() => handleSetOpenPanel('report-type')}>
-                        <MdInsights />
-                    </IconButton>
-                    <IconButton title='Open Attendance Insight by Contact Type' onClick={() => handleSetOpenPanel('report-type-attendance')}>
-                        <PiUserCircleCheckDuotone />
-                    </IconButton>
-                    <IconButton title='Remaining Invitations for the Current Event' onClick={() => handleSetOpenPanel('report-missing-sid')}>
-                        <MdPersonSearch />
-                    </IconButton>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                    
+                        sx={{ textTransform: 'none', justifyContent: 'flex-start', color: blueGrey[400], '&:hover': { color: blueGrey[400] }, borderColor: blueGrey[400] }} title='Open Delivery Report' onClick={() => handleSetOpenPanel('report')}>
+                        <IoStatsChartSharp size={17} style={{ marginRight: 4 }} /> Delivery Report
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        sx={{ textTransform: 'none', justifyContent: 'flex-start', color: blueGrey[400], '&:hover': { color: blueGrey[400] }, borderColor: blueGrey[400] }} title='Open Delivery Insight by Contact Type' onClick={() => handleSetOpenPanel('report-type')}>
+                        <MdInsights size={17} style={{ marginRight: 4 }} /> Delivery by Contact Type
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        sx={{ textTransform: 'none', justifyContent: 'flex-start', color: blueGrey[400], '&:hover': { color: blueGrey[400] }, borderColor: blueGrey[400] }} title='Open Attendance Insight by Contact Type' onClick={() => handleSetOpenPanel('report-type-attendance')}>
+                        <PiUserCircleCheckDuotone size={17} style={{ marginRight: 4 }} /> Attendance by Contact Type
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        sx={{ textTransform: 'none', justifyContent: 'flex-start', color: blueGrey[400], '&:hover': { color: blueGrey[400] }, borderColor: blueGrey[400] }} title='Remaining Invitations for the Current Event' onClick={() => handleSetOpenPanel('report-missing-sid')}>
+                        <MdPersonSearch size={17} style={{ marginRight: 4 }} /> Remaining Invitations
+                    </Button>
                 </Box>
 
                 {/* ── Vertical divider ── */}
