@@ -530,7 +530,7 @@ function GridToolbar({ columns, filters, onFiltersChange, visibleFields, onVisib
 
 // ─── Mobile Card View ─────────────────────────────────────────────────────────
 
-function MobileCardView({ rows, columns, loading }) {
+function MobileCardView({ rows, columns, loading, onRowClick, selectedRowId }) {
   if (loading) return null; // loading overlay is rendered by the parent
 
   if (rows.length === 0) {
@@ -549,7 +549,9 @@ function MobileCardView({ rows, columns, loading }) {
         <Card
           key={row.id}
           variant="outlined"
+          onClick={() => onRowClick?.(row)}
           sx={{
+            cursor: onRowClick ? 'pointer' : 'default',
             borderRadius: 2,
             boxShadow: 'none',
             transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
@@ -557,6 +559,10 @@ function MobileCardView({ rows, columns, loading }) {
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               borderColor: 'primary.light',
             },
+            ...(selectedRowId !== undefined && row.id === selectedRowId && {
+              borderColor: 'primary.main',
+              bgcolor: 'action.selected',
+            }),
           }}
         >
           <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
@@ -664,6 +670,8 @@ const CustomDataGrid = ({
   rowsPerPageOptions = [10, 25, 50, 100, 500],
   disableRowSelectionOnClick = true,
   getRowHeight,
+  onRowClick,
+  selectedRowId,
   sx,
 }) => {
   const theme = useTheme();
@@ -812,6 +820,8 @@ const CustomDataGrid = ({
               rows={pagedRows}
               columns={visibleColumns}
               loading={loading}
+              onRowClick={onRowClick}
+              selectedRowId={selectedRowId}
             />
           </Box>
         ) : (
@@ -879,9 +889,15 @@ const CustomDataGrid = ({
                       <TableRow
                         key={row.id}
                         hover
+                        onClick={() => onRowClick?.(row)}
                         sx={{
                           height: rowHeight,
+                          cursor: onRowClick ? 'pointer' : 'default',
                           '& td': { borderBottom: '1px solid', borderColor: 'divider' },
+                          ...(selectedRowId !== undefined && row.id === selectedRowId && {
+                            bgcolor: 'action.selected',
+                            '&:hover': { bgcolor: 'action.selected' },
+                          }),
                         }}
                       >
                         {visibleColumns.map((col) => (

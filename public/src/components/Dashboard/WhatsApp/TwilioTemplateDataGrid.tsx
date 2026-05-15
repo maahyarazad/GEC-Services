@@ -1,16 +1,14 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Box, Typography, Paper, Button, IconButton, Tooltip, Chip } from "@mui/material";
-import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams } from "@mui/x-data-grid";
+import _CustomDataGrid from '../../CustomDataGrid';
+const CustomDataGrid = _CustomDataGrid as React.ComponentType<Record<string, any>>;
 import { SiQuicklook } from "react-icons/si";
 import { IoCloseOutline } from "react-icons/io5";
 import { SiTwilio } from "react-icons/si";
 import { IoIosCopy } from "react-icons/io";
-import { MdDeleteOutline } from 'react-icons/md';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material';
-import { MdQuickreply } from "react-icons/md";
-import { RiEditLine } from "react-icons/ri";
 import { TbTrashX } from "react-icons/tb";
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -333,15 +331,17 @@ export default function TwilioTemplateDataGrid({
     const triggerRef = useRef<HTMLButtonElement>(null);
     const [triggerPos, setTriggerPos] = useState({ top: 0, right: 0 });
 
-    const columns: GridColDef<FlatRow>[] = [
+    const columns = [
         {
-            field: "type",
+            field: "group",
             headerName: "Type",
             width: 150,
-            renderCell: (params: GridRenderCellParams<FlatRow, string>) => (
+            filterable: true,
+            sortable: true,
+            renderCell: ({ row }: { row: FlatRow }) => (
                 <div>
                     {(() => {
-                        switch (params.row.group.toLowerCase()) {
+                        switch (row.group.toLowerCase()) {
                             case "whatsapp/authentication":
                                 return <Chip label="Auth" size="small" sx={{ bgcolor: "#E8F5E9", color: "#2E7D32", fontWeight: 600 }} />;
                             case "twilio/list-picker":
@@ -357,7 +357,7 @@ export default function TwilioTemplateDataGrid({
                             case "twilio/call-to-action":
                                 return <Chip label="Call to Action" size="small" sx={{ bgcolor: "#FFF8E1", color: "#F57F17", fontWeight: 600 }} />;
                             default:
-                                return <Chip label={params.row.group} size="small" sx={{ bgcolor: "#ECEFF1", color: "#37474F", fontWeight: 600 }} />;
+                                return <Chip label={row.group} size="small" sx={{ bgcolor: "#ECEFF1", color: "#37474F", fontWeight: 600 }} />;
                         }
                     })()}
                 </div>
@@ -367,67 +367,62 @@ export default function TwilioTemplateDataGrid({
             field: "friendlyName",
             headerName: "Name",
             width: 300,
+            filterable: true,
         },
         {
             field: "language",
             headerName: "Language",
             width: 100,
+            filterable: true,
         },
         {
             field: "dateCreated",
             headerName: "Created",
             width: 180,
+            filterable: true,
         },
         {
             field: "dateUpdated",
             headerName: "Updated",
             width: 180,
+            filterable: true,
         },
-
         {
-            field: "_",
+            field: "actions",
             headerName: "Actions",
             width: 180,
+            filterable: false,
             sortable: false,
-            renderCell: (params: GridRenderCellParams<FlatRow, string>) => (
+            renderCell: ({ row }: { row: FlatRow }) => (
                 <div>
-
-                    <IconButton title='View Template' onClick={(e) => handleQuickView(params.row, e)} ref={triggerRef}>
+                    <IconButton title='View Template' onClick={(e) => handleQuickView(row, e)} ref={triggerRef}>
                         <SiQuicklook size={22} color="#5C6BC0" />
                     </IconButton>
 
-
-
-                    <IconButton title='View in Twilio' onClick={() => { window.open(params.row.url, "_blank", "noopener,noreferrer") }}>
+                    <IconButton title='View in Twilio' onClick={() => { window.open(row.url, "_blank", "noopener,noreferrer") }}>
                         <SiTwilio size={22} />
                     </IconButton>
 
-
-
                     <Tooltip
                         title="Template Sid Copied!"
-                        open={params.row.sid === copiedId}
+                        open={row.sid === copiedId}
                         disableFocusListener
                         disableHoverListener
                         disableTouchListener
                     >
-                        <IconButton
-                            // title="Copy SID"
-                            onClick={() => handleCopy(params.row.sid)}
-                        >
-                            <IoIosCopy size={22} color={params.row.sid === copiedId ? "#4CAF50" : "#78909C"} />
+                        <IconButton onClick={() => handleCopy(row.sid)}>
+                            <IoIosCopy size={22} color={row.sid === copiedId ? "#4CAF50" : "#78909C"} />
                         </IconButton>
                     </Tooltip>
 
                     <Tooltip title="Delete Template">
-                        <IconButton size="small" color="error" onClick={() => onDelete(params.row)} sx={{
+                        <IconButton size="small" color="error" onClick={() => onDelete(row)} sx={{
                             color: "#d32f2f",
                             "&:hover": { backgroundColor: "#ffebee" },
                         }}>
                             <TbTrashX size={22} />
                         </IconButton>
                     </Tooltip>
-
                 </div>
             ),
         },
@@ -435,13 +430,12 @@ export default function TwilioTemplateDataGrid({
 
 
 
-    const [selectedRow, setSelectedRow] = React.useState<FlatRow | null>(null);
+    const [selectedRow, setSelectedRow] = useState<FlatRow | null>(null);
 
-    const handleRowClick = (params: GridRowParams<FlatRow>) => {
-        setSelectedRow(params.row);
-
+    const handleRowClick = (row: FlatRow) => {
+        setSelectedRow(row);
         handleMessageStateChange("inputValue", {});
-        handleMessageStateChange("content", params.row._raw);
+        handleMessageStateChange("content", row._raw);
     };
 
 
@@ -479,34 +473,13 @@ export default function TwilioTemplateDataGrid({
                 {/* Left: DataGrid */}
                 <div className="col-12" style={{ height: "100%" }}>
                     {rows.length > 0 ? (
-                        <DataGrid<FlatRow>
+                        <CustomDataGrid
                             rows={rows}
                             columns={columns}
-                            pageSizeOptions={[25, 50, 100]}
-                            initialState={{
-                                pagination: { paginationModel: { pageSize: 25 } },
-                            }}
+                            showToolbar
+                            rowsPerPageOptions={[25, 50, 100]}
                             onRowClick={handleRowClick}
-                            localeText={{
-                                footerRowSelected: () => {
-                                    return `Selected template: ${selectedRow?.friendlyName}` || "";
-                                }
-                            }}
-                            getRowId={(row) => row.sid}
-                            sx={{
-                                cursor: "pointer",
-                                "& .MuiDataGrid-row:hover": {
-                                    backgroundColor: "action.hover",
-                                },
-                                "& .MuiDataGrid-row.Mui-selected": {
-                                    backgroundColor: "action.selected",
-                                },
-                                 "& .MuiDataGrid-selectedRowCount": {
-        fontWeight: "bold",
-        color: "primary.main",
-        fontSize: "14px",
-    },
-                            }}
+                            selectedRowId={selectedRow?.id}
                         />
                     ) : (
                         <Typography>No data available</Typography>

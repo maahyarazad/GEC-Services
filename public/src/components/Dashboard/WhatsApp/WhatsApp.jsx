@@ -1141,7 +1141,9 @@ const WhatsappBroadcast = () => {
 
 
 
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+            <Box sx={{ display: {
+                sm: 'flex'
+            }, gap: 1, alignItems: 'flex-start' }}>
 
                 {/* ── Vertical action sidebar ── */}
                 <Box
@@ -1150,9 +1152,19 @@ const WhatsappBroadcast = () => {
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'stretch',
-                        gap: 0.5,
+                        gap: 1,
                         minWidth: 44,
                         flexShrink: 0,
+                        marginBottom:{
+                            xs: '5px',
+                            md: 'none',
+                        },
+                        maxHeight: {
+                            xs: '200px',
+                            md: '100vh',
+                        },
+
+                        overflowY: 'auto',
                     }}
                 >
                     {/* TOP — primary action */}
