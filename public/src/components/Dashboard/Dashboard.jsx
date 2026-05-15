@@ -11,6 +11,7 @@ import * as Yup from "yup";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
 
@@ -23,8 +24,7 @@ import { GiArchiveRegister } from "react-icons/gi";
 import { GoShieldLock } from "react-icons/go";
 import { GrCatalogOption } from "react-icons/gr";
 import { IoIdCardOutline } from "react-icons/io5";
-import { MdPictureAsPdf } from "react-icons/md";
-import { MdOutlineHealthAndSafety } from "react-icons/md";
+import { MdPictureAsPdf, MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight } from "react-icons/md";
 import { IoPeopleSharp } from "react-icons/io5";
 // Utils
 import { Header } from "../utils/Header";
@@ -233,6 +233,7 @@ const Admin = ({ data }) => {
     const [tabValue, setTabValue] = useState(0);
     const [burgerActive, setBurgerActive] = useState(false);
     const [showMenu, setShowMenu] = useState(null);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
     useEffect(() => {
         const setWidth = () => {
@@ -355,13 +356,16 @@ const Admin = ({ data }) => {
     ) : adminUser ? (
         <>
             <Header adminUser={adminUser} setAdminUser={setAdminUser} showMenu={showMenu} burgerActive={burgerActive} setBurgerActive={setBurgerActive} />
-            <div className="admin">
+            <div className={`admin${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
                 <div className={burgerActive ? "show" : ""}>
-                    <Box
-
-                        sx={{ flexGrow: 1, bgcolor: 'background.paper', display: 'flex' }}
-                    >
-
+                    {!showMenu && (
+                        <Box sx={{ display: 'flex', justifyContent: sidebarCollapsed ? 'center' : 'flex-end', borderBottom: '1px solid', borderColor: 'divider', p: 0.25 }}>
+                            <IconButton size="small" onClick={() => setSidebarCollapsed(prev => !prev)} title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+                                {sidebarCollapsed ? <MdChevronRight size={18} /> : <MdChevronLeft size={18} />}
+                            </IconButton>
+                        </Box>
+                    )}
+                    <Box sx={{ flexGrow: 1, bgcolor: 'background.paper', display: 'flex' }}>
                         <Tabs
                             orientation="vertical"
                             variant="scrollable"
@@ -378,8 +382,9 @@ const Admin = ({ data }) => {
                             }}
                             sx={{
                                 '& .MuiTab-root': {
-                                    minHeight: 45,  // reduce height of all tabs
+                                    minHeight: 45,
                                     py: 0.5,
+                                    ...(sidebarCollapsed && { minWidth: 56, px: 0 }),
                                 },
                             }}
                         >
@@ -388,16 +393,15 @@ const Admin = ({ data }) => {
                                     key={index}
                                     icon={tab.icon}
                                     iconPosition="start"
-                                    label={tab.label}
-                                    style={tabStyle}
+                                    label={sidebarCollapsed ? undefined : tab.label}
+                                    style={sidebarCollapsed ? { textTransform: 'none' } : tabStyle}
                                 />
                             ))}
-
                         </Tabs>
                     </Box>
                 </div>
                 <React.Suspense fallback={<FallBackLoader />}>
-                    <div >{content}</div>
+                    <div>{content}</div>
                 </React.Suspense>
             </div>
         </>
