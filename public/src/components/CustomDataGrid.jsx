@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Box,
   Table,
@@ -83,7 +84,7 @@ function applyOperator(cellValue, operator, filterValue) {
 
 // ─── Filter Panel ─────────────────────────────────────────────────────────────
 
-function FilterPanel({ columns, filters, onFiltersChange }) {
+function FilterPanel({ columns, filters, onFiltersChange, onClose }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const filterableColumns = columns.filter((c) => c.filterable !== false);
@@ -122,22 +123,26 @@ function FilterPanel({ columns, filters, onFiltersChange }) {
         // On mobile: fill most of the viewport width; on desktop: fixed width
         width: isMobile ? 'calc(100vw - 32px)' : 480,
         maxWidth: isMobile ? '100%' : 600,
-        boxSizing: 'border-box',
+        boxSizing: 'border-box'
       }}
     >
-      <Typography
-        variant="subtitle2"
-        sx={{
-          mb: 1.5,
-          fontWeight: 600,
-          color: 'text.secondary',
-          fontSize: 12,
-          textTransform: 'uppercase',
-          letterSpacing: 0.5,
-        }}
-      >
-        Filters
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+        <Typography
+          variant="subtitle2"
+          sx={{
+            fontWeight: 600,
+            color: 'text.secondary',
+            fontSize: 12,
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+          }}
+        >
+          Filters
+        </Typography>
+        <IconButton size="small" onClick={onClose} sx={{ color: 'text.secondary' }}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </Box>
 
       {filters.length === 0 && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: 13 }}>
@@ -187,6 +192,7 @@ function FilterPanel({ columns, filters, onFiltersChange }) {
                     value={filter.field}
                     onChange={(e) => updateFilter(filter.id, { field: e.target.value })}
                     sx={{ fontSize: 13 }}
+                    MenuProps={{ style: { zIndex: 1500 } }}
                   >
                     {filterableColumns.map((c) => (
                       <MenuItem key={c.field} value={c.field} sx={{ fontSize: 13 }}>
@@ -202,6 +208,7 @@ function FilterPanel({ columns, filters, onFiltersChange }) {
                     value={filter.operator}
                     onChange={(e) => updateFilter(filter.id, { operator: e.target.value })}
                     sx={{ fontSize: 13 }}
+                    MenuProps={{ style: { zIndex: 1500 } }}
                   >
                     {ops.map((op) => (
                       <MenuItem key={op.value} value={op.value} sx={{ fontSize: 13 }}>
@@ -312,10 +319,42 @@ function ColumnVisibilityPanel({ columns, visibleFields, onVisibilityChange }) {
 // ─── Toolbar ──────────────────────────────────────────────────────────────────
 
 function GridToolbar({ columns, filters, onFiltersChange, visibleFields, onVisibilityChange }) {
-  const [filterAnchor, setFilterAnchor] = useState(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterPos, setFilterPos] = useState({ top: 0, left: 0 });
+  const filterAnchorRef = useRef(null);
   const [colAnchor, setColAnchor] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const openFilter = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setFilterPos({ top: rect.bottom + 4, left: rect.left });
+    filterAnchorRef.current = e.currentTarget;
+    setFilterOpen(true);
+  };
+
+  // Keep panel anchored when user scrolls or resizes
+  useEffect(() => {
+    if (!filterOpen) return;
+    const reposition = () => {
+      const rect = filterAnchorRef.current?.getBoundingClientRect();
+      if (rect) setFilterPos({ top: rect.bottom + 4, left: rect.left });
+    };
+    window.addEventListener('scroll', reposition, true);
+    window.addEventListener('resize', reposition);
+    return () => {
+      window.removeEventListener('scroll', reposition, true);
+      window.removeEventListener('resize', reposition);
+    };
+  }, [filterOpen]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!filterOpen) return;
+    const handler = (e) => { if (e.key === 'Escape') setFilterOpen(false); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [filterOpen]);
 
   const activeCount = filters.filter(
     (f) => f.value !== '' || ['isEmpty', 'isNotEmpty'].includes(f.operator)
@@ -340,7 +379,7 @@ function GridToolbar({ columns, filters, onFiltersChange, visibleFields, onVisib
         {isMobile ? (
           <IconButton
             size="small"
-            onClick={(e) => setFilterAnchor(e.currentTarget)}
+            onClick={openFilter}
             color={activeCount > 0 ? 'primary' : 'default'}
           >
             <FilterListIcon fontSize="small" />
@@ -364,7 +403,7 @@ function GridToolbar({ columns, filters, onFiltersChange, visibleFields, onVisib
           <Button
             size="small"
             startIcon={<FilterListIcon />}
-            onClick={(e) => setFilterAnchor(e.currentTarget)}
+            onClick={openFilter}
             sx={{
               textTransform: 'none',
               fontSize: 13,
@@ -447,17 +486,29 @@ function GridToolbar({ columns, filters, onFiltersChange, visibleFields, onVisib
         />
       )}
 
-      {/* Popovers */}
-      <Popover
-        open={Boolean(filterAnchor)}
-        anchorEl={filterAnchor}
-        onClose={() => setFilterAnchor(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        PaperProps={{ elevation: 3, sx: { borderRadius: 2 } }}
-      >
-        <FilterPanel columns={columns} filters={filters} onFiltersChange={onFiltersChange} />
-      </Popover>
+      {/* Filter panel — portal into document.body so no parent re-render closes it */}
+      {filterOpen && createPortal(
+        <Paper
+          elevation={6}
+          sx={{
+            position: 'fixed',
+            top: filterPos.top,
+            left: filterPos.left,
+            zIndex: 1400,
+            borderRadius: 2,
+            maxHeight: 'calc(100vh - 80px)',
+            overflowY: 'auto',
+          }}
+        >
+          <FilterPanel
+            columns={columns}
+            filters={filters}
+            onFiltersChange={onFiltersChange}
+            onClose={() => setFilterOpen(false)}
+          />
+        </Paper>,
+        document.body
+      )}
 
       <Popover
         open={Boolean(colAnchor)}

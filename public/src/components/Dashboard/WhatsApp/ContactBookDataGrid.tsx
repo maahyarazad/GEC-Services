@@ -41,6 +41,7 @@ const ContactBookDataGrid = ({
     onSortModelChange,
     filterItems = [],
     onFilterItemsChange,
+    loading = false,
 }: {
     contactList: any[];
     viewMode: string;
@@ -56,6 +57,7 @@ const ContactBookDataGrid = ({
     onSortModelChange?: (m: SortItem[]) => void;
     filterItems?: FilterItem[];
     onFilterItemsChange?: (items: FilterItem[]) => void;
+    loading?: boolean;
 }) => {
     const selectedGuestList = useAppSelector(getSelectedGuestList);
 
@@ -75,6 +77,7 @@ const ContactBookDataGrid = ({
         onFilterItemsChange,
         showToolbar: true,
         rowsPerPageOptions: [25, 50, 100],
+        loading,
     };
 
     switch (viewMode) {
