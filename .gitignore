@@ -83,3 +83,4 @@ Thumbs.db
 twilio_media/
 invoice_json_storage/
 invoice_storage/
+backups/

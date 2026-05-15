@@ -36,6 +36,8 @@ const cron = require("node-cron");
 // Setup DB connection
 const betterSqlite3 = require("better-sqlite3");
 const Jobs = require("./services/sqllite_jobs.js");
+const MongoDbBackUpJob = require("./services/MongoDbBackUpJob.js");
+const dbService = require("./services/dbService.js");
 
 let db;
 
@@ -160,14 +162,33 @@ createWebSocketServer(server, allowedOrigins);
 // Maahyar CM: node cron expression is different than normal expression use this site to check 
 cron.schedule("0 */6 * * *", async () => {
   try {
-    console.log("Running background job every 6 hours:", new Date());
+    console.log("[Cron | Every 6h] Starting: GSheet sync + phone normalization —", new Date());
     await GSheetService.GSheetParser();
     await Jobs.normilizeMemberPhoneNumbers();
-    console.log("Background job finished at:", new Date());
-  } catch (err) {
-    console.error("Background job failed:", err);
+    console.log("[Cron | Every 6h] Completed —", new Date());
+  } catch (error) {
+    console.error("[Cron | Every 6h] Failed:", error);
+    dbService.create("error_log", {
+      error: error.toString(),
+      origin_function: "cron_6h_gsheet_normalize",
+    });
   }
 });
+
+cron.schedule("* * 1 * *", async () => {
+  try {
+    console.log("[Cron | Monthly] Starting: MongoDB backup —", new Date());
+    MongoDbBackUpJob.run();
+    console.log("[Cron | Monthly] Completed —", new Date());
+  } catch (error) {
+    console.error("[Cron | Monthly] Failed:", error);
+    dbService.create("error_log", {
+      error: error.toString(),
+      origin_function: "cron_monthly_mongo_backup",
+    });
+  }
+});
+
 
 
 
