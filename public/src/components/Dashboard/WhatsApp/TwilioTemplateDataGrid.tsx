@@ -468,24 +468,15 @@ export default function TwilioTemplateDataGrid({
 
 
     return (
-        <div style={{ height: "calc(100vh - 155px)", overflow: "hidden", position: "relative" }}>
-            <div className="row m-0" style={{ height: "calc(100vh - 185px)" }}>
-                {/* Left: DataGrid */}
-                <div className="col-12" style={{ height: "100%" }}>
-                    {rows.length > 0 ? (
-                        <CustomDataGrid
-                            rows={rows}
-                            columns={columns}
-                            showToolbar
-                            rowsPerPageOptions={[25, 50, 100]}
-                            onRowClick={handleRowClick}
-                            selectedRowId={selectedRow?.id}
-                        />
-                    ) : (
-                        <Typography>No data available</Typography>
-                    )}
-                </div>
-
+        <div style={{ height: "calc(100vh - 150px)", overflow: "hidden", position: "relative" }}>
+                    <CustomDataGrid
+                        rows={rows}
+                        columns={columns}
+                        showToolbar
+                        rowsPerPageOptions={[25, 50, 100]}
+                        onRowClick={handleRowClick}
+                        selectedRowId={selectedRow?.id}
+                    />
                 {/* Right: Preview Panel */}
                 <div
                     style={{
@@ -513,7 +504,7 @@ export default function TwilioTemplateDataGrid({
 
                     <TemplatePreview content={messageState.content} viewTemplate={viewTemplate} setViewTemplate={setViewTemplate} />
                 </div>
-            </div>
+           
         </div>
     );
 }
