@@ -192,6 +192,7 @@ function FilterPanel({ columns, filters, onFiltersChange, onClose }) {
                     value={filter.field}
                     onChange={(e) => updateFilter(filter.id, { field: e.target.value })}
                     sx={{ fontSize: 13 }}
+                    MenuProps={{ style: { zIndex: 1500 } }}
                   >
                     {filterableColumns.map((c) => (
                       <MenuItem key={c.field} value={c.field} sx={{ fontSize: 13 }}>
@@ -207,6 +208,7 @@ function FilterPanel({ columns, filters, onFiltersChange, onClose }) {
                     value={filter.operator}
                     onChange={(e) => updateFilter(filter.id, { operator: e.target.value })}
                     sx={{ fontSize: 13 }}
+                    MenuProps={{ style: { zIndex: 1500 } }}
                   >
                     {ops.map((op) => (
                       <MenuItem key={op.value} value={op.value} sx={{ fontSize: 13 }}>
