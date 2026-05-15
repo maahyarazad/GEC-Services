@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import { Switch, IconButton, Paper } from "@mui/material";
+import { Switch, IconButton, Paper, Divider } from "@mui/material";
 import { Button } from '@mui/material'
 import Modal from '../../Modal';
 import SlideMenu from '../../SlideMenu/SlideMenu';
@@ -1161,58 +1161,85 @@ const WhatsappBroadcast = () => {
 
 
 
-            <div className="pb-2 border-bottom border-1">
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
 
-                <IconButton title='Open Delivery Report' onClick={() => handleSetOpenPanel('report')}>
-                    <IoStatsChartSharp />
-                </IconButton>
+                {/* ── Vertical action sidebar ── */}
+                <Box
+                    id="action-tab"
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'stretch',
+                        gap: 0.5,
+                        minWidth: 44,
+                        flexShrink: 0,
+                    }}
+                >
+                    {/* TOP — primary action */}
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        sx={{ textTransform: 'none', justifyContent: 'flex-start' }}
+                        onClick={() => { handleMessageStateChange('massAction', true); }}
+                        disabled={messageState.content === null}
+                    >
+                        <FaWhatsapp size={17} style={{ marginRight: 4 }} /> Send Message
+                    </Button>
 
-                <IconButton title='Open Delivery Insight by Contact Type' onClick={() => handleSetOpenPanel('report-type')}>
-                    <MdInsights />
-                </IconButton>
+                    <Divider sx={{ my: 0.5, borderColor: 'grey.300' }} />
 
-                <IconButton title='Open Attendance Insight by Contact Type' onClick={() => handleSetOpenPanel('report-type-attendance')}>
-                    <PiUserCircleCheckDuotone />
-                </IconButton>
+                    {/* MIDDLE — navigation & utility buttons */}
+                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('contact-book')}>
+                        <RiContactsBook2Fill size={17} style={{ marginRight: 4 }} /> Contact Book
+                    </Button>
+                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('event-list')}>
+                        <BsCalendar2Event size={17} style={{ marginRight: 4 }} /> Event List
+                    </Button>
+                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('response-logs')}>
+                        <RiUserReceivedFill style={{ marginRight: 4 }} /> Response Logs
+                    </Button>
+                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('delivery-logs')}>
+                        <RiCheckDoubleFill style={{ marginRight: 4 }} /> Delivery Logs
+                    </Button>
 
-                <IconButton title='Remaining Invitations for the Current Event' onClick={() => handleSetOpenPanel('report-missing-sid')}>
-                    <MdPersonSearch />
-                </IconButton>
+                    <IconButton title='Reset ClubTime invitation data from Contact Book' onClick={clearContactBook}>
+                        <AiOutlineClear />
+                    </IconButton>
+                    <IconButton title='Update Google Map URL' onClick={() => handleSetOpenPanel('update-map-url')}>
+                        <SiGooglemaps />
+                    </IconButton>
 
-                <IconButton title='Reset ClubTime invitation data from Contact Book' onClick={clearContactBook}>
-                    <AiOutlineClear style={{ marginRight: 2 }} />
-                </IconButton>
+                    {/* SPACER — pushes report icons to bottom */}
+                    <Box sx={{ flexGrow: 1 }} />
 
-                <IconButton title='Reset ClubTime invitation data from Contact Book' onClick={() => handleSetOpenPanel('update-map-url')}>
-                    <SiGooglemaps style={{ marginRight: 2 }} />
-                </IconButton>
+                    <Divider sx={{ my: 0.5, borderColor: 'grey.300' }} />
 
-                <Button variant="contained" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => { handleMessageStateChange('massAction', true); }} disabled={messageState.content === null}>
-                    <FaWhatsapp size={17} style={{ marginRight: 2 }} /> Send Message
-                </Button>
+                    {/* BOTTOM — report icon buttons */}
+                    <IconButton title='Open Delivery Report' onClick={() => handleSetOpenPanel('report')}>
+                        <IoStatsChartSharp />
+                    </IconButton>
+                    <IconButton title='Open Delivery Insight by Contact Type' onClick={() => handleSetOpenPanel('report-type')}>
+                        <MdInsights />
+                    </IconButton>
+                    <IconButton title='Open Attendance Insight by Contact Type' onClick={() => handleSetOpenPanel('report-type-attendance')}>
+                        <PiUserCircleCheckDuotone />
+                    </IconButton>
+                    <IconButton title='Remaining Invitations for the Current Event' onClick={() => handleSetOpenPanel('report-missing-sid')}>
+                        <MdPersonSearch />
+                    </IconButton>
+                </Box>
 
-                <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => handleSetOpenPanel('contact-book')}>
-                    <RiContactsBook2Fill size={17} style={{ marginRight: 2 }} />
-                    Contact Book
-                </Button>
-                <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => handleSetOpenPanel('event-list')}>
-                    <BsCalendar2Event size={17} style={{ marginRight: 2 }} />
-                    Event List
-                </Button>
-                <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => handleSetOpenPanel('response-logs')}>
-                    <RiUserReceivedFill style={{ marginRight: 2 }} />
-                    Response Logs
-                </Button>
-                <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', marginRight: 1 }} onClick={() => handleSetOpenPanel('delivery-logs')}>
-                    <RiCheckDoubleFill style={{ marginRight: 2 }} />
-                    Delivery Logs
-                </Button>
+                {/* ── Vertical divider ── */}
+                <Divider orientation="vertical" flexItem sx={{ borderColor: 'grey.300' }} />
 
-            </div>
+                {/* ── Main content area ── */}
+                <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                    {groupedByTypeKey && <TwilioTemplateDataGrid groupedByTypeKey={groupedByTypeKey} messageState={messageState} handleMessageStateChange={handleMessageStateChange} />}
+                    {twilioCreditLow && <TwilioCreditWarning twilioCreditLow={twilioCreditLow} twilioCreditLowMessage={twilioCreditLowMessage} />}
+                </Box>
 
-            {groupedByTypeKey && <TwilioTemplateDataGrid groupedByTypeKey={groupedByTypeKey} messageState={messageState} handleMessageStateChange={handleMessageStateChange} />}
-
-            {twilioCreditLow && <TwilioCreditWarning twilioCreditLow={twilioCreditLow} twilioCreditLowMessage={twilioCreditLowMessage} />}
+            </Box>
 
 
 
