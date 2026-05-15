@@ -80,7 +80,7 @@ const ContactBookDataGrid = ({
     switch (viewMode) {
         case "blacklist":
             return (
-                <Box sx={{ width: '100%', height: 'calc(100vh - 175px)' }}>
+                <Box sx={{ width: '100%', height: { xs: 'calc(100vh - 170px)', md: 'calc(100vh - 150px)' } }}>
                     <CustomDataGrid
                         rows={contactList}
                         columns={contactBookColumn(columnProps)}
@@ -137,7 +137,7 @@ const ContactBookDataGrid = ({
         case "default":
         default:
             return (
-                <Box sx={{ width: '100%', height: 'calc(100vh - 175px)' }}>
+                <Box sx={{ width: '100%', height: { xs: 'calc(100vh - 170px)', md: 'calc(100vh - 150px)' } }}>
                     <CustomDataGrid
                         rows={contactList}
                         columns={contactBookColumn(contactBookColumnProps)}

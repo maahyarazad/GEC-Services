@@ -249,7 +249,7 @@ const MemberCardDataGrid = () => {
                 </IconButton>
             </Box>
 
-            <Box sx={{ width: '100%', height: { xs: '60vh', md: 'calc(100vh - 175px)' } }}>
+            <Box sx={{ width: '100%', height: { xs: 'calc(100vh - 150px)', md: 'calc(100vh - 175px)' } }}>
                 <CustomDataGrid
                     rows={members}
                     columns={columns({ onResendPasswordReset: handleResetPassword, loadingRowId, onSendInvitationEmail: confirmSendInvitationEmail })}
