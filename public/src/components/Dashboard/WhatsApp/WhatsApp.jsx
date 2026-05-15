@@ -1104,30 +1104,23 @@ const WhatsappBroadcast = () => {
                         </Box>
                     </div>
 
-                    {loading_logs ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                            <CircularProgress />
-                        </Box>
-                    ) : (
-
-                        <ContactBookDataGrid
-                            contactList={contactList}
-                            viewMode={viewMode}
-                            paginationModel={contactPaginationModel}
-                            setPaginationModel={setContactPaginationModel}
-                            onModifyContact={onModifyContact}
-                            onDeleteContact={onDeleteContact}
-                            onSwitchBlacklist={onSwitchBlacklist}
-                            onGuestAttend={onGuestAttend}
-                            onRemoveGuest={onRemoveGuestRequest}
-                            rowCount={contactRowCount}
-                            sortModel={contactSortModel}
-                            onSortModelChange={setContactSortModel}
-                            filterItems={contactFilterItems}
-                            onFilterItemsChange={setContactFilterItems}
-                        />
-
-                    )}
+                    <ContactBookDataGrid
+                        contactList={contactList}
+                        viewMode={viewMode}
+                        paginationModel={contactPaginationModel}
+                        setPaginationModel={setContactPaginationModel}
+                        onModifyContact={onModifyContact}
+                        onDeleteContact={onDeleteContact}
+                        onSwitchBlacklist={onSwitchBlacklist}
+                        onGuestAttend={onGuestAttend}
+                        onRemoveGuest={onRemoveGuestRequest}
+                        rowCount={contactRowCount}
+                        sortModel={contactSortModel}
+                        onSortModelChange={setContactSortModel}
+                        filterItems={contactFilterItems}
+                        onFilterItemsChange={setContactFilterItems}
+                        loading={loading_logs}
+                    />
                 </div>
             </SlideMenu>
 
