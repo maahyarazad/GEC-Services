@@ -965,113 +965,106 @@ const WhatsappBroadcast = () => {
             >
 
 
-                {loading_logs ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                        <CircularProgress />
-                    </Box>
-                ) : (
-                    <>
-                        {openPanel === 'delivery-logs' && (
-                            <div style={{ width: '100%', height: 'calc(100vh - 155px)' }}>
+                <>
+                    {openPanel === 'delivery-logs' && (
+                        <div style={{ width: '100%', height: 'calc(100vh - 155px)' }}>
 
-                                <div style={{ marginBottom: 12 }} className="d-flex">
-                                    <div >
+                            <div style={{ marginBottom: 12 }} className="d-flex">
+                                <div >
 
-                                        <label>
-                                            Start Date{" "}
-                                            <input className=""
-                                                type="date"
-                                                value={startDate}
-                                                onChange={(e) => setStartDate(e.target.value)}
-                                            />
-                                        </label>{" "}
-                                    </div>
-                                    <div className="ps-2">
-
-                                        <label>
-                                            End Date{" "}
-                                            <input
-                                                type="date"
-                                                className=""
-                                                value={endDate}
-                                                onChange={(e) => setEndDate(e.target.value)}
-                                            />
-                                        </label>
-                                    </div>
+                                    <label>
+                                        Start Date{" "}
+                                        <input className=""
+                                            type="date"
+                                            value={startDate}
+                                            onChange={(e) => setStartDate(e.target.value)}
+                                        />
+                                    </label>{" "}
                                 </div>
+                                <div className="ps-2">
 
-
-                                <DataGrid
-                                    rows={logs}
-                                    columns={columns({ onViewJson })}
-                                    getRowHeight={(params) => {
-                                        const companyData = params?.row?.company_data;
-
-                                        if (companyData) {
-                                            return 200;
-                                        }
-                                        return 52;
-                                    }}
-                                    // getRowClassName={(params) =>
-                                    //     params.row.company_data ? "companyRow" : ""
-                                    // }
-                                    rowsPerPageOptions={[25, 50, 100]}
-                                    paginationMode="server"
-                                    sortingMode="server"
-                                    filterMode="server"
-                                    rowCount={rowCount}
-                                    paginationModel={paginationModel}
-                                    onPaginationModelChange={(newModel) => {
-                                        setPaginationModel(newModel);
-                                    }}
-                                    onSortModelChange={(newModel) => {
-
-                                        setSortModel(newModel)
-                                    }}
-                                    filterModel={filterModel}
-                                    onFilterModelChange={(newModel) => {
-                                        setFilterModel(newModel); // use the raw model now
-                                    }}
-                                    sortModel={sortModel}
-                                    disableRowSelectionOnClick
-                                    disableSelectionOnClick
-                                    showToolbar
-                                    pagination
-                                />
+                                    <label>
+                                        End Date{" "}
+                                        <input
+                                            type="date"
+                                            className=""
+                                            value={endDate}
+                                            onChange={(e) => setEndDate(e.target.value)}
+                                        />
+                                    </label>
+                                </div>
                             </div>
-                        )}
-
-                        {openPanel === 'response-logs' && (
-                            <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
-                                <CustomDataGrid
-                                    rows={responses}
-                                    columns={responseColumns({ onViewJson, onViewHistory })}
-                                    loading={loading_logs}
-                                    showToolbar
-
-                                    filterMode='server'
-                                    sortingMode='server'
-                                    paginationMode='server'
-
-                                    rowCount={responsesRowCount}
-                                    paginationModel={responsesPaginationModel}
-                                    onPaginationModelChange={setResponsesPaginationModel}
-                                    rowsPerPageOptions={[25, 50, 100]}
-
-                                    sortModel={responsesSortModel}
-                                    onSortModelChange={setResponsesSortModel}
-
-                                    filterItems={responsesFilterItems}
-                                    onFilterItemsChange={setResponsesFilterItems}
-
-                                    disableRowSelectionOnClick
-                                />
-                            </div>
-                        )}
 
 
-                    </>
-                )}
+                            <DataGrid
+                                rows={logs}
+                                columns={columns({ onViewJson })}
+                                loading={loading_logs}
+                                getRowHeight={(params) => {
+                                    const companyData = params?.row?.company_data;
+
+                                    if (companyData) {
+                                        return 200;
+                                    }
+                                    return 52;
+                                }}
+                                // getRowClassName={(params) =>
+                                //     params.row.company_data ? "companyRow" : ""
+                                // }
+                                rowsPerPageOptions={[25, 50, 100]}
+                                paginationMode="server"
+                                sortingMode="server"
+                                filterMode="server"
+                                rowCount={rowCount}
+                                paginationModel={paginationModel}
+                                onPaginationModelChange={(newModel) => {
+                                    setPaginationModel(newModel);
+                                }}
+                                onSortModelChange={(newModel) => {
+
+                                    setSortModel(newModel)
+                                }}
+                                filterModel={filterModel}
+                                onFilterModelChange={(newModel) => {
+                                    setFilterModel(newModel); // use the raw model now
+                                }}
+                                sortModel={sortModel}
+                                disableRowSelectionOnClick
+                                disableSelectionOnClick
+                                showToolbar
+                                pagination
+                            />
+                        </div>
+                    )}
+
+                    {openPanel === 'response-logs' && (
+                        <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
+                            <CustomDataGrid
+                                rows={responses}
+                                columns={responseColumns({ onViewJson, onViewHistory })}
+                                loading={loading_logs}
+                                showToolbar
+
+                                filterMode='server'
+                                sortingMode='server'
+                                paginationMode='server'
+
+                                rowCount={responsesRowCount}
+                                paginationModel={responsesPaginationModel}
+                                onPaginationModelChange={setResponsesPaginationModel}
+                                rowsPerPageOptions={[25, 50, 100]}
+
+                                sortModel={responsesSortModel}
+                                onSortModelChange={setResponsesSortModel}
+
+                                filterItems={responsesFilterItems}
+                                onFilterItemsChange={setResponsesFilterItems}
+
+                                disableRowSelectionOnClick
+                            />
+                        </div>
+                    )}
+                </>
 
             </SlideMenu>
 
