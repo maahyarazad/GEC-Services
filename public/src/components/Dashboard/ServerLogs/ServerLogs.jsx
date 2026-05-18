@@ -75,14 +75,18 @@ export default function ServerLogs() {
         };
     }, [appendLines]);
 
-    // Connect on mount
-    useEffect(() => {
-        connect();
-        return () => {
-            esRef.current?.close();
-            clearTimeout(reconnectTimerRef.current);
-        };
-    }, [connect]);
+// Connect on mount — cleanup closes stream when component unmounts (route change)
+useEffect(() => {
+    connect();
+    return () => {
+        // Explicitly close the EventSource and cancel any pending reconnect
+        if (esRef.current) {
+            esRef.current.close();
+            esRef.current = null;
+        }
+        clearTimeout(reconnectTimerRef.current);
+    };
+}, []); // ← empty array: run once on mount, clean up on unmount
 
     // Reconnect when log type changes
     const handleTypeChange = (_e, val) => {
