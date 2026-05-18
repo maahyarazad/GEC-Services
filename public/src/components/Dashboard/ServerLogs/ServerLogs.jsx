@@ -68,6 +68,8 @@ export default function ServerLogs() {
         };
 
         es.onerror = () => {
+            if (esRef.current !== es) return; // stale: component unmounted or reconnected
+            esRef.current = null;             // ← null it out before reconnecting
             setConnected(false);
             setStatusMsg(`Disconnected — reconnecting in ${RECONNECT_DELAY_MS / 1000}s…`);
             es.close();
