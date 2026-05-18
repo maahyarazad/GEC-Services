@@ -177,16 +177,16 @@ cron.schedule("0 */6 * * *", async () => {
   }
 });
 
-cron.schedule("* * 1 * *", async () => {
+cron.schedule("0 0 * * *", async () => {
   try {
-    console.log("[Cron | Monthly] Starting: MongoDB backup —", new Date());
+    console.log("[Cron | daily] Starting: MongoDB backup —", new Date());
     MongoDbBackUpJob.run();
-    console.log("[Cron | Monthly] Completed —", new Date());
+    console.log("[Cron | daily] Completed —", new Date());
   } catch (error) {
-    console.error("[Cron | Monthly] Failed:", error);
+    console.error("[Cron | daily] Failed:", error);
     dbService.create("error_log", {
       error: error.toString(),
-      origin_function: "cron_monthly_mongo_backup",
+      origin_function: "cron_daily_mongo_backup",
     });
   }
 });
