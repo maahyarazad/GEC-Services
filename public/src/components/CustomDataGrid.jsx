@@ -826,7 +826,7 @@ const CustomDataGrid = ({
           </Box>
         ) : (
           /* ── Desktop: standard table layout ── */
-          <TableContainer sx={{ height: '100%', overflowX: 'auto', overflowY: 'auto' }}>
+          <TableContainer sx={{ height: '100%', overflowX: 'auto', overflowY: 'auto', isolation: 'isolate' }}>
             <Table
               stickyHeader
               size="small"
