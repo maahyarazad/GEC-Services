@@ -4,9 +4,36 @@ import Alert from "@mui/material/Alert";
 import Slide from "@mui/material/Slide";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
-import { IoMdClose } from "react-icons/io";
-import "sweetalert2/dist/sweetalert2.min.css";
-import { GEC, toastAlertSx, toastAlertErrorSx } from "../PartnerOnboarding/PartnerOnboardingStyles";
+import { toastAlertSx, toastAlertErrorSx } from "../PartnerOnboarding/PartnerOnboardingStyles";
+
+const neutralAlertSx = {
+    background: "#f7f7f7",
+    border: "1px solid rgba(0,0,0,0.1)",
+    color: "#141414",
+    fontWeight: 500,
+    borderRadius: "8px",
+       alignItems: "center",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
+    "& .MuiAlert-icon": { color: "#555" }, 
+     "& .MuiAlert-message": { padding: 0, fontSize: "0.875rem", lineHeight: 1.5 },
+};
+
+const successAlertSx = {
+    background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+    border: "1px solid rgba(34, 197, 94, 0.3)",
+    borderLeft: "4px solid #16a34a",
+    color: "#14532d",
+    fontWeight: 500,
+    borderRadius: "10px",
+    boxShadow: "0 4px 20px rgba(34, 197, 94, 0.12), 0 1px 4px rgba(0,0,0,0.06)",
+    padding: "10px 16px",
+    "& .MuiAlert-icon": { color: "#16a34a", fontSize: "20px" },
+    "& .MuiAlert-message": { padding: 0, fontSize: "0.875rem", lineHeight: 1.5 },
+    "& .MuiAlert-action": {
+        paddingTop: 0,
+        "& .MuiIconButton-root": { color: "#15803d", opacity: 0.7 },
+    },
+};
 
 const SnackbarContext = createContext();
 
@@ -41,75 +68,40 @@ export const SnackbarProvider = ({ children, useGECStyle = false }) => {
         closeSnackbar();
     };
 
-    // ── Default (original) snackbar ───────────────────────────────────────
-    const defaultAction = (
-        <span
-            aria-label="close"
-            onClick={handleClose}
-            style={{ cursor: "pointer" }}
-        >
-            <IoMdClose fontSize="24px" />
-        </span>
-    );
-
+    // ── Default snackbar (neutral for info, error-styled for errors) ─────
     const defaultSnackbar = (
         <Snackbar
             TransitionComponent={SlideTransition}
-            anchorOrigin={{
-                vertical: "top",
-                horizontal: isLargeScreen ? "right" : "center",
-            }}
-            slotProps={{
-                content: {
-                    sx: {
-                        position: "fixed",
-                        top: 15,
-                        fontSize: { xs: "1rem", sm: "1.2rem" },
-                        backgroundColor: "#f7f7f7",
-                        color: "#141414",
-                        padding: { xs: "12px 16px", sm: "16px 24px" },
-                        margin: 0,
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
-                        display: "flex",
-                        flexDirection: { xs: "column", sm: "row" },
-                        alignItems: "center",
-                        width: "90%",
-                        maxWidth: 600,
-                        minWidth: { lg: 300 },
-                        "& .MuiSnackbarContent-message": {
-                            width: "100%",
-                            margin: 0,
-                        },
-                    },
-                },
-            }}
+            anchorOrigin={{ vertical: "top", horizontal: isLargeScreen ? "right" : "center" }}
             open={open}
-            autoHideDuration={5000}
+            autoHideDuration={messageType === "error" ? 6000 : 5000}
             onClose={handleClose}
-            message={
-                <div className="d-flex justify-content-between col">
-                    <div className="d-flex justify-content-start col-9">
-                        <div className="d-flex justify-content-start align-items-center">
-                            {messageType === "success" ? (
-                                <div className="swal2-success">
-                                    <div className="swal2-success-line-tip"></div>
-                                    <div className="swal2-success-line-long"></div>
-                                </div>
-                            ) : (
-                                <div className="swal2-error"></div>
-                            )}
-                        </div>
-                        <div className="ps-2 d-flex justify-content-start align-items-center">
-                            {message}
-                        </div>
-                    </div>
-                    <div className="d-flex justify-content-end align-items-center col-3">
-                        {defaultAction}
-                    </div>
-                </div>
-            }
-        />
+            sx={{ zIndex: 1400, top: { xs: 16, sm: 24 } }}
+        >
+            <Alert
+                onClose={handleClose}
+                severity={messageType === "error" ? "error" : "info"}
+                sx={messageType === "error" ? toastAlertErrorSx : neutralAlertSx}
+            >
+                {message}
+            </Alert>
+        </Snackbar>
+    );
+
+    // ── Success snackbar ──────────────────────────────────────────────────
+    const successSnackbar = (
+        <Snackbar
+            TransitionComponent={SlideTransition}
+            anchorOrigin={{ vertical: "top", horizontal: isLargeScreen ? "right" : "center" }}
+            open={open}
+            autoHideDuration={4000}
+            onClose={handleClose}
+            sx={{ zIndex: 1400, top: { xs: 16, sm: 24 } }}
+        >
+            <Alert onClose={handleClose} severity="success" sx={successAlertSx}>
+                {message}
+            </Alert>
+        </Snackbar>
     );
 
     // ── GEC styled snackbar ───────────────────────────────────────────────
@@ -146,7 +138,11 @@ export const SnackbarProvider = ({ children, useGECStyle = false }) => {
     return (
         <SnackbarContext.Provider value={{ showSnackbar, closeSnackbar }}>
             {children}
-            {useGECStyle ? gecSnackbar : defaultSnackbar}
+            {useGECStyle
+                ? gecSnackbar
+                : messageType === "success"
+                    ? successSnackbar
+                    : defaultSnackbar}
         </SnackbarContext.Provider>
     );
 };

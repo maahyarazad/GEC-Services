@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import "./login.css";
 import { useNavigate } from "react-router-dom";
+import GECLogo from "../../assets/background.webp";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import {
@@ -184,6 +185,13 @@ const Login = ({ emailRequired, event }) => {
     return (
         <div className="login">
             <div>
+                <div className="d-flex align-items-center mb-3">
+                    <img alt="GEC Logo" src={GECLogo} height={50} style={{ borderRadius: 6 }} />
+                    <div className="d-flex flex-column ps-3" style={{ fontWeight: 300 }}>
+                        <div>GEC Services</div>
+                        <div style={{ fontSize: 10, color: "#6b6347" }}>Member Portal</div>
+                    </div>
+                </div>
                 {emailRequired ? (
                 <h4>
                     Please check the back of your member card for the Card ID number to proceed further.

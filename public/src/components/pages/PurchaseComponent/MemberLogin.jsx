@@ -123,7 +123,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 showMessage("Email not found. Please speak with your HR department as soon as possible.", 10000);
             }
         } catch (err) {
-            showMessage(err);
+            showSnackbar(err.message, "error");
             console.error('Error fetching data:', err);
         } finally {
             setIsSearching(false);

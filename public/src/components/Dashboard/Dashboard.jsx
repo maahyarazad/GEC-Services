@@ -57,7 +57,7 @@ const ServerLogs = React.lazy(() => import("./ServerLogs/ServerLogs"));
 // Styles
 import "./Dashboard.css";
 import "../utils/login.css";
-
+import GECLogo from "../../assets/background.webp";
 
 const validationSchema = Yup.object({
     login_code: Yup.string().required('Login code is required!'),
@@ -416,7 +416,14 @@ const Admin = ({ data }) => {
     ) : (
         <div className="login">
             <div>
-                <h4>Welcome back! Please log in to continue.</h4>
+                  <div className="d-flex align-items-center mb-3">
+                                    <img alt="GEC Logo" src={GECLogo} height={50} style={{ borderRadius: 6 }} />
+                                    <div className="d-flex flex-column ps-3" style={{ fontWeight: 300 }}>
+                                        <div>GEC Services</div>
+                                        <div style={{ fontSize: 10, color: "#6b6347" }}>Admin Dashboard</div>
+                                    </div>
+                                </div>
+                <h4>Login into Admin Dashboard</h4>
                 <Formik
                     initialValues={initialValues}
                     validationSchema={validationSchema}

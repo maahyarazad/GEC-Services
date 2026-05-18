@@ -95,7 +95,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 })
             });
 
-
+            
             const result = await response.json();
 
             if (result.data) {
@@ -118,7 +118,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 showMessage("Email not found. Please speak with your HR department as soon as possible.", 10000);
             }
         } catch (err) {
-            showMessage(err);
+            showSnackbar(err.message, "error");
             console.error('Error fetching data:', err);
         } finally {
             setIsSearching(false);
@@ -126,13 +126,10 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
     };
 
     const getToken = async () => {
-
         try {
             const { google_pass_token, ...memberDataWithoutToken } = wizardState.member;
 
-
-
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/member-login`, {
+            await fetch(`${import.meta.env.VITE_SERVERURL}/member-login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -140,15 +137,9 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 credentials: 'include',
                 body: JSON.stringify(memberDataWithoutToken)
             });
-
-
-
-
         } catch (err) {
-
+            showSnackbar(err.message, "error");
             console.error('Error fetching data:', err);
-        } finally {
-
         }
     };
 
@@ -175,6 +166,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
 
 
         } catch (err) {
+            showSnackbar(err.message, "error");
             console.error('Error fetching data:', err);
         }
     }, []);
@@ -255,7 +247,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
             if (otp_response.status === 429) {
 
                 const response_data = await otp_response.json();
-                showSnackbar(response_data.error, "");
+                showSnackbar(response_data.error, "error");
                 return;
 
             }
@@ -280,6 +272,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
 
         } catch (e) {
             statusRef.current.innerText = e.message;
+
         }
     };
 
