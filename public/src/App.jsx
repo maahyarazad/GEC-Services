@@ -15,6 +15,7 @@ import 'nprogress/nprogress.css';
 import NProgress from 'nprogress';
 
 import NotFound from "./components/pages/NotFound";
+import Footer from "./components/utils/Footer";
 import { WebSocketProvider } from "./components/Dashboard/WebSocketContext";
 import { Buffer } from 'buffer';
 window.Buffer = Buffer;
@@ -63,6 +64,9 @@ function TitleManager() {
 }
 
 function AppRoutes() {
+    const location = useLocation();
+    const isAdminRoute = location.pathname.startsWith("/admin");
+
     return (
         <>
             <RouteLoader />
@@ -74,7 +78,11 @@ function AppRoutes() {
                 <Route path="/registration/:event/success" element={<SuccessTemplatePage />} />
                 <Route path="/guest-registration/:eventSlug" element={<GuestRegistration />} />
                 <Route path="/membership" element={<PurchaseMemberShip />} />
-                <Route path="/partner-onboarding" element={<PartnerOnboarding />} />
+                <Route path="/partner-onboarding" element={
+                    <SnackbarProvider useGECStyle={true}>
+                        <PartnerOnboarding />
+                    </SnackbarProvider>
+                } />
                 <Route
                     path="/admin"
                     element={
@@ -85,6 +93,7 @@ function AppRoutes() {
                 />
                 <Route path="*" element={<NotFound />} />
             </Routes>
+            {!isAdminRoute && <Footer />}
         </>
     );
 }

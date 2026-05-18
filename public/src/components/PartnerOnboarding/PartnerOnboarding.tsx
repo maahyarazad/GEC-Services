@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -8,7 +7,6 @@ import Container from "@mui/material/Container";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import Paper from "@mui/material/Paper";
-import Snackbar from "@mui/material/Snackbar";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Stepper from "@mui/material/Stepper";
@@ -48,10 +46,10 @@ import {
     reviewCardSx,
     dropZoneSx,
     termsBannerSx,
-    toastAlertSx,
-    footerLinkSx, toastAlertErrorSx
+    footerLinkSx,
 } from "./PartnerOnboardingStyles.tsx";
 import { ErrorMessage } from "formik";
+import { useSnackbar } from "../Providers/Snackbar";
 
 // ── Steps Config ──────────────────────────────────────────────────────────
 const STEPS = ["Login", "Upload Document", "Review Submission"];
@@ -88,7 +86,6 @@ const INITIAL_WIZARD_STATE = {
 
     // Step 1 — Upload
     uploadedFile: null,         // the File object
-    uploadComplete: false,      // true once file successfully submitted to server
     valid: false,
     csvBlob: null,
     csvFile: null,
@@ -96,11 +93,7 @@ const INITIAL_WIZARD_STATE = {
     faultyRecords: null,
     startProcessingXLSX: false,
     // Step 2 — Review
-    toastOpen: false,           // submission success toast
-    toastErrorOpen: false,           // submission success toast
-    successToastMessage: "",           // submission success toast
-    ErrorToastMessage: "",           // submission success toast
-    uploading: false,           // submission success toast
+    uploading: false,
     wizardCompleted: false
 
 };
@@ -111,6 +104,7 @@ export default function PartnerOnboarding() {
     const [wizardState, setWizardState] = useState(INITIAL_WIZARD_STATE);
 
     const setWiz = (patch) => setWizardState((prev) => ({ ...prev, ...patch }));
+    const { showSnackbar } = useSnackbar();
 
     const otpRef = useRef();
     const statusRef = useRef();
@@ -169,13 +163,13 @@ export default function PartnerOnboarding() {
             });
             if (res.status === 429) {
                 const data = await res.json();
-                if (statusRef.current) statusRef.current.textContent = data.error;
+                showSnackbar(data.error || "Too many attempts. Please try again later.", "error");
                 return;
             }
 
             if (res.status === 404) {
                 const data = await res.json();
-                if (statusRef.current) statusRef.current.textContent = data.message;
+                showSnackbar(data.message || "Email not found.", "error");
                 return;
             }
 
@@ -189,12 +183,11 @@ export default function PartnerOnboarding() {
                 setWiz({ otpResponseStatus: true, otpResponseMessage: data.message, otpValid: true });
                 otpFocus?.current?.scrollIntoView({ behavior: "smooth", block: "center" });
             } else {
-
+                const data = await res.json().catch(() => ({}));
+                showSnackbar(data.message || `Unexpected error (${res.status}). Please try again.`, "error");
             }
-
-
         } catch (e) {
-            if (statusRef.current) statusRef.current.innerText = e.message;
+            showSnackbar(e.message || "Network error. Please check your connection.", "error");
         }
     };
 
@@ -229,10 +222,7 @@ export default function PartnerOnboarding() {
                 }
             }
         } catch (err) {
-            if (statusRef.current) {
-                statusRef.current.textContent = `Verification failed: ${err.message}`;
-                statusRef.current.classList.add("text-danger");
-            }
+            showSnackbar(err.message || "Verification failed. Please try again.", "error");
         }
     };
 
@@ -256,41 +246,33 @@ export default function PartnerOnboarding() {
                 dropped.name.toLowerCase().endsWith(".xlsx");
 
             if (!isXlsx) {
-                setWiz({
-                    toastOpen: true,
-                    toastErrorOpen: true,
-                    ErrorToastMessage: 'Only .xlsx files are allowed',
-                });
+                showSnackbar("Only .xlsx files are allowed.", "error");
                 return;
             }
 
-            if (dropped) setWiz({ uploadedFile: dropped, uploadComplete: true });
+            if (dropped) setWiz({ uploadedFile: dropped });
             
             const result = await validateAndConvertXlsx(dropped);
 
             if (!result.valid) {
-
-
-                setWiz({
-                    uploadedFile: null,
-                    uploadError: result.error,
-                });
+                setWiz({ uploadedFile: null });
+                showSnackbar(result.error || "Failed to parse file. Please upload a valid .xlsx file.", "error");
                 return;
             }
 
             // Store the ready-to-post CSV file alongside the original
             setWiz({
-
                 csvBlob: result?.csvBlob,
                 csvFile: result?.csvFile,
                 rowCount: result?.rowCount,
                 valid: result?.valid,
                 faultyRecords: result.faultyRecords,
-                startProcessingXLSX: false
+                startProcessingXLSX: false,
             });
+            showSnackbar(SUCCESS_TOAST_MESSAGES[0], "success");
             
         } catch (e) {
-
+            showSnackbar(e.message || "An unexpected error occurred while processing the file.", "error");
         } finally {
             setWiz({ startProcessingXLSX: false });
         }
@@ -322,26 +304,16 @@ export default function PartnerOnboarding() {
                 }
             );
             if (res.ok) {
-                setWiz({ wizardCompleted: true, toastOpen: true });
-            }
-
-            if (res.status === 401) {
-                const data = await res.json();
-
-                setWiz({
-                    toastOpen: true,
-                    toastErrorOpen: true,
-                    ErrorToastMessage: data.message
-                });
-
+                setWiz({ wizardCompleted: true });
+                showSnackbar(SUCCESS_TOAST_MESSAGES[1], "success");
                 return;
             }
 
-
-
+            const data = await res.json().catch(() => ({}));
+            showSnackbar(data.message || `Submission failed (${res.status}). Please try again.`, "error");
 
         } catch (err) {
-            console.error("Error fetching data:", err);
+            showSnackbar(err.message || "Network error. Please check your connection.", "error");
         }
         finally {
             setWiz({ uploading: false });
@@ -616,22 +588,6 @@ export default function PartnerOnboarding() {
 
     const panels = [StepLogin, StepUpload, StepReview];
 
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
-    useEffect(() => {
-        timerRef.current = setTimeout(() => {
-            setWiz({ toastOpen: false });
-            setWiz({ uploadComplete: false });
-        }, 4000);
-
-
-        return () => {
-            if (timerRef.current) {
-                clearTimeout(timerRef.current);
-            }
-        };
-    }, [wizardState.toastOpen, wizardState.uploadComplete]);
-
-
     const isNextButtonDisabled = () => {
 
         if (activeStep === 0 && !wizardState.authenticate) {
@@ -744,32 +700,6 @@ export default function PartnerOnboarding() {
                 </Paper>
             </Container>
 
-            {/* Toast */}
-            <Snackbar
-                open={wizardState.toastOpen || wizardState.uploadComplete || wizardState.toastErrorOpen}
-                onClose={() => setWiz({ toastOpen: false, uploadComplete: false, toastErrorOpen: false })}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-                autoHideDuration={wizardState.toastErrorOpen ? 6000 : 4000}
-            >
-                {wizardState.toastErrorOpen ? (
-                    <Alert
-                        onClose={() => setWiz({ toastOpen: false, toastErrorOpen: false })}
-                        severity="error"
-                        sx={toastAlertErrorSx}
-                    >
-                        {wizardState.ErrorToastMessage}
-                    </Alert>
-                ) : (
-                    <Alert
-                        onClose={() => setWiz({ toastOpen: false, uploadComplete: false })}
-                        severity="success"
-                        sx={toastAlertSx}
-                    >
-                        {wizardState.uploadComplete ? SUCCESS_TOAST_MESSAGES[0] : ""}
-                        {wizardState.toastOpen ? SUCCESS_TOAST_MESSAGES[1] : ""}
-                    </Alert>
-                )}
-            </Snackbar>
         </Box>
     );
 }
