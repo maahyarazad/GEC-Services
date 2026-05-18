@@ -162,10 +162,10 @@ createWebSocketServer(server, allowedOrigins);
 
 // https://crontab.guru/
 // Maahyar CM: node cron expression is different than normal expression use this site to check 
-cron.schedule("0 */6 * * *", async () => {
+cron.schedule("* */6 * * *", async () => {
   try {
     console.log("[Cron | Every 6h] Starting: GSheet sync + phone normalization —", new Date());
-    await GSheetService.GSheetParser();
+    // await GSheetService.GSheetParser();
     await Jobs.normilizeMemberPhoneNumbers();
     console.log("[Cron | Every 6h] Completed —", new Date());
   } catch (error) {
