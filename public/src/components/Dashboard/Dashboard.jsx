@@ -24,7 +24,7 @@ import { GiArchiveRegister } from "react-icons/gi";
 import { GoShieldLock } from "react-icons/go";
 import { GrCatalogOption } from "react-icons/gr";
 import { IoIdCardOutline } from "react-icons/io5";
-import { MdPictureAsPdf, MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight } from "react-icons/md";
+import { MdPictureAsPdf, MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight, MdTerminal } from "react-icons/md";
 import { IoPeopleSharp } from "react-icons/io5";
 // Utils
 import { Header } from "../utils/Header";
@@ -42,6 +42,7 @@ const SurveyDataGrid = React.lazy(() => import("../Sections/SurveyDataGrid"));
 const PartnerOnboardingSection = React.lazy(() => import("../Sections/PartnerOnboardingSection"));
 const WhatsappBroadcast = React.lazy(() => import("./WhatsApp/WhatsApp"));
 const PDFGenerator = React.lazy(() => import("./PDFGenerator/PDFGenerator"));
+const ServerLogs = React.lazy(() => import("./ServerLogs/ServerLogs"));
 
 // import RegistrationList from "./Registration/RegistrationList";
 // import RegistrationDataGrid from "../gallery/RegistrationDataGrid";
@@ -228,6 +229,10 @@ const Admin = ({ data }) => {
             icon: <FaWhatsapp size={20} />,
             label: "WhatsApp Broadcast",
         },
+        {
+            icon: <MdTerminal size={20} />,
+            label: "Server Logs",
+        },
     ];
 
     const [tabValue, setTabValue] = useState(0);
@@ -338,6 +343,9 @@ const Admin = ({ data }) => {
             break;
         case 8:
             content = <WhatsappBroadcast />;
+            break;
+        case 9:
+            content = <ServerLogs />;
             break;
     }
 
