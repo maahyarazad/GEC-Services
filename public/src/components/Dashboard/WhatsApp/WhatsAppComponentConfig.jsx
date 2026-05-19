@@ -169,6 +169,7 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'type', headerName: 'Type', width: 110, filterable: true },
     { field: 'title', headerName: 'Title', width: 70, filterable: true },
+    { field: 'phone', headerName: 'Phone Number', width: 170, filterable: true },
     { field: 'language', headerName: 'language', width: 80, filterable: true },
     { field: 'first_name', headerName: 'First Name', width: 160, filterable: true },
     { field: 'last_name', headerName: 'Last Name', width: 160, filterable: true },

@@ -10,6 +10,7 @@ interface GuestRow {
   id: string | number;
   type: string;
   title: string;
+  phone: string;
   language: string;
   first_name: string;
   last_name: string;
