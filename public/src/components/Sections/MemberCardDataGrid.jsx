@@ -30,6 +30,7 @@ const red = '#cc0000';
 
 const columns = ({ onResendPasswordReset: _onResendPasswordReset, loadingRowId: _loadingRowId, onSendInvitationEmail }) => [
     { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'active', headerName: 'Active', width: 70 },
     {
         field: 'type',
         headerName: 'Type',
