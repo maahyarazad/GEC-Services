@@ -1,6 +1,6 @@
 
-import React, { useState, useRef, useEffect } from "react";
-import { Box, Typography, Paper, Button, IconButton, Tooltip, Chip } from "@mui/material";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { Box, Typography, Paper, Button, IconButton, Tooltip, Chip, CircularProgress } from "@mui/material";
 import _CustomDataGrid from '../../CustomDataGrid';
 const CustomDataGrid = _CustomDataGrid as React.ComponentType<Record<string, any>>;
 import { SiQuicklook } from "react-icons/si";
@@ -297,6 +297,24 @@ export default function TwilioTemplateDataGrid({
         }))
     );
 
+    const [approvals, setApprovals] = useState<Record<string, any>>({});
+    const [approvalsLoading, setApprovalsLoading] = useState(false);
+
+    const fetchApprovals = useCallback(async () => {
+        setApprovalsLoading(true);
+        try {
+            const res = await fetch(`${import.meta.env.VITE_SERVERURL}/api/twilio/approvals`, { credentials: 'include' });
+            const data = await res.json();
+            if (data.status) setApprovals(data.approvals ?? {});
+        } catch (e) {
+            console.error('Failed to fetch approvals', e);
+        } finally {
+            setApprovalsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { fetchApprovals(); }, [fetchApprovals]);
+
     const [copiedId, setCopiedId] = useState<string | null>(null);
 
     const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -386,6 +404,32 @@ export default function TwilioTemplateDataGrid({
             headerName: "Updated",
             width: 180,
             filterable: true,
+        },
+        {
+            field: "approval",
+            headerName: "WhatsApp Approval",
+            width: 160,
+            filterable: false,
+            sortable: false,
+            renderCell: ({ row }: { row: FlatRow }) => {
+                if (approvalsLoading) return <CircularProgress size={14} />;
+                const a = approvals[row.sid];
+                const status: string = a?.whatsapp?.status ?? 'unknown';
+                const colorMap: Record<string, { bg: string; color: string }> = {
+                    approved:   { bg: '#E8F5E9', color: '#2E7D32' },
+                    pending:    { bg: '#FFF8E1', color: '#F57F17' },
+                    rejected:   { bg: '#FFEBEE', color: '#C62828' },
+                    unknown:    { bg: '#ECEFF1', color: '#607D8B' },
+                };
+                const style = colorMap[status] ?? colorMap.unknown;
+                return (
+                    <Chip
+                        label={status.charAt(0).toUpperCase() + status.slice(1)}
+                        size="small"
+                        sx={{ bgcolor: style.bg, color: style.color, fontWeight: 600, fontSize: 11 }}
+                    />
+                );
+            },
         },
         {
             field: "actions",
