@@ -42,6 +42,8 @@ import UpdateMapUrl from './UpdateMapUrl';
 import TwilioCreditWarning from './TwilioCreditWarning';
 import { blueGrey } from '@mui/material/colors';
 import TwilioTemplateDataGrid from "./TwilioTemplateDataGrid";
+import CreateTwilioTemplate from "./CreateTwilioTemplate";
+import { SiTwilio } from "react-icons/si";
 const WhatsappBroadcast = () => {
 
     const location = useLocation();
@@ -1127,6 +1129,17 @@ const WhatsappBroadcast = () => {
 
             </SlideMenu>
 
+            <SlideMenu
+                id="create-template"
+                isOpen={openPanel === 'create-template'}
+                onClose={() => handleSetOpenPanel(null)}
+                headerTitle="Create Twilio Template"
+            >
+                <div style={{ width: '100%', padding: 8 }}>
+                    <CreateTwilioTemplate onSuccess={() => { handleSetOpenPanel(null); fetchData(); }} />
+                </div>
+            </SlideMenu>
+
 
             <Modal
                 isOpen={viewJsonModal}
@@ -1211,6 +1224,16 @@ const WhatsappBroadcast = () => {
                         size="small"
                         sx={{ textTransform: 'none', justifyContent: 'flex-start' }} title='Update Google Map URL' onClick={() => handleSetOpenPanel('update-map-url')}>
                         <SiGooglemaps size={17} style={{ marginRight: 4 }} /> Update Google Map
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        color="secondary"
+                        size="small"
+                        sx={{ textTransform: 'none', justifyContent: 'flex-start' }}
+                        title="Create Twilio Template"
+                        onClick={() => handleSetOpenPanel('create-template')}
+                    >
+                        <SiTwilio size={17} style={{ marginRight: 4 }} /> Create Template
                     </Button>
 
                     {/* SPACER — pushes report icons to bottom */}

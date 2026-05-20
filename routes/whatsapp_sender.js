@@ -6,6 +6,10 @@ const {
   handleAutoResponse,
   fetchHistory,
 } = require("../services/whatsAppSender");
+const twilioClient = require("twilio")(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
 const crypto = require("crypto");
 
 const dbService = require("../services/dbService");
@@ -94,6 +98,129 @@ router.get("/api/whatsapp/list", async (req, res) => {
     res
       .status(500)
       .json({ status: false, message: "Failed to fetch WhatsApp templates" });
+  }
+});
+
+router.post("/api/twilio/create-template", async (req, res) => {
+  try {
+    const { friendly_name, language, body, variable_example, buttons, type } = req.body;
+
+    if (!friendly_name || !language || !body) {
+      return res.status(400).json({ status: false, message: "friendly_name, language, and body are required" });
+    }
+
+    const templateType = type || "twilio/quick-reply";
+    const actions = (buttons || []).map((b, i) => ({
+      title: b.title || null,
+      id: b.id || `btn_${i + 1}`,
+    }));
+
+    const typePayload =
+      templateType === "twilio/quick-reply"
+        ? { body, actions }
+        : { body };
+
+    let _variable;
+    if (typePayload.body.includes(`{{`)) {
+        const match = typePayload.body.match(/\{\{(.*?)\}\}/);
+        if (match) {
+            _variable = match[1]; // captured text between {{ and }}
+        }
+    }
+
+
+    const payload = {
+      friendly_name,
+      language,
+      ...(variable_example ? { variables: { [_variable]: variable_example } } : {}),
+      types: {
+        [templateType]: typePayload,
+      },
+    };
+
+    const credentials = Buffer.from(
+      `${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`
+    ).toString("base64");
+
+    const twilioRes = await fetch("https://content.twilio.com/v1/Content", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Basic ${credentials}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await twilioRes.json();
+
+    if (!twilioRes.ok) {
+      return res.status(twilioRes.status).json({ status: false, message: data?.message || "Twilio error", details: data });
+    }
+
+    // Submit for WhatsApp approval (Marketing category)
+    const approvalRes = await fetch(
+      `https://content.twilio.com/v1/Content/${data.sid}/ApprovalRequests/whatsapp`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${credentials}`,
+        },
+        body: JSON.stringify({
+          name: friendly_name,
+          category: "MARKETING",
+        }),
+      }
+    );
+
+    const approvalData = await approvalRes.json();
+
+    return res.status(201).json({
+      status: true,
+      template: data,
+      approval: approvalRes.ok ? approvalData : { error: approvalData },
+    });
+  } catch (error) {
+    console.error("Error in /api/twilio/create-template:", error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
+router.get("/api/twilio/approvals", async (req, res) => {
+  try {
+    const result = await fetchContentTemplates();
+    if (!result.status) {
+      return res.status(500).json({ status: false, message: "Failed to fetch templates" });
+    }
+
+    const credentials = Buffer.from(
+      `${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`
+    ).toString("base64");
+
+    const approvals = await Promise.all(
+      result.result.map(async (template) => {
+        try {
+          const r = await fetch(
+            `https://content.twilio.com/v1/Content/${template.sid}/ApprovalRequests`,
+            { headers: { Authorization: `Basic ${credentials}` } }
+          );
+          const data = await r.json();
+          return { sid: template.sid, approval: r.ok ? data : null };
+        } catch {
+          return { sid: template.sid, approval: null };
+        }
+      })
+    );
+
+    const approvalMap = {};
+    for (const { sid, approval } of approvals) {
+      approvalMap[sid] = approval;
+    }
+
+    return res.json({ status: true, approvals: approvalMap });
+  } catch (error) {
+    console.error("Error in /api/twilio/approvals:", error);
+    res.status(500).json({ status: false, message: "Server error" });
   }
 });
 
