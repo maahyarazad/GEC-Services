@@ -350,12 +350,14 @@ CREATE TABLE IF NOT EXISTS member_card (
     email VARCHAR(150),
     card_expiry_date DATETIME,
     last_login DATETIME,
-metadata_createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    metadata_createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     metadata_modifiedAt DATETIME,
-     google_pass_token TEXT ,
-     serial_number TEXT,
-     partner TEXT,
-     birthday datetime
+    google_pass_token TEXT ,
+    serial_number TEXT,
+    partner TEXT,
+    birthday datetime,
+    active BOOLEAN,
+    remarks TEXT
 );
 
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import CustomDataGrid from '../CustomDataGrid';
 import { useAlertDialog } from '../Providers/AlertProvider';
 import { useSnackbar } from '../Providers/Snackbar';
@@ -6,14 +6,23 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
-import DashboardCards from '../Dashboard/Dashboard/DashboardCards';
+import TextField from '@mui/material/TextField';
+import Chip from '@mui/material/Chip';
+import Typography from '@mui/material/Typography';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
 import { MdWorkspacePremium } from "react-icons/md";
 import { BsFiletypeCsv } from "react-icons/bs";
 import { GrVirtualMachine } from "react-icons/gr";
-import Modal from '../Modal';
+import SlideMenu from '../SlideMenu/SlideMenu';
 import { IconButton } from '@mui/material';
-import { FaUsersViewfinder } from "react-icons/fa6";
 import { SiMinutemailer } from "react-icons/si";
+import { MdPeople } from "react-icons/md";
 
 const paidBlue = '#0f0faf';
 const nonpaidBlue = '#55729e';
@@ -97,11 +106,79 @@ const getEffectiveFilterKey = (items) =>
         .sort()
         .join('|');
 
+// ─── Simple searchable mini-table ────────────────────────────────────────────
+
+const MiniTable = ({ title, rows, columns: cols, loading, searchPlaceholder }) => {
+    const [search, setSearch] = useState('');
+
+    const filtered = useMemo(() => {
+        if (!search.trim()) return rows;
+        const q = search.trim().toLowerCase();
+        return rows.filter((r) =>
+            cols.some((c) => String(r[c.key] ?? '').toLowerCase().includes(q))
+        );
+    }, [rows, search, cols]);
+
+    return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 175px)' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>{title}</Typography>
+            <TextField
+                size="small"
+                placeholder={searchPlaceholder ?? 'Search…'}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                sx={{ mb: 1 }}
+                fullWidth
+            />
+            <TableContainer component={Paper} variant="outlined" sx={{ flex: 1, overflow: 'auto' }}>
+                {loading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                        <CircularProgress size={24} />
+                    </Box>
+                ) : (
+                    <Table size="small" stickyHeader>
+                        <TableHead>
+                            <TableRow>
+                                {cols.map((c) => (
+                                    <TableCell key={c.key} sx={{ fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                        {c.label}
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {filtered.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={cols.length} align="center" sx={{ color: 'text.secondary', py: 3 }}>
+                                        No data
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                filtered.map((row, i) => (
+                                    <TableRow key={i} hover>
+                                        {cols.map((c) => (
+                                            <TableCell key={c.key} sx={{ whiteSpace: 'nowrap' }}>
+                                                {c.render ? c.render(row) : (row[c.key] ?? '—')}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                )}
+            </TableContainer>
+        </Box>
+    );
+};
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 const MemberCardDataGrid = () => {
     const [loadingRowId, setLoadingRowId] = useState(null);
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [viewStatus, setViewStatus] = useState(false);
+    const [showMembersGrid, setShowMembersGrid] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [sortModel, setSortModel] = useState([{ field: 'id', sort: 'desc' }]);
@@ -110,8 +187,84 @@ const MemberCardDataGrid = () => {
     const [debouncedFilterItems, setDebouncedFilterItems] = useState([]);
     const filterSentRef = useRef([]);
 
+    // Partner stats (left table)
+    const [partnerStats, setPartnerStats] = useState([]);
+    const [partnerStatsLoading, setPartnerStatsLoading] = useState(false);
+
+    // GEC grouped partners (right table)
+    const [gecPartners, setGecPartners] = useState([]);
+    const [gecLoading, setGecLoading] = useState(false);
+
     const { openDialog } = useAlertDialog();
     const { showSnackbar } = useSnackbar();
+
+    // ─── Partner stats fetch ─────────────────────────────────────────────────
+
+    useEffect(() => {
+        setPartnerStatsLoading(true);
+        fetch(`${import.meta.env.VITE_SERVERURL}/api/member-card-partner-stats`, { credentials: 'include' })
+            .then((r) => r.json())
+            .then((d) => setPartnerStats(d.data ?? []))
+            .catch((e) => console.error('partner stats fetch failed', e))
+            .finally(() => setPartnerStatsLoading(false));
+    }, []);
+
+    // ─── GEC grouped partners fetch ──────────────────────────────────────────
+
+    const fetchGecPartners = useCallback(async () => {
+        setGecLoading(true);
+        try {
+            const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/gec-grouped-partners`, { credentials: 'include' });
+            const d = await r.json();
+            setGecPartners(d.data ?? []);
+        } catch (e) {
+            console.error('GEC partners fetch failed', e);
+        } finally {
+            setGecLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchGecPartners();
+    }, [fetchGecPartners]);
+
+    // ─── Right-table rows: GEC partners + local-only rows with chip ──────────
+
+    const rightTableRows = useMemo(() => {
+        const statsTitles = new Set(partnerStats.map((s) => (s.partner ?? '').toLowerCase().trim()));
+        const gecOnlyPartners = gecPartners
+            .filter((p) => !statsTitles.has((p.group_name ?? '').toLowerCase().trim()))
+            .map((p) => ({ ...p, _notInServices: true }));
+        return [...partnerStats.map((s) => ({ group_name: s.partner, member_count: s.member_count, _notInServices: false })), ...gecOnlyPartners];
+    }, [gecPartners, partnerStats]);
+
+    const summaryStats = useMemo(() => {
+        const inServices = rightTableRows.filter((r) => !r._notInServices).length;
+        const notInServices = rightTableRows.filter((r) => r._notInServices).length;
+        const totalMembers = partnerStats.reduce((sum, s) => sum + (Number(s.member_count) || 0), 0);
+        return { inServices, notInServices, totalMembers };
+    }, [rightTableRows, partnerStats]);
+
+    const leftCols = [
+        { key: 'partner', label: 'Partner' },
+        { key: 'member_count', label: 'Members' },
+    ];
+
+    const rightCols = [
+        { key: 'group_name', label: 'Partner (GEC)' },
+        {
+            key: '_notInServices',
+            label: 'Status',
+            render: (row) =>
+                row._notInServices ? (
+                    <Chip label="Not in Services" size="small" color="warning" variant="outlined" sx={{ fontSize: 11 }} />
+                ) : (
+                    <Chip label="In Services" size="small" color="success" variant="outlined" sx={{ fontSize: 11 }} />
+                ),
+        },
+    ];
+
+    // ─── Members DataGrid logic ──────────────────────────────────────────────
 
     const fetchData = useCallback(async (pagination, sort, filters) => {
         setLoading(true);
@@ -141,7 +294,6 @@ const MemberCardDataGrid = () => {
         }
     }, []);
 
-    // Smart debounce — only fires when effective filter values change
     useEffect(() => {
         const timer = setTimeout(() => {
             const currentKey = getEffectiveFilterKey(filterItems);
@@ -155,8 +307,11 @@ const MemberCardDataGrid = () => {
     }, [filterItems]);
 
     useEffect(() => {
+        if (!showMembersGrid) return;
         fetchData(paginationModel, sortModel, debouncedFilterItems);
-    }, [paginationModel, sortModel, debouncedFilterItems]);
+    }, [paginationModel, sortModel, debouncedFilterItems, showMembersGrid]);
+
+    // ─── Handlers ────────────────────────────────────────────────────────────
 
     const confirmSendInvitationEmail = (member_data) => {
         openDialog(
@@ -232,56 +387,117 @@ const MemberCardDataGrid = () => {
         }
     };
 
+    const handleOpenMembersGrid = () => {
+        setShowMembersGrid(true);
+        fetchData(paginationModel, sortModel, debouncedFilterItems);
+    };
+
+    // ─── Render ───────────────────────────────────────────────────────────────
+
     return (
-        <Box sx={{ padding: 1 }}>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+        <Box sx={{ padding: 1, display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)' }}>
+
+            {/* Top action bar */}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1, alignItems: 'center' }}>
+                <Button
+                    variant="contained"
+                    startIcon={<MdPeople size={20} />}
+                    onClick={handleOpenMembersGrid}
+                    sx={{ fontSize: 13, textTransform: 'none' }}
+                >
+                    Corporate Members
+                </Button>
+
                 <Button
                     variant="outlined"
                     startIcon={<BsFiletypeCsv size={20} />}
                     onClick={handleExport}
-                    sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none', wordBreak: 'break-all' }}
+                    sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none' }}
                 >
-                    {isDownloading ? <CircularProgress size={20} color="inherit" /> : 'Download (All Records) CSV'}
+                    {isDownloading ? <CircularProgress size={20} color="inherit" /> : 'Download CSV'}
                 </Button>
 
-                <IconButton title='View MemberShip Status' onClick={() => setViewStatus(true)} style={{ padding: 0, margin: 0 }}>
-                    <FaUsersViewfinder size={30} />
-                </IconButton>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <Chip
+                        label={`Legacy Partners In Services: ${summaryStats.inServices}`}
+                        size="small"
+                        color="success"
+                        variant="outlined"
+                    />
+                    <Chip
+                        label={`Not in Services: ${summaryStats.notInServices}`}
+                        size="small"
+                        color="warning"
+                        variant="outlined"
+                    />
+                    <Chip
+                        label={`Total Members (Local DB): ${summaryStats.totalMembers.toLocaleString()}`}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                    />
+                </Box>
             </Box>
 
-            <Box sx={{ width: '100%', height: { xs: 'calc(100vh - 150px)', md: 'calc(100vh - 175px)' } }}>
-                <CustomDataGrid
-                    rows={members}
-                    columns={columns({ onResendPasswordReset: handleResetPassword, loadingRowId, onSendInvitationEmail: confirmSendInvitationEmail })}
-                    loading={loading}
-                    showToolbar
+            {/* Two-column partner tables */}
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, flex: 1, minHeight: 0 }}>
 
-                    filterMode="server"
-                    sortingMode="server"
-                    paginationMode="server"
+                {/* Left — Local DB partner stats */}
+                <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                    <MiniTable
+                        title="Partner Member Counts (Local DB)"
+                        rows={partnerStats}
+                        columns={leftCols}
+                        loading={partnerStatsLoading}
+                        searchPlaceholder="Search partner…"
+                    />
+                </Box>
 
-                    rowCount={rowCount}
-                    paginationModel={paginationModel}
-                    onPaginationModelChange={setPaginationModel}
-                    rowsPerPageOptions={[25, 50, 100]}
-
-                    sortModel={sortModel}
-                    onSortModelChange={setSortModel}
-
-                    filterItems={filterItems}
-                    onFilterItemsChange={setFilterItems}
-
-                    disableRowSelectionOnClick
-                />
+                {/* Right — GEC grouped partners + chip indicators */}
+                <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                    <MiniTable
+                        title="Legacy Admin Partners"
+                        rows={rightTableRows}
+                        columns={rightCols}
+                        loading={gecLoading || partnerStatsLoading}
+                        searchPlaceholder="Search GEC partner…"
+                    />
+                </Box>
             </Box>
 
-            <Modal
-                isOpen={viewStatus}
-                onRequestClose={() => setViewStatus(false)}
-                title="MemberShip Status"
+            {/* Corporate Members DataGrid slide menu */}
+            <SlideMenu
+                isOpen={showMembersGrid}
+                onClose={() => setShowMembersGrid(false)}
+                headerTitle="Corporate Members"
             >
-                <DashboardCards />
-            </Modal>
+                <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <CustomDataGrid
+                        rows={members}
+                        columns={columns({ onResendPasswordReset: handleResetPassword, loadingRowId, onSendInvitationEmail: confirmSendInvitationEmail })}
+                        loading={loading}
+                        showToolbar
+
+                        filterMode="server"
+                        sortingMode="server"
+                        paginationMode="server"
+
+                        rowCount={rowCount}
+                        paginationModel={paginationModel}
+                        onPaginationModelChange={setPaginationModel}
+                        rowsPerPageOptions={[25, 50, 100]}
+
+                        sortModel={sortModel}
+                        onSortModelChange={setSortModel}
+
+                        filterItems={filterItems}
+                        onFilterItemsChange={setFilterItems}
+
+                        disableRowSelectionOnClick
+                    />
+                </Box>
+            </SlideMenu>
+
         </Box>
     );
 };

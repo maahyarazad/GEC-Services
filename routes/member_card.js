@@ -267,6 +267,48 @@ router.post("/member-logout", (req, res) => {
   }
 });
 
+router.get("/api/gec-grouped-partners", async (req, res) => {
+  try {
+   const baseUrl = process.env.ENVIRONMENT === "PRODUCTION" ? `${process.env.GEC__ORIGIN}/api/`: `${process.env.GEC__ORIGIN}`
+
+    const fetchRes = await fetch(`${baseUrl}partners/get-grouped-partner-list`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        services_secret: process.env.SERVICES_SECRET,
+      },
+    });
+
+    
+    const partnerData = await fetchRes.json();
+
+    if (!fetchRes.ok || !partnerData.status) {
+      return res.status(502).json({ status: false, message: "GEC fetch failed" });
+    }
+
+    return res.json({ status: true, data: partnerData?.data ?? [] });
+  } catch (error) {
+    console.error("Error in /api/gec-grouped-partners:", error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
+router.get("/api/member-card-partner-stats", (req, res) => {
+  try {
+    const stmt = db.prepare(
+      `SELECT mc.partner, COUNT(*) AS member_count
+       FROM member_card AS mc
+       GROUP BY mc.partner
+       ORDER BY member_count DESC`
+    );
+    const data = stmt.all();
+    return res.json({ status: true, data });
+  } catch (error) {
+    console.error("Error in /api/member-card-partner-stats:", error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
 router.get("/api/member_card", (req, res) => {
   try {
     const table_name = "member_card";
