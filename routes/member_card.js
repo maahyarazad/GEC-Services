@@ -503,7 +503,7 @@ router.get("/api/member_card_report", async (req, res) => {
   }
 });
 
-router.post("/member/email", upload.none(), async (req, res) => {
+router.post("/members/mobile-check", upload.none(), async (req, res) => {
   const apiKey = req.headers["x-api-key"];
 
   if (!apiKey || apiKey !== process.env.SERVICES_SECRET) {
@@ -513,45 +513,56 @@ router.post("/member/email", upload.none(), async (req, res) => {
     });
   }
 
-  const { email } = req.body;
+  const { mobile } = req.body;
 
-  if (!email) {
+  if (!mobile) {
     return res.status(400).json({
       status: false,
-      message: "Email is required",
+      message: "Mobile number is required",
+    });
+  }
+
+  const sanitizedMobile = mobile.trim().replace(/\D/g, ""); 
+
+  if (!sanitizedMobile) {
+    return res.status(400).json({
+      status: false,
+      message: "Invalid mobile number format",
     });
   }
 
   try {
     const query = `
-        SELECT *
-FROM member_card mc
-WHERE mc.email = '${email.trim().toLowerCase()}'
-  AND mc.serial_number IS NOT NULL
-  AND DATE('now') <= date(mc.card_expiry_date, 'start of month', '+1 month', '-1 day');
-    `;
+      SELECT *
+      FROM member_card mc
+      WHERE mc.mobile_number = ?
+        AND mc.serial_number IS NOT NULL
+        AND mc.active = 1
+        AND DATE('now') <= DATE(mc.card_expiry_date, 'start of month', '+1 month', '-1 day')
+    `; 
 
     const stmt = db.prepare(query);
-    const memberRecord = stmt.all();
+    const memberRecords = stmt.all(sanitizedMobile);
 
-    if (memberRecord) {
+    if (memberRecords.length > 0) { 
       return res.status(200).json({
         status: true,
-        data: memberRecord,
+        message: "Member found",
+        count: memberRecords.length,
+        data: memberRecords,
       });
     } else {
       return res.status(404).json({
         status: false,
-        message: "Email not found",
+        message: "No active member found for this mobile number",
       });
     }
   } catch (error) {
-    console.error("Error checking email:", error);
+    console.error("Error checking mobile number:", error.message);
     return res.status(500).json({
       status: false,
-      message: "Server error",
+      message: "An unexpected server error occurred. Please try again later.",
     });
   }
 });
-
 module.exports = router;
