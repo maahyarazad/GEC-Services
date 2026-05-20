@@ -25,6 +25,7 @@ import { GoShieldLock } from "react-icons/go";
 import { GrCatalogOption } from "react-icons/gr";
 import { IoIdCardOutline } from "react-icons/io5";
 import { MdPictureAsPdf, MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight, MdTerminal } from "react-icons/md";
+import { PiBriefcaseDuotone } from "react-icons/pi";
 import { IoPeopleSharp } from "react-icons/io5";
 // Utils
 import { Header } from "../utils/Header";
@@ -214,7 +215,7 @@ const Admin = ({ data }) => {
             label: "Corporate Member",
         },
         {
-            icon: <IoPeopleSharp size={24} />,
+            icon: <PiBriefcaseDuotone size={24} />,
             label: "Partner Onboarding",
         },
         {

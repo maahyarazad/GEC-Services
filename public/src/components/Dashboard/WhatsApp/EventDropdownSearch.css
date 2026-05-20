@@ -1,0 +1,89 @@
+@keyframes dropdownOpen {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scaleY(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+.event-dropdown {
+  position: relative;
+}
+.event-dropdown__trigger {
+  cursor: pointer;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.event-dropdown__trigger .chevron {
+  display: inline-block;
+  font-size: 0.7rem;
+  opacity: 0.6;
+  transition: transform 0.2s ease;
+}
+.event-dropdown__trigger .chevron--open {
+  transform: rotate(180deg);
+}
+.event-dropdown__panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  max-height: 260px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform-origin: top;
+  animation: dropdownOpen 0.2s ease forwards;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+.event-dropdown__search {
+  padding: 0.5rem;
+  background-color: var(--bs-light);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+.event-dropdown__search input {
+  width: 100%;
+}
+.event-dropdown__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  max-height: 200px;
+}
+.event-dropdown__list::-webkit-scrollbar {
+  width: 4px;
+}
+.event-dropdown__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.event-dropdown__list::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+}
+.event-dropdown__item {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.event-dropdown__item--selected {
+  background-color: var(--bs-primary);
+  color: #fff;
+}
+.event-dropdown__item:not(.event-dropdown__item--selected):hover {
+  background-color: var(--bs-light);
+}
+.event-dropdown__empty {
+  padding: 0.5rem 1rem;
+  color: var(--bs-secondary);
+  font-style: italic;
+}/*# sourceMappingURL=EventDropdownSearch.css.map */
