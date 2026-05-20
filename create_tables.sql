@@ -372,7 +372,8 @@ CREATE TABLE IF NOT EXISTS partner_onboarding_data (
     metadata_createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     partner TEXT,
     birthday DATETIME,
-    language TEXT CHECK(language IN ('en', 'de'))
+    language TEXT CHECK(language IN ('en', 'de')),
+    synchronized INTEGER DEFAULT 0
 );
 
 

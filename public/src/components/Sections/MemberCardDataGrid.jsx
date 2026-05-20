@@ -190,6 +190,7 @@ const MemberCardDataGrid = () => {
     // Partner stats (left table)
     const [partnerStats, setPartnerStats] = useState([]);
     const [partnerStatsLoading, setPartnerStatsLoading] = useState(false);
+    const [syncingPartner, setSyncingPartner] = useState(null);
 
     // GEC grouped partners (right table)
     const [gecPartners, setGecPartners] = useState([]);
@@ -200,14 +201,20 @@ const MemberCardDataGrid = () => {
 
     // ─── Partner stats fetch ─────────────────────────────────────────────────
 
-    useEffect(() => {
+    const fetchPartnerStats = useCallback(async () => {
         setPartnerStatsLoading(true);
-        fetch(`${import.meta.env.VITE_SERVERURL}/api/member-card-partner-stats`, { credentials: 'include' })
-            .then((r) => r.json())
-            .then((d) => setPartnerStats(d.data ?? []))
-            .catch((e) => console.error('partner stats fetch failed', e))
-            .finally(() => setPartnerStatsLoading(false));
+        try {
+            const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-card-partner-stats`, { credentials: 'include' });
+            const d = await r.json();
+            setPartnerStats(d.data ?? []);
+        } catch (e) {
+            console.error('partner stats fetch failed', e);
+        } finally {
+            setPartnerStatsLoading(false);
+        }
     }, []);
+
+    useEffect(() => { fetchPartnerStats(); }, [fetchPartnerStats]);
 
     // ─── GEC grouped partners fetch ──────────────────────────────────────────
 
@@ -245,9 +252,51 @@ const MemberCardDataGrid = () => {
         return { inServices, notInServices, totalMembers };
     }, [rightTableRows, partnerStats]);
 
+    const handleSync = async (partner) => {
+        setSyncingPartner(partner);
+        try {
+            const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-card-sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ partner }),
+            });
+            const d = await r.json();
+            if (d.status) {
+                showSnackbar(`Synced "${partner}": ${d.updated} updated, ${d.inserted} inserted, ${d.deactivated} deactivated`);
+                fetchPartnerStats();
+            } else {
+                showSnackbar(`Sync failed: ${d.message}`);
+            }
+        } catch (e) {
+            console.error('Sync failed', e);
+            showSnackbar('Sync failed — check console');
+        } finally {
+            setSyncingPartner(null);
+        }
+    };
+
     const leftCols = [
         { key: 'partner', label: 'Partner' },
         { key: 'member_count', label: 'Members' },
+        { key: 'available_update', label: 'Available Update' },
+        {
+            key: '_sync',
+            label: '',
+            render: (row) =>
+                row.available_update > 0 ? (
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        color="warning"
+                        disabled={syncingPartner === row.partner}
+                        onClick={() => handleSync(row.partner)}
+                        sx={{ fontSize: 11, textTransform: 'none', whiteSpace: 'nowrap', py: 0 }}
+                    >
+                        {syncingPartner === row.partner ? <CircularProgress size={14} color="inherit" /> : 'Sync'}
+                    </Button>
+                ) : null,
+        },
     ];
 
     const rightCols = [
@@ -406,6 +455,14 @@ const MemberCardDataGrid = () => {
                     sx={{ fontSize: 13, textTransform: 'none' }}
                 >
                     Corporate Members
+                </Button>
+
+                <Button
+                    variant="outlined"
+                    disabled
+                    sx={{ fontSize: 13, textTransform: 'none' }}
+                >
+                    Sync All — Under Development
                 </Button>
 
                 <Button
