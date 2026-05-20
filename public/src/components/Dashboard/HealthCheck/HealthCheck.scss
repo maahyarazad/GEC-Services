@@ -1,81 +1,202 @@
-$status-green: #199647;
-$status-red: rgb(184, 1, 1);
-;
-$up-bg-color: rgba(71, 213, 32, 0.10);
-$down-bg-color: rgba(213, 32, 32, 0.10);
+$green:      #16a34a;
+$green-bg:   rgba(22, 163, 74, 0.08);
+$green-border: rgba(22, 163, 74, 0.25);
+$red:        #dc2626;
+$red-bg:     rgba(220, 38, 38, 0.08);
+$red-border: rgba(220, 38, 38, 0.25);
 
-.paper-container {
-    margin-bottom: 8px;
-    max-width: 500px;
-    padding: 20px;
+// ── Header ────────────────────────────────────────────────────────────────────
 
-    &.up {
-        background-color: $up-bg-color !important;
+.hc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__title {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+  }
+
+  &__badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+
+    &--ok {
+      background: $green-bg;
+      color: $green;
+      border: 1px solid $green-border;
     }
 
-    &.down {
-        background-color: $down-bg-color !important;
+    &--warn {
+      background: $red-bg;
+      color: $red;
+      border: 1px solid $red-border;
     }
+  }
 
-    .status-container {
-        display: flex;
-        justify-content: start;
-        align-items: center;
-        min-height: 25px;
-
-        .status-info {
-            padding-left: 10px;
-
-            &.up {
-                color: $status-green
-            }
-
-            &.down {
-                color: $status-red
-            }
-        }
-
-        .status-dot {
-            margin-left: 20px;
-            width: 10px;
-            height: 10px;
-            background: $status-green;
-            border-radius: 50%;
-            display: inline-block;
-            position: relative;
-
-
-            &.pulse {
-                &::after {
-
-                    content: "";
-                    position: absolute;
-                    inset: 0;
-                    border-radius: 50%;
-                    background: rgba($status-green, 0.6);
-                    animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-                }
-            }
-
-            &.down {
-                background: $status-red
-            }
-        }
-    }
+  &__countdown {
+    font-size: 0.75rem;
+    color: #94a3b8;
+  }
 }
 
-@keyframes pulse-ring {
-    0% {
-        transform: scale(1);
-        opacity: 1;
+// ── Grid ──────────────────────────────────────────────────────────────────────
+
+.hc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+// ── Card ──────────────────────────────────────────────────────────────────────
+
+.hc-card {
+  border-radius: 14px;
+  padding: 20px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: default;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.10) !important;
+  }
+
+  &--up {
+    background: $green-bg;
+    border: 1px solid $green-border;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.08);
+  }
+
+  &--down {
+    background: $red-bg;
+    border: 1px solid $red-border;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.08);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    position: relative;
+
+    &--up {
+      background: $green;
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: rgba($green, 0.5);
+        animation: hc-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
     }
 
-    70% {
-        transform: scale(3);
-        opacity: 0;
-    }
+    &--down { background: $red; }
+  }
 
-    100% {
-        opacity: 0;
-    }
+  &__badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+
+    &--up  { color: $green; }
+    &--down { color: $red; }
+  }
+
+  &__open {
+    margin-left: auto;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+
+    &:hover { color: #475569; }
+  }
+
+  &__icon {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0 4px;
+  }
+
+  &__name {
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__url {
+    font-size: 0.7rem !important;
+    color: #94a3b8 !important;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__time {
+    font-size: 0.7rem !important;
+    color: #94a3b8 !important;
+    text-align: center;
+    margin-top: 4px;
+  }
+}
+
+// ── Icons ─────────────────────────────────────────────────────────────────────
+
+.hc-icon--up  { color: $green; }
+.hc-icon--down { color: $red; }
+
+.hc-spin {
+  animation: hc-rotate 1s linear infinite;
+}
+
+// ── Animations ────────────────────────────────────────────────────────────────
+
+@keyframes hc-pulse {
+  0%   { transform: scale(1); opacity: 1; }
+  70%  { transform: scale(3); opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes hc-rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
