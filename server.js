@@ -65,10 +65,10 @@ try {
 
   // Column migrations — safe to re-run; SQLite throws if column already exists
   try {
-    db.prepare("ALTER TABLE partner_onboarding_data ADD COLUMN synchronized INTEGER DEFAULT 0").run();
-    db.prepare("ALTER TABLE member_card ADD COLUMN remarks TEXT").run();
-    db.prepare("ALTER TABLE member_card ADD COLUMN active BOOLEAN;").run();
-    console.log("Migration: added synchronized column to partner_onboarding_data.");
+    // db.prepare("ALTER TABLE partner_onboarding_data ADD COLUMN synchronized INTEGER DEFAULT 0").run();
+    // db.prepare("ALTER TABLE member_card ADD COLUMN remarks TEXT").run();
+    // db.prepare("ALTER TABLE member_card ADD COLUMN active BOOLEAN;").run();
+    // console.log("Migration: added synchronized column to partner_onboarding_data.");
   } catch {
     // Column already exists — ignore
   }
