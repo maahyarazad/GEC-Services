@@ -211,7 +211,7 @@ const Admin = ({ data }) => {
         },
         {
             icon: <IoIdCardOutline size={24} />,
-            label: "Member Cards",
+            label: "Corporate Member",
         },
         {
             icon: <IoPeopleSharp size={24} />,
@@ -219,7 +219,7 @@ const Admin = ({ data }) => {
         },
         {
             icon: <BsPeopleFill size={20} />,
-            label: "Member Data",
+            label: "Expert Circle",
         },
         {
             icon: <MdPictureAsPdf size={20} />,
