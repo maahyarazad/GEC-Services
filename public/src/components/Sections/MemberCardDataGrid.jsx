@@ -471,7 +471,7 @@ const MemberCardDataGrid = () => {
                 onClose={() => setShowMembersGrid(false)}
                 headerTitle="Corporate Members"
             >
-                <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ width: '100%', height: 'calc(100vh - 125px)' }}>
                     <CustomDataGrid
                         rows={members}
                         columns={columns({ onResendPasswordReset: handleResetPassword, loadingRowId, onSendInvitationEmail: confirmSendInvitationEmail })}
@@ -495,7 +495,7 @@ const MemberCardDataGrid = () => {
 
                         disableRowSelectionOnClick
                     />
-                </Box>
+                </div>
             </SlideMenu>
 
         </Box>
