@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import CustomDataGrid from '../CustomDataGrid';
 import { useAlertDialog } from '../Providers/AlertProvider';
 import { useSnackbar } from '../Providers/Snackbar';
@@ -23,6 +23,8 @@ import SlideMenu from '../SlideMenu/SlideMenu';
 import { IconButton } from '@mui/material';
 import { SiMinutemailer } from "react-icons/si";
 import { MdPeople } from "react-icons/md";
+import { FcMultipleInputs } from "react-icons/fc";
+const PartnerOnboardingSection = React.lazy(() => import("../Sections/PartnerOnboardingSection"));
 
 const paidBlue = '#0f0faf';
 const nonpaidBlue = '#55729e';
@@ -121,7 +123,7 @@ const MiniTable = ({ title, rows, columns: cols, loading, searchPlaceholder }) =
     }, [rows, search, cols]);
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 175px)' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 220px)' }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>{title}</Typography>
             <TextField
                 size="small"
@@ -180,6 +182,7 @@ const MemberCardDataGrid = () => {
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [showMembersGrid, setShowMembersGrid] = useState(false);
+    const [showPartnerSubmission, setShowPartnerSubmission] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [rowCount, setRowCount] = useState(0);
     const [sortModel, setSortModel] = useState([{ field: 'id', sort: 'desc' }]);
@@ -369,7 +372,7 @@ const MemberCardDataGrid = () => {
             'Send Invitation Email',
             { text: 'Send', color: 'primary' },
             () => handleSendInvitationEmail(member_data),
-            () => {}
+            () => { }
         );
     };
 
@@ -442,58 +445,73 @@ const MemberCardDataGrid = () => {
         fetchData(paginationModel, sortModel, debouncedFilterItems);
     };
 
+
     // ─── Render ───────────────────────────────────────────────────────────────
 
     return (
         <Box sx={{ padding: 1, display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)' }}>
 
             {/* Top action bar */}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1, alignItems: 'center' }}>
-                <Button
-                    variant="contained"
-                    startIcon={<MdPeople size={20} />}
-                    onClick={handleOpenMembersGrid}
-                    sx={{ fontSize: 13, textTransform: 'none' }}
-                >
-                    Corporate Members
-                </Button>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1, alignItems: 'start', flexDirection: "column" }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1, alignItems: 'center' }}>
 
-                <Button
-                    variant="outlined"
-                    disabled
-                    sx={{ fontSize: 13, textTransform: 'none' }}
-                >
-                    Sync All — Under Development
-                </Button>
+                    <Button
+                        variant="contained"
+                        startIcon={<MdPeople size={20} />}
+                        onClick={handleOpenMembersGrid}
+                        sx={{ fontSize: 13, textTransform: 'none' }}
+                    >
+                        Corporate Members
 
-                <Button
-                    variant="outlined"
-                    startIcon={<BsFiletypeCsv size={20} />}
-                    onClick={handleExport}
-                    sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none' }}
-                >
-                    {isDownloading ? <CircularProgress size={20} color="inherit" /> : 'Download CSV'}
-                </Button>
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<FcMultipleInputs size={20} />}
+                        onClick={() => setShowPartnerSubmission(true)}
+                        sx={{ fontSize: 13, textTransform: 'none' }}
+                    >
+                        Partner Submission
+                    </Button>
 
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <Chip
-                        label={`Legacy Partners In Services: ${summaryStats.inServices}`}
-                        size="small"
-                        color="success"
+                    <Button
                         variant="outlined"
-                    />
-                    <Chip
-                        label={`Not in Services: ${summaryStats.notInServices}`}
-                        size="small"
-                        color="warning"
+                        disabled
+                        sx={{ fontSize: 13, textTransform: 'none' }}
+                    >
+                        Sync All — Under Development
+                    </Button>
+                    <Button
                         variant="outlined"
-                    />
-                    <Chip
-                        label={`Total Members (Local DB): ${summaryStats.totalMembers.toLocaleString()}`}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                    />
+                        startIcon={<BsFiletypeCsv size={20} />}
+                        onClick={handleExport}
+                        sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none' }}
+                    >
+                        {isDownloading ? <CircularProgress size={20} color="inherit" /> : 'Download Corporate Members CSV'}
+                    </Button>
+                </Box>
+
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1, alignItems: 'center' }}>
+
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <Chip
+                            label={`Legacy Partners In Services: ${summaryStats.inServices}`}
+                            size="small"
+                            color="success"
+                            variant="outlined"
+                        />
+                        <Chip
+                            label={`Not in Services: ${summaryStats.notInServices}`}
+                            size="small"
+                            color="warning"
+                            variant="outlined"
+                        />
+                        <Chip
+                            label={`Total Members (Local DB): ${summaryStats.totalMembers.toLocaleString()}`}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                        />
+                    </Box>
                 </Box>
             </Box>
 
@@ -501,7 +519,7 @@ const MemberCardDataGrid = () => {
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, flex: 1, minHeight: 0 }}>
 
                 {/* Left — Local DB partner stats */}
-                <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', }}>
                     <MiniTable
                         title="Partner Member Counts (Local DB)"
                         rows={partnerStats}
@@ -512,7 +530,7 @@ const MemberCardDataGrid = () => {
                 </Box>
 
                 {/* Right — GEC grouped partners + chip indicators */}
-                <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', marginTop: { xs: '45rem', md: '0' } }}>
                     <MiniTable
                         title="Legacy Admin Partners"
                         rows={rightTableRows}
@@ -553,6 +571,17 @@ const MemberCardDataGrid = () => {
 
                         disableRowSelectionOnClick
                     />
+                </div>
+            </SlideMenu>
+
+            {/* Corporate Members DataGrid slide menu */}
+            <SlideMenu
+                isOpen={showPartnerSubmission}
+                onClose={() => setShowPartnerSubmission(false)}
+                headerTitle="Partner Employee List Submission"
+            >
+                <div style={{ width: '100%', height: 'calc(100vh - 125px)' }}>
+                    <PartnerOnboardingSection />
                 </div>
             </SlideMenu>
 

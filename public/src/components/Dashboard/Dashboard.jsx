@@ -23,10 +23,9 @@ import { FcSurvey } from "react-icons/fc";
 import { GiArchiveRegister } from "react-icons/gi";
 import { GoShieldLock } from "react-icons/go";
 import { GrCatalogOption } from "react-icons/gr";
-import { IoIdCardOutline } from "react-icons/io5";
 import { MdPictureAsPdf, MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight, MdTerminal } from "react-icons/md";
 import { PiBriefcaseDuotone } from "react-icons/pi";
-import { IoPeopleSharp } from "react-icons/io5";
+
 // Utils
 import { Header } from "../utils/Header";
 
@@ -40,7 +39,6 @@ const RegistrantSection = React.lazy(() => import("../Sections/RegistrantSection
 const MemberDataGrid = React.lazy(() => import("../Sections/MembersDataGrid"));
 const MemberCardDataGrid = React.lazy(() => import("../Sections/MemberCardDataGrid"));
 const SurveyDataGrid = React.lazy(() => import("../Sections/SurveyDataGrid"));
-const PartnerOnboardingSection = React.lazy(() => import("../Sections/PartnerOnboardingSection"));
 const WhatsappBroadcast = React.lazy(() => import("./WhatsApp/WhatsApp"));
 const PDFGenerator = React.lazy(() => import("./PDFGenerator/PDFGenerator"));
 const ServerLogs = React.lazy(() => import("./ServerLogs/ServerLogs"));
@@ -85,7 +83,7 @@ const Admin = ({ data }) => {
                 method: "GET",
                 credentials: "include",
             });
-            
+
             if (res.status === 401) {
 
                 console.warn("Unauthorized");
@@ -167,7 +165,7 @@ const Admin = ({ data }) => {
                     resetForm();
 
                     navigate(`/admin?${params.toString()}`, {
-                    state: { tab: params.get("tab") },
+                        state: { tab: params.get("tab") },
                     });
 
                     setStatus("Login successful!", "dark");
@@ -211,13 +209,10 @@ const Admin = ({ data }) => {
             label: "Surveys",
         },
         {
-            icon: <IoIdCardOutline size={24} />,
-            label: "Corporate Member",
-        },
-        {
             icon: <PiBriefcaseDuotone size={24} />,
             label: "Partner Onboarding",
         },
+
         {
             icon: <BsPeopleFill size={20} />,
             label: "Expert Circle",
@@ -334,18 +329,15 @@ const Admin = ({ data }) => {
             content = <MemberCardDataGrid />;
             break;
         case 5:
-            content = <PartnerOnboardingSection />;
-            break;
-        case 6:
             content = <MemberDataGrid />;
             break;
-        case 7:
+        case 6:
             content = <PDFGenerator />;
             break;
-        case 8:
+        case 7:
             content = <WhatsappBroadcast />;
             break;
-        case 9:
+        case 8:
             content = <ServerLogs />;
             break;
     }
@@ -417,13 +409,13 @@ const Admin = ({ data }) => {
     ) : (
         <div className="login">
             <div>
-                  <div className="d-flex align-items-center mb-3">
-                                    <img alt="GEC Logo" src={GECLogo} height={50} style={{ borderRadius: 6 }} />
-                                    <div className="d-flex flex-column ps-3" style={{ fontWeight: 300 }}>
-                                        <div>GEC Services</div>
-                                        <div style={{ fontSize: 10, color: "#6b6347" }}>Admin Dashboard</div>
-                                    </div>
-                                </div>
+                <div className="d-flex align-items-center mb-3">
+                    <img alt="GEC Logo" src={GECLogo} height={50} style={{ borderRadius: 6 }} />
+                    <div className="d-flex flex-column ps-3" style={{ fontWeight: 300 }}>
+                        <div>GEC Services</div>
+                        <div style={{ fontSize: 10, color: "#6b6347" }}>Admin Dashboard</div>
+                    </div>
+                </div>
                 <h4>Login into Admin Dashboard</h4>
                 <Formik
                     initialValues={initialValues}
