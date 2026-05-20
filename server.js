@@ -62,6 +62,14 @@ try {
   } catch (err) {
     console.error("Failed to create tables or read SQL file:", err.message);
   }
+
+  // Column migrations — safe to re-run; SQLite throws if column already exists
+  try {
+    db.prepare("ALTER TABLE partner_onboarding_data ADD COLUMN synchronized INTEGER DEFAULT 0").run();
+    console.log("Migration: added synchronized column to partner_onboarding_data.");
+  } catch {
+    // Column already exists — ignore
+  }
 })();
 
 app.use(
