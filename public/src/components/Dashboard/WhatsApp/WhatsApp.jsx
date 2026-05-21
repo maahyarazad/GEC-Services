@@ -1239,13 +1239,13 @@ const WhatsappBroadcast = () => {
                         <AiOutlineClear /> Clear Delivery Flag
                     </Button>
                     <Divider sx={{ my: 1 }} component="div"/>
-                    <Button
+                    {/* <Button
                         variant="outlined"
                         color="primary"
                         size="small"
                         sx={{ textTransform: 'none', justifyContent: 'flex-start' }} title='Update Google Map URL' onClick={() => handleSetOpenPanel('update-map-url')}>
                         <SiGooglemaps size={17} style={{ marginRight: 4 }} /> Update Google Map
-                    </Button>
+                    </Button> */}
                     <Button
                         variant="outlined"
                         color="secondary"

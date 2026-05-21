@@ -65,12 +65,12 @@ try {
 
   // Column migrations — safe to re-run; SQLite throws if column already exists
   try {
-    db.prepare("ALTER TABLE events ADD COLUMN active_event BOOLEAN DEFAULT false").run();
+//     db.prepare("ALTER TABLE events ADD COLUMN active_event BOOLEAN DEFAULT false").run();
     
-db.prepare("ALTER TABLE events ADD COLUMN auto_response_general_de TEXT").run();
-db.prepare("ALTER TABLE events ADD COLUMN auto_response_general_en TEXT").run();
-db.prepare("ALTER TABLE events ADD COLUMN auto_response_guest_de TEXT").run();
-db.prepare("ALTER TABLE events ADD COLUMN auto_response_guest_en TEXT").run();
+// db.prepare("ALTER TABLE events ADD COLUMN auto_response_general_de TEXT").run();
+// db.prepare("ALTER TABLE events ADD COLUMN auto_response_general_en TEXT").run();
+// db.prepare("ALTER TABLE events ADD COLUMN auto_response_guest_de TEXT").run();
+// db.prepare("ALTER TABLE events ADD COLUMN auto_response_guest_en TEXT").run();
     
 
     console.log("Migration: added synchronized column to partner_onboarding_data.");
