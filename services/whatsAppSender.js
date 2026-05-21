@@ -598,63 +598,35 @@ async function handleAutoResponse(From, ButtonPayload) {
   try {
     const from = From.replace("whatsapp:", "");
 
-    if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
-      const templates = await fetchContentTemplates();
+    const contact = db
+      .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
+      .get(from);
+    if (!contact) return;
 
-      const query = `
-              SELECT * FROM contact_book cb
-              WHERE cb.phone = '${from}'
-          `;
+    const event = db
+      .prepare(`SELECT * FROM events WHERE active_event = 1`)
+      .get();
+    if (!event) return;
 
-      const stmt = db.prepare(query);
-      const contactInfo = stmt.all(); // synchronous, returns rows array
+    const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
+    const type = guestTypes.includes(contact.type) ? "guest" : "general";
+    const lang = contact.language === "de" ? "de" : "en";
 
-      let phoneList = [];
-      let template = "";
-      let payload = {};
+    const templates = await fetchContentTemplates();
+    const template = templates.result.find(
+      (x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc"
+    );
 
-      const guest_Types = ["expert_guest", "only_guest", "Wüstenkinder"];
+    const phoneList = [{ id: "8176278162873", phone: contact.phone }];
+    const payload = { 1: event[`auto_response_${type}_${lang}`] };
 
-      const contact = contactInfo?.[0];
-      if (!contact) return;
+    await messageSender({ body: { template, phoneList, payload } });
 
-      phoneList.push({
-        id: "8176278162873",
-        phone: contact.phone,
-      });
-
-      const filePath = path.resolve(
-        __dirname,
-        "..",
-        "data",
-        "google_data.json"
-      );
-
-      const template_sid = "HXb1ce9479f3d42819bef456f00448afcc";
-      template = templates.result.find((x) => x.sid === template_sid);
-
-      const grab_event_query = `
-            SELECT *
-            FROM events where active_event = 1;
-            `;
-
-      const event = db.prepare(grab_event_query).get();
-
-      const type = guest_Types.includes(contact.type) ? "guest" : "general";
-      const lang = contact.language === "de" ? "de" : "en";
-
-      payload[1] = event[`auto_response_${type}_${lang}`];
-
-      const result = await messageSender({
-        body: { template, phoneList, payload },
-      });
-
-      dbService.create("event_guest_list", {
-        contact_book_id: Number(contact.id),
-        event_id: Number(event.id),
-      });
-    } else {
-    }
+    dbService.create("event_guest_list", {
+      contact_book_id: Number(contact.id),
+      event_id: Number(event.id),
+    });
+    
   } catch (e) {
     console.error(e);
   }
