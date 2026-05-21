@@ -68,6 +68,19 @@ router.get("/api/events", async (req, res) => {
   }
 });
 
+// ── GET /api/events/active  – return the single active event ──────────────────
+router.get("/api/events/active", (req, res) => {
+  try {
+    const row = db.prepare(
+      "SELECT id, title, event_date FROM events WHERE active_event = 1 LIMIT 1"
+    ).get();
+    return res.json({ status: true, event: row ?? null });
+  } catch (error) {
+    console.error("Error in GET /api/events/active:", error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
 router.get("/api/events/latest", async (req, res) => {
   try {
     const dataQuery = `

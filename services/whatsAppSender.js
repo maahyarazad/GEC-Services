@@ -196,13 +196,13 @@ const messageSender = async (req) => {
         }
 
         if (process.env.ENVIRONMENT === "PRODUCTION") {
-            return await sendMessageToPhone(
+          return await sendMessageToPhone(
             el.phone,
             template,
             payload,
             el,
             eventId
-            );
+          );
         }
       } catch (err) {
         console.error(`Error sending message to ${el.phone}:`, err);
@@ -219,7 +219,7 @@ const messageSender = async (req) => {
       const query = `SELECT * FROM contact_book WHERE id IN(
              SELECT contact_book_id FROM event_guest_list WHERE event_id = ? and language = ? )`;
       const stmt = db.prepare(query);
-      const result = stmt.all([Number(eventId), template.language.slice(0,2)]);
+      const result = stmt.all([Number(eventId), template.language.slice(0, 2)]);
 
       await Promise.all(result.map((x) => safeSendMessage(x, eventId)));
     }
@@ -365,11 +365,12 @@ async function sendMessageToPhone(
     const result = await twilioClient.messages.create(messageOptions);
 
     await Promise.resolve(
-    db.prepare(
-        `INSERT INTO twilio_template_message (messageSid, contentSid, event_id) VALUES (?, ?, ?)`
-     ).run(result.sid, messageOptions.contentSid, Number(eventId))
+      db
+        .prepare(
+          `INSERT INTO twilio_template_message (messageSid, contentSid, event_id) VALUES (?, ?, ?)`
+        )
+        .run(result.sid, messageOptions.contentSid, Number(eventId))
     );
-
 
     return result;
   } catch (error) {
@@ -629,26 +630,20 @@ async function handleAutoResponse(From, ButtonPayload) {
         "google_data.json"
       );
 
-      const fileContent = fs.readFileSync(filePath, "utf-8");
-      const google_map_link_json = JSON.parse(fileContent);
-      const google_map_link = google_map_link_json.google_map_url;
-
       const template_sid = "HXb1ce9479f3d42819bef456f00448afcc";
       template = templates.result.find((x) => x.sid === template_sid);
 
-      if (guest_Types.includes(contact.type)) {
-        
-        const message = `Super, du stehst auf der Gästeliste! Wir freuen uns auf dich. Kommst du allein oder in Begleitung? Wenn du in Begleitung kommst, schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\n\nHier noch der Google link zur Location, damit du es besser findest: https://maps.app.goo.gl/MPpGCFyRee3kGsAB9\nKindly check the parking options below: \n\nSelf Parking Free (Recommended)\nhttps://goo.gl/maps/kZDENNEodHsnkhiP9 \nConvenient FREE parking across multiple levels  (P4–P10). Kindly take the lift to the ground floor. FRNDS entrance is located directly in front of the lift.\n\nTaxi Drop Off\nhttps://maps.app.goo.gl/WmPZwHYceZNcpEUw8\n\nComplimentary Valet Parking\nAvailable at Address Dubai Mall Hotel (approximately 200 metres walking distance)\nhttps://goo.gl/maps/iMzuzyhqp6PXAsay7\n\nHerzliche Grüße,\nSylvia`;
-        payload[1] = message;
-      } else {
-          if (contact.language === "de") {
-            const message = `Super, du stehst auf der Gästeliste! Wir freuen uns auf dich. Kommst du allein oder in Begleitung? Wenn du in Begleitung kommst, schick mir bitte den vollständigen Namen deiner Begleitung für die Gästeliste.\n\nHier noch der Link zur Location, damit du es besser findest: https://maps.app.goo.gl/MPpGCFyRee3kGsAB9\n\nKindly check the parking options below:\n\nSelf Parking Free (Recommended)\nhttps://goo.gl/maps/kZDENNEodHsnkhiP9\nConvenient FREE parking across multiple levels (P4–P10). Kindly take the lift to the ground floor. FRNDS entrance is located directly in front of the lift.\n\nTaxi Drop Off\nhttps://maps.app.goo.gl/WmPZwHYceZNcpEUw8\n\nComplimentary Valet Parking\nAvailable at Address Dubai Mall Hotel (approximately 200 metres walking distance)\nhttps://goo.gl/maps/iMzuzyhqp6PXAsay7\n\nHerzliche Grüße,\nSylvia`;
-            payload[1] = message;
-          } else {
-            const message = `Great, you're on the guest list! We're looking forward to seeing you. Are you coming alone or with a guest? Please send me the full name of your guest for our guest list.\n\nHere's the Google Maps link to the location to help you find it: https://maps.app.goo.gl/MPpGCFyRee3kGsAB9\nKindly check the parking options below: \n\nSelf Parking Free (Recommended)\nhttps://goo.gl/maps/kZDENNEodHsnkhiP9 \nConvenient FREE parking across multiple levels  (P4–P10). Kindly take the lift to the ground floor. FRNDS entrance is located directly in front of the lift.\n\nTaxi Drop Off\nhttps://maps.app.goo.gl/WmPZwHYceZNcpEUw8\n\nComplimentary Valet Parking\nAvailable at Address Dubai Mall Hotel (approximately 200 metres walking distance)\nhttps://goo.gl/maps/iMzuzyhqp6PXAsay7\n\nBest regards,\nSylvia`;
-            payload[1] = message;
-          }
-      }
+      const grab_event_query = `
+            SELECT *
+            FROM events where active_event = 1;
+            `;
+
+      const event = db.prepare(grab_event_query).get();
+
+      const type = guest_Types.includes(contact.type) ? "guest" : "general";
+      const lang = contact.language === "de" ? "de" : "en";
+
+      payload[1] = event[`auto_response_${type}_${lang}`];
 
       const result = await messageSender({
         body: { template, phoneList, payload },
@@ -656,7 +651,7 @@ async function handleAutoResponse(From, ButtonPayload) {
 
       dbService.create("event_guest_list", {
         contact_book_id: Number(contact.id),
-        event_id: Number(2),
+        event_id: Number(event.id),
       });
     } else {
     }

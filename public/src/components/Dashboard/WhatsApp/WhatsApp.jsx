@@ -44,6 +44,7 @@ import { blueGrey } from '@mui/material/colors';
 import TwilioTemplateDataGrid from "./TwilioTemplateDataGrid";
 import CreateTwilioTemplate from "./CreateTwilioTemplate";
 import { SiTwilio } from "react-icons/si";
+import ActiveEventCard from "./ActiveEventCard";
 const WhatsappBroadcast = () => {
 
     const location = useLocation();
@@ -61,6 +62,22 @@ const WhatsappBroadcast = () => {
 
     const dispatch = useAppDispatch();
     const shouldRefetch = useAppSelector(getShouldRefetch);
+
+    const [activeEvent, setActiveEvent] = useState(null);
+    const [activeEventLoading, setActiveEventLoading] = useState(true);
+
+    const fetchActiveEvent = useCallback(async () => {
+        try {
+            setActiveEventLoading(true);
+            const res = await fetch(`${import.meta.env.VITE_SERVERURL}/api/events/active`, { credentials: 'include' });
+            const json = await res.json();
+            setActiveEvent(json.event ?? null);
+        } catch (e) {
+            console.error('Failed to fetch active event:', e);
+        } finally {
+            setActiveEventLoading(false);
+        }
+    }, []);
 
     const fetchEvents = useCallback(async () => {
         try {
@@ -96,10 +113,10 @@ const WhatsappBroadcast = () => {
 
     useEffect(() => {
         if (shouldRefetch) {
-
             fetchEvents();
+            fetchActiveEvent();
         }
-    }, [shouldRefetch, fetchEvents]);
+    }, [shouldRefetch, fetchEvents, fetchActiveEvent]);
 
 
     const [contactList, setContactList] = useState([]);
@@ -168,6 +185,7 @@ const WhatsappBroadcast = () => {
     useEffect(() => {
         fetchData();
         fetchEvents();
+        fetchActiveEvent();
     }, []);
 
     const buildContactFilterParams = (filterItems = []) => {
@@ -1180,7 +1198,10 @@ const WhatsappBroadcast = () => {
                         overflowY: 'auto',
                     }}
                 >
-                    {/* TOP — primary action */}
+                    {/* TOP — active event card */}
+                    <ActiveEventCard event={activeEvent} loading={activeEventLoading} />
+
+                    {/* Send Message */}
                     <Button
                         variant="contained"
                         color="primary"
