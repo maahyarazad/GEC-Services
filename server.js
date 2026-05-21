@@ -192,7 +192,7 @@ cron.schedule("* */6 * * *", async () => {
   }
 });
 
-cron.schedule("*/1 * * * *", async () => {
+cron.schedule("0 0 * * *", async () => {
   try {
     console.log("[Cron | daily] Starting: MongoDB backup —", new Date());
     MongoDbBackUpJob.run();
