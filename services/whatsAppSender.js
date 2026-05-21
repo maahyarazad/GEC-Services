@@ -596,37 +596,39 @@ async function fetchTwilioMessagesDetails(sentMessages) {
 
 async function handleAutoResponse(From, ButtonPayload) {
   try {
-    const from = From.replace("whatsapp:", "");
-
-    const contact = db
-      .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
-      .get(from);
-    if (!contact) return;
-
-    const event = db
-      .prepare(`SELECT * FROM events WHERE active_event = 1`)
-      .get();
-    if (!event) return;
-
-    const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
-    const type = guestTypes.includes(contact.type) ? "guest" : "general";
-    const lang = contact.language === "de" ? "de" : "en";
-
-    const templates = await fetchContentTemplates();
-    const template = templates.result.find(
-      (x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc"
-    );
-
-    const phoneList = [{ id: "8176278162873", phone: contact.phone }];
-    const payload = { 1: event[`auto_response_${type}_${lang}`] };
-
-    await messageSender({ body: { template, phoneList, payload } });
-
-    dbService.create("event_guest_list", {
-      contact_book_id: Number(contact.id),
-      event_id: Number(event.id),
-    });
+    if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
+        const from = From.replace("whatsapp:", "");
     
+        const contact = db
+          .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
+          .get(from);
+        if (!contact) return;
+    
+        const event = db
+          .prepare(`SELECT * FROM events WHERE active_event = 1`)
+          .get();
+        if (!event) return;
+    
+        const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
+        const type = guestTypes.includes(contact.type) ? "guest" : "general";
+        const lang = contact.language === "de" ? "de" : "en";
+    
+        const templates = await fetchContentTemplates();
+        const template = templates.result.find(
+          (x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc"
+        );
+    
+        const phoneList = [{ id: "8176278162873", phone: contact.phone }];
+        const payload = { 1: event[`auto_response_${type}_${lang}`] };
+    
+        await messageSender({ body: { template, phoneList, payload } });
+    
+        dbService.create("event_guest_list", {
+          contact_book_id: Number(contact.id),
+          event_id: Number(event.id),
+        });
+    }
+
   } catch (e) {
     console.error(e);
   }
