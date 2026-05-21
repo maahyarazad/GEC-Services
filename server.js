@@ -65,10 +65,15 @@ try {
 
   // Column migrations — safe to re-run; SQLite throws if column already exists
   try {
-    // db.prepare("ALTER TABLE partner_onboarding_data ADD COLUMN synchronized INTEGER DEFAULT 0").run();
-    // db.prepare("ALTER TABLE member_card ADD COLUMN remarks TEXT").run();
-    // db.prepare("ALTER TABLE member_card ADD COLUMN active BOOLEAN;").run();
-    // console.log("Migration: added synchronized column to partner_onboarding_data.");
+    db.prepare("ALTER TABLE events ADD COLUMN active_event BOOLEAN DEFAULT false").run();
+    
+db.prepare("ALTER TABLE events ADD COLUMN auto_response_general_de TEXT").run();
+db.prepare("ALTER TABLE events ADD COLUMN auto_response_general_en TEXT").run();
+db.prepare("ALTER TABLE events ADD COLUMN auto_response_guest_de TEXT").run();
+db.prepare("ALTER TABLE events ADD COLUMN auto_response_guest_en TEXT").run();
+    
+
+    console.log("Migration: added synchronized column to partner_onboarding_data.");
   } catch {
     // Column already exists — ignore
   }
@@ -187,7 +192,7 @@ cron.schedule("* */6 * * *", async () => {
   }
 });
 
-cron.schedule("0 0 * * *", async () => {
+cron.schedule("*/1 * * * *", async () => {
   try {
     console.log("[Cron | daily] Starting: MongoDB backup —", new Date());
     MongoDbBackUpJob.run();

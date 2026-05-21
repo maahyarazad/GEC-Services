@@ -36,7 +36,7 @@ const formatDate = (value) => {
 
 const buildColumns = (onEdit, onDelete) => [
     { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'title', headerName: 'Title', width: 200, filterable: true },
+    { field: 'title', headerName: 'Title', width: 250, filterable: true },
     { field: 'description', headerName: 'Description', width: 260, filterable: true },
     {
         field: 'event_date',

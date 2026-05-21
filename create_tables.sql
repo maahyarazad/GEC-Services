@@ -328,5 +328,10 @@ CREATE TABLE IF NOT EXISTS events (
   description TEXT, 
 metadata_createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 metadata_modifiedAt DATETIME,
-  event_date DATETIME
+  event_date DATETIME,
+  active_event BOOLEAN,
+  auto_response_general_de TEXT,
+  auto_response_general_en TEXT,
+  auto_response_guest_de TEXT,
+  auto_response_guest_de TEXT,
 );
