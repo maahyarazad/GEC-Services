@@ -1,9 +1,6 @@
 import { DataGrid } from '@mui/x-data-grid';
-import { contactBookColumn, corruptedContactBookColumn, guestListColumns } from './WhatsAppComponentConfig';
-import EventSearch from './EventSearch';
+import { contactBookColumn, corruptedContactBookColumn } from './WhatsAppComponentConfig';
 import { Box } from "@mui/material";
-import { getSelectedGuestList } from "../../../features/eventSlice";
-import { useAppSelector } from '../../../store/hooks';
 import _CustomDataGrid from '../../CustomDataGrid';
 import React from 'react';
 const CustomDataGrid = _CustomDataGrid as React.ComponentType<Record<string, any>>;
@@ -33,8 +30,6 @@ const ContactBookDataGrid = ({
     onModifyContact,
     onDeleteContact,
     onSwitchBlacklist,
-    onGuestAttend,
-    onRemoveGuest,
     // Server-side props (default / blacklist modes)
     rowCount = 0,
     sortModel = [],
@@ -50,8 +45,6 @@ const ContactBookDataGrid = ({
     onModifyContact: (row: any) => void;
     onDeleteContact: (row: any) => void;
     onSwitchBlacklist: (row: any, val: boolean) => void;
-    onGuestAttend: (row: any) => void;
-    onRemoveGuest: (row: any) => void;
     rowCount?: number;
     sortModel?: SortItem[];
     onSortModelChange?: (m: SortItem[]) => void;
@@ -59,8 +52,6 @@ const ContactBookDataGrid = ({
     onFilterItemsChange?: (items: FilterItem[]) => void;
     loading?: boolean;
 }) => {
-    const selectedGuestList = useAppSelector(getSelectedGuestList);
-
     const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: false };
     const contactBookColumnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: true };
 
@@ -104,37 +95,6 @@ const ContactBookDataGrid = ({
                     disableRowSelectionOnClick
                     showToolbar
                 />
-            );
-
-        case "guest_list":
-            return (
-                <Box sx={{
-                    display: 'flex',
-                    flexDirection: { xs: 'column', md: 'row' },
-                    alignItems: 'flex-start',
-                    gap: 2
-                }}>
-                    <Box sx={{ flexShrink: 0, width: { xs: '100%', md: 280 } }}>
-                        <EventSearch />
-                    </Box>
-                    <Box sx={{
-                        flex: 1,
-                        minWidth: 0,
-                        height: { xs: '60dvh', md: '85dvh' },
-                        width: { xs: '100%', md: 'auto' },
-                    }}>
-                        <DataGrid
-                            rows={selectedGuestList}
-                            columns={guestListColumns({ onGuestAttend, onRemoveGuest })}
-                            paginationModel={paginationModel}
-                            onPaginationModelChange={setPaginationModel}
-                            pageSizeOptions={[25, 50, 100]}
-                            pagination
-                            disableRowSelectionOnClick
-                            showToolbar
-                        />
-                    </Box>
-                </Box>
             );
 
         case "default":

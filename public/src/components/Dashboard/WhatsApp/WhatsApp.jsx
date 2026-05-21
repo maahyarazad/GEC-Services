@@ -45,6 +45,8 @@ import TwilioTemplateDataGrid from "./TwilioTemplateDataGrid";
 import CreateTwilioTemplate from "./CreateTwilioTemplate";
 import { SiTwilio } from "react-icons/si";
 import ActiveEventCard from "./ActiveEventCard";
+import GuestListPanel from "./GuestListPanel";
+import { BsPeopleFill } from "react-icons/bs";
 const WhatsappBroadcast = () => {
 
     const location = useLocation();
@@ -847,6 +849,7 @@ const WhatsappBroadcast = () => {
             "event-list": "event-list",
             "update-map-url": "update-map-url",
             "report-missing-sid": "report-missing-sid",
+            "guest-list": "guest-list",
         };
 
         setOpenPanel(panelMap[modalView] ?? null);
@@ -1125,8 +1128,6 @@ const WhatsappBroadcast = () => {
                         onModifyContact={onModifyContact}
                         onDeleteContact={onDeleteContact}
                         onSwitchBlacklist={onSwitchBlacklist}
-                        onGuestAttend={onGuestAttend}
-                        onRemoveGuest={onRemoveGuestRequest}
                         rowCount={contactRowCount}
                         sortModel={contactSortModel}
                         onSortModelChange={setContactSortModel}
@@ -1135,6 +1136,19 @@ const WhatsappBroadcast = () => {
                         loading={loading_logs}
                     />
                 </div>
+            </SlideMenu>
+
+            <SlideMenu id={'guest-list'}
+                isOpen={openPanel === 'guest-list'}
+                onClose={() => { handleSetOpenPanel(null) }}
+                headerTitle={'Guest List'}
+            >
+                <GuestListPanel
+                    onGuestAttend={onGuestAttend}
+                    onRemoveGuest={onRemoveGuestRequest}
+                    paginationModel={contactPaginationModel}
+                    setPaginationModel={setContactPaginationModel}
+                />
             </SlideMenu>
 
             <SlideMenu id={'event-list'}
@@ -1218,6 +1232,9 @@ const WhatsappBroadcast = () => {
                     {/* MIDDLE — navigation & utility buttons */}
                     <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('contact-book')}>
                         <RiContactsBook2Fill size={17} style={{ marginRight: 4 }} /> Contact Book
+                    </Button>
+                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('guest-list')}>
+                        <BsPeopleFill size={17} style={{ marginRight: 4 }} /> Guest List
                     </Button>
                     <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('event-list')}>
                         <BsCalendar2Event size={17} style={{ marginRight: 4 }} /> Event List

@@ -1,6 +1,6 @@
 // ViewModeButtonGroup.tsx
 
-type ViewMode = "default" | "blacklist" | "corrupted" | "guest_list";
+type ViewMode = "default" | "blacklist" | "corrupted";
 
 interface ViewModeButtonGroupProps {
   viewMode: ViewMode;
@@ -11,7 +11,6 @@ const buttons: { label: string; mode: ViewMode; shortLabel: string }[] = [
   { label: "Main Contact Book",  shortLabel: "Contacts",  mode: "default" },
   { label: "Blacklist",          shortLabel: "Blacklist", mode: "blacklist" },
   { label: "Corrupted Contacts", shortLabel: "Corrupted", mode: "corrupted" },
-  { label: "Guest List",         shortLabel: "Guests",    mode: "guest_list" },
 ];
 
 export default function ViewModeButtonGroup({ viewMode, setViewMode }: ViewModeButtonGroupProps) {
