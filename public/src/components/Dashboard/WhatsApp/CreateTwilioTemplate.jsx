@@ -8,7 +8,14 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import { SiAutoprefixer } from 'react-icons/si';
 import { useSnackbar } from '../../Providers/Snackbar';
+
+const slugify = (val) =>
+    val.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 
 const LANGUAGES = [
     { value: 'en', label: 'English (en)' },
@@ -126,6 +133,19 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                     size="small"
                     sx={{ flex: 3 }}
                     helperText="Lowercase, no spaces"
+                    slotProps={{
+                        input: {
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <Tooltip title="Slugify (convert to snake_case)">
+                                        <IconButton size="small" onClick={() => set('friendly_name', slugify(form.friendly_name))} tabIndex={-1}>
+                                            <SiAutoprefixer size={15} />
+                                        </IconButton>
+                                    </Tooltip>
+                                </InputAdornment>
+                            ),
+                        },
+                    }}
                 />
                 <TextField
                     select
