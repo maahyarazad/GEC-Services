@@ -180,7 +180,7 @@ createWebSocketServer(server, allowedOrigins);
 cron.schedule("* */6 * * *", async () => {
   try {
     console.log("[Cron | Every 6h] Starting: GSheet sync + phone normalization —", new Date());
-    // await GSheetService.GSheetParser();
+    await GSheetService.GSheetParser();
     await Jobs.normilizeMemberPhoneNumbers();
     console.log("[Cron | Every 6h] Completed —", new Date());
   } catch (error) {

@@ -53,7 +53,7 @@ const Jobs = {
                 let normalized = await normalizePhoneLocal(row.mobile_number);
 
                 if (normalized === null) {
-                    console.log(`[normilizeMemberPhoneNumbers] Sending to Claude Agent: id=${row.id} raw="${row.mobile_number}"`);
+                    // console.log(`[normilizeMemberPhoneNumbers] Sending to Claude Agent: id=${row.id} raw="${row.mobile_number}"`);
                     // normalized = await claudeAgent.normalizePhone(row.mobile_number);
                     
 
@@ -74,9 +74,9 @@ const Jobs = {
                 }
             }
 
-            console.log(
-                `[normilizeMemberPhoneNumbers] fixed=${fixed} (ai=${aiFixed}) skipped=${skipped} total=${rows.length}`
-            );
+            // console.log(
+            //     `[normilizeMemberPhoneNumbers] fixed=${fixed} (ai=${aiFixed}) skipped=${skipped} total=${rows.length}`
+            // );
 
             if (malformed.length > 0) {
                 console.warn("[normilizeMemberPhoneNumbers] Could not parse — manual review required:");
