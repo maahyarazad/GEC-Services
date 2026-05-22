@@ -8,8 +8,6 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
-import InputAdornment from '@mui/material/InputAdornment';
-import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import { SiAutoprefixer } from 'react-icons/si';
 import { useSnackbar } from '../../Providers/Snackbar';
@@ -49,6 +47,19 @@ export default function CreateTwilioTemplate({ onSuccess }) {
             );
             return { ...prev, buttons };
         });
+
+    const isSlugified = form.friendly_name !== '' && form.friendly_name === slugify(form.friendly_name);
+    const isBodyFilled = form.body.trim() !== '';
+    const submitDisabledReason = !isBodyFilled && !isSlugified
+        ? 'Message body and a normalized friendly name are required'
+        : !isBodyFilled
+        ? 'Message body is required'
+        : !isSlugified && !form.friendly_name
+        ? 'Friendly name is required'
+        : !isSlugified
+        ? 'Friendly name must be normalized — click Normalize'
+        : '';
+    const canSubmit = isSlugified && isBodyFilled && !submitting;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -124,7 +135,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
             </Box>
 
             {/* Name + Language row */}
-            <Box sx={{ display: 'flex', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
                 <TextField
                     label="Friendly Name"
                     value={form.friendly_name}
@@ -133,20 +144,17 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                     size="small"
                     sx={{ flex: 3 }}
                     helperText="Lowercase, no spaces"
-                    slotProps={{
-                        input: {
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <Tooltip title="Slugify (convert to snake_case)">
-                                        <IconButton size="small" onClick={() => set('friendly_name', slugify(form.friendly_name))} tabIndex={-1}>
-                                            <SiAutoprefixer size={15} />
-                                        </IconButton>
-                                    </Tooltip>
-                                </InputAdornment>
-                            ),
-                        },
-                    }}
                 />
+                <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<SiAutoprefixer />}
+                    onClick={() => set('friendly_name', slugify(form.friendly_name))}
+                    tabIndex={-1}
+                    sx={{ textTransform: 'none', whiteSpace: 'nowrap', mt: 0.5 }}
+                >
+                    Normalize
+                </Button>
                 <TextField
                     select
                     label="Language"
@@ -204,14 +212,18 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                 </>
             )}
 
-            <Button
-                type="submit"
-                variant="contained"
-                disabled={submitting}
-                sx={{ alignSelf: 'flex-start', textTransform: 'none' }}
-            >
-                {submitting ? <CircularProgress size={20} color="inherit" /> : 'Create Template'}
-            </Button>
+            <Tooltip title={submitDisabledReason}>
+                <span style={{ alignSelf: 'flex-start' }}>
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        disabled={!canSubmit}
+                        sx={{ textTransform: 'none' }}
+                    >
+                        {submitting ? <CircularProgress size={20} color="inherit" /> : 'Create Template'}
+                    </Button>
+                </span>
+            </Tooltip>
         </Box>
             </form>
 
