@@ -240,6 +240,8 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
                                             style={{
                                                 transition: 'all 0.2s ease-in-out',
                                                 cursor: 'pointer',
+                                                backgroundColor: selectedItem === itemKey ? '#0d6efd' : '',
+                                                color: selectedItem === itemKey ? '#fff' : '#212529',
                                             }}
                                         >
                                             <span style={{

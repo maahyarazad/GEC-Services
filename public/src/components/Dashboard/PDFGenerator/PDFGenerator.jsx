@@ -1,6 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from "react";
-
-
+import React, { useState, useEffect } from "react";
 
 import Box from '@mui/material/Box';
 import Accordion from '@mui/material/Accordion';
@@ -10,58 +8,20 @@ import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Button from '@mui/material/Button';
 import Switch from '@mui/material/Switch';
-import isEqual from "lodash.isequal";
-
+import TextField from '@mui/material/TextField';
 import './PDFGenerator.css';
 
 const Invoice = React.lazy(() => import("./Invoice"));
 const FileList = React.lazy(() => import("./FileList"));
-import { GrCurrency } from "react-icons/gr";
+
+const labelify = (key) =>
+    key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
 const PDFGenerator = () => {
-
-
-    // const handleKeyDown = (e) => {
-    //     if (e.key === "Backspace") {
-    //         const textarea = e.target;
-    //         const { selectionStart, selectionEnd, value } = textarea;
-
-    //         // Split value into lines
-    //         const lines = value.split(/\r?\n/);
-
-    //         // Determine current line index based on caret position
-    //         const beforeCaret = value.slice(0, selectionStart);
-    //         const currentLineIndex = beforeCaret.split(/\r?\n/).length - 1;
-    //         const currentLine = lines[currentLineIndex];
-
-    //         // CASE 1: Prevent line merge or deletion at line start
-    //         // if (selectionStart === selectionEnd && currentLine.trim() === "" && selectionStart > 0) {
-    //         //   e.preventDefault(); // stop default backspace
-    //         //   console.log("Prevented deleting empty line");
-    //         //   return;
-    //         // }
-
-    //         // // CASE 2: Prevent line merge when caret at beginning of line
-    //         // const lineStartPosition = beforeCaret.lastIndexOf("\n") + 1;
-    //         // if (selectionStart === lineStartPosition) {
-    //         //   e.preventDefault();
-    //         //   console.log("Prevented merging lines");
-    //         //   return;
-    //         // }
-
-    //         // Otherwise, let Backspace work normally
-    //     }
-    // };
-
-
-
-    const printRef = useRef();
     const now = new Date();
-    const this_month = `${String(now.getMonth() + 1).padStart(2, "0")}`;
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const day = String(now.getDate()).padStart(2, "0");
-
     const formattedDate = `${year}${month}${day}`;
 
     const _initial_formData = {
@@ -76,7 +36,6 @@ const PDFGenerator = () => {
             company_postal_city: "",
             company_country: "",
         },
-
         reference: {
             reference_number: "",
             reference_contact_person_name_1: "Martin Esser",
@@ -87,7 +46,6 @@ const PDFGenerator = () => {
             reference_contact_person_email_2: "procurement1@german-emirates-club.com",
             date: `${day}/${month}/${now.getFullYear()}`
         },
-
         bank_detail: {
             account_name: "German World Club",
             bank_name: "WIO Bank",
@@ -96,7 +54,6 @@ const PDFGenerator = () => {
             iban: "AE 10 0860 0000 0998 4546 965",
             swift: "WIOBAEADXXX",
         },
-
         payment_terms: {
             line1: "100% at time of signing (one time)",
             line2: "",
@@ -117,26 +74,12 @@ const PDFGenerator = () => {
             currency_symbol: "USD",
             currency_rate: 3.67,
         }
-    }
+    };
+
     const [formData, setFormData] = useState(_initial_formData);
-    const [objectChanged, setObjectChanged] = useState(false);
 
-    const UpdateForm = (data) => { setFormData(data); }
+    const UpdateForm = (data) => { setFormData(data); };
 
-
-    useEffect(() => {
-
-        setObjectChanged(!isEqual(_initial_formData, formData));
-        // console.log(`parent => ${objectChanged}`)
-    }, [formData]);
-
-
-
-
-
-    const _objectChanged = () => { return objectChanged };
-
-    // Add a new empty item
     const addItem = () => {
         setFormData((prev) => ({
             ...prev,
@@ -144,7 +87,6 @@ const PDFGenerator = () => {
         }));
     };
 
-    // Remove item by index
     const removeItem = (index) => {
         setFormData((prev) => ({
             ...prev,
@@ -156,141 +98,90 @@ const PDFGenerator = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        const nameParts = name.split('.'); // e.g. ["items", "0", "price"] or ["company", "company_name"]
+        const nameParts = name.split('.');
 
         if (nameParts[0] === 'items') {
-            // Update an item in the items array
             const index = parseInt(nameParts[1], 10);
             const key = nameParts[2];
-
             setFormData((prev) => {
-                // Defensive: check index and key exist
                 if (isNaN(index) || !key) return prev;
-
                 const updatedItems = [...prev.items];
-                const updatedItem = { ...updatedItems[index], [key]: value };
-                updatedItems[index] = updatedItem;
-
+                updatedItems[index] = { ...updatedItems[index], [key]: value };
                 return { ...prev, items: updatedItems };
             });
         } else {
-            // Handle nested keys in other parts, e.g. project.project_name
             const topKey = nameParts[0];
             const subKey = nameParts[1] || null;
-
             setFormData((prev) => {
                 if (!topKey) return prev;
-
                 if (subKey) {
-                    // Nested object update
-                    return {
-                        ...prev,
-                        [topKey]: {
-                            ...prev[topKey],
-                            [subKey]: value,
-                        },
-                    };
-                } else {
-                    // Direct key update
-                    return {
-                        ...prev,
-                        [topKey]: value,
-                    };
+                    return { ...prev, [topKey]: { ...prev[topKey], [subKey]: value } };
                 }
+                return { ...prev, [topKey]: value };
             });
         }
     };
 
-
-
     const tabstyle = {
-        backgroundColor: "#00000",      // background of the header
-        color: "#fffff",                // text color
+        backgroundColor: '#000000',
+        color: '#ffffff',
         "& .MuiAccordionSummary-expandIconWrapper": {
-            color: "#fffff",             // icon color
+            color: '#ffffff',
         },
         '&.Mui-expanded': {
             bgcolor: '#037bfc',
-            '& .MuiTypography-root': {
-                color: '#fff',   // text color when expanded
-            },
-            '& .MuiSvgIcon-root': {
-                color: '#fff',   // expand icon color when expanded
-            },
+            '& .MuiTypography-root': { color: '#fff' },
+            '& .MuiSvgIcon-root': { color: '#fff' },
         },
+    };
 
-    }
+    const renderFields = (section, prefix) =>
+        Object.entries(formData[section]).map(([key, value]) => (
+            <TextField
+                key={key}
+                label={labelify(key)}
+                name={`${prefix}.${key}`}
+                value={value}
+                onChange={handleChange}
+                size="small"
+                fullWidth
+                sx={{ mb: 1.5 }}
+            />
+        ));
+
     return (
         <Box sx={{ padding: 1 }}>
-
-
-            {/* Form + Invoice: side by side on lg, stacked on sm */}
             <Box sx={{
                 display: 'flex',
                 flexDirection: { xs: 'column', lg: 'row' },
-                gap: 1,
+                gap: 1.5,
                 alignItems: 'flex-start',
             }}>
-                {/* File list on top, full width */}
-                <Box sx={{ width: { xs: '100%', lg: '15%' , height: { lg: 'calc(100vh - 125px)' }}, flexShrink: 0, mb: 1 }}>
+                {/* File list */}
+                <Box sx={{ width: { xs: '100%', lg: '15%', height: { lg: 'calc(100vh - 125px)' } }, flexShrink: 0 }}>
                     <FileList onSelect={UpdateForm} formData={formData} initialFormData={_initial_formData} />
                 </Box>
 
-                {/* Left: Form */}
+                {/* Form */}
                 <Box sx={{
                     width: { xs: '100%', md: '35%' },
                     height: { lg: 'calc(100vh - 125px)' },
                     overflowY: { lg: 'scroll' },
                     flexShrink: 0,
                 }} className='rounded border p-1'>
-                                
-                    <form style={{ display: 'block' }} >
+                    <form style={{ display: 'block' }}>
 
                         <Accordion>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={tabstyle}>
                                 <Typography component="span">Project & Company Details</Typography>
                             </AccordionSummary>
-                            <AccordionDetails>
-                                <Box sx={{ width: '100%', display: 'flex', gap: 2 }}>
+                            <AccordionDetails sx={{ pt: 2 }}>
+                                <Box sx={{ display: 'flex', gap: 2 }}>
                                     <Box sx={{ flex: 1 }}>
-                                        {Object.entries(formData.project).map(([key, value]) => (
-                                            <div key={key} style={{ marginBottom: 12 }}>
-                                                <label style={{ display: 'block', fontSize: 14, color: '#888', marginBottom: 0 }}>
-                                                    {key
-                                                        .replace(/_/g, ' ')
-                                                        .replace(/\b\w/g, c => c.toUpperCase())}
-                                                </label>
-                                                <input
-                                                    name={`project.${key}`}
-                                                    value={value}
-                                                    onChange={handleChange}
-                                                    placeholder={key
-                                                        .replace(/_/g, ' ')
-                                                        .replace(/\b\w/g, c => c.toUpperCase())}
-                                                    style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
-                                                />
-                                            </div>
-                                        ))}
+                                        {renderFields('project', 'project')}
                                     </Box>
                                     <Box sx={{ flex: 1 }}>
-                                        {Object.entries(formData.company).map(([key, value]) => (
-                                            <div key={key} style={{ marginBottom: 12 }}>
-                                                <label style={{ display: 'block', fontSize: 14, color: '#888', marginBottom: 0 }}>
-                                                    {key
-                                                        .replace(/_/g, ' ')
-                                                        .replace(/\b\w/g, c => c.toUpperCase())}
-                                                </label>
-                                                <input
-                                                    name={`company.${key}`}
-                                                    value={value}
-                                                    onChange={handleChange}
-                                                    placeholder={key
-                                                        .replace(/_/g, ' ')
-                                                        .replace(/\b\w/g, c => c.toUpperCase())}
-                                                    style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
-                                                />
-                                            </div>
-                                        ))}
+                                        {renderFields('company', 'company')}
                                     </Box>
                                 </Box>
                             </AccordionDetails>
@@ -300,27 +191,8 @@ const PDFGenerator = () => {
                             <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={tabstyle}>
                                 <Typography component="span">Project Reference</Typography>
                             </AccordionSummary>
-                            <AccordionDetails>
-                                <Box sx={{ width: '100%' }}>
-                                    {Object.entries(formData.reference).map(([key, value]) => (
-                                        <div key={key} style={{ marginBottom: 12 }}>
-                                            <label style={{ display: 'block', fontSize: 14, color: '#888', marginBottom: 0 }}>
-                                                {key
-                                                    .replace(/_/g, ' ')
-                                                    .replace(/\b\w/g, c => c.toUpperCase())}
-                                            </label>
-                                            <input
-                                                name={`reference.${key}`}
-                                                value={value}
-                                                onChange={handleChange}
-                                                placeholder={key
-                                                    .replace(/_/g, ' ')
-                                                    .replace(/\b\w/g, c => c.toUpperCase())}
-                                                style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
-                                            />
-                                        </div>
-                                    ))}
-                                </Box>
+                            <AccordionDetails sx={{ pt: 2 }}>
+                                {renderFields('reference', 'reference')}
                             </AccordionDetails>
                         </Accordion>
 
@@ -328,124 +200,89 @@ const PDFGenerator = () => {
                             <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={tabstyle}>
                                 <Typography component="span">Descriptions</Typography>
                             </AccordionSummary>
-                            <AccordionDetails>
-                                <Box sx={{ width: '100%' }}>
-
-                                    {/* Toggles */}
-                                    <Box sx={{ mb: 1, pb: 1, borderBottom: '1px solid #ccc' }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                                            <Switch
-                                                size="small"
-                                                onChange={(e) => setFormData((prev) => ({ ...prev, items_price: e.target.checked }))}
-                                                checked={!!formData?.items_price}
-                                                color="primary"
-                                            />
-                                            <small style={{ fontSize: 13 }}>Enable (Dummy String) Price Column</small>
-                                        </Box>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                                            <Switch
-                                                size="small"
-                                                color="primary"
-                                                checked={!!formData.currency?.currency_enable}
-                                                onChange={(e) => setFormData((prev) => ({
-                                                    ...prev,
-                                                    currency: { ...prev.currency, currency_enable: e.target.checked }
-                                                }))}
-                                            />
-                                            <small style={{ fontSize: 14 }}>Enable Currency</small>
-                                        </Box>
-
-                                        {/* Currency fields */}
-                                        {formData.currency?.currency_enable && (
-                                            <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                                                {Object.entries(formData.currency).map(([key, value]) =>
-                                                    key !== 'currency_enable' && (
-                                                        <div key={key} style={{ flex: 1 }}>
-                                                            <label style={{ display: 'block', fontSize: 14, color: '#888', marginBottom: 0 }}>
-                                                                {key
-                                                                    .replace(/_/g, ' ')
-                                                                    .replace(/\b\w/g, c => c.toUpperCase())}
-                                                            </label>
-                                                            <input
-                                                                name={`currency.${key}`}
-                                                                value={value}
-                                                                onChange={handleChange}
-                                                                placeholder={key
-                                                                    .replace(/_/g, ' ')
-                                                                    .replace(/\b\w/g, c => c.toUpperCase())}
-                                                                style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
-                                                            />
-                                                        </div>
-                                                    )
-                                                )}
-                                            </Box>
-                                        )}
+                            <AccordionDetails sx={{ pt: 2 }}>
+                                {/* Toggles */}
+                                <Box sx={{ mb: 2, pb: 1.5, borderBottom: '1px solid #ccc' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                                        <Switch
+                                            size="small"
+                                            onChange={(e) => setFormData((prev) => ({ ...prev, items_price: e.target.checked }))}
+                                            checked={!!formData?.items_price}
+                                            color="primary"
+                                        />
+                                        <Typography variant="caption">Enable (Dummy String) Price Column</Typography>
                                     </Box>
-
-                                    {/* Items */}
-                                    {formData.items.map((item, index) => {
-                                        const itemKey = item.id ?? index;
-                                        if (item.deleted) return null;
-                                        return (
-                                            <Box
-                                                key={itemKey}
-                                                sx={{ mb: 1.5, pb: 1.5, borderBottom: '1px solid #eee' }}
-                                            >
-                                                {Object.keys(item).map((key) => {
-                                                    if (key === 'deleted') return null;
-                                                    if (key === 'price' && !formData.items_price) return null;
-
-                                                    return (
-                                                        <div key={`${index}-${key}`} style={{ marginBottom: 10 }}>
-                                                            <label style={{ display: 'block', fontSize: 14, color: '#888', marginBottom: 0 }}>
-                                                                {key
-                                                                    .replace(/_/g, ' ')
-                                                                    .replace(/\b\w/g, c => c.toUpperCase())}
-                                                            </label>
-                                                            {key === 'body' ? (
-                                                                <textarea
-                                                                    rows={3}
-                                                                    name={`items.${index}.${key}`}
-                                                                    value={item[key]}
-                                                                    onChange={handleChange}
-                                                                    placeholder={key
-                                                                        .replace(/_/g, ' ')
-                                                                        .replace(/\b\w/g, c => c.toUpperCase())}
-                                                                    style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
-                                                                />
-                                                            ) : (
-                                                                <input
-                                                                    name={`items.${index}.${key}`}
-                                                                    value={item[key]}
-                                                                    onChange={handleChange}
-                                                                    placeholder={key
-                                                                        .replace(/_/g, ' ')
-                                                                        .replace(/\b\w/g, c => c.toUpperCase())}
-                                                                    style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
-                                                                />
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-                                                <Button
-                                                    variant="contained"
-                                                    sx={{ textTransform: 'none' }}
-                                                    size="small"
-                                                    type="button"
-                                                    color="error"
-                                                    onClick={() => removeItem(index)}
-                                                >
-                                                    Remove
-                                                </Button>
-                                            </Box>
-                                        );
-                                    })}
-
-                                    <Button type="button" variant="outlined" color="info" size="small" sx={{ textTransform: 'none' }} onClick={addItem}>
-                                        Add Item
-                                    </Button>
-
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                                        <Switch
+                                            size="small"
+                                            color="primary"
+                                            checked={!!formData.currency?.currency_enable}
+                                            onChange={(e) => setFormData((prev) => ({
+                                                ...prev,
+                                                currency: { ...prev.currency, currency_enable: e.target.checked }
+                                            }))}
+                                        />
+                                        <Typography variant="caption">Enable Currency</Typography>
+                                    </Box>
+                                    {formData.currency?.currency_enable && (
+                                        <Box sx={{ display: 'flex', gap: 1.5, mt: 1 }}>
+                                            {Object.entries(formData.currency).map(([key, value]) =>
+                                                key !== 'currency_enable' && (
+                                                    <TextField
+                                                        key={key}
+                                                        label={labelify(key)}
+                                                        name={`currency.${key}`}
+                                                        value={value}
+                                                        onChange={handleChange}
+                                                        size="small"
+                                                        sx={{ flex: 1 }}
+                                                    />
+                                                )
+                                            )}
+                                        </Box>
+                                    )}
                                 </Box>
+
+                                {/* Items */}
+                                {formData.items.map((item, index) => {
+                                    if (item.deleted) return null;
+                                    return (
+                                        <Box key={item.id ?? index} sx={{ mb: 2, pb: 2, borderBottom: '1px solid #eee' }}>
+                                            {Object.keys(item).map((key) => {
+                                                if (key === 'deleted') return null;
+                                                if (key === 'price' && !formData.items_price) return null;
+                                                return (
+                                                    <TextField
+                                                        key={`${index}-${key}`}
+                                                        label={labelify(key)}
+                                                        name={`items.${index}.${key}`}
+                                                        value={item[key]}
+                                                        onChange={handleChange}
+                                                        size="small"
+                                                        fullWidth
+                                                        multiline={key === 'body'}
+                                                        rows={key === 'body' ? 3 : undefined}
+                                                        sx={{ mb: 1.5 }}
+                                                    />
+                                                );
+                                            })}
+                                            <Button
+                                                variant="contained"
+                                                size="small"
+                                                type="button"
+                                                color="error"
+                                                sx={{ textTransform: 'none' }}
+                                                onClick={() => removeItem(index)}
+                                            >
+                                                Remove
+                                            </Button>
+                                        </Box>
+                                    );
+                                })}
+
+                                <Button type="button" variant="outlined" color="info" size="small" sx={{ textTransform: 'none' }} onClick={addItem}>
+                                    Add Item
+                                </Button>
                             </AccordionDetails>
                         </Accordion>
 
@@ -453,27 +290,8 @@ const PDFGenerator = () => {
                             <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={tabstyle}>
                                 <Typography component="span">Bank Details</Typography>
                             </AccordionSummary>
-                            <AccordionDetails>
-                                <Box sx={{ width: '100%' }}>
-                                    {Object.entries(formData.bank_detail).map(([key, value]) => (
-                                        <div key={key} style={{ marginBottom: 12 }}>
-                                            <label style={{ display: 'block', fontSize: 14, color: '#888', marginBottom: 0 }}>
-                                                {key
-                                                    .replace(/_/g, ' ')
-                                                    .replace(/\b\w/g, c => c.toUpperCase())}
-                                            </label>
-                                            <input
-                                                name={`bank_detail.${key}`}
-                                                value={value}
-                                                onChange={handleChange}
-                                                placeholder={key
-                                                    .replace(/_/g, ' ')
-                                                    .replace(/\b\w/g, c => c.toUpperCase())}
-                                                style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
-                                            />
-                                        </div>
-                                    ))}
-                                </Box>
+                            <AccordionDetails sx={{ pt: 2 }}>
+                                {renderFields('bank_detail', 'bank_detail')}
                             </AccordionDetails>
                         </Accordion>
 
@@ -481,46 +299,22 @@ const PDFGenerator = () => {
                             <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={tabstyle}>
                                 <Typography component="span">Payment Terms</Typography>
                             </AccordionSummary>
-                            <AccordionDetails>
-                                <Box sx={{ width: '100%' }}>
-                                    {Object.entries(formData.payment_terms).map(([key, value]) => (
-                                        <div key={key} style={{ marginBottom: 12 }}>
-                                            <label style={{ display: 'block', fontSize: 14, color: '#888', marginBottom: 0 }}>
-                                                {key
-                                                    .replace(/_/g, ' ')
-                                                    .replace(/\b\w/g, c => c.toUpperCase())}
-                                            </label>
-                                            <input
-                                                name={`payment_terms.${key}`}
-                                                value={value}
-                                                onChange={handleChange}
-                                                placeholder={key
-                                                    .replace(/_/g, ' ')
-                                                    .replace(/\b\w/g, c => c.toUpperCase())}
-                                                style={{ width: '100%', padding: '4px 6px', boxSizing: 'border-box' }}
-                                            />
-                                        </div>
-                                    ))}
-                                </Box>
+                            <AccordionDetails sx={{ pt: 2 }}>
+                                {renderFields('payment_terms', 'payment_terms')}
                             </AccordionDetails>
                         </Accordion>
 
                     </form>
                 </Box>
 
-                {/* Right: Invoice Preview */}
+                {/* Invoice Preview */}
                 <Box sx={{
                     width: { xs: '100%', md: '50%' },
                     flexShrink: 0,
-                     height: { lg: 'calc(100vh - 125px)' },
+                    height: { lg: 'calc(100vh - 125px)' },
                     overflowY: { lg: 'scroll' },
-                }}
-                className='rounded border p-1'
-                >
-                    
-
+                }} className='rounded border p-1'>
                     <Invoice formData={formData} />
-                    
                 </Box>
 
             </Box>
