@@ -119,7 +119,9 @@ router.post(
 
       if (data?.event === "Partner Onboarding Authentication") {
         const result = await fetchPartnerFromGEC(req);
-        if(result.error) return res.status(404).json({ status: false, message: "Partner not found" });
+        const data = await result.json();
+        if(!data.success) return res.status(400).json({ status: false, message: data.message });
+        
         return res.status(200).json({
           status: true
         });
@@ -252,7 +254,7 @@ async function fetchPartnerFromGEC(req) {
     const data = req.body;
     const baseUrl = process.env.ENVIRONMENT === "PRODUCTION" ? `${process.env.GEC__ORIGIN}/api/`: `${process.env.GEC__ORIGIN}`
   // ── 1. Fetch partner ──────────────────────────────────────────
-  const fetchRes = await fetch(
+  return await fetch(
     
     `${baseUrl}partners/get-partner-with-email?email=${data.email}`,
     {
@@ -263,14 +265,6 @@ async function fetchPartnerFromGEC(req) {
       },
     }
   );
-
-  const partnerData = await fetchRes.json();
-
-  if (!fetchRes.ok || !partnerData.success || !partnerData?.data?.length) {
-  return {error: true};
-  }
-
-  return {error: false, data: partnerData?.data};
 }
 
 router.post("/partner-otp-check", async (req, res) => {
@@ -279,7 +273,7 @@ router.post("/partner-otp-check", async (req, res) => {
 
     const partnerData = await fetchPartnerFromGEC(req);
     // ── 2. OTP validation (PRODUCTION only) ──────────────────────
-    if (process.env.ENVIRONMENT !== "PRODUCTION") {
+    if (process.env.ENVIRONMENT === "PRODUCTION") {
       if (Date.now() > req.session.otpExpires) {
         return res
           .status(401)

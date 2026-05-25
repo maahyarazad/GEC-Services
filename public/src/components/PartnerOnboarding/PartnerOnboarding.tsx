@@ -161,6 +161,9 @@ export default function PartnerOnboarding() {
                     message: "To verify your email and complete your account authentication for",
                 }),
             });
+
+            
+
             if (res.status === 429) {
                 const data = await res.json();
                 showSnackbar(data.error || "Too many attempts. Please try again later.", "error");
@@ -169,9 +172,17 @@ export default function PartnerOnboarding() {
 
             if (res.status === 404) {
                 const data = await res.json();
+                
                 showSnackbar(data.message || "Email not found.", "error");
                 return;
             }
+
+             if (res.status === 403) {
+                const data = await res.json();
+                showSnackbar(data.message, "error");
+                return;
+            }
+
 
             if (res.ok) {
                 const data = await res.json();
@@ -217,6 +228,7 @@ export default function PartnerOnboarding() {
                 setActiveStep((s) => s + 1);
             } else {
                 if (statusRef.current) {
+                    
                     statusRef.current.textContent = data.message;
                     statusRef.current.classList.add("text-danger");
                 }
