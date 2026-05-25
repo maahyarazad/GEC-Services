@@ -20,6 +20,7 @@ import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import TaskAltOutlinedIcon from "@mui/icons-material/TaskAltOutlined";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
+import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
 import OtpTimer from "../utils/OtpTimer";
 import OtpInput from "../utils/OtpInput";
 import { validateAndConvertXlsx } from './validateAndConvertXlsx.tsx';
@@ -52,10 +53,10 @@ import { ErrorMessage } from "formik";
 import { useSnackbar } from "../Providers/Snackbar";
 
 // ── Steps Config ──────────────────────────────────────────────────────────
-const STEPS = ["Login", "Upload Document", "Review Submission"];
+const STEPS = ["Login", "Upload Document", "Delivery Info", "Review Submission"];
 const SUCCESS_TOAST_MESSAGES = ["Document uploaded successfully.", "Onboarding submitted — we'll be in touch soon!"]
 // ── Step Icon ─────────────────────────────────────────────────────────────
-const stepIcons = [LoginOutlinedIcon, UploadFileOutlinedIcon, TaskAltOutlinedIcon];
+const stepIcons = [LoginOutlinedIcon, UploadFileOutlinedIcon, LocalShippingOutlinedIcon, TaskAltOutlinedIcon];
 
 function GoldStepIcon({ active, completed, icon }) {
     const Icon = stepIcons[Number(icon) - 1];
@@ -86,6 +87,10 @@ const INITIAL_WIZARD_STATE = {
 
     // Step 1 — Upload
     uploadedFile: null,         // the File object
+    // Step 2 — Delivery Info
+    deliveryAddress: "",
+    contactPerson: "",
+    phoneNumber: "",
     valid: false,
     csvBlob: null,
     csvFile: null,
@@ -306,6 +311,9 @@ export default function PartnerOnboarding() {
 
             //@ts-ignore
             formData.append("partner", wizardState.partner?.title);
+            formData.append("delivery_address", wizardState.deliveryAddress);
+            formData.append("contact_person", wizardState.contactPerson);
+            formData.append("phone_number", wizardState.phoneNumber);
 
             const res = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/upload-csv`,
@@ -520,7 +528,43 @@ export default function PartnerOnboarding() {
         </Box>
     );
 
-    // ── Step 2: Review ────────────────────────────────────────────────────
+    // ── Step 2: Delivery Info ─────────────────────────────────────────────
+    const StepDelivery = (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            <Box>
+                <FieldLabel>Delivery Address *</FieldLabel>
+                <TextField
+                    fullWidth
+                    placeholder="Street, Building, City"
+                    value={wizardState.deliveryAddress}
+                    onChange={(e) => setWiz({ deliveryAddress: e.target.value })}
+                    sx={fieldSx}
+                />
+            </Box>
+            <Box>
+                <FieldLabel>Contact Person *</FieldLabel>
+                <TextField
+                    fullWidth
+                    placeholder="Full name"
+                    value={wizardState.contactPerson}
+                    onChange={(e) => setWiz({ contactPerson: e.target.value })}
+                    sx={fieldSx}
+                />
+            </Box>
+            <Box>
+                <FieldLabel>Phone Number *</FieldLabel>
+                <TextField
+                    fullWidth
+                    placeholder="+971 XX XXX XXXX"
+                    value={wizardState.phoneNumber}
+                    onChange={(e) => setWiz({ phoneNumber: e.target.value })}
+                    sx={fieldSx}
+                />
+            </Box>
+        </Box>
+    );
+
+    // ── Step 3: Review ────────────────────────────────────────────────────
     const StepReview = (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {[
@@ -598,7 +642,7 @@ export default function PartnerOnboarding() {
         </Box>
     );
 
-    const panels = [StepLogin, StepUpload, StepReview];
+    const panels = [StepLogin, StepUpload, StepDelivery, StepReview];
 
     const isNextButtonDisabled = () => {
 
@@ -610,8 +654,15 @@ export default function PartnerOnboarding() {
             return true;
         }
 
-        if (activeStep === 2 && wizardState.wizardCompleted) {
+        if (activeStep === 2 && (
+            !wizardState.deliveryAddress.trim() ||
+            !wizardState.contactPerson.trim() ||
+            !wizardState.phoneNumber.trim()
+        )) {
+            return true;
+        }
 
+        if (activeStep === 3 && wizardState.wizardCompleted) {
             return true;
         }
 

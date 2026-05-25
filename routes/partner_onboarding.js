@@ -119,6 +119,9 @@ router.post("/upload-csv", upload.single("file"), (req, res) => {
     }
 
     const partner = req.body.partner;
+    const deliveryAddress = req.body.delivery_address || null;
+    const contactPerson = req.body.contact_person || null;
+    const phoneNumber = req.body.phone_number || null;
 
     if (!partner) {
       return res
@@ -150,6 +153,16 @@ router.post("/upload-csv", upload.single("file"), (req, res) => {
     }
 
     const inserted = insertMany(rows, partner);
+
+    db.prepare(`
+      INSERT INTO partner_delivery_info (partner, delivery_address, contact_person, phone_number, updated_at)
+      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(partner) DO UPDATE SET
+        delivery_address = excluded.delivery_address,
+        contact_person = excluded.contact_person,
+        phone_number = excluded.phone_number,
+        updated_at = CURRENT_TIMESTAMP
+    `).run(partner, deliveryAddress, contactPerson, phoneNumber);
 
     return res.status(200).json({
       status: true,
