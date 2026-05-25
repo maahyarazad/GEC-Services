@@ -271,7 +271,7 @@ router.post("/partner-otp-check", async (req, res) => {
   try {
     const data = req.body;
 
-    const partnerData = await fetchPartnerFromGEC(req);
+    const partnerFetch = await fetchPartnerFromGEC(req);
     // ── 2. OTP validation (PRODUCTION only) ──────────────────────
     if (process.env.ENVIRONMENT === "PRODUCTION") {
       if (Date.now() > req.session.otpExpires) {
@@ -297,6 +297,8 @@ router.post("/partner-otp-check", async (req, res) => {
     if (Object.keys(data).length > 0) {
       dbService.create("registration_client_access", data);
     }
+
+    const partnerData = await partnerFetch.json();
 
     // ── 4. Sign token & set cookie ───────────────────────────────
     const token = jwt.sign(

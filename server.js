@@ -77,6 +77,22 @@ try {
   } catch {
     // Column already exists — ignore
   }
+
+  try {
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS partner_delivery_info (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        partner TEXT UNIQUE,
+        delivery_address TEXT,
+        contact_person TEXT,
+        phone_number TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+  } catch {
+    // Table already exists — ignore
+  }
 })();
 
 app.use(
