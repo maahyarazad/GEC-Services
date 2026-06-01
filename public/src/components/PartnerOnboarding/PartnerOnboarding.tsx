@@ -114,6 +114,7 @@ export default function PartnerOnboarding() {
     const otpRef = useRef();
     const statusRef = useRef();
     const otpFocus = useRef();
+    const deliveryInfoFetched = useRef(false);
 
     // Read ?email= from URL on mount
     useEffect(() => {
@@ -245,6 +246,33 @@ export default function PartnerOnboarding() {
 
     // ── OTP Timer expiry ──────────────────────────────────────────────────
     const handleExpiredChange = () => setWiz({ otpValid: false });
+
+    // ── Pre-fill delivery info on entering Step 3 ─────────────────────────
+    useEffect(() => {
+        if (activeStep !== 2 || deliveryInfoFetched.current || !wizardState.partner?.title) return;
+        deliveryInfoFetched.current = true;
+
+        const fetchDeliveryInfo = async () => {
+            try {
+                const res = await fetch(
+                    `${import.meta.env.VITE_SERVERURL}/partner-delivery-info?partner=${encodeURIComponent(wizardState.partner!.title)}`,
+                    { credentials: "include" }
+                );
+                const data = await res.json();
+                if (data.status && data.data) {
+                    setWiz({
+                        deliveryAddress: data.data.delivery_address || "",
+                        contactPerson:   data.data.contact_person  || "",
+                        phoneNumber:     data.data.phone_number     || "",
+                    });
+                }
+            } catch (e) {
+                console.error("Failed to fetch delivery info:", e);
+            }
+        };
+
+        fetchDeliveryInfo();
+    }, [activeStep]);
 
     // ── Token check ───────────────────────────────────────────────────────
     const getToken = async () => {

@@ -368,14 +368,14 @@ WHERE rn = 1;
 
       if (batch.length === 0) return { updated: 0, inserted: 0, deactivated: 0 };
 
-      const addBatch    = batch.filter(r => !r.action_type || r.action_type === 'add');
+      const addBatch    = batch.filter(r => r.action_type === 'add');
       const updateBatch = batch.filter(r => r.action_type === 'update');
       const deleteBatch = batch.filter(r => r.action_type === 'delete');
 
       let updated = 0;
       let deactivated = 0;
 
-      // Handle 'update' action: apply field changes to existing member_card rows
+      // STEP 1:  Handle 'update' action: apply field changes to existing member_card rows
       const updateStmt = db.prepare(`
         UPDATE member_card
         SET firstname = ?, lastname = ?, title = ?,
@@ -391,7 +391,7 @@ WHERE rn = 1;
         updated += updateStmt.run(r.firstname, r.lastname, r.title, r.gender, r.email, r.birthday, r.language, r.partner, r.mobile_number).changes;
       }
 
-      // Handle 'delete' action: soft-delete matching member_card rows
+      // STEP 2: Handle 'delete' action: soft-delete matching member_card rows
       const deleteStmt = db.prepare(`
         UPDATE member_card SET active = 0, remarks = 'synchronized delete ' || datetime('now')
         WHERE LOWER(partner) = LOWER(?) AND mobile_number = ?
@@ -400,38 +400,14 @@ WHERE rn = 1;
         deactivated += deleteStmt.run(r.partner, r.mobile_number).changes;
       }
 
-      // Handle 'add' action: batch INSERT / UPDATE / DEACTIVATE (original logic)
+      // STEP 3: Handle 'add' action: batch INSERT / UPDATE / DEACTIVATE (original logic)
       let insertResult = { changes: 0 };
       let deactivateResult = { changes: 0 };
       let updateResult = { changes: 0 };
 
       if (addBatch.length > 0) {
-        // Step 1 — UPDATE existing member_card rows whose mobile_number matches
-        updateResult = db.prepare(`
-          UPDATE member_card
-          SET active = 1,
-              type   = (
-                  SELECT CASE pod.language WHEN 'de' THEN 5 ELSE 7 END
-                  FROM partner_onboarding_data AS pod
-                  WHERE LOWER(pod.partner) = LOWER(member_card.partner)
-                    AND pod.mobile_number = member_card.mobile_number
-                    AND pod.metadata_createdAt >= datetime('now', '-1 month')
-                    AND pod.synchronized != 1
-                    AND (pod.action_type IS NULL OR pod.action_type = 'add')
-                  LIMIT 1
-              ),
-              remarks = 'synchronized ' || datetime('now')
-          WHERE LOWER(partner) = LOWER(?)
-            AND mobile_number IN (
-                SELECT mobile_number FROM partner_onboarding_data
-                WHERE LOWER(partner) = LOWER(?)
-                  AND metadata_createdAt >= datetime('now', '-1 month')
-                  AND synchronized != 1
-                  AND (action_type IS NULL OR action_type = 'add')
-            )
-        `).run(partner, partner);
-
-        // Step 2 — INSERT new members whose mobile_number is not yet in member_card
+       
+        // INSERT new members whose mobile_number is not yet in member_card
         insertResult = db.prepare(`
           INSERT INTO member_card (partner, mobile_number, firstname, lastname, title, gender, email, birthday, active, type, remarks)
           SELECT pod.partner, pod.mobile_number, pod.firstname, pod.lastname,
@@ -453,20 +429,7 @@ WHERE rn = 1;
             )
         `).run(partner);
 
-        // Step 3 — DEACTIVATE cards not in the add batch
-        deactivateResult = db.prepare(`
-          UPDATE member_card
-          SET active  = 0,
-              remarks = 'synchronized ' || datetime('now')
-          WHERE LOWER(partner) = LOWER(?)
-            AND mobile_number NOT IN (
-                SELECT mobile_number FROM partner_onboarding_data
-                WHERE LOWER(partner) = LOWER(?)
-                  AND metadata_createdAt >= datetime('now', '-1 month')
-                  AND synchronized != 1
-                  AND (action_type IS NULL OR action_type = 'add')
-            )
-        `).run(partner, partner);
+       
       }
 
       // Step 4 — Mark all batch records as synchronized

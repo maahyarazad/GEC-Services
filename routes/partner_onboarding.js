@@ -87,6 +87,39 @@ const insertMany = db.transaction((contacts, partner) => {
   return inserted;
 });
 
+// ── Delivery info pre-fill ─────────────────────────────────────────────────
+router.get("/partner-delivery-info", (req, res) => {
+  try {
+    const partnerToken = req.cookies["partner-usr"];
+    if (!partnerToken) return res.status(401).json({ status: false, message: "Unauthorized" });
+    jwt.verify(partnerToken, process.env.JWT_SECRET);
+
+    const { partner } = req.query;
+    if (!partner) return res.status(400).json({ status: false, message: "partner query param is required" });
+
+    const row = db.prepare(`
+      WITH unsynced_table AS (
+        SELECT * FROM partner_delivery_info
+        WHERE LOWER(partner) = LOWER(?)
+      ),
+      deduped AS (
+        SELECT *,
+          ROW_NUMBER() OVER (
+            PARTITION BY phone_number
+            ORDER BY updated_at DESC
+          ) AS rn
+        FROM unsynced_table
+      )
+      SELECT * FROM deduped WHERE rn = 1
+    `).get(partner);
+
+    return res.json({ status: true, data: row ?? null });
+  } catch (error) {
+    console.error("Delivery info fetch error:", error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
 // ── Existing endpoint ──────────────────────────────────────────────────────
 router.post("/partner-auto-login", async (req, res) => {
   try {
