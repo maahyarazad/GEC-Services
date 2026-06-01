@@ -459,8 +459,14 @@ WHERE rn = 1;
 router.get("/api/member_card", (req, res) => {
   try {
     const table_name = "member_card";
+    const { activeFilter, ...queryWithoutActiveFilter } = req.query;
     const { pageNumber, limit, sortField, sortOrder, filters, jsonFilters, advancedClauses } =
-      dbService._QuerySqlConverter(req.query, table_name);
+      dbService._QuerySqlConverter(queryWithoutActiveFilter, table_name);
+
+    // Default to active records only; pass activeFilter=all to include inactive
+    if (activeFilter !== 'all') {
+      advancedClauses.push({ clause: 'active = 1', value: null });
+    }
 
     const total = dbService._getTotalCount(table_name, filters, advancedClauses);
     const data  = dbService._getAll(table_name, filters, {

@@ -31,6 +31,9 @@ import SlideMenu from '../SlideMenu/SlideMenu';
 import { IconButton } from '@mui/material';
 import { SiMinutemailer } from "react-icons/si";
 import { FcMultipleInputs } from "react-icons/fc";
+import { RiEditLine } from "react-icons/ri";
+import { TbTrashX } from "react-icons/tb";
+
 const PartnerOnboardingSection = React.lazy(() => import("../Sections/PartnerOnboardingSection"));
 
 const paidBlue = '#0f0faf';
@@ -81,13 +84,13 @@ const columns = ({ onResendPasswordReset: _onResendPasswordReset, loadingRowId: 
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="Edit member">
-                    <IconButton onClick={() => onEdit(params.row)}>
-                        <MdEdit size={20} />
+                    <IconButton size="small" onClick={() => onEdit(params.row)} sx={{ color: '#1976d2', '&:hover': { backgroundColor: '#e3f2fd' } }}>
+                        <RiEditLine size={20} />
                     </IconButton>
                 </Tooltip>
                 <Tooltip title="Deactivate member">
-                    <IconButton onClick={() => onDelete(params.row)}>
-                        <MdDelete size={20} color="#cc0000" />
+                    <IconButton size="small" color="error" onClick={() => onDelete(params.row)} sx={{ color: '#d32f2f', '&:hover': { backgroundColor: '#ffebee' } }}>
+                        <TbTrashX size={20} />
                     </IconButton>
                 </Tooltip>
             </div>
@@ -207,6 +210,7 @@ const MemberCardDataGrid = () => {
     const [filterItems, setFilterItems] = useState([]);
     const [debouncedFilterItems, setDebouncedFilterItems] = useState([]);
     const filterSentRef = useRef([]);
+    const [activeFilter, setActiveFilter] = useState('active'); // 'active' | 'all'
 
     // Partner stats (left table)
     const [partnerStats, setPartnerStats] = useState([]);
@@ -255,7 +259,7 @@ const MemberCardDataGrid = () => {
         try {
             const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/gec-grouped-partners`, { credentials: 'include' });
             const d = await r.json();
-            
+
             setGecPartners(d.data ?? []);
         } catch (e) {
             console.error('GEC partners fetch failed', e);
@@ -290,7 +294,7 @@ const MemberCardDataGrid = () => {
 
     const rightTableRows = useMemo(() => {
         const statsTitles = new Set(partnerStats.map((s) => (s.partner ?? '').toLowerCase().trim()));
-        
+
         const gecOnlyPartners = gecPartners
             .filter((p) => !statsTitles.has((p.group_name ?? '').toLowerCase().trim()))
             .map((p) => ({
@@ -413,7 +417,7 @@ const MemberCardDataGrid = () => {
 
     // ─── Members DataGrid logic ──────────────────────────────────────────────
 
-    const fetchData = useCallback(async (pagination, sort, filters) => {
+    const fetchData = useCallback(async (pagination, sort, filters, activeFilt = 'active') => {
         setLoading(true);
         try {
             const { field: sortField = '', sort: sortOrder = '' } = (sort ?? [])[0] ?? {};
@@ -425,6 +429,7 @@ const MemberCardDataGrid = () => {
                 sortField ? `sortField=${sortField}` : '',
                 sortOrder ? `sortOrder=${sortOrder}` : '',
                 filterParams,
+                `activeFilter=${activeFilt}`,
             ].filter(Boolean).join('&');
 
             const response = await fetch(
@@ -455,8 +460,8 @@ const MemberCardDataGrid = () => {
 
     useEffect(() => {
         if (!showMembersGrid) return;
-        fetchData(paginationModel, sortModel, debouncedFilterItems);
-    }, [paginationModel, sortModel, debouncedFilterItems, showMembersGrid]);
+        fetchData(paginationModel, sortModel, debouncedFilterItems, activeFilter);
+    }, [paginationModel, sortModel, debouncedFilterItems, showMembersGrid, activeFilter]);
 
     // ─── Handlers ────────────────────────────────────────────────────────────
 
@@ -558,7 +563,7 @@ const MemberCardDataGrid = () => {
             'Deactivate Corporate Member',
             { text: 'Deactivate', color: 'error' },
             () => handleDeleteEmployee(row.id),
-            () => {}
+            () => { }
         );
     };
 
@@ -720,7 +725,20 @@ const MemberCardDataGrid = () => {
                 headerTitle="Corporate Members"
             >
                 <div style={{ width: '100%', height: 'calc(100vh - 125px)', display: 'flex', flexDirection: 'column' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                            {['active', 'all'].map((val) => (
+                                <Chip
+                                    key={val}
+                                    label={val === 'active' ? 'Active' : 'All'}
+                                    size="small"
+                                    color={activeFilter === val ? (val === 'active' ? 'success' : 'default') : 'default'}
+                                    variant={activeFilter === val ? 'filled' : 'outlined'}
+                                    onClick={() => { setActiveFilter(val); setPaginationModel(p => ({ ...p, page: 0 })); }}
+                                    sx={{ cursor: 'pointer', fontWeight: activeFilter === val ? 700 : 400 }}
+                                />
+                            ))}
+                        </Box>
                         <Button
                             variant="contained"
                             startIcon={<MdAdd size={18} />}

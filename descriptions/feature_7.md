@@ -267,3 +267,20 @@ form fields (address, phone number) with the most recent non-duplicate entry.
 
       
 ```
+
+
+
+# Feature Ticket 5: Add Synchronized Column to Partner Employee List Submission DataGrid
+
+**Description:**
+In the Partner Employee List Submission DataGrid, add a `synchronized` column
+to display each record's sync status. Update the query to load non-synchronized
+records by default, while allowing users to toggle the view to also see
+synchronized records.
+
+**Acceptance Criteria:**
+- [ ] A `synchronized` column is added to the DataGrid
+- [ ] Column displays a clear indicator (e.g. boolean, badge, or icon) per row
+- [ ] Query defaults to loading only non-synchronized records on page load
+- [ ] A toggle or filter control allows users to also view synchronized records
+- [ ] Switching the filter does not require a full page reload
