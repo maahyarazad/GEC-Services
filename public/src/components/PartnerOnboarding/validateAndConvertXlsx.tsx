@@ -10,6 +10,7 @@ const REQUIRED_HEADERS = [
   "Mobile Number",
   "Date of Birth",
   "Language",
+  "Add/Update/Delete",
 ];
 
 // Fields that must not be empty in any data row
@@ -19,6 +20,7 @@ const MANDATORY_FIELDS = [
   "Company Email",
   "Mobile Number",
   "Language",
+  "Add/Update/Delete",
 ];
 
 // ── Types ──────────────────────────────────────────────────────────────────
