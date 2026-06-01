@@ -200,6 +200,9 @@ const MemberCardDataGrid = () => {
     const [gecPartners, setGecPartners] = useState([]);
     const [gecLoading, setGecLoading] = useState(false);
 
+    // Pending sync counts keyed by lowercase partner name
+    const [pendingCounts, setPendingCounts] = useState({});
+
     const { openDialog } = useAlertDialog();
     const { showSnackbar } = useSnackbar();
 
@@ -227,6 +230,7 @@ const MemberCardDataGrid = () => {
         try {
             const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/gec-grouped-partners`, { credentials: 'include' });
             const d = await r.json();
+            
             setGecPartners(d.data ?? []);
         } catch (e) {
             console.error('GEC partners fetch failed', e);
@@ -239,15 +243,46 @@ const MemberCardDataGrid = () => {
         fetchGecPartners();
     }, [fetchGecPartners]);
 
+    // ─── Pending sync counts fetch ────────────────────────────────────────────
+
+    const fetchPendingCounts = useCallback(async () => {
+        try {
+            const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/partner-onboarding-pending-counts`, { credentials: 'include' });
+            const d = await r.json();
+            const map = {};
+            (d.data ?? []).forEach(({ partner, pending_count }) => {
+                map[(partner ?? '').toLowerCase().trim()] = pending_count;
+            });
+            setPendingCounts(map);
+        } catch (e) {
+            console.error('pending counts fetch failed', e);
+        }
+    }, []);
+
+    useEffect(() => { fetchPendingCounts(); }, [fetchPendingCounts]);
+
     // ─── Right-table rows: GEC partners + local-only rows with chip ──────────
 
     const rightTableRows = useMemo(() => {
         const statsTitles = new Set(partnerStats.map((s) => (s.partner ?? '').toLowerCase().trim()));
+        
         const gecOnlyPartners = gecPartners
             .filter((p) => !statsTitles.has((p.group_name ?? '').toLowerCase().trim()))
-            .map((p) => ({ ...p, _notInServices: true }));
-        return [...partnerStats.map((s) => ({ group_name: s.partner, member_count: s.member_count, _notInServices: false })), ...gecOnlyPartners];
-    }, [gecPartners, partnerStats]);
+            .map((p) => ({
+                ...p,
+                _notInServices: true,
+                _pendingCount: pendingCounts[(p.group_name ?? '').toLowerCase().trim()] ?? 0,
+            }));
+        return [
+            ...partnerStats.map((s) => ({
+                group_name: s.partner,
+                member_count: s.member_count,
+                _notInServices: false,
+                _pendingCount: pendingCounts[(s.partner ?? '').toLowerCase().trim()] ?? 0,
+            })),
+            ...gecOnlyPartners,
+        ];
+    }, [gecPartners, partnerStats, pendingCounts]);
 
     const summaryStats = useMemo(() => {
         const inServices = rightTableRows.filter((r) => !r._notInServices).length;
@@ -269,12 +304,13 @@ const MemberCardDataGrid = () => {
             if (d.status) {
                 showSnackbar(`Synced "${partner}": ${d.updated} updated, ${d.inserted} inserted, ${d.deactivated} deactivated`);
                 fetchPartnerStats();
+                fetchPendingCounts();
             } else {
-                showSnackbar(`Sync failed: ${d.message}`);
+                showSnackbar(`Sync failed: ${d.message}`, 'error');
             }
         } catch (e) {
             console.error('Sync failed', e);
-            showSnackbar('Sync failed — check console');
+            showSnackbar('Sync failed — check console', 'error');
         } finally {
             setSyncingPartner(null);
         }
@@ -304,7 +340,40 @@ const MemberCardDataGrid = () => {
     ];
 
     const rightCols = [
-        { key: 'group_name', label: 'Partner (GEC)' },
+        {
+            key: 'group_name',
+            label: 'Partner (GEC)',
+            render: (row) => (
+                <Box
+                    title={row.group_name}
+                    sx={{
+                        width: 300,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                    }}
+                >
+                    {row.group_name ?? '—'}
+                </Box>
+            ),
+        },
+        {
+            key: '_sync',
+            label: '',
+            render: (row) =>
+                row._notInServices && row._pendingCount > 0 ? (
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        color="warning"
+                        disabled={syncingPartner === row.group_name}
+                        onClick={() => handleSync(row.group_name)}
+                        sx={{ fontSize: 11, textTransform: 'none', whiteSpace: 'nowrap', py: 0 }}
+                    >
+                        {syncingPartner === row.group_name ? <CircularProgress size={14} color="inherit" /> : 'Sync'}
+                    </Button>
+                ) : null,
+        },
         {
             key: '_notInServices',
             label: 'Status',

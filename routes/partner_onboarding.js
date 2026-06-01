@@ -237,4 +237,96 @@ const total = dbService._getTotalCount(
 
 
 
+// ── Employee ADD ──────────────────────────────────────────────────────────────
+router.post("/api/partner-onboarding/employee", (req, res) => {
+  try {
+    const { title, firstname, lastname, gender, mobile_number, email, partner, birthday, language } = req.body;
+
+    if (!firstname || !lastname || !email || !partner) {
+      return res.status(400).json({ status: false, message: "firstname, lastname, email and partner are required" });
+    }
+
+    const VALID_TITLES = ["Mr.", "Ms.", "Mrs.", "Dr.", ""];
+    const VALID_GENDERS = ["", "m", "f"];
+    const VALID_LANGUAGES = ["en", "de"];
+
+    const result = db.prepare(`
+      INSERT INTO partner_onboarding_data (title, firstname, lastname, gender, mobile_number, email, partner, birthday, language, synchronized)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+    `).run(
+      VALID_TITLES.includes(title) ? title : "",
+      firstname,
+      lastname,
+      VALID_GENDERS.includes(gender) ? gender : "",
+      mobile_number || null,
+      email,
+      partner,
+      birthday || null,
+      VALID_LANGUAGES.includes(language) ? language : "en"
+    );
+
+    return res.status(201).json({ status: true, message: "Employee added", id: result.lastInsertRowid });
+  } catch (error) {
+    console.error("Add employee error:", error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
+// ── Employee UPDATE ───────────────────────────────────────────────────────────
+router.put("/api/partner-onboarding/employee/:id", (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, firstname, lastname, gender, mobile_number, email, partner, birthday, language } = req.body;
+
+    if (!firstname || !lastname || !email || !partner) {
+      return res.status(400).json({ status: false, message: "firstname, lastname, email and partner are required" });
+    }
+
+    const VALID_TITLES = ["Mr.", "Ms.", "Mrs.", "Dr.", ""];
+    const VALID_GENDERS = ["", "m", "f"];
+    const VALID_LANGUAGES = ["en", "de"];
+
+    const result = db.prepare(`
+      UPDATE partner_onboarding_data
+      SET title = ?, firstname = ?, lastname = ?, gender = ?, mobile_number = ?,
+          email = ?, partner = ?, birthday = ?, language = ?
+      WHERE id = ?
+    `).run(
+      VALID_TITLES.includes(title) ? title : "",
+      firstname,
+      lastname,
+      VALID_GENDERS.includes(gender) ? gender : "",
+      mobile_number || null,
+      email,
+      partner,
+      birthday || null,
+      VALID_LANGUAGES.includes(language) ? language : "en",
+      id
+    );
+
+    if (result.changes === 0) return res.status(404).json({ status: false, message: "Record not found" });
+
+    return res.status(200).json({ status: true, message: "Employee updated" });
+  } catch (error) {
+    console.error("Update employee error:", error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
+// ── Employee DELETE ───────────────────────────────────────────────────────────
+router.delete("/api/partner-onboarding/employee/:id", (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = db.prepare("DELETE FROM partner_onboarding_data WHERE id = ?").run(id);
+
+    if (result.changes === 0) return res.status(404).json({ status: false, message: "Record not found" });
+
+    return res.status(200).json({ status: true, message: "Employee deleted" });
+  } catch (error) {
+    console.error("Delete employee error:", error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
 module.exports = router;
