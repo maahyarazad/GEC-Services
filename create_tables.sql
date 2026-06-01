@@ -295,6 +295,7 @@ CREATE TABLE IF NOT EXISTS partner_onboarding_data (
     partner TEXT,
     birthday DATETIME,
     language TEXT CHECK(language IN ('en', 'de')),
+    action_type VARCHAR(10) CHECK (action_type IN ('add', 'update', 'delete'));
     synchronized INTEGER DEFAULT 0
 );
 

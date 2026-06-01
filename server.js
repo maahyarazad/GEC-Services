@@ -79,6 +79,12 @@ try {
   }
 
   try {
+    db.prepare("ALTER TABLE partner_onboarding_data ADD COLUMN action_type TEXT DEFAULT 'add'").run();
+  } catch {
+    // Column already exists — ignore
+  }
+
+  try {
     db.prepare(`
       CREATE TABLE IF NOT EXISTS partner_delivery_info (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

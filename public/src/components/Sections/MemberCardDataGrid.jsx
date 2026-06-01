@@ -16,13 +16,20 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import { MdWorkspacePremium } from "react-icons/md";
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import { MdWorkspacePremium, MdPeople, MdEdit, MdDelete, MdAdd } from "react-icons/md";
 import { BsFiletypeCsv } from "react-icons/bs";
 import { GrVirtualMachine } from "react-icons/gr";
 import SlideMenu from '../SlideMenu/SlideMenu';
 import { IconButton } from '@mui/material';
 import { SiMinutemailer } from "react-icons/si";
-import { MdPeople } from "react-icons/md";
 import { FcMultipleInputs } from "react-icons/fc";
 const PartnerOnboardingSection = React.lazy(() => import("../Sections/PartnerOnboardingSection"));
 
@@ -30,7 +37,7 @@ const paidBlue = '#0f0faf';
 const nonpaidBlue = '#55729e';
 const red = '#cc0000';
 
-const columns = ({ onResendPasswordReset: _onResendPasswordReset, loadingRowId: _loadingRowId, onSendInvitationEmail }) => [
+const columns = ({ onResendPasswordReset: _onResendPasswordReset, loadingRowId: _loadingRowId, onSendInvitationEmail, onEdit, onDelete }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'active', headerName: 'Active', width: 70 },
     {
@@ -64,13 +71,23 @@ const columns = ({ onResendPasswordReset: _onResendPasswordReset, loadingRowId: 
     {
         field: '',
         headerName: 'Actions',
-        width: 100,
+        width: 170,
         filterable: false,
         renderCell: (params) => (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%' }}>
                 <Tooltip title={`Send invitation email to ${params.row.email}`}>
                     <IconButton onClick={() => onSendInvitationEmail(params.row)}>
                         <SiMinutemailer color={'gray'} size={22} />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Edit member">
+                    <IconButton onClick={() => onEdit(params.row)}>
+                        <MdEdit size={20} />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Deactivate member">
+                    <IconButton onClick={() => onDelete(params.row)}>
+                        <MdDelete size={20} color="#cc0000" />
                     </IconButton>
                 </Tooltip>
             </div>
@@ -205,6 +222,14 @@ const MemberCardDataGrid = () => {
 
     const { openDialog } = useAlertDialog();
     const { showSnackbar } = useSnackbar();
+
+    // ─── Employee form state ──────────────────────────────────────────────────
+
+    const emptyForm = { title: '', firstname: '', lastname: '', gender: '', mobile_number: '', email: '', partner: '', birthday: '', type: 7 };
+    const [formOpen, setFormOpen] = useState(false);
+    const [formData, setFormData] = useState(emptyForm);
+    const [editingId, setEditingId] = useState(null);
+    const [formSaving, setFormSaving] = useState(false);
 
     // ─── Partner stats fetch ─────────────────────────────────────────────────
 
@@ -509,6 +534,84 @@ const MemberCardDataGrid = () => {
         }
     };
 
+    const handleOpenAdd = () => { setFormData(emptyForm); setEditingId(null); setFormOpen(true); };
+
+    const handleOpenEdit = (row) => {
+        setFormData({
+            title: row.title || '',
+            firstname: row.firstname || '',
+            lastname: row.lastname || '',
+            gender: row.gender || '',
+            mobile_number: row.mobile_number || '',
+            email: row.email || '',
+            partner: row.partner || '',
+            birthday: row.birthday || '',
+            type: row.type ?? 7,
+        });
+        setEditingId(row.id);
+        setFormOpen(true);
+    };
+
+    const handleConfirmDelete = (row) => {
+        openDialog(
+            <>Are you sure you want to deactivate <strong>{row.firstname} {row.lastname}</strong>?</>,
+            'Deactivate Corporate Member',
+            { text: 'Deactivate', color: 'error' },
+            () => handleDeleteEmployee(row.id),
+            () => {}
+        );
+    };
+
+    const handleDeleteEmployee = async (id) => {
+        try {
+            const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/partner-onboarding/employee/${id}`, {
+                method: 'DELETE',
+                credentials: 'include',
+            });
+            const d = await r.json();
+            if (d.status) {
+                showSnackbar('Member deactivated');
+                fetchData(paginationModel, sortModel, debouncedFilterItems);
+            } else {
+                showSnackbar(`Failed: ${d.message}`, 'error');
+            }
+        } catch {
+            showSnackbar('Delete failed', 'error');
+        }
+    };
+
+    const handleFormSave = async () => {
+        const { firstname, lastname, email, partner } = formData;
+        if (!firstname || !lastname || !email || !partner) {
+            showSnackbar('First name, last name, email, and partner are required', 'error');
+            return;
+        }
+        setFormSaving(true);
+        try {
+            const url = editingId
+                ? `${import.meta.env.VITE_SERVERURL}/api/partner-onboarding/employee/${editingId}`
+                : `${import.meta.env.VITE_SERVERURL}/api/partner-onboarding/employee`;
+            const r = await fetch(url, {
+                method: editingId ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(formData),
+            });
+            const d = await r.json();
+            if (d.status) {
+                showSnackbar(editingId ? 'Member updated' : 'Member added');
+                setFormOpen(false);
+                fetchData(paginationModel, sortModel, debouncedFilterItems);
+            } else {
+                showSnackbar(`Failed: ${d.message}`, 'error');
+            }
+        } catch {
+            showSnackbar('Save failed', 'error');
+        } finally {
+            setFormSaving(false);
+        }
+    };
+
     const handleOpenMembersGrid = () => {
         setShowMembersGrid(true);
         fetchData(paginationModel, sortModel, debouncedFilterItems);
@@ -616,30 +719,48 @@ const MemberCardDataGrid = () => {
                 onClose={() => setShowMembersGrid(false)}
                 headerTitle="Corporate Members"
             >
-                <div style={{ width: '100%', height: 'calc(100vh - 125px)' }}>
-                    <CustomDataGrid
-                        rows={members}
-                        columns={columns({ onResendPasswordReset: handleResetPassword, loadingRowId, onSendInvitationEmail: confirmSendInvitationEmail })}
-                        loading={loading}
-                        showToolbar
+                <div style={{ width: '100%', height: 'calc(100vh - 125px)', display: 'flex', flexDirection: 'column' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+                        <Button
+                            variant="contained"
+                            startIcon={<MdAdd size={18} />}
+                            onClick={handleOpenAdd}
+                            sx={{ fontSize: 13, textTransform: 'none' }}
+                        >
+                            Add Employee
+                        </Button>
+                    </Box>
+                    <Box sx={{ flex: 1, minHeight: 0 }}>
+                        <CustomDataGrid
+                            rows={members}
+                            columns={columns({
+                                onResendPasswordReset: handleResetPassword,
+                                loadingRowId,
+                                onSendInvitationEmail: confirmSendInvitationEmail,
+                                onEdit: handleOpenEdit,
+                                onDelete: handleConfirmDelete,
+                            })}
+                            loading={loading}
+                            showToolbar
 
-                        filterMode="server"
-                        sortingMode="server"
-                        paginationMode="server"
+                            filterMode="server"
+                            sortingMode="server"
+                            paginationMode="server"
 
-                        rowCount={rowCount}
-                        paginationModel={paginationModel}
-                        onPaginationModelChange={setPaginationModel}
-                        rowsPerPageOptions={[25, 50, 100]}
+                            rowCount={rowCount}
+                            paginationModel={paginationModel}
+                            onPaginationModelChange={setPaginationModel}
+                            rowsPerPageOptions={[25, 50, 100]}
 
-                        sortModel={sortModel}
-                        onSortModelChange={setSortModel}
+                            sortModel={sortModel}
+                            onSortModelChange={setSortModel}
 
-                        filterItems={filterItems}
-                        onFilterItemsChange={setFilterItems}
+                            filterItems={filterItems}
+                            onFilterItemsChange={setFilterItems}
 
-                        disableRowSelectionOnClick
-                    />
+                            disableRowSelectionOnClick
+                        />
+                    </Box>
                 </div>
             </SlideMenu>
 
@@ -653,6 +774,58 @@ const MemberCardDataGrid = () => {
                     <PartnerOnboardingSection />
                 </div>
             </SlideMenu>
+
+            {/* Add / Edit Employee dialog */}
+            <Dialog open={formOpen} onClose={() => setFormOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>{editingId ? 'Edit Corporate Member' : 'Add Corporate Member'}</DialogTitle>
+                <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '16px !important' }}>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <FormControl size="small" sx={{ minWidth: 100 }}>
+                            <InputLabel>Title</InputLabel>
+                            <Select value={formData.title} label="Title" onChange={(e) => setFormData(p => ({ ...p, title: e.target.value }))}>
+                                {['', 'Mr.', 'Ms.', 'Mrs.', 'Dr.'].map(t => (
+                                    <MenuItem key={t} value={t}>{t || '—'}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <TextField size="small" label="First Name *" value={formData.firstname} onChange={(e) => setFormData(p => ({ ...p, firstname: e.target.value }))} fullWidth />
+                        <TextField size="small" label="Last Name *" value={formData.lastname} onChange={(e) => setFormData(p => ({ ...p, lastname: e.target.value }))} fullWidth />
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                            <InputLabel>Gender</InputLabel>
+                            <Select value={formData.gender} label="Gender" onChange={(e) => setFormData(p => ({ ...p, gender: e.target.value }))}>
+                                {['', 'Herr', 'Frau'].map(g => (
+                                    <MenuItem key={g} value={g}>{g || '—'}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <TextField size="small" label="Mobile Number" value={formData.mobile_number} onChange={(e) => setFormData(p => ({ ...p, mobile_number: e.target.value }))} fullWidth />
+                    </Box>
+                    <TextField size="small" label="Email *" value={formData.email} onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))} fullWidth />
+                    <TextField size="small" label="Partner *" value={formData.partner} onChange={(e) => setFormData(p => ({ ...p, partner: e.target.value }))} fullWidth />
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <TextField
+                            size="small" label="Birthday" type="date" value={formData.birthday}
+                            onChange={(e) => setFormData(p => ({ ...p, birthday: e.target.value }))}
+                            slotProps={{ inputLabel: { shrink: true } }} sx={{ flex: 1 }}
+                        />
+                        <FormControl size="small" sx={{ minWidth: 180 }}>
+                            <InputLabel>Type</InputLabel>
+                            <Select value={formData.type} label="Type" onChange={(e) => setFormData(p => ({ ...p, type: e.target.value }))}>
+                                <MenuItem value={7}>Standard (7)</MenuItem>
+                                <MenuItem value={5}>German / Corporate (5)</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setFormOpen(false)} disabled={formSaving}>Cancel</Button>
+                    <Button variant="contained" onClick={handleFormSave} disabled={formSaving}>
+                        {formSaving ? <CircularProgress size={18} color="inherit" /> : (editingId ? 'Update' : 'Add')}
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
         </Box>
     );

@@ -23,8 +23,22 @@ const upload = multer({
 const VALID_TITLES = ["Mr.", "Ms.", "Mrs.", "Dr.", ""];
 const VALID_GENDERS = ["", "m", "f"];
 const VALID_LANGUAGES = ["en", "de"];
+const VALID_ACTION_TYPES = ["add", "update", "delete"];
 
-// Prepared insert statement (INSERT OR IGNORE skips duplicate emails)
+const insertContact = db.prepare(`
+  INSERT OR IGNORE INTO partner_onboarding_data (
+      title,
+      firstname,
+      lastname,
+      gender,
+      mobile_number,
+      email,
+      partner,
+      birthday,
+      language,
+      action_type
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
 
 const insertMany = db.transaction((contacts, partner) => {
   let inserted = 0;
@@ -42,6 +56,7 @@ const insertMany = db.transaction((contacts, partner) => {
     const title = VALID_TITLES.includes(r.title) ? r.title : "";
     const gender = VALID_GENDERS.includes(r.gender) ? r.gender : "";
     const language = VALID_LANGUAGES.includes(r.language) ? r.language : "en";
+    const action_type = VALID_ACTION_TYPES.includes(r["add/update/delete"]) ? r["add/update/delete"] : "add";
 
     let birthday = null;
     if (r["date of birth"]) {
@@ -53,30 +68,17 @@ const insertMany = db.transaction((contacts, partner) => {
       }
     }
 
-    const insertContact = db.prepare(`
-    INSERT OR IGNORE INTO partner_onboarding_data (
-        title,
-        firstname,
-        lastname,
-        gender,
-        mobile_number,
-        email,
-        partner,
-        birthday,
-        language
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-`);
-
     const info = insertContact.run(
       title,
       r["first name"],
       r["last name"],
       gender,
       r["mobile number"],
-      r.email,
+      r["company email"],
       partner,
-      birthday,
-      language
+      r["date of birth"],
+      language,
+      action_type
     );
 
     if (info.changes > 0) inserted++;
@@ -237,94 +239,95 @@ const total = dbService._getTotalCount(
 
 
 
-// ── Employee ADD ──────────────────────────────────────────────────────────────
+// ── Corporate Member ADD ──────────────────────────────────────────────────────
 router.post("/api/partner-onboarding/employee", (req, res) => {
   try {
-    const { title, firstname, lastname, gender, mobile_number, email, partner, birthday, language } = req.body;
+    const { title, firstname, lastname, gender, mobile_number, email, partner, birthday, type } = req.body;
 
     if (!firstname || !lastname || !email || !partner) {
       return res.status(400).json({ status: false, message: "firstname, lastname, email and partner are required" });
     }
 
     const VALID_TITLES = ["Mr.", "Ms.", "Mrs.", "Dr.", ""];
-    const VALID_GENDERS = ["", "m", "f"];
-    const VALID_LANGUAGES = ["en", "de"];
+    const VALID_GENDERS = ["Herr", "Frau", ""];
 
     const result = db.prepare(`
-      INSERT INTO partner_onboarding_data (title, firstname, lastname, gender, mobile_number, email, partner, birthday, language, synchronized)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+      INSERT INTO member_card (title, firstname, lastname, gender, mobile_number, email, partner, birthday, active, type, remarks)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 'manually added')
     `).run(
       VALID_TITLES.includes(title) ? title : "",
       firstname,
       lastname,
-      VALID_GENDERS.includes(gender) ? gender : "",
+      VALID_GENDERS.includes(gender) ? (gender || null) : null,
       mobile_number || null,
       email,
       partner,
       birthday || null,
-      VALID_LANGUAGES.includes(language) ? language : "en"
+      type === 5 ? 5 : 7
     );
 
-    return res.status(201).json({ status: true, message: "Employee added", id: result.lastInsertRowid });
+    return res.status(201).json({ status: true, message: "Member added", id: result.lastInsertRowid });
   } catch (error) {
-    console.error("Add employee error:", error);
+    console.error("Add member error:", error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
 
-// ── Employee UPDATE ───────────────────────────────────────────────────────────
+// ── Corporate Member UPDATE ───────────────────────────────────────────────────
 router.put("/api/partner-onboarding/employee/:id", (req, res) => {
   try {
     const { id } = req.params;
-    const { title, firstname, lastname, gender, mobile_number, email, partner, birthday, language } = req.body;
+    const { title, firstname, lastname, gender, mobile_number, email, partner, birthday, type } = req.body;
 
     if (!firstname || !lastname || !email || !partner) {
       return res.status(400).json({ status: false, message: "firstname, lastname, email and partner are required" });
     }
 
     const VALID_TITLES = ["Mr.", "Ms.", "Mrs.", "Dr.", ""];
-    const VALID_GENDERS = ["", "m", "f"];
-    const VALID_LANGUAGES = ["en", "de"];
+    const VALID_GENDERS = ["Herr", "Frau", ""];
 
     const result = db.prepare(`
-      UPDATE partner_onboarding_data
+      UPDATE member_card
       SET title = ?, firstname = ?, lastname = ?, gender = ?, mobile_number = ?,
-          email = ?, partner = ?, birthday = ?, language = ?
+          email = ?, partner = ?, birthday = ?, type = ?, metadata_modifiedAt = datetime('now')
       WHERE id = ?
     `).run(
       VALID_TITLES.includes(title) ? title : "",
       firstname,
       lastname,
-      VALID_GENDERS.includes(gender) ? gender : "",
+      VALID_GENDERS.includes(gender) ? (gender || null) : null,
       mobile_number || null,
       email,
       partner,
       birthday || null,
-      VALID_LANGUAGES.includes(language) ? language : "en",
+      type === 5 ? 5 : 7,
       id
     );
 
     if (result.changes === 0) return res.status(404).json({ status: false, message: "Record not found" });
 
-    return res.status(200).json({ status: true, message: "Employee updated" });
+    return res.status(200).json({ status: true, message: "Member updated" });
   } catch (error) {
-    console.error("Update employee error:", error);
+    console.error("Update member error:", error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
 
-// ── Employee DELETE ───────────────────────────────────────────────────────────
+// ── Corporate Member DELETE (soft) ────────────────────────────────────────────
 router.delete("/api/partner-onboarding/employee/:id", (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = db.prepare("DELETE FROM partner_onboarding_data WHERE id = ?").run(id);
+    const result = db.prepare(`
+      UPDATE member_card SET active = 0, remarks = 'deleted ' || datetime('now'), metadata_modifiedAt = datetime('now')
+      WHERE id = ?
+    `).run(id);
 
     if (result.changes === 0) return res.status(404).json({ status: false, message: "Record not found" });
 
-    return res.status(200).json({ status: true, message: "Employee deleted" });
+    return res.status(200).json({ status: true, message: "Member deactivated" });
   } catch (error) {
-    console.error("Delete employee error:", error);
+    console.error("Delete member error:", error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });

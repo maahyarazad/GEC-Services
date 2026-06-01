@@ -347,73 +347,129 @@ router.post("/api/member-card-sync", (req, res) => {
     const sync = db.transaction(() => {
       // Step 0 — load the pending batch for this partner
       const batch = db.prepare(`
-        SELECT * FROM partner_onboarding_data
-        WHERE LOWER(partner) = LOWER(?)
-          AND metadata_createdAt >= datetime('now', '-1 month')
-          AND synchronized != 1
+      WITH unsynced_table AS (
+  SELECT * FROM partner_onboarding_data
+  WHERE LOWER(partner) = LOWER(?)
+    AND metadata_createdAt >= datetime('now', '-1 month')
+    AND synchronized != 1
+),
+deduped AS (
+  SELECT *,
+    ROW_NUMBER() OVER (
+      PARTITION BY mobile_number
+      ORDER BY metadata_createdAt DESC
+    ) AS rn
+  FROM unsynced_table
+)
+SELECT *
+FROM deduped
+WHERE rn = 1;
       `).all(partner);
 
       if (batch.length === 0) return { updated: 0, inserted: 0, deactivated: 0 };
 
-      // Step 1 — UPDATE existing member_card rows whose mobile_number matches
-      const updateResult = db.prepare(`
+      const addBatch    = batch.filter(r => !r.action_type || r.action_type === 'add');
+      const updateBatch = batch.filter(r => r.action_type === 'update');
+      const deleteBatch = batch.filter(r => r.action_type === 'delete');
+
+      let updated = 0;
+      let deactivated = 0;
+
+      // Handle 'update' action: apply field changes to existing member_card rows
+      const updateStmt = db.prepare(`
         UPDATE member_card
-        SET active  = 1,
-            type    = (
-                SELECT CASE pod.language WHEN 'de' THEN 5 ELSE 7 END
-                FROM partner_onboarding_data AS pod
-                WHERE LOWER(pod.partner) = LOWER(member_card.partner)
-                  AND pod.mobile_number = member_card.mobile_number
-                  AND pod.metadata_createdAt >= datetime('now', '-1 month')
-                  AND pod.synchronized != 1
-                LIMIT 1
-            ),
-            remarks = 'synchronized ' || datetime('now')
-        WHERE LOWER(partner) = LOWER(?)
-          AND mobile_number IN (
-              SELECT mobile_number FROM partner_onboarding_data
-              WHERE LOWER(partner) = LOWER(?)
-                AND metadata_createdAt >= datetime('now', '-1 month')
-                AND synchronized != 1
-          )
-      `).run(partner, partner);
+        SET firstname = ?, lastname = ?, title = ?,
+            gender    = CASE ? WHEN 'm' THEN 'Herr' WHEN 'f' THEN 'Frau' ELSE NULL END,
+            email = ?, birthday = ?,
+            type      = CASE ? WHEN 'de' THEN 5 ELSE 7 END,
+            active = 1,
+            remarks = 'synchronized ' || datetime('now'),
+            metadata_modifiedAt = datetime('now')
+        WHERE LOWER(partner) = LOWER(?) AND mobile_number = ?
+      `);
+      for (const r of updateBatch) {
+        updated += updateStmt.run(r.firstname, r.lastname, r.title, r.gender, r.email, r.birthday, r.language, r.partner, r.mobile_number).changes;
+      }
 
-      // Step 2 — INSERT new members whose mobile_number is not yet in member_card
-      const insertResult = db.prepare(`
-        INSERT INTO member_card (partner, mobile_number, firstname, lastname, title, gender, email, birthday, active, type, remarks)
-        SELECT pod.partner, pod.mobile_number, pod.firstname, pod.lastname,
-               pod.title,
-               CASE pod.gender WHEN 'm' THEN 'Herr' WHEN 'f' THEN 'Frau' ELSE NULL END,
-               pod.email, pod.birthday,
-               1,
-               CASE pod.language WHEN 'de' THEN 5 ELSE 7 END,
-               'synchronized ' || datetime('now')
-        FROM partner_onboarding_data AS pod
-        WHERE LOWER(pod.partner) = LOWER(?)
-          AND pod.metadata_createdAt >= datetime('now', '-1 month')
-          AND pod.synchronized != 1
-          AND NOT EXISTS (
-              SELECT 1 FROM member_card AS mc
-              WHERE LOWER(mc.partner) = LOWER(pod.partner)
-                AND mc.mobile_number = pod.mobile_number
-          )
-      `).run(partner);
+      // Handle 'delete' action: soft-delete matching member_card rows
+      const deleteStmt = db.prepare(`
+        UPDATE member_card SET active = 0, remarks = 'synchronized delete ' || datetime('now')
+        WHERE LOWER(partner) = LOWER(?) AND mobile_number = ?
+      `);
+      for (const r of deleteBatch) {
+        deactivated += deleteStmt.run(r.partner, r.mobile_number).changes;
+      }
 
-      // Step 3 — DEACTIVATE cards for this partner whose mobile_number is NOT in the new batch
-      const deactivateResult = db.prepare(`
-        UPDATE member_card
-        SET active  = 0,
-            remarks = 'synchronized ' || datetime('now')
-        WHERE LOWER(partner) = LOWER(?)
-          AND mobile_number NOT IN (
-              SELECT mobile_number FROM partner_onboarding_data
-              WHERE LOWER(partner) = LOWER(?)
-                AND metadata_createdAt >= datetime('now', '-1 month')
-                AND synchronized != 1
-          )
-      `).run(partner, partner);
+      // Handle 'add' action: batch INSERT / UPDATE / DEACTIVATE (original logic)
+      let insertResult = { changes: 0 };
+      let deactivateResult = { changes: 0 };
+      let updateResult = { changes: 0 };
 
-      // Step 4 — Mark the batch as synchronized
+      if (addBatch.length > 0) {
+        // Step 1 — UPDATE existing member_card rows whose mobile_number matches
+        updateResult = db.prepare(`
+          UPDATE member_card
+          SET active = 1,
+              type   = (
+                  SELECT CASE pod.language WHEN 'de' THEN 5 ELSE 7 END
+                  FROM partner_onboarding_data AS pod
+                  WHERE LOWER(pod.partner) = LOWER(member_card.partner)
+                    AND pod.mobile_number = member_card.mobile_number
+                    AND pod.metadata_createdAt >= datetime('now', '-1 month')
+                    AND pod.synchronized != 1
+                    AND (pod.action_type IS NULL OR pod.action_type = 'add')
+                  LIMIT 1
+              ),
+              remarks = 'synchronized ' || datetime('now')
+          WHERE LOWER(partner) = LOWER(?)
+            AND mobile_number IN (
+                SELECT mobile_number FROM partner_onboarding_data
+                WHERE LOWER(partner) = LOWER(?)
+                  AND metadata_createdAt >= datetime('now', '-1 month')
+                  AND synchronized != 1
+                  AND (action_type IS NULL OR action_type = 'add')
+            )
+        `).run(partner, partner);
+
+        // Step 2 — INSERT new members whose mobile_number is not yet in member_card
+        insertResult = db.prepare(`
+          INSERT INTO member_card (partner, mobile_number, firstname, lastname, title, gender, email, birthday, active, type, remarks)
+          SELECT pod.partner, pod.mobile_number, pod.firstname, pod.lastname,
+                 pod.title,
+                 CASE pod.gender WHEN 'm' THEN 'Herr' WHEN 'f' THEN 'Frau' ELSE NULL END,
+                 pod.email, pod.birthday,
+                 1,
+                 CASE pod.language WHEN 'de' THEN 5 ELSE 7 END,
+                 'synchronized ' || datetime('now')
+          FROM partner_onboarding_data AS pod
+          WHERE LOWER(pod.partner) = LOWER(?)
+            AND pod.metadata_createdAt >= datetime('now', '-1 month')
+            AND pod.synchronized != 1
+            AND (pod.action_type IS NULL OR pod.action_type = 'add')
+            AND NOT EXISTS (
+                SELECT 1 FROM member_card AS mc
+                WHERE LOWER(mc.partner) = LOWER(pod.partner)
+                  AND mc.mobile_number = pod.mobile_number
+            )
+        `).run(partner);
+
+        // Step 3 — DEACTIVATE cards not in the add batch
+        deactivateResult = db.prepare(`
+          UPDATE member_card
+          SET active  = 0,
+              remarks = 'synchronized ' || datetime('now')
+          WHERE LOWER(partner) = LOWER(?)
+            AND mobile_number NOT IN (
+                SELECT mobile_number FROM partner_onboarding_data
+                WHERE LOWER(partner) = LOWER(?)
+                  AND metadata_createdAt >= datetime('now', '-1 month')
+                  AND synchronized != 1
+                  AND (action_type IS NULL OR action_type = 'add')
+            )
+        `).run(partner, partner);
+      }
+
+      // Step 4 — Mark all batch records as synchronized
       db.prepare(`
         UPDATE partner_onboarding_data
         SET synchronized = 1
@@ -423,9 +479,9 @@ router.post("/api/member-card-sync", (req, res) => {
       `).run(partner);
 
       return {
-        updated: updateResult.changes,
-        inserted: insertResult.changes,
-        deactivated: deactivateResult.changes,
+        updated:     updated + updateResult.changes,
+        inserted:    insertResult.changes,
+        deactivated: deactivated + deactivateResult.changes,
       };
     });
 
