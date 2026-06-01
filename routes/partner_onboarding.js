@@ -223,8 +223,12 @@ router.post("/upload-csv", upload.single("file"), (req, res) => {
 
 router.get("/api/partner-onboarding", async (req, res) => {
   try {
+    // Extract synchronized flag before passing query to _QuerySqlConverter
+    // so it is not treated as a legacy filter field by dbService
+    const { synchronized: syncFlag, ...queryWithoutSync } = req.query;
+
     const {pageNumber,limit,sortField,sortOrder,filters,jsonFilters,advancedClauses} = dbService._QuerySqlConverter(
-      req.query,
+      queryWithoutSync,
       "partner_onboarding_data AS pod",
       {
         table: "member_card AS mc",
@@ -232,6 +236,11 @@ router.get("/api/partner-onboarding", async (req, res) => {
       },
       ["pod.*", "mc.id AS member_card_id"]
     );
+
+    // Default: only unsynced records unless synchronized=true
+    if (syncFlag !== 'true') {
+      advancedClauses.push({ clause: 'pod.synchronized != 1', value: null });
+    }
 
 const total = dbService._getTotalCount(
   "partner_onboarding_data AS pod LEFT JOIN member_card AS mc ON pod.mobile_number = mc.mobile_number",

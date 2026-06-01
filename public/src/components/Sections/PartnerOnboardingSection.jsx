@@ -53,6 +53,15 @@ const columns = [
         },
     },
     {
+        field: 'synchronized', headerName: 'Synced', width: 100, filterable: false, sortable: false,
+        renderCell: (p) => {
+            const s = p?.row?.synchronized;
+            return (s === 1 || s === true)
+                ? <Chip label="Synced" size="small" color="success" variant="filled" sx={{ fontSize: 11, fontWeight: 600 }} />
+                : <Chip label="Pending" size="small" color="warning" variant="outlined" sx={{ fontSize: 11 }} />;
+        },
+    },
+    {
         field: 'metadata_createdAt', headerName: 'Created At', width: 170, filterable: true,
         renderCell: (p) => {
             const ts = p?.row?.metadata_createdAt;
@@ -90,8 +99,9 @@ const PartnerOnboardingSection = () => {
     const [sortModel,        setSortModel]        = useState([{ field: 'id', sort: 'desc' }]);
     const [paginationModel,  setPaginationModel]  = useState({ page: 0, pageSize: 25 });
     const [filterItems,      setFilterItems]      = useState([]);
+    const [showSynced,       setShowSynced]       = useState(false);
 
-    const fetchData = useCallback(async (pagination, sort = [], filters = []) => {
+    const fetchData = useCallback(async (pagination, sort = [], filters = [], synced = false) => {
         setLoading(true);
         try {
             const { field: sortField = '', sort: sortOrder = '' } = sort[0] ?? {};
@@ -101,6 +111,7 @@ const PartnerOnboardingSection = () => {
                 sortField  ? `sortField=${sortField}` : '',
                 sortOrder  ? `sortOrder=${sortOrder}` : '',
                 buildFilterParams(filters),
+                `synchronized=${synced}`,
             ].filter(Boolean).join('&');
 
             const res = await fetch(`${import.meta.env.VITE_SERVERURL}/api/partner-onboarding?${queryParams}`, { credentials: 'include' });
@@ -114,7 +125,7 @@ const PartnerOnboardingSection = () => {
         }
     }, []);
 
-    useEffect(() => { fetchData(paginationModel, sortModel, filterItems); }, [paginationModel, sortModel, filterItems]);
+    useEffect(() => { fetchData(paginationModel, sortModel, filterItems, showSynced); }, [paginationModel, sortModel, filterItems, showSynced]);
 
     const handleExport = async () => {
         try {
@@ -142,6 +153,14 @@ const PartnerOnboardingSection = () => {
                 <Button variant="outlined" startIcon={<BsFiletypeCsv size={20} />} onClick={handleExport}
                     sx={{ fontSize: 13, color: 'primary.main', textTransform: 'none' }}>
                     {isDownloading ? <CircularProgress size={20} color="inherit" /> : 'Download (All Records) CSV'}
+                </Button>
+                <Button
+                    variant={showSynced ? 'contained' : 'outlined'}
+                    color="success"
+                    onClick={() => { setShowSynced(s => !s); setPaginationModel(p => ({ ...p, page: 0 })); }}
+                    sx={{ fontSize: 13, textTransform: 'none' }}
+                >
+                    {showSynced ? 'Showing All' : 'Pending Only'}
                 </Button>
             </Box>
 
