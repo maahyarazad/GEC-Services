@@ -322,7 +322,7 @@ const WhatsappBroadcast = () => {
     useEffect(() => {
         const phones = [...new Set(contactList.map((c) => c.phone).filter(Boolean))];
         if (!phones.length) { setActiveMemberPhones(new Map()); return; }
-        const full_names = [...new Set(contactList.map((c) => `${c.first_name.trimEnd() ?? ''} ${c.last_name.trimEnd() ?? ''}`.trim()).filter(Boolean))];
+        const full_names = [...new Set(contactList.map((c) => `${c.first_name ?? ''} ${c.last_name ?? ''}`.trim()).filter(Boolean))];
         fetch(`${import.meta.env.VITE_SERVERURL}/api/gec/members/check-batch`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
