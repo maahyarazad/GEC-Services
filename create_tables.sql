@@ -346,3 +346,11 @@ metadata_modifiedAt DATETIME,
   auto_response_guest_de TEXT,
   auto_response_guest_de TEXT,
 );
+
+
+CREATE TABLE IF NOT EXISTS contact_book_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    contact_book_id INTEGER,
+    note_body TEXT,
+    FOREIGN KEY (contact_book_id) REFERENCES contact_book(id)
+);
