@@ -123,6 +123,7 @@ const WhatsappBroadcast = () => {
 
     const [contactList, setContactList] = useState([]);
     const [contactRowCount, setContactRowCount] = useState(0);
+    const [activeMemberPhones, setActiveMemberPhones] = useState(new Set());
     const [contactPaginationModel, setContactPaginationModel] = useState({ page: 0, pageSize: 25 });
     const [contactSortModel, setContactSortModel] = useState([{ field: 'id', sort: 'asc' }]);
     const [contactFilterItems, setContactFilterItems] = useState([]);
@@ -304,6 +305,21 @@ const WhatsappBroadcast = () => {
             fetchContactData(contactPaginationModel, contactSortModel, debouncedContactFilterItems);
         }
     }, [openPanel, fetchContactData, contactPaginationModel, contactSortModel, debouncedContactFilterItems]);
+
+    // Batch-check active membership for the current contact page
+    useEffect(() => {
+        const phones = [...new Set(contactList.map((c) => c.phone).filter(Boolean))];
+        if (!phones.length) { setActiveMemberPhones(new Set()); return; }
+        fetch(`${import.meta.env.VITE_SERVERURL}/api/gec/members/check-batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ phone_numbers: phones }),
+        })
+            .then((r) => r.json())
+            .then((d) => { if (d.status) setActiveMemberPhones(new Set(d.data.map((r) => r.phone))); })
+            .catch(() => {});
+    }, [contactList]);
 
     const onViewJson = (value, type, full_name) => {
 
@@ -1134,6 +1150,7 @@ const WhatsappBroadcast = () => {
                         filterItems={contactFilterItems}
                         onFilterItemsChange={setContactFilterItems}
                         loading={loading_logs}
+                        activeMemberPhones={activeMemberPhones}
                     />
                 </div>
             </SlideMenu>

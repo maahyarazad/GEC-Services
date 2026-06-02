@@ -30,6 +30,7 @@ const contact_book = require("./routes/contact_book.js");
 const health_check = require("./routes/health_check.js");
 const server_logs = require("./routes/server_logs.js");
 const account_deletion = require("./routes/account_deletion.js");
+const gec_members = require("./routes/gec_members.js");
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
 const { createWebSocketServer } = require("./websocket/admin.js");
@@ -147,6 +148,7 @@ app.use("/", server_logs);
 app.use("/", contact_book);
 app.use("/", external_route);
 app.use("/", events);
+app.use("/api/", gec_members);
 
 // Route to serve your main HTML file
 app.get("/", (req, res) => {

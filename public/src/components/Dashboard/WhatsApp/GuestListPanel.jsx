@@ -4,9 +4,25 @@ import EventSearch from './EventSearch';
 import { Box } from '@mui/material';
 import { getSelectedGuestList } from '../../../features/eventSlice';
 import { useAppSelector } from '../../../store/hooks';
+import { useState, useEffect } from 'react';
 
 export default function GuestListPanel({ onGuestAttend, onRemoveGuest, paginationModel, setPaginationModel }) {
     const selectedGuestList = useAppSelector(getSelectedGuestList);
+    const [activeMemberPhones, setActiveMemberPhones] = useState(new Set());
+
+    useEffect(() => {
+        const phones = [...new Set(selectedGuestList.map((c) => c.phone).filter(Boolean))];
+        if (!phones.length) { setActiveMemberPhones(new Set()); return; }
+        fetch(`${import.meta.env.VITE_SERVERURL}/api/gec/members/check-batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ phone_numbers: phones }),
+        })
+            .then((r) => r.json())
+            .then((d) => { if (d.status) setActiveMemberPhones(new Set(d.data.map((r) => r.phone))); })
+            .catch(() => {});
+    }, [selectedGuestList]);
 
     return (
         <Box sx={{
@@ -29,7 +45,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, paginatio
             }}>
                 <DataGrid
                     rows={selectedGuestList}
-                    columns={guestListColumns({ onGuestAttend, onRemoveGuest })}
+                    columns={guestListColumns({ onGuestAttend, onRemoveGuest, activeMemberPhones })}
                     paginationModel={paginationModel}
                     onPaginationModelChange={setPaginationModel}
                     pageSizeOptions={[25, 50, 100]}
