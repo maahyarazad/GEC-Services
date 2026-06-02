@@ -25,8 +25,67 @@ const VALID_GENDERS = ["", "m", "f"];
 const VALID_LANGUAGES = ["en", "de"];
 const VALID_ACTION_TYPES = ["add", "update", "delete"];
 
+const insertContact = db.prepare(`
+  INSERT OR IGNORE INTO partner_onboarding_data (
+      title,
+      firstname,
+      lastname,
+      gender,
+      mobile_number,
+      email,
+      partner,
+      birthday,
+      language,
+      action_type
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
 
+const insertMany = db.transaction((contacts, partner) => {
+  let inserted = 0;
 
+  for (const row of contacts) {
+    // Normalise keys to lowercase
+    const r = Object.fromEntries(
+      Object.entries(row).map(([k, v]) => [
+        k.toLowerCase().trim(),
+        String(v ?? "").trim(),
+      ])
+    );
+
+    // Sanitise CHECK constraint fields — fall back to "" if value is invalid
+    const title = VALID_TITLES.includes(r.title) ? r.title : "";
+    const gender = VALID_GENDERS.includes(r.gender) ? r.gender : "";
+    const language = VALID_LANGUAGES.includes(r.language) ? r.language : "en";
+    const action_type = VALID_ACTION_TYPES.includes(r["add/update/delete"]) ? r["add/update/delete"] : "add";
+
+    let birthday = null;
+    if (r["date of birth"]) {
+      const ddmmyyyy = r["date of birth"].match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (ddmmyyyy) {
+        birthday = `${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`; // → YYYY-MM-DD
+      } else if (/^\d{4}-\d{2}-\d{2}/.test(r["date of birth"])) {
+        birthday = r["date of birth"];
+      }
+    }
+
+    const info = insertContact.run(
+      title,
+      r["first name"],
+      r["last name"],
+      gender,
+      r["mobile number"],
+      r["company email"],
+      partner,
+      r["date of birth"],
+      language,
+      action_type
+    );
+
+    if (info.changes > 0) inserted++;
+  }
+
+  return inserted;
+});
 
 // ── Delivery info pre-fill ─────────────────────────────────────────────────
 router.get("/partner-delivery-info", (req, res) => {
@@ -88,76 +147,6 @@ router.post("/partner-auto-login", async (req, res) => {
 // ── New CSV upload endpoint ────────────────────────────────────────────────
 router.post("/upload-csv", upload.single("file"), (req, res) => {
   try {
-
-
-    const insertMany = db.transaction((contacts, partner) => {
-  let inserted = 0;
-
-  const insertContact = db.prepare(`
-  INSERT OR IGNORE INTO partner_onboarding_data (
-      title,
-      firstname,
-      lastname,
-      gender,
-      mobile_number,
-      email,
-      partner,
-      birthday,
-      language,
-      action_type
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`);
-
-  for (const row of contacts) {
-    // Normalise keys to lowercase
-    const r = Object.fromEntries(
-      Object.entries(row).map(([k, v]) => [
-        k.toLowerCase().trim(),
-        String(v ?? "").trim(),
-      ])
-    );
-
-    // Sanitise CHECK constraint fields — fall back to "" if value is invalid
-    const title = VALID_TITLES.includes(r.title) ? r.title : "";
-    const gender = VALID_GENDERS.includes(r.gender) ? r.gender : "";
-    const language = VALID_LANGUAGES.includes(r.language) ? r.language : "en";
-    const action_type = VALID_ACTION_TYPES.includes(r["add/update/delete"]) ? r["add/update/delete"] : "add";
-
-    let birthday = null;
-    if (r["date of birth"]) {
-      const ddmmyyyy = r["date of birth"].match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-      if (ddmmyyyy) {
-        birthday = `${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`; // → YYYY-MM-DD
-      } else if (/^\d{4}-\d{2}-\d{2}/.test(r["date of birth"])) {
-        birthday = r["date of birth"];
-      }
-    }
-
-    const info = insertContact.run(
-      title,
-      r["first name"],
-      r["last name"],
-      gender,
-      r["mobile number"],
-      r["company email"],
-      partner,
-      r["date of birth"],
-      language,
-      action_type
-    );
-
-    if (info.changes > 0) inserted++;
-  }
-
-  return inserted;
-});
-
-
-
-
-
-
-
     // 1. Auth guard — reuse the same partner cookie
     const partnerToken = req.cookies["partner-usr"];
     if (!partnerToken) {
