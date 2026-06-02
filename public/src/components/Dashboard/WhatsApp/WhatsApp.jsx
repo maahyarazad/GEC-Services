@@ -123,7 +123,7 @@ const WhatsappBroadcast = () => {
 
     const [contactList, setContactList] = useState([]);
     const [contactRowCount, setContactRowCount] = useState(0);
-    const [activeMemberPhones, setActiveMemberPhones] = useState(new Set());
+    const [activeMemberPhones, setActiveMemberPhones] = useState(new Map());
     const [contactPaginationModel, setContactPaginationModel] = useState({ page: 0, pageSize: 25 });
     const [contactSortModel, setContactSortModel] = useState([{ field: 'id', sort: 'asc' }]);
     const [contactFilterItems, setContactFilterItems] = useState([]);
@@ -309,7 +309,7 @@ const WhatsappBroadcast = () => {
     // Batch-check active membership for the current contact page
     useEffect(() => {
         const phones = [...new Set(contactList.map((c) => c.phone).filter(Boolean))];
-        if (!phones.length) { setActiveMemberPhones(new Set()); return; }
+        if (!phones.length) { setActiveMemberPhones(new Map()); return; }
         fetch(`${import.meta.env.VITE_SERVERURL}/api/gec/members/check-batch`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -317,7 +317,7 @@ const WhatsappBroadcast = () => {
             body: JSON.stringify({ phone_numbers: phones }),
         })
             .then((r) => r.json())
-            .then((d) => { if (d.status) setActiveMemberPhones(new Set(d.data.map((r) => r.phone))); })
+            .then((d) => { if (d.status) setActiveMemberPhones(new Map(d.data.map((r) => [r.phone.replace(/[+\-\s]/g, ''), r]))); })
             .catch(() => {});
     }, [contactList]);
 

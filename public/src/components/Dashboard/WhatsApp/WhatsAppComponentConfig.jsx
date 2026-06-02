@@ -146,9 +146,17 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
     { field: 'gender', headerName: 'Gender', width: 90, filterable: true },
     {
         field: 'active_member', headerName: 'Active Member', width: 120, filterable: false, sortable: false,
-        renderCell: (params) => activeMemberPhones?.has(params.row.phone)
-            ? <BiSolidCheckCircle size={22} color="green" />
-            : null,
+        renderCell: (params) => {
+            const member = activeMemberPhones?.get(params.row.phone?.replace(/[+\-\s]/g, '') ?? '');
+            if (!member) return null;
+            return (
+                <Tooltip title={`ID: ${member.usrId ?? ''} | ${member.time ? new Date(member.time).toLocaleString() : ''} | ${member.email ?? ''}`} arrow>
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                        <BiSolidCheckCircle size={22} color="green" />
+                    </span>
+                </Tooltip>
+            );
+        },
     },
     {
         field: '_',
@@ -182,9 +190,17 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
     { field: 'club_partner_name', headerName: 'Club Patner Name', width: 160, filterable: true },
     {
         field: 'active_member', headerName: 'Active Member', width: 120, filterable: false, sortable: false,
-        renderCell: (params) => activeMemberPhones?.has(params.row.phone)
-            ? <BiSolidCheckCircle size={22} color="green" />
-            : null,
+        renderCell: (params) => {
+            const member = activeMemberPhones?.get(params.row.phone?.replace(/[+\-\s]/g, '') ?? '');
+            if (!member) return null;
+            return (
+                <Tooltip title={`ID: ${member.usrId ?? ''} | ${member.time ? new Date(member.time).toLocaleString() : ''} | ${member.email ?? ''}`} arrow>
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                        <BiSolidCheckCircle size={22} color="green" />
+                    </span>
+                </Tooltip>
+            );
+        },
     },
     {
         field: '_',
