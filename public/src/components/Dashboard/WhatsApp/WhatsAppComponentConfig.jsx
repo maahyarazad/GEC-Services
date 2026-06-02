@@ -79,9 +79,9 @@ export const responseColumns = ({ onViewJson, onViewHistory, activeMemberPhones,
             if (!member) return null;
             return (
                 <Tooltip title={memberTooltip(member)} arrow>
-                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                    
                         <BiSolidCheckCircle size={22} color="green" />
-                    </span>
+                    
                 </Tooltip>
             );
         },
@@ -182,9 +182,9 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
             if (!member) return null;
             return (
                 <Tooltip title={memberTooltip(member)} arrow>
-                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                    
                         <BiSolidCheckCircle size={22} color="green" />
-                    </span>
+                    
                 </Tooltip>
             );
         },
@@ -228,9 +228,9 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
             if (!member) return null;
             return (
                 <Tooltip title={memberTooltip(member)} arrow>
-                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                    
                         <BiSolidCheckCircle size={22} color="green" />
-                    </span>
+                    
                 </Tooltip>
             );
         },
