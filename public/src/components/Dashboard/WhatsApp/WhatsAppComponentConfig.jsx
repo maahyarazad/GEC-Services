@@ -14,7 +14,7 @@ import { BsDashCircle } from "react-icons/bs";
 import { VscDebugAlt } from "react-icons/vsc";
 
 const memberTooltip = (member) =>
-    `ID: ${member.usrId ?? ''} | Issue Date: ${member.time ? new Date(member.time).toLocaleString() : ''} | Email: ${member.email ?? ''}`;
+    `ID: ${member.usrId ?? ''}      |       Issue Date: ${member.time ? new Date(member.time).toLocaleString() : ''}        |       Email: ${member.email ?? ''}        |       Legacy System Phone Number: ${member.phone ?? ''}`;
 
 const noteTitle = (noteBody) => {
     if (!noteBody) return 'Notepad';
