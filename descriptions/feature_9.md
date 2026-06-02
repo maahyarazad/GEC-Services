@@ -182,3 +182,13 @@ Consider using `COALESCE` or a similar approach so that the lookup can match eit
 
 This enhancement should improve member identification when phone data is missing or inconsistent.
 
+# Fix Active Member Green Check in UI
+
+## Description
+
+In the ticket **Fix `gec/members/check` and `gec/members/check-batch` Queries**, we updated the server-side logic to find missing member records.
+
+However, the client-side UI does not display the active member green check for records that were matched using the member's first name and last name. As a result, these members are correctly identified by the API but are not visually marked as active in the user interface.
+
+Update the client-side logic to ensure that members found through first-name and last-name matching are displayed in the same way as members found through phone number matching, including the active member green check indicator.
+
