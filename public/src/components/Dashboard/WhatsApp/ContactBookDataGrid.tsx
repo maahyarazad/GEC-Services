@@ -38,6 +38,8 @@ const ContactBookDataGrid = ({
     onFilterItemsChange,
     loading = false,
     activeMemberPhones = new Map(),
+    onOpenNotepad,
+    notes,
 }: {
     contactList: any[];
     viewMode: string;
@@ -53,9 +55,11 @@ const ContactBookDataGrid = ({
     onFilterItemsChange?: (items: FilterItem[]) => void;
     loading?: boolean;
     activeMemberPhones?: Map<string, any>;
+    onOpenNotepad?: (row: any) => void;
+    notes?: Map<number, string>;
 }) => {
-    const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: false, activeMemberPhones };
-    const contactBookColumnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: true, activeMemberPhones };
+    const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: false, activeMemberPhones, onOpenNotepad, notes };
+    const contactBookColumnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: true, activeMemberPhones, onOpenNotepad, notes };
 
     const serverSideProps = {
         filterMode: 'server' as const,

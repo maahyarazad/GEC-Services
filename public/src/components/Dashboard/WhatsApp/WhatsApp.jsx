@@ -46,6 +46,7 @@ import CreateTwilioTemplate from "./CreateTwilioTemplate";
 import { SiTwilio } from "react-icons/si";
 import ActiveEventCard from "./ActiveEventCard";
 import GuestListPanel from "./GuestListPanel";
+import NotepadModal from "./NotepadModal";
 import { BsPeopleFill } from "react-icons/bs";
 const WhatsappBroadcast = () => {
 
@@ -306,6 +307,17 @@ const WhatsappBroadcast = () => {
         }
     }, [openPanel, fetchContactData, contactPaginationModel, contactSortModel, debouncedContactFilterItems]);
 
+    // Batch-fetch notes for contact book
+    const [contactNotes, setContactNotes] = useState(new Map());
+    useEffect(() => {
+        const ids = contactList.map(c => c.id).filter(Boolean);
+        if (!ids.length) { setContactNotes(new Map()); return; }
+        fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts/notes/by-ids`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+            body: JSON.stringify({ ids }),
+        }).then(r => r.json()).then(d => { if (d.status) setContactNotes(new Map(d.data.map(n => [n.contact_book_id, n.note_body]))); }).catch(() => {});
+    }, [contactList]);
+
     // Batch-check active membership for the current contact page
     useEffect(() => {
         const phones = [...new Set(contactList.map((c) => c.phone).filter(Boolean))];
@@ -320,6 +332,18 @@ const WhatsappBroadcast = () => {
             .then((d) => { if (d.status) setActiveMemberPhones(new Map(d.data.map((r) => [r.phone.replace(/[+\-\s]/g, ''), r]))); })
             .catch(() => {});
     }, [contactList]);
+
+   
+
+
+
+    // Notepad state (shared for contact book + response logs)
+    const [notepadOpen, setNotepadOpen] = useState(false);
+    const [notepadContactId, setNotepadContactId] = useState(null);
+    const [notepadContactPhone, setNotepadContactPhone] = useState(null);
+    const [notepadContactName, setNotepadContactName] = useState('');
+    const handleOpenNotepad = (row) => { setNotepadContactId(row.id); setNotepadContactPhone(null); setNotepadContactName(`${row.first_name ?? ''} ${row.last_name ?? ''}`.trim()); setNotepadOpen(true); };
+    const handleOpenNotepadByPhone = (phone, name) => { setNotepadContactId(null); setNotepadContactPhone(phone); setNotepadContactName(name ?? ''); setNotepadOpen(true); };
 
     const onViewJson = (value, type, full_name) => {
 
@@ -769,6 +793,33 @@ const WhatsappBroadcast = () => {
     const [startDate, setStartDate] = useState(formatDateForInput(defaultStart));
     const [endDate, setEndDate] = useState(formatDateForInput(now));
 
+        // Batch-fetch notes for response logs (by phone/WaId)
+    const [responseNotes, setResponseNotes] = useState(new Map());
+    useEffect(() => {
+        const phones = [...new Set(responses.map(c => c.WaId).filter(Boolean))];
+        if (!phones.length) { setResponseNotes(new Map()); return; }
+        fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts/notes/by-phones`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+            body: JSON.stringify({ phones }),
+        }).then(r => r.json()).then(d => { if (d.status) setResponseNotes(new Map(d.data.map(n => [n.phone, n.note_body]))); }).catch(() => {});
+    }, [responses]);
+    
+     // Batch-check active membership for response logs
+    const [activeMemberPhonesResponses, setActiveMemberPhonesResponses] = useState(new Map());
+    useEffect(() => {
+        const phones = [...new Set(responses.map((c) => c.WaId).filter(Boolean))];
+        if (!phones.length) { setActiveMemberPhonesResponses(new Map()); return; }
+        fetch(`${import.meta.env.VITE_SERVERURL}/api/gec/members/check-batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ phone_numbers: phones }),
+        })
+            .then((r) => r.json())
+            .then((d) => { if (d.status) setActiveMemberPhonesResponses(new Map(d.data.map((r) => [r.phone.replace(/[+\-\s]/g, ''), r]))); })
+            .catch(() => {});
+    }, [responses]);
+    
     const fetchLogs = useCallback(
 
         async (paginationModel, sortModel = [], filterModel = {}, start, end) => {
@@ -1080,7 +1131,7 @@ const WhatsappBroadcast = () => {
                         <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
                             <CustomDataGrid
                                 rows={responses}
-                                columns={responseColumns({ onViewJson, onViewHistory })}
+                                columns={responseColumns({ onViewJson, onViewHistory, activeMemberPhones: activeMemberPhonesResponses, onOpenNotepad: handleOpenNotepadByPhone, notes: responseNotes })}
                                 loading={loading_logs}
                                 showToolbar
 
@@ -1151,6 +1202,8 @@ const WhatsappBroadcast = () => {
                         onFilterItemsChange={setContactFilterItems}
                         loading={loading_logs}
                         activeMemberPhones={activeMemberPhones}
+                        onOpenNotepad={handleOpenNotepad}
+                        notes={contactNotes}
                     />
                 </div>
             </SlideMenu>
@@ -1362,9 +1415,15 @@ const WhatsappBroadcast = () => {
 
 
 
+            <NotepadModal
+                open={notepadOpen}
+                onClose={() => { setNotepadOpen(false); setNotepadContactId(null); setNotepadContactPhone(null); setNotepadContactName(''); }}
+                contactId={notepadContactId}
+                contactPhone={notepadContactPhone}
+                contactName={notepadContactName}
+            />
+
         </Box>
-
-
 
     );
 };
