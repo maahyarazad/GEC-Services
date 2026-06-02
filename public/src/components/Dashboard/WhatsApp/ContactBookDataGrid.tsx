@@ -37,6 +37,7 @@ const ContactBookDataGrid = ({
     filterItems = [],
     onFilterItemsChange,
     loading = false,
+    activeMemberPhones = new Set(),
 }: {
     contactList: any[];
     viewMode: string;
@@ -51,9 +52,10 @@ const ContactBookDataGrid = ({
     filterItems?: FilterItem[];
     onFilterItemsChange?: (items: FilterItem[]) => void;
     loading?: boolean;
+    activeMemberPhones?: Set<string>;
 }) => {
-    const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: false };
-    const contactBookColumnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: true };
+    const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: false, activeMemberPhones };
+    const contactBookColumnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: true, activeMemberPhones };
 
     const serverSideProps = {
         filterMode: 'server' as const,
