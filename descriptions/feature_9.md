@@ -129,3 +129,56 @@ on hovering the tool tip show at least 5 lines of the content note_body
 ## Part 3.4 – Improve Notepad Icon 
 
 When the record doesn't have any content or note_body is null or empty the color of the notepad should be gray and if it has content use the same color that it has
+
+
+# Fix `gec/members/check` and `gec/members/check-batch` Queries
+
+## Description
+
+The current query checks for matching members using normalized phone numbers:
+
+```sql
+SELECT
+    um.usrId,
+    um.time,
+    um.first_name,
+    um.name,
+    ml.email,
+    ml.phone
+FROM __member_login ml
+LEFT JOIN usr_membership um ON um.usrId = ml.user_id
+WHERE um.time BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) AND NOW()
+  AND um.id IS NOT NULL
+  AND REPLACE(REPLACE(REPLACE(ml.phone, '+', ''), '-', ''), ' ', '')
+      IN (${placeholders})
+```
+
+Additional logic is required.
+
+If no match is found using the phone number, the query should also check the member's full name by combining `um.first_name` and `um.name`.
+and the fullname placeholders should send to the end point from the client
+Example:
+
+```sql
+SELECT
+    um.usrId,
+    um.time,
+    um.first_name,
+    um.name,
+    ml.email,
+    ml.phone
+FROM __member_login ml
+LEFT JOIN usr_membership um ON um.usrId = ml.user_id
+WHERE um.time BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) AND NOW()
+  AND um.id IS NOT NULL
+  AND CONCAT(um.first_name, ' ', um.name)
+      IN (${placeholders})
+```
+
+Consider using `COALESCE` or a similar approach so that the lookup can match either:
+
+1. The normalized phone number.
+2. The member's full name (`first_name + name`) when the phone number is unavailable or does not match.
+
+This enhancement should improve member identification when phone data is missing or inconsistent.
+

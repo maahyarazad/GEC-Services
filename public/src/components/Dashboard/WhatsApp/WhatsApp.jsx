@@ -322,11 +322,12 @@ const WhatsappBroadcast = () => {
     useEffect(() => {
         const phones = [...new Set(contactList.map((c) => c.phone).filter(Boolean))];
         if (!phones.length) { setActiveMemberPhones(new Map()); return; }
+        const full_names = [...new Set(contactList.map((c) => `${c.first_name ?? ''} ${c.last_name ?? ''}`.trim()).filter(Boolean))];
         fetch(`${import.meta.env.VITE_SERVERURL}/api/gec/members/check-batch`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ phone_numbers: phones }),
+            body: JSON.stringify({ phone_numbers: phones, full_names }),
         })
             .then((r) => r.json())
             .then((d) => { if (d.status) setActiveMemberPhones(new Map(d.data.map((r) => [r.phone.replace(/[+\-\s]/g, ''), r]))); })
@@ -809,11 +810,12 @@ const WhatsappBroadcast = () => {
     useEffect(() => {
         const phones = [...new Set(responses.map((c) => c.WaId).filter(Boolean))];
         if (!phones.length) { setActiveMemberPhonesResponses(new Map()); return; }
+        const full_names = [...new Set(responses.map((c) => c.full_name || c.ProfileName).filter(Boolean))];
         fetch(`${import.meta.env.VITE_SERVERURL}/api/gec/members/check-batch`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ phone_numbers: phones }),
+            body: JSON.stringify({ phone_numbers: phones, full_names }),
         })
             .then((r) => r.json())
             .then((d) => { if (d.status) setActiveMemberPhonesResponses(new Map(d.data.map((r) => [r.phone.replace(/[+\-\s]/g, ''), r]))); })
