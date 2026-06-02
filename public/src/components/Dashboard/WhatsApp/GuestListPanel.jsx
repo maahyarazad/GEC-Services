@@ -8,11 +8,11 @@ import { useState, useEffect } from 'react';
 
 export default function GuestListPanel({ onGuestAttend, onRemoveGuest, paginationModel, setPaginationModel }) {
     const selectedGuestList = useAppSelector(getSelectedGuestList);
-    const [activeMemberPhones, setActiveMemberPhones] = useState(new Set());
+    const [activeMemberPhones, setActiveMemberPhones] = useState(new Map());
 
     useEffect(() => {
         const phones = [...new Set(selectedGuestList.map((c) => c.phone).filter(Boolean))];
-        if (!phones.length) { setActiveMemberPhones(new Set()); return; }
+        if (!phones.length) { setActiveMemberPhones(new Map()); return; }
         fetch(`${import.meta.env.VITE_SERVERURL}/api/gec/members/check-batch`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -20,7 +20,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, paginatio
             body: JSON.stringify({ phone_numbers: phones }),
         })
             .then((r) => r.json())
-            .then((d) => { if (d.status) setActiveMemberPhones(new Set(d.data.map((r) => r.phone))); })
+            .then((d) => { if (d.status) setActiveMemberPhones(new Map(d.data.map((r) => [r.phone.replace(/[+\-\s]/g, ''), r]))); })
             .catch(() => {});
     }, [selectedGuestList]);
 

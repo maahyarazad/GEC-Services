@@ -42,3 +42,11 @@ In both the **ContactBook** component and the **Guest List**, add a new column n
 For each contact, call the `gec/members/` endpoint to determine whether the contact is an active member. If a matching record is found, display the same green indicator currently used for active events. If no record is found, leave the column empty.
 
 To improve performance, consider enhancing the endpoint to accept a batch of phone numbers from the client and return all matching results in a single request, rather than making individual requests for each contact.
+
+
+
+# Fix Display Member Status
+
+### Description
+
+The server sends back the data but the green indicator doesn't show - also when the mouse hover open a tool tip and view the response data 
