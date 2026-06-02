@@ -23,7 +23,7 @@ import { FcSurvey } from "react-icons/fc";
 import { GiArchiveRegister } from "react-icons/gi";
 import { GoShieldLock } from "react-icons/go";
 import { GrCatalogOption } from "react-icons/gr";
-import { MdPictureAsPdf, MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight, MdTerminal } from "react-icons/md";
+import { MdPictureAsPdf, MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight, MdTerminal, MdLocalShipping } from "react-icons/md";
 import { PiBriefcaseDuotone } from "react-icons/pi";
 
 // Utils
@@ -42,6 +42,7 @@ const SurveyDataGrid = React.lazy(() => import("../Sections/SurveyDataGrid"));
 const WhatsappBroadcast = React.lazy(() => import("./WhatsApp/WhatsApp"));
 const PDFGenerator = React.lazy(() => import("./PDFGenerator/PDFGenerator"));
 const ServerLogs = React.lazy(() => import("./ServerLogs/ServerLogs"));
+const DeliveryTrackingSection = React.lazy(() => import("../Sections/DeliveryTrackingSection"));
 
 // import RegistrationList from "./Registration/RegistrationList";
 // import RegistrationDataGrid from "../gallery/RegistrationDataGrid";
@@ -229,6 +230,10 @@ const Admin = ({ data }) => {
             icon: <MdTerminal size={20} />,
             label: "Server Logs",
         },
+        {
+            icon: <MdLocalShipping size={20} />,
+            label: "Delivery & Tracking",
+        },
     ];
 
     const [tabValue, setTabValue] = useState(0);
@@ -339,6 +344,9 @@ const Admin = ({ data }) => {
             break;
         case 8:
             content = <ServerLogs />;
+            break;
+        case 9:
+            content = <DeliveryTrackingSection />;
             break;
     }
 

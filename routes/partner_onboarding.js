@@ -281,6 +281,53 @@ const total = dbService._getTotalCount(
 
 
 
+// GET /api/partner-delivery-employees?partner=X&...  (admin, German-speaking only)
+router.get("/api/partner-delivery-employees", (req, res) => {
+  try {
+    const { partner: partnerParam, synchronized: syncFlag, ...queryRest } = req.query;
+    if (!partnerParam) {
+      return res.status(400).json({ status: false, message: "partner query param is required" });
+    }
+
+    const { pageNumber, limit, sortField, sortOrder, filters, jsonFilters, advancedClauses } =
+      dbService._QuerySqlConverter(
+        queryRest,
+        "partner_onboarding_data AS pod",
+        { table: "member_card AS mc", on: "pod.mobile_number = mc.mobile_number" },
+        ["pod.*", "mc.id AS member_card_id"]
+      );
+
+    advancedClauses.push({ clause: "pod.partner = ?", value: partnerParam });
+    advancedClauses.push({ clause: "pod.language = 'de'", value: null });
+
+    if (syncFlag !== "true") {
+      advancedClauses.push({ clause: "pod.synchronized != 1", value: null });
+    }
+
+    const total = dbService._getTotalCount(
+      "partner_onboarding_data AS pod LEFT JOIN member_card AS mc ON pod.mobile_number = mc.mobile_number",
+      filters,
+      advancedClauses
+    );
+
+    const data = dbService._getAll("partner_onboarding_data AS pod", filters, {
+      columns: ["pod.*", "mc.id AS member_card_id"],
+      leftJoin: { table: "member_card AS mc", on: "pod.mobile_number = mc.mobile_number" },
+      advancedClauses,
+      jsonFilters,
+      sortField,
+      sortOrder,
+      pageNumber,
+      limit,
+    });
+
+    return res.json({ success: true, data, total, page: pageNumber + 1, pageSize: limit });
+  } catch (error) {
+    console.error("Error in /api/partner-delivery-employees:", error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
 // ── Corporate Member ADD ──────────────────────────────────────────────────────
 router.post("/api/partner-onboarding/employee", (req, res) => {
   try {
