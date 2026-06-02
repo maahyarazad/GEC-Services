@@ -75,13 +75,13 @@ export const responseColumns = ({ onViewJson, onViewHistory, activeMemberPhones,
     {
         field: 'active_member', headerName: 'Active Member', width: 120, filterable: false, sortable: false,
         renderCell: (params) => {
-            const member = activeMemberPhones?.get(params.row.WaId?.replace(/[+\-\s]/g, '') ?? '');
+            const phone = params.row.WaId?.replace(/[+\-\s]/g, '') ?? '';
+            const fullName = (params.row.full_name || params.row.ProfileName || '').trim();
+            const member = activeMemberPhones?.get(phone) || activeMemberPhones?.get(fullName);
             if (!member) return null;
             return (
                 <Tooltip title={memberTooltip(member)} arrow>
-                    
-                        <BiSolidCheckCircle size={22} color="green" />
-                    
+                    <BiSolidCheckCircle size={22} color="green" />
                 </Tooltip>
             );
         },
@@ -178,13 +178,13 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
     {
         field: 'active_member', headerName: 'Active Member', width: 120, filterable: false, sortable: false,
         renderCell: (params) => {
-            const member = activeMemberPhones?.get(params.row.phone?.replace(/[+\-\s]/g, '') ?? '');
+            const phone = params.row.phone?.replace(/[+\-\s]/g, '') ?? '';
+            const fullName = `${params.row.first_name ?? ''} ${params.row.last_name ?? ''}`.trim();
+            const member = activeMemberPhones?.get(phone) || activeMemberPhones?.get(fullName);
             if (!member) return null;
             return (
                 <Tooltip title={memberTooltip(member)} arrow>
-                    
-                        <BiSolidCheckCircle size={22} color="green" />
-                    
+                    <BiSolidCheckCircle size={22} color="green" />
                 </Tooltip>
             );
         },
@@ -224,13 +224,13 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
     {
         field: 'active_member', headerName: 'Active Member', width: 120, filterable: false, sortable: false,
         renderCell: (params) => {
-            const member = activeMemberPhones?.get(params.row.phone?.replace(/[+\-\s]/g, '') ?? '');
+            const phone = params.row.phone?.replace(/[+\-\s]/g, '') ?? '';
+            const fullName = `${params.row.first_name ?? ''} ${params.row.last_name ?? ''}`.trim();
+            const member = activeMemberPhones?.get(phone) || activeMemberPhones?.get(fullName);
             if (!member) return null;
             return (
                 <Tooltip title={memberTooltip(member)} arrow>
-                    
-                        <BiSolidCheckCircle size={22} color="green" />
-                    
+                    <BiSolidCheckCircle size={22} color="green" />
                 </Tooltip>
             );
         },

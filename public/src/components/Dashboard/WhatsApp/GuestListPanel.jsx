@@ -36,7 +36,17 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, paginatio
             body: JSON.stringify({ phone_numbers: phones, full_names }),
         })
             .then((r) => r.json())
-            .then((d) => { if (d.status) setActiveMemberPhones(new Map(d.data.map((r) => [r.phone.replace(/[+\-\s]/g, ''), r]))); })
+            .then((d) => {
+                if (d.status) {
+                    const entries = [];
+                    d.data.forEach(r => {
+                        if (r.phone) entries.push([r.phone.replace(/[+\-\s]/g, ''), r]);
+                        const fullName = `${r.first_name ?? ''} ${r.name ?? ''}`.trim();
+                        if (fullName) entries.push([fullName, r]);
+                    });
+                    setActiveMemberPhones(new Map(entries));
+                }
+            })
             .catch(() => {});
     }, [selectedGuestList]);
 
