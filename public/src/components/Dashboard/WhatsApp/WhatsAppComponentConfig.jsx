@@ -179,7 +179,7 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
         field: 'active_member', headerName: 'Active Member', width: 120, filterable: false, sortable: false,
         renderCell: (params) => {
             const phone = params.row.phone?.replace(/[+\-\s]/g, '') ?? '';
-            const fullName = `${params.row.first_name ?? ''} ${params.row.last_name ?? ''}`.trim();
+            const fullName = `${params.row.first_name?.trimEnd() ?? ''} ${params.row.last_name?.trimEnd()?? ''}`.trim();
             const member = activeMemberPhones?.get(phone) || activeMemberPhones?.get(fullName);
             if (!member) return null;
             return (
@@ -225,7 +225,7 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
         field: 'active_member', headerName: 'Active Member', width: 120, filterable: false, sortable: false,
         renderCell: (params) => {
             const phone = params.row.phone?.replace(/[+\-\s]/g, '') ?? '';
-            const fullName = `${params.row.first_name ?? ''} ${params.row.last_name ?? ''}`.trim();
+            const fullName = `${params.row.first_name?.trimEnd() ?? ''} ${params.row.last_name?.trimEnd() ?? ''}`.trim();
             const member = activeMemberPhones?.get(phone) || activeMemberPhones?.get(fullName);
             if (!member) return null;
             return (
