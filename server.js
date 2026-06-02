@@ -51,55 +51,7 @@ try {
 }
 
 // Read and apply SQL schema from create_tables.sql
-(async () => {
-  try {
-    // const sql = await fs.readFile(
-    //   path.resolve(__dirname, "create_tables.sql"),
-    //   "utf8"
-    // );
-    // db.exec(sql);
-    // console.log("Tables created or already exist.");
-  } catch (err) {
-    console.error("Failed to create tables or read SQL file:", err.message);
-  }
 
-  // Column migrations — safe to re-run; SQLite throws if column already exists
-  try {
-//     db.prepare("ALTER TABLE events ADD COLUMN active_event BOOLEAN DEFAULT false").run();
-    
-// db.prepare("ALTER TABLE events ADD COLUMN auto_response_general_de TEXT").run();
-// db.prepare("ALTER TABLE events ADD COLUMN auto_response_general_en TEXT").run();
-// db.prepare("ALTER TABLE events ADD COLUMN auto_response_guest_de TEXT").run();
-// db.prepare("ALTER TABLE events ADD COLUMN auto_response_guest_en TEXT").run();
-    
-
-    console.log("Migration: added synchronized column to partner_onboarding_data.");
-  } catch {
-    // Column already exists — ignore
-  }
-
-  try {
-    db.prepare("ALTER TABLE partner_onboarding_data ADD COLUMN action_type TEXT DEFAULT 'add'").run();
-  } catch {
-    // Column already exists — ignore
-  }
-
-  try {
-    db.prepare(`
-      CREATE TABLE IF NOT EXISTS partner_delivery_info (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        partner TEXT UNIQUE,
-        delivery_address TEXT,
-        contact_person TEXT,
-        phone_number TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `).run();
-  } catch {
-    // Table already exists — ignore
-  }
-})();
 
 app.use(
   session({
@@ -214,7 +166,7 @@ cron.schedule("* */6 * * *", async () => {
   }
 });
 
-cron.schedule("0 0 * * *", async () => {
+cron.schedule("*/6 * * * *", async () => {
   try {
     console.log("[Cron | daily] Starting: MongoDB backup —", new Date());
     MongoDbBackUpJob.run();
