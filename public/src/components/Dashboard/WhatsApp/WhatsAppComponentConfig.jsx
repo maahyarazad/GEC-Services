@@ -193,10 +193,11 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
         renderCell: (params) => {
             const member = activeMemberPhones?.get(params.row.phone?.replace(/[+\-\s]/g, '') ?? '');
             if (!member) return null;
+           
             return (
-                <Tooltip title={`ID: ${member.usrId ?? ''} | ${member.time ? new Date(member.time).toLocaleString() : ''} | ${member.email ?? ''}`} arrow>
-                    <span style={{ display: 'flex', alignItems: 'center' }}>
-                        <BiSolidCheckCircle size={22} color="green" />
+                    <Tooltip title={`ID: ${member.usrId ?? ''} \n\n Issue Date:${member.time ? new Date(member.time).toLocaleString() : ''} \n\n Email: ${member.email ?? ''}`} arrow>
+                    <span>
+                         <BiSolidCheckCircle size={22} color="green" />
                     </span>
                 </Tooltip>
             );
