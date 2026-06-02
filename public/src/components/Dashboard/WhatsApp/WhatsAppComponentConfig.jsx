@@ -13,8 +13,35 @@ import { BiSolidCheckCircle } from "react-icons/bi";
 import { BsDashCircle } from "react-icons/bs";
 import { VscDebugAlt } from "react-icons/vsc";
 
-const memberTooltip = (member) =>
-    `ID: ${member.usrId ?? ''}      |       Issue Date: ${member.time ? new Date(member.time).toLocaleString() : ''}        |       Email: ${member.email ?? ''}        |       Legacy System Phone Number: ${member.phone ?? ''}`;
+    const slotPropsStyle = {
+        tooltip: {
+            sx: {
+                backgroundColor: "#1e1e1e",
+                color: "#fff",
+                fontSize: "14px",
+                padding: "12px 16px",
+                borderRadius: "12px",
+                maxWidth: 350,
+                lineHeight: 1.8,
+                boxShadow: 3,
+            },
+        },
+        arrow: {
+            sx: {
+                color: "#1e1e1e",
+            },
+        },
+    }
+
+const memberTooltip = (member) => (
+    <>
+        • ID: {member?.usrId ?? ''}  <br />
+        • Issue Date: {member?.time ? new Date(member?.time).toLocaleString() : ''} <br />
+        • Email: {member?.email ?? ''}<br />
+        • Legacy System Phone Number: {member?.phone ?? ''}<br />
+    </>
+)
+
 
 const noteTitle = (noteBody) => {
     if (!noteBody) return 'Notepad';
@@ -80,7 +107,7 @@ export const responseColumns = ({ onViewJson, onViewHistory, activeMemberPhones,
             const member = activeMemberPhones?.get(phone) || activeMemberPhones?.get(fullName);
             if (!member) return null;
             return (
-                <Tooltip title={memberTooltip(member)} arrow>
+                <Tooltip title={memberTooltip(member)}  slotProps={slotPropsStyle} arrow>
                     <BiSolidCheckCircle size={22} color="green" />
                 </Tooltip>
             );
@@ -183,7 +210,7 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
             const member = activeMemberPhones?.get(phone) || activeMemberPhones?.get(fullName);
             if (!member) return null;
             return (
-                <Tooltip title={memberTooltip(member)} arrow>
+                <Tooltip title={memberTooltip(member)} slotProps={slotPropsStyle} arrow>
                     <BiSolidCheckCircle size={22} color="green" />
                 </Tooltip>
             );
