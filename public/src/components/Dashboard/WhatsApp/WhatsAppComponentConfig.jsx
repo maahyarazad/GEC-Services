@@ -5,12 +5,27 @@ import 'react-json-pretty/themes/monikai.css'; // optional styling
 import { IoMdOpen } from "react-icons/io";
 import { RiEditLine } from "react-icons/ri";
 import { TbTrashX } from "react-icons/tb";
+import { FaStickyNote } from "react-icons/fa";
 import { FaHistory } from "react-icons/fa";
 import { TbClipboardCheck } from "react-icons/tb";
 import ActionCell from './ActionCell';
 import { BiSolidCheckCircle } from "react-icons/bi";
 import { BsDashCircle } from "react-icons/bs";
 import { VscDebugAlt } from "react-icons/vsc";
+
+const memberTooltip = (member) =>
+    `ID: ${member.usrId ?? ''} | Issue Date: ${member.time ? new Date(member.time).toLocaleString() : ''} | Email: ${member.email ?? ''}`;
+
+const noteTitle = (noteBody) => {
+    if (!noteBody) return 'Notepad';
+    const lines = noteBody.split('\n');
+    const preview = lines.slice(0, 5).join('\n');
+    return (
+        <span style={{ whiteSpace: 'pre-line', display: 'block', maxWidth: 300, fontSize: '0.8rem', lineHeight: 1.5 }}>
+            {preview}{lines.length > 5 ? '\n…' : ''}
+        </span>
+    );
+};
 export const columns = ({ onViewJson }) => [
     { field: 'id', headerName: 'ID', width: 70, hide: true },
     { field: 'metadata_createdAt', headerName: 'Created At', width: 160, filterable: true },
@@ -48,7 +63,7 @@ export const columns = ({ onViewJson }) => [
 ];
 
 
-export const responseColumns = ({ onViewJson, onViewHistory }) => [
+export const responseColumns = ({ onViewJson, onViewHistory, activeMemberPhones, onOpenNotepad, notes }) => [
     { field: 'id', headerName: 'ID', width: 70, hide: true },
     { field: 'received_at', headerName: 'Received at', width: 160, filterable: true },
     { field: 'type', headerName: 'Member Type', width: 160, filterable: true },
@@ -58,31 +73,47 @@ export const responseColumns = ({ onViewJson, onViewHistory }) => [
     { field: 'MessageType', headerName: 'Type', width: 100, filterable: true },
     { field: 'Body', headerName: 'Body', width: 200, filterable: true },
     {
-        field: '_',
-        headerName: 'Actions',
-        width: 90,
-
-        filterable: false,
+        field: 'active_member', headerName: 'Active Member', width: 120, filterable: false, sortable: false,
         renderCell: (params) => {
-
-
+            const member = activeMemberPhones?.get(params.row.WaId?.replace(/[+\-\s]/g, '') ?? '');
+            if (!member) return null;
             return (
-                <div>
-
-                    <IconButton onClick={() => onViewJson(JSON.parse(params.row.payload), 'instant_reply', params.row.full_name)} title="Open Instant Resopne">
-                        <IoMdOpen size={22} color="#5C6BC0" />
-                    </IconButton>
-
-                    <IconButton onClick={() => onViewHistory(JSON.parse(params.row.payload), 'history')}>
-                        <VscDebugAlt size={20} color="#EF5350"/>
-                    </IconButton>
-
-                </div>
+                <Tooltip title={memberTooltip(member)} arrow>
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                        <BiSolidCheckCircle size={22} color="green" />
+                    </span>
+                </Tooltip>
             );
         },
-
     },
-
+    {
+        field: '_',
+        headerName: 'Actions',
+        width: 130,
+        filterable: false,
+        renderCell: (params) => (
+            <div>
+                <Tooltip title="Open Instant Reply">
+                    <IconButton onClick={() => onViewJson(JSON.parse(params.row.payload), 'instant_reply', params.row.full_name)}>
+                        <IoMdOpen size={22} color="#5C6BC0" />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Debug">
+                    <IconButton onClick={() => onViewHistory(JSON.parse(params.row.payload), 'history')}>
+                        <VscDebugAlt size={20} color="#EF5350" />
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title={noteTitle(notes?.get(params.row.WaId))}>
+                    <IconButton
+                        onClick={() => onOpenNotepad?.(params.row.WaId, params.row.full_name || params.row.ProfileName)}
+                        sx={{ color: notes?.get(params.row.WaId) ? "#e65100" : "#9e9e9e", "&:hover": { backgroundColor: "#fff8e1" } }}
+                    >
+                        <FaStickyNote size={18} />
+                    </IconButton>
+                </Tooltip>
+            </div>
+        ),
+    },
 ];
 
 export const corruptedContactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBlacklist }) => [
@@ -134,7 +165,7 @@ export const corruptedContactBookColumn = ({ onModifyContact, onDeleteContact, o
     }
 
 ];
-export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial, activeMemberPhones }) => [
+export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial, activeMemberPhones, onOpenNotepad, notes }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'type', headerName: 'Type', width: 110, filterable: true },
     { field: 'title', headerName: 'Title', width: 70, filterable: true },
@@ -150,7 +181,7 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
             const member = activeMemberPhones?.get(params.row.phone?.replace(/[+\-\s]/g, '') ?? '');
             if (!member) return null;
             return (
-                <Tooltip title={`ID: ${member.usrId ?? ''} | ${member.time ? new Date(member.time).toLocaleString() : ''} | ${member.email ?? ''}`} arrow>
+                <Tooltip title={memberTooltip(member)} arrow>
                     <span style={{ display: 'flex', alignItems: 'center' }}>
                         <BiSolidCheckCircle size={22} color="green" />
                     </span>
@@ -161,7 +192,7 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
     {
         field: '_',
         headerName: 'Actions',
-        width: 300,
+        width: 320,
 
         filterable: true,
         renderCell: (params) => {
@@ -172,14 +203,16 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
                     <ActionCell params={params} viewEventSpeedDial={viewEventSpeedDial}
                         onModifyContact={onModifyContact}
                         onDeleteContact={onDeleteContact}
-                        onSwitchBlacklist={onSwitchBlacklist} />
+                        onSwitchBlacklist={onSwitchBlacklist}
+                        onOpenNotepad={onOpenNotepad}
+                        noteContent={notes?.get(params.row.id)} />
                 </div>
             );
         },
     }
 
 ];
-export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPhones }) => [
+export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPhones, onOpenNotepad, notes }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'type', headerName: 'Type', width: 110, filterable: true },
     { field: 'title', headerName: 'Title', width: 70, filterable: true },
@@ -193,11 +226,10 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
         renderCell: (params) => {
             const member = activeMemberPhones?.get(params.row.phone?.replace(/[+\-\s]/g, '') ?? '');
             if (!member) return null;
-           
             return (
-                    <Tooltip title={`ID: ${member.usrId ?? ''} \n\n Issue Date:${member.time ? new Date(member.time).toLocaleString() : ''} \n\n Email: ${member.email ?? ''}`} arrow>
-                    <span>
-                         <BiSolidCheckCircle size={22} color="green" />
+                <Tooltip title={memberTooltip(member)} arrow>
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                        <BiSolidCheckCircle size={22} color="green" />
                     </span>
                 </Tooltip>
             );
@@ -206,15 +238,13 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
     {
         field: '_',
         headerName: 'Actions',
-        width: 300,
-
+        width: 340,
         filterable: true,
         renderCell: (params) => {
             return (
                 <>
                     <Tooltip title="Complete Attendance">
                         <IconButton
-                            //   size="small"
                             onClick={() => onGuestAttend(params.row)}
                             sx={{
                                 color: params.row.complete_attendance === 0 ? "" : "green",
@@ -226,14 +256,18 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
                     </Tooltip>
                     <Tooltip title={`Remove ${params.row.first_name} from guest list`}>
                         <IconButton
-                            //   size="small"
                             onClick={() => onRemoveGuest(params.row)}
-                            sx={{
-                                color: "#d32f2f",
-                                "&:hover": { backgroundColor: "#ffebee" },
-                            }}
+                            sx={{ color: "#d32f2f", "&:hover": { backgroundColor: "#ffebee" } }}
                         >
                             <TbTrashX size={22} />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title={noteTitle(notes?.get(params.row.id))}>
+                        <IconButton
+                            onClick={() => onOpenNotepad?.(params.row)}
+                            sx={{ color: notes?.get(params.row.id) ? "#e65100" : "#9e9e9e", "&:hover": { backgroundColor: "#fff8e1" } }}
+                        >
+                            <FaStickyNote size={20} />
                         </IconButton>
                     </Tooltip>
                 </>

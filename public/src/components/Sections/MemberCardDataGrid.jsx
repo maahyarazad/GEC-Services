@@ -795,7 +795,7 @@ const MemberCardDataGrid = () => {
 
             {/* Add / Edit Employee dialog */}
             <Dialog open={formOpen} onClose={() => setFormOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>{editingId ? 'Edit Corporate Member' : 'Add Corporate Member'}</DialogTitle>
+                <DialogTitle>{editingId ? `Edit ${formData.firstname} ${formData.lastname}` : 'Add Corporate Member'}</DialogTitle>
                 <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '16px !important' }}>
                     <Box sx={{ display: 'flex', gap: 2 }}>
                         <FormControl size="small" sx={{ minWidth: 100 }}>
@@ -838,8 +838,8 @@ const MemberCardDataGrid = () => {
                     </Box>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setFormOpen(false)} disabled={formSaving}>Cancel</Button>
-                    <Button variant="contained" onClick={handleFormSave} disabled={formSaving}>
+                    <Button onClick={() => setFormOpen(false)} disabled={formSaving} sx={{textTransform: 'none'}}>Cancel</Button>
+                    <Button variant="contained" onClick={handleFormSave} disabled={formSaving} sx={{textTransform: 'none'}}>
                         {formSaving ? <CircularProgress size={18} color="inherit" /> : (editingId ? 'Update' : 'Add')}
                     </Button>
                 </DialogActions>

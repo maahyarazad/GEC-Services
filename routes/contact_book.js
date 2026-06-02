@@ -4,6 +4,75 @@ const dbService = require("../services/dbService");
 const db = dbService.getDB();
 const { corruptedContactBookData } = require("../services/whatsAppSender");
 
+
+// Lookup contact by phone
+router.get("/api/contacts/lookup", (req, res) => {
+  const { phone } = req.query;
+  if (!phone) return res.status(400).json({ status: false, message: "phone is required" });
+  const contact = db.prepare("SELECT id FROM contact_book WHERE phone = ?").get(phone);
+  return res.json({ status: true, data: contact ?? null });
+});
+
+// GET latest note for a contact
+router.get("/api/contacts/:id/notes", (req, res) => {
+  const note = db.prepare(
+    "SELECT * FROM contact_book_notes WHERE contact_book_id = ? ORDER BY id DESC LIMIT 1"
+  ).get(req.params.id);
+  return res.json({ status: true, data: note ?? null });
+});
+
+// Upsert note for a contact
+router.post("/api/contacts/:id/notes", (req, res) => {
+  const { note_body } = req.body;
+  const existing = db.prepare(
+    "SELECT id FROM contact_book_notes WHERE contact_book_id = ? LIMIT 1"
+  ).get(req.params.id);
+  if (existing) {
+    db.prepare("UPDATE contact_book_notes SET note_body = ? WHERE id = ?").run(note_body, existing.id);
+    return res.json({ status: true, id: existing.id });
+  }
+  const result = db.prepare(
+    "INSERT INTO contact_book_notes (contact_book_id, note_body) VALUES (?, ?)"
+  ).run(req.params.id, note_body);
+  return res.json({ status: true, id: result.lastInsertRowid });
+});
+
+// Delete a note by its own id
+router.delete("/api/contacts/notes/:noteId", (req, res) => {
+  db.prepare("DELETE FROM contact_book_notes WHERE id = ?").run(req.params.noteId);
+  return res.json({ status: true });
+});
+
+// Batch fetch notes by contact IDs → [{ contact_book_id, note_body }]
+router.post("/api/contacts/notes/by-ids", (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || !ids.length) return res.json({ status: true, data: [] });
+  const placeholders = ids.map(() => '?').join(', ');
+  const rows = db.prepare(
+    `SELECT contact_book_id, note_body FROM contact_book_notes WHERE contact_book_id IN (${placeholders}) ORDER BY id DESC`
+  ).all(ids);
+  const seen = new Set();
+  const data = rows.filter(r => { if (seen.has(r.contact_book_id)) return false; seen.add(r.contact_book_id); return true; });
+  return res.json({ status: true, data });
+});
+
+// Batch fetch notes by phone → [{ phone, note_body }]
+router.post("/api/contacts/notes/by-phones", (req, res) => {
+  const { phones } = req.body;
+  if (!Array.isArray(phones) || !phones.length) return res.json({ status: true, data: [] });
+  const placeholders = phones.map(() => '?').join(', ');
+  const rows = db.prepare(`
+    SELECT cb.phone, cbn.note_body
+    FROM contact_book cb
+    JOIN contact_book_notes cbn ON cbn.contact_book_id = cb.id
+    WHERE cb.phone IN (${placeholders})
+    ORDER BY cbn.id DESC
+  `).all(phones);
+  const seen = new Set();
+  const data = rows.filter(r => { if (seen.has(r.phone)) return false; seen.add(r.phone); return true; });
+  return res.json({ status: true, data });
+});
+
 router.post("/api/contacts/create", (req, res) => {
   try {
     const contactData = req.body;

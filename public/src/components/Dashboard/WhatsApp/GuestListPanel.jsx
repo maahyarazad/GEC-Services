@@ -5,10 +5,25 @@ import { Box } from '@mui/material';
 import { getSelectedGuestList } from '../../../features/eventSlice';
 import { useAppSelector } from '../../../store/hooks';
 import { useState, useEffect } from 'react';
+import NotepadModal from './NotepadModal';
 
 export default function GuestListPanel({ onGuestAttend, onRemoveGuest, paginationModel, setPaginationModel }) {
     const selectedGuestList = useAppSelector(getSelectedGuestList);
     const [activeMemberPhones, setActiveMemberPhones] = useState(new Map());
+    const [guestNotes, setGuestNotes] = useState(new Map());
+
+    useEffect(() => {
+        const ids = selectedGuestList.map(c => c.id).filter(Boolean);
+        if (!ids.length) { setGuestNotes(new Map()); return; }
+        fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts/notes/by-ids`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+            body: JSON.stringify({ ids }),
+        }).then(r => r.json()).then(d => { if (d.status) setGuestNotes(new Map(d.data.map(n => [n.contact_book_id, n.note_body]))); }).catch(() => {});
+    }, [selectedGuestList]);
+    const [notepadOpen, setNotepadOpen] = useState(false);
+    const [notepadContactId, setNotepadContactId] = useState(null);
+    const [notepadContactName, setNotepadContactName] = useState('');
+    const handleOpenNotepad = (row) => { setNotepadContactId(row.id); setNotepadContactName(`${row.first_name ?? ''} ${row.last_name ?? ''}`.trim()); setNotepadOpen(true); };
 
     useEffect(() => {
         const phones = [...new Set(selectedGuestList.map((c) => c.phone).filter(Boolean))];
@@ -45,13 +60,19 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, paginatio
             }}>
                 <DataGrid
                     rows={selectedGuestList}
-                    columns={guestListColumns({ onGuestAttend, onRemoveGuest, activeMemberPhones })}
+                    columns={guestListColumns({ onGuestAttend, onRemoveGuest, activeMemberPhones, onOpenNotepad: handleOpenNotepad, notes: guestNotes })}
                     paginationModel={paginationModel}
                     onPaginationModelChange={setPaginationModel}
                     pageSizeOptions={[25, 50, 100]}
                     pagination
                     disableRowSelectionOnClick
                     showToolbar
+                />
+                <NotepadModal
+                    open={notepadOpen}
+                    onClose={() => { setNotepadOpen(false); setNotepadContactId(null); setNotepadContactName(''); }}
+                    contactId={notepadContactId}
+                    contactName={notepadContactName}
                 />
             </Box>
         </Box>
