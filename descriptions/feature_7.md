@@ -334,3 +334,139 @@ Before validation:
 If the phone number is invalid, display an appropriate validation error and prevent the user from proceeding until the issue is resolved.
 
 
+# Feature Ticket 7: Fortify the Partner Onboarding Logic
+
+## Description
+
+This section of the code in the partner onboarding process plays a crucial role.
+
+```js
+// Valid values per CHECK constraints
+const VALID_TITLES = ["Mr.", "Ms.", "Mrs.", "Dr.", ""];
+const VALID_GENDERS = ["", "m", "f"];
+const VALID_LANGUAGES = ["en", "de"];
+const VALID_ACTION_TYPES = ["add", "update", "delete"];
+
+const insertContact = db.prepare(`
+  INSERT OR IGNORE INTO partner_onboarding_data (
+      title,
+      firstname,
+      lastname,
+      gender,
+      mobile_number,
+      email,
+      partner,
+      birthday,
+      language,
+      action_type
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const insertMany = db.transaction((contacts, partner) => {
+  let inserted = 0;
+
+  for (const row of contacts) {
+    // Normalise keys to lowercase
+    const r = Object.fromEntries(
+      Object.entries(row).map(([k, v]) => [
+        k.toLowerCase().trim(),
+        String(v ?? "").trim(),
+      ])
+    );
+
+    // Sanitise CHECK constraint fields — fall back to "" if value is invalid
+    const title = VALID_TITLES.includes(r.title) ? r.title : "";
+    const gender = VALID_GENDERS.includes(r.gender) ? r.gender : "";
+    const language = VALID_LANGUAGES.includes(r.language) ? r.language : "en";
+    const action_type = VALID_ACTION_TYPES.includes(r["add/update/delete"]) ? r["add/update/delete"] : "add";
+
+    let birthday = null;
+    if (r["date of birth"]) {
+      const ddmmyyyy = r["date of birth"].match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (ddmmyyyy) {
+        birthday = `${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`; // → YYYY-MM-DD
+      } else if (/^\d{4}-\d{2}-\d{2}/.test(r["date of birth"])) {
+        birthday = r["date of birth"];
+      }
+    }
+
+    const info = insertContact.run(
+      title,
+      r["first name"],
+      r["last name"],
+      gender,
+      r["mobile number"],
+      r["company email"],
+      partner,
+      r["date of birth"],
+      language,
+      action_type
+    );
+
+    if (info.changes > 0) inserted++;
+  }
+
+  return inserted;
+});
+```
+
+
+
+### 1. Enhance Add Logic
+
+The current implementation uses a pure `INSERT OR IGNORE INTO` operation for records with the `add` flag.
+
+Before performing the insert, the system must check whether a record with the same phone number already exists in `partner_onboarding_data`.
+
+* If a matching phone number exists, the operation must be converted from an **INSERT** to an **UPDATE**.
+* This behavior is mandatory and must always be applied.
+
+#### 1.1 Additional Validation for the Add Flag
+
+When processing records with the `add` flag, the following restriction must be enforced:
+
+* If a record with the same phone number exists:
+
+  * in `member_card` with `active = 1`, and
+  * in `partner_onboarding_data` with:
+
+    * the same phone number,
+    * `sync = 1`, and
+    * a `created_metadata` value less than three months old,
+
+then the system must prevent the transaction for that specific record and continue processing the remaining records.
+
+---
+
+### 2. Card Number and Expiry Date Generation
+
+This logic applies **only** to records with the `add` flag.
+
+The system must:
+
+1. Generate a new expiry date based on the current date, with an expiration date one year in the future.
+2. Generate a new card number by:
+
+   * Finding the largest existing card number that starts with `7` for the `en` language and `5` for the `de` language.
+   * Incrementing that number by `1`.
+   * Assigning the new value to the newly created record.
+
+---
+
+### 3. Update Logic
+
+For records with the `update` flag:
+
+* The system may update only the following fields:
+
+  * `firstname`
+  * `lastname`
+  * `title`
+  * `birthdate`
+  * `email`
+  * `active`
+
+* Before performing the update, the system must verify that the phone number does not already belong to another record.
+
+* If another record with the same phone number exists, the update operation must be rejected for that specific record, and processing must continue with the remaining records.
+

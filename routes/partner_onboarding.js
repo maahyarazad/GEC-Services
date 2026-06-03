@@ -27,21 +27,67 @@ const VALID_ACTION_TYPES = ["add", "update", "delete"];
 
 const insertContact = db.prepare(`
   INSERT OR IGNORE INTO partner_onboarding_data (
-      title,
-      firstname,
-      lastname,
-      gender,
-      mobile_number,
-      email,
-      partner,
-      birthday,
-      language,
-      action_type
+      title, firstname, lastname, gender, mobile_number, email,
+      partner, birthday, language, action_type
   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const updatePodRecord = db.prepare(`
+  UPDATE partner_onboarding_data
+  SET title = ?, firstname = ?, lastname = ?, gender = ?, email = ?,
+      birthday = ?, language = ?, action_type = ?,
+      metadata_createdAt = CURRENT_TIMESTAMP
+  WHERE id = ?
+`);
+
+const checkPodByPhone = db.prepare(`
+  SELECT id FROM partner_onboarding_data
+  WHERE mobile_number = ? AND LOWER(partner) = LOWER(?) LIMIT 1
+`);
+
+const checkActiveGuard = db.prepare(`
+  SELECT 1 FROM member_card mc
+  WHERE mc.mobile_number = ? AND mc.active = 1
+    AND EXISTS (
+      SELECT 1 FROM partner_onboarding_data pod2
+      WHERE pod2.mobile_number = ?
+        AND pod2.synchronized = 1
+        AND pod2.metadata_createdAt >= datetime('now', '-3 months')
+    )
+  LIMIT 1
+`);
+
+const checkMcByPhone = db.prepare(
+  `SELECT id FROM member_card WHERE mobile_number = ? LIMIT 1`
+);
+
+const getMaxCardNumber = db.prepare(
+  `SELECT MAX(card_number) AS max_num FROM member_card WHERE CAST(card_number AS TEXT) LIKE ?`
+);
+
+const insertMemberCardRecord = db.prepare(`
+  INSERT INTO member_card (
+    partner, mobile_number, firstname, lastname, title, gender,
+    email, birthday, active, type, card_number, card_expiry_date, remarks
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, datetime('now', '+1 year'), 'onboarding upload')
+`);
+
+const checkMcPhoneConflict = db.prepare(`
+  SELECT id FROM member_card WHERE mobile_number = ? AND LOWER(partner) != LOWER(?) LIMIT 1
+`);
+
+const updateMemberCardRecord = db.prepare(`
+  UPDATE member_card
+  SET firstname = ?, lastname = ?, title = ?, birthday = ?, email = ?, active = 1,
+      metadata_modifiedAt = datetime('now'),
+      remarks = 'updated from onboarding ' || datetime('now')
+  WHERE mobile_number = ? AND LOWER(partner) = LOWER(?)
 `);
 
 const insertMany = db.transaction((contacts, partner) => {
   let inserted = 0;
+  let updated = 0;
+  let skipped = 0;
 
   for (const row of contacts) {
     // Normalise keys to lowercase
@@ -57,6 +103,10 @@ const insertMany = db.transaction((contacts, partner) => {
     const gender = VALID_GENDERS.includes(r.gender) ? r.gender : "";
     const language = VALID_LANGUAGES.includes(r.language) ? r.language : "en";
     const action_type = VALID_ACTION_TYPES.includes(r["add/update/delete"]) ? r["add/update/delete"] : "add";
+    const mobile_number = r["mobile number"];
+    const firstname = r["first name"];
+    const lastname = r["last name"];
+    const email = r["company email"];
 
     let birthday = null;
     if (r["date of birth"]) {
@@ -68,23 +118,67 @@ const insertMany = db.transaction((contacts, partner) => {
       }
     }
 
-    const info = insertContact.run(
-      title,
-      r["first name"],
-      r["last name"],
-      gender,
-      r["mobile number"],
-      r["company email"],
-      partner,
-      r["date of birth"],
-      language,
-      action_type
-    );
+    const existingPod = checkPodByPhone.get(mobile_number, partner);
 
-    if (info.changes > 0) inserted++;
+    if (action_type === "add") {
+      // Guard: skip if phone is already an active member synced within the last 3 months
+      if (checkActiveGuard.get(mobile_number, mobile_number)) {
+        skipped++;
+        continue;
+      }
+
+      if (existingPod) {
+        // Phone already staged → convert INSERT to UPDATE
+        updatePodRecord.run(title, firstname, lastname, gender, email, birthday, language, action_type, existingPod.id);
+        updated++;
+      } else {
+        const info = insertContact.run(title, firstname, lastname, gender, mobile_number, email, partner, birthday, language, action_type);
+        if (info.changes > 0) {
+          inserted++;
+          // Section 2: generate card number and insert into member_card
+          if (!checkMcByPhone.get(mobile_number)) {
+            const prefix = language === "de" ? "5" : "7";
+            const maxRow = getMaxCardNumber.get(`${prefix}%`);
+            const baseNumber = language === "de" ? 5000000 : 7000000;
+            const newCardNumber = (maxRow?.max_num ?? baseNumber) + 1;
+            const mcGender = gender === "m" ? "Herr" : gender === "f" ? "Frau" : null;
+            const mcType = language === "de" ? 5 : 7;
+            insertMemberCardRecord.run(
+              partner, mobile_number, firstname, lastname, title,
+              mcGender, email, birthday, mcType, newCardNumber
+            );
+          }
+        }
+      }
+    } else if (action_type === "update") {
+      // Section 3: reject if phone belongs to a member_card of a different partner
+      if (checkMcPhoneConflict.get(mobile_number, partner)) {
+        skipped++;
+        continue;
+      }
+
+      // Upsert into partner_onboarding_data
+      if (existingPod) {
+        updatePodRecord.run(title, firstname, lastname, gender, email, birthday, language, action_type, existingPod.id);
+      } else {
+        insertContact.run(title, firstname, lastname, gender, mobile_number, email, partner, birthday, language, action_type);
+      }
+
+      // Update safe fields in member_card
+      updateMemberCardRecord.run(firstname, lastname, title, birthday, email, mobile_number, partner);
+      updated++;
+    } else {
+      // delete: write to pod; sync handles the soft delete
+      if (existingPod) {
+        updatePodRecord.run(title, firstname, lastname, gender, email, birthday, language, action_type, existingPod.id);
+      } else {
+        insertContact.run(title, firstname, lastname, gender, mobile_number, email, partner, birthday, language, action_type);
+      }
+      inserted++;
+    }
   }
 
-  return inserted;
+  return { inserted, updated, skipped };
 });
 
 // ── Delivery info pre-fill ─────────────────────────────────────────────────
@@ -187,7 +281,7 @@ router.post("/upload-csv", upload.single("file"), (req, res) => {
         .json({ status: false, message: "CSV file is empty" });
     }
 
-    const inserted = insertMany(rows, partner);
+    const result = insertMany(rows, partner);
 
     db.prepare(`
       INSERT INTO partner_delivery_info (partner, delivery_address, contact_person, phone_number, updated_at)
@@ -203,8 +297,9 @@ router.post("/upload-csv", upload.single("file"), (req, res) => {
       status: true,
       message: "CSV imported successfully",
       total: rows.length,
-      inserted, // rows actually written
-      skipped: rows.length - inserted, // duplicates ignored
+      inserted: result.inserted,
+      updated: result.updated,
+      skipped: result.skipped,
     });
   } catch (error) {
     console.error("CSV upload error:", error);
