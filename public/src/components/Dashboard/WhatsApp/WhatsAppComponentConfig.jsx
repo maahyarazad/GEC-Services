@@ -18,8 +18,8 @@ import { VscDebugAlt } from "react-icons/vsc";
             sx: {
                 backgroundColor: "#1e1e1e",
                 color: "#fff",
-                fontSize: "14px",
-                padding: "12px 16px",
+                fontSize: "12px",
+                padding: "10px 14px",
                 borderRadius: "12px",
                 maxWidth: 350,
                 lineHeight: 1.8,
@@ -256,7 +256,7 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
             const member = activeMemberPhones?.get(phone) || activeMemberPhones?.get(fullName);
             if (!member) return null;
             return (
-                <Tooltip title={memberTooltip(member)} arrow>
+                <Tooltip title={memberTooltip(member)} slotProps={slotPropsStyle} arrow>
                     <BiSolidCheckCircle size={22} color="green" />
                 </Tooltip>
             );
@@ -289,7 +289,7 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
                             <TbTrashX size={22} />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title={noteTitle(notes?.get(params.row.id))}>
+                    <Tooltip title={noteTitle(notes?.get(params.row.id))} slotProps={slotPropsStyle} arrow>
                         <IconButton
                             onClick={() => onOpenNotepad?.(params.row)}
                             sx={{ color: notes?.get(params.row.id) ? "#e65100" : "#9e9e9e", "&:hover": { backgroundColor: "#fff8e1" } }}

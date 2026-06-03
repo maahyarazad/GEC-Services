@@ -3,7 +3,7 @@ const path = require("path");
 const fs = require("fs");
 
 const MongoDbBackUpJob = {
-  run: () => {
+  run: async () => {
     const uri       = process.env.MONGO_URI;
     const backupDir = process.env.MONGO_BACKUP_DIR || "./backups/mongo";
 
