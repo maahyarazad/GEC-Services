@@ -619,4 +619,28 @@ router.post("/members/mobile-check", upload.none(), async (req, res) => {
     });
   }
 });
+// GET /api/partner-delivery-info?partner=X  (admin, no partner JWT required)
+router.get("/api/partner-delivery-info", (req, res) => {
+  try {
+    const { partner } = req.query;
+    if (!partner) return res.status(400).json({ status: false, message: "partner query param is required" });
+    const row = db.prepare(`SELECT * FROM partner_delivery_info WHERE LOWER(partner) = LOWER(?)`).get(partner);
+    return res.json({ status: true, data: row ?? null });
+  } catch (error) {
+    console.error("Error in /api/partner-delivery-info:", error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
+// GET /api/partners-with-delivery  — returns lowercase partner names that have delivery data
+router.get("/api/partners-with-delivery", (req, res) => {
+  try {
+    const rows = db.prepare(`SELECT LOWER(partner) AS partner_key FROM partner_delivery_info`).all();
+    return res.json({ status: true, data: rows.map((r) => r.partner_key) });
+  } catch (error) {
+    console.error("Error in /api/partners-with-delivery:", error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
 module.exports = router;
