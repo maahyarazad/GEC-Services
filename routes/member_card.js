@@ -373,25 +373,29 @@ WHERE rn = 1;
       const deleteBatch = batch.filter(r => r.action_type === 'delete');
 
       let updated = 0;
+      let inserted = 0;
       let deactivated = 0;
 
-      // STEP 1:  Handle 'update' action: apply field changes to existing member_card rows
+      // ── Prepared statements ───────────────────────────────────────────────
+
+      // STEP 1 — update: safe fields only, skip if phone belongs to another record
+      const checkPhoneConflict = db.prepare(`
+        SELECT id FROM member_card
+        WHERE mobile_number = ? AND LOWER(partner) != LOWER(?) LIMIT 1
+      `);
       const updateStmt = db.prepare(`
         UPDATE member_card
-        SET firstname = ?, lastname = ?, title = ?,
-            gender    = CASE ? WHEN 'm' THEN 'Herr' WHEN 'f' THEN 'Frau' ELSE NULL END,
-            email = ?, birthday = ?,
-            type      = CASE ? WHEN 'de' THEN 5 ELSE 7 END,
-            active = 1,
+        SET firstname = ?, lastname = ?, title = ?, birthday = ?, email = ?, active = 1,
             remarks = 'synchronized ' || datetime('now'),
             metadata_modifiedAt = datetime('now')
         WHERE LOWER(partner) = LOWER(?) AND mobile_number = ?
       `);
       for (const r of updateBatch) {
-        updated += updateStmt.run(r.firstname, r.lastname, r.title, r.gender, r.email, r.birthday, r.language, r.partner, r.mobile_number).changes;
+        if (checkPhoneConflict.get(r.mobile_number, r.partner)) continue;
+        updated += updateStmt.run(r.firstname, r.lastname, r.title, r.birthday, r.email, r.partner, r.mobile_number).changes;
       }
 
-      // STEP 2: Handle 'delete' action: soft-delete matching member_card rows
+      // STEP 2 — delete: soft-delete matching member_card rows
       const deleteStmt = db.prepare(`
         UPDATE member_card SET active = 0, remarks = 'synchronized delete ' || datetime('now')
         WHERE LOWER(partner) = LOWER(?) AND mobile_number = ?
@@ -400,39 +404,70 @@ WHERE rn = 1;
         deactivated += deleteStmt.run(r.partner, r.mobile_number).changes;
       }
 
-      // STEP 3: Handle 'add' action: batch INSERT / UPDATE / DEACTIVATE (original logic)
-      let insertResult = { changes: 0 };
-      let deactivateResult = { changes: 0 };
-      let updateResult = { changes: 0 };
+      // STEP 3 — add: per-record upsert with guard and card number generation
+      const checkActiveGuard = db.prepare(`
+        SELECT 1 FROM member_card mc
+        WHERE mc.mobile_number = ? AND mc.active = 1
+          AND EXISTS (
+            SELECT 1 FROM partner_onboarding_data pod2
+            WHERE pod2.mobile_number = ?
+              AND pod2.synchronized = 1
+              AND pod2.metadata_createdAt >= datetime('now', '-3 months')
+          )
+        LIMIT 1
+      `);
+      const checkMcByPhone = db.prepare(
+        `SELECT id FROM member_card WHERE mobile_number = ? LIMIT 1`
+      );
+      const getMaxCardNumber = db.prepare(
+        `SELECT MAX(card_number) AS max_num FROM member_card WHERE CAST(card_number AS TEXT) LIKE ?`
+      );
+      const insertMcStmt = db.prepare(`
+        INSERT INTO member_card (
+          partner, mobile_number, firstname, lastname, title, gender,
+          email, birthday, active, type, card_number, card_expiry_date, remarks
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, datetime('now', '+1 year'), 'synchronized')
+      `);
+      const updateMcAddStmt = db.prepare(`
+        UPDATE member_card
+        SET firstname = ?, lastname = ?, title = ?,
+            gender    = CASE ? WHEN 'm' THEN 'Herr' WHEN 'f' THEN 'Frau' ELSE NULL END,
+            email = ?, birthday = ?,
+            type      = CASE ? WHEN 'de' THEN 5 ELSE 7 END,
+            active = 1,
+            card_expiry_date = datetime('now', '+1 year'),
+            remarks = 'synchronized ' || datetime('now'),
+            metadata_modifiedAt = datetime('now')
+        WHERE mobile_number = ?
+      `);
 
-      if (addBatch.length > 0) {
-       
-        // INSERT new members whose mobile_number is not yet in member_card
-        insertResult = db.prepare(`
-          INSERT INTO member_card (partner, mobile_number, firstname, lastname, title, gender, email, birthday, active, type, remarks)
-          SELECT pod.partner, pod.mobile_number, pod.firstname, pod.lastname,
-                 pod.title,
-                 CASE pod.gender WHEN 'm' THEN 'Herr' WHEN 'f' THEN 'Frau' ELSE NULL END,
-                 pod.email, pod.birthday,
-                 1,
-                 CASE pod.language WHEN 'de' THEN 5 ELSE 7 END,
-                 'synchronized ' || datetime('now')
-          FROM partner_onboarding_data AS pod
-          WHERE LOWER(pod.partner) = LOWER(?)
-            AND pod.metadata_createdAt >= datetime('now', '-1 month')
-            AND pod.synchronized != 1
-            AND (pod.action_type IS NULL OR pod.action_type = 'add')
-            AND NOT EXISTS (
-                SELECT 1 FROM member_card AS mc
-                WHERE LOWER(mc.partner) = LOWER(pod.partner)
-                  AND mc.mobile_number = pod.mobile_number
-            )
-        `).run(partner);
+      for (const r of addBatch) {
+        const mobile_number = r.mobile_number.replace('+','');
+        // 1.1 Guard: skip if phone is an active member synced within the last 3 months
+        if (checkActiveGuard.get(mobile_number, mobile_number)) continue;
 
-       
+        if (checkMcByPhone.get(mobile_number)) {
+          // 1 — Phone already in member_card → convert INSERT to UPDATE
+          updated += updateMcAddStmt.run(
+            r.firstname, r.lastname, r.title, r.gender, r.email, r.birthday, r.language, mobile_number
+          ).changes;
+        } else {
+          // INSERT new record with card number + expiry generation
+          const prefix = r.language === 'de' ? '5' : '7';
+          const maxRow = getMaxCardNumber.get(`${prefix}%`);
+          const baseNumber = r.language === 'de' ? 5000000 : 7000000;
+          const newCardNumber = (maxRow?.max_num ?? baseNumber) + 1;
+          const mcGender = r.gender === 'm' ? 'Herr' : r.gender === 'f' ? 'Frau' : null;
+          const mcType = r.language === 'de' ? 5 : 7;
+          const info = insertMcStmt.run(
+            r.partner, mobile_number, r.firstname, r.lastname, r.title,
+            mcGender, r.email, r.birthday, mcType, newCardNumber
+          );
+          if (info.changes > 0) inserted++;
+        }
       }
 
-      // Step 4 — Mark all batch records as synchronized
+      // STEP 4 — Mark all batch records as synchronized
       db.prepare(`
         UPDATE partner_onboarding_data
         SET synchronized = 1
@@ -441,11 +476,7 @@ WHERE rn = 1;
           AND synchronized != 1
       `).run(partner);
 
-      return {
-        updated:     updated + updateResult.changes,
-        inserted:    insertResult.changes,
-        deactivated: deactivated + deactivateResult.changes,
-      };
+      return { updated, inserted, deactivated };
     });
 
     const result = sync();
