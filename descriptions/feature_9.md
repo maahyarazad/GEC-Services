@@ -130,6 +130,14 @@ on hovering the tool tip show at least 5 lines of the content note_body
 
 When the record doesn't have any content or note_body is null or empty the color of the notepad should be gray and if it has content use the same color that it has
 
+## Part 3.5 – Improve Notepad Data Refetching
+
+Every POST request from the client should trigger a refetch of the current contact notes in the Contact Book, Response Logs, and Guest List sections to ensure the displayed data remains up to date.
+
+## Part 3.5 – Improve Response Logs Section
+
+Use the **From Number** field to fetch the associated notepad data, then add the **NotepadModal** component to the Response Logs section.
+
 
 # Fix `gec/members/check` and `gec/members/check-batch` Queries
 

@@ -4,7 +4,7 @@ import EventSearch from './EventSearch';
 import { Box } from '@mui/material';
 import { getSelectedGuestList } from '../../../features/eventSlice';
 import { useAppSelector } from '../../../store/hooks';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import NotepadModal from './NotepadModal';
 
 export default function GuestListPanel({ onGuestAttend, onRemoveGuest, paginationModel, setPaginationModel }) {
@@ -12,7 +12,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, paginatio
     const [activeMemberPhones, setActiveMemberPhones] = useState(new Map());
     const [guestNotes, setGuestNotes] = useState(new Map());
 
-    useEffect(() => {
+    const fetchGuestNotes = useCallback(() => {
         const ids = selectedGuestList.map(c => c.id).filter(Boolean);
         if (!ids.length) { setGuestNotes(new Map()); return; }
         fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts/notes/by-ids`, {
@@ -20,6 +20,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, paginatio
             body: JSON.stringify({ ids }),
         }).then(r => r.json()).then(d => { if (d.status) setGuestNotes(new Map(d.data.map(n => [n.contact_book_id, n.note_body]))); }).catch(() => {});
     }, [selectedGuestList]);
+    useEffect(() => { fetchGuestNotes(); }, [fetchGuestNotes]);
     const [notepadOpen, setNotepadOpen] = useState(false);
     const [notepadContactId, setNotepadContactId] = useState(null);
     const [notepadContactName, setNotepadContactName] = useState('');
@@ -84,6 +85,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, paginatio
                     onClose={() => { setNotepadOpen(false); setNotepadContactId(null); setNotepadContactName(''); }}
                     contactId={notepadContactId}
                     contactName={notepadContactName}
+                    onSaved={fetchGuestNotes}
                 />
             </Box>
         </Box>

@@ -5,11 +5,14 @@ const db = dbService.getDB();
 const { corruptedContactBookData } = require("../services/whatsAppSender");
 
 
-// Lookup contact by phone
+// Lookup contact by phone (normalized — strips +, -, spaces so WaId matches stored phones)
 router.get("/api/contacts/lookup", (req, res) => {
   const { phone } = req.query;
   if (!phone) return res.status(400).json({ status: false, message: "phone is required" });
-  const contact = db.prepare("SELECT id FROM contact_book WHERE phone = ?").get(phone);
+  const normalized = phone.replace(/[+\-\s]/g, '');
+  const contact = db.prepare(
+    "SELECT id FROM contact_book WHERE REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = ?"
+  ).get(normalized);
   return res.json({ status: true, data: contact ?? null });
 });
 
@@ -57,19 +60,26 @@ router.post("/api/contacts/notes/by-ids", (req, res) => {
 });
 
 // Batch fetch notes by phone → [{ phone, note_body }]
+// Normalizes both input and stored phones so WaId values (no + or spaces) match contact_book entries.
 router.post("/api/contacts/notes/by-phones", (req, res) => {
   const { phones } = req.body;
   if (!Array.isArray(phones) || !phones.length) return res.json({ status: true, data: [] });
-  const placeholders = phones.map(() => '?').join(', ');
+  const normalize = (p) => p.replace(/[+\-\s]/g, '');
+  const normalizedPhones = phones.map(normalize);
+  const placeholders = normalizedPhones.map(() => '?').join(', ');
   const rows = db.prepare(`
-    SELECT cb.phone, cbn.note_body
+    SELECT REPLACE(REPLACE(REPLACE(cb.phone, '+', ''), '-', ''), ' ', '') AS normalized_phone, cbn.note_body
     FROM contact_book cb
     JOIN contact_book_notes cbn ON cbn.contact_book_id = cb.id
-    WHERE cb.phone IN (${placeholders})
+    WHERE REPLACE(REPLACE(REPLACE(cb.phone, '+', ''), '-', ''), ' ', '') IN (${placeholders})
     ORDER BY cbn.id DESC
-  `).all(phones);
+  `).all(normalizedPhones);
+  // Map normalized phone back to the original input phone the client sent
+  const normalizedToOriginal = new Map(phones.map(p => [normalize(p), p]));
   const seen = new Set();
-  const data = rows.filter(r => { if (seen.has(r.phone)) return false; seen.add(r.phone); return true; });
+  const data = rows
+    .filter(r => { if (seen.has(r.normalized_phone)) return false; seen.add(r.normalized_phone); return true; })
+    .map(r => ({ phone: normalizedToOriginal.get(r.normalized_phone) ?? r.normalized_phone, note_body: r.note_body }));
   return res.json({ status: true, data });
 });
 

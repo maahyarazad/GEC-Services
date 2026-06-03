@@ -309,7 +309,7 @@ const WhatsappBroadcast = () => {
 
     // Batch-fetch notes for contact book
     const [contactNotes, setContactNotes] = useState(new Map());
-    useEffect(() => {
+    const fetchContactNotes = useCallback(() => {
         const ids = contactList.map(c => c.id).filter(Boolean);
         if (!ids.length) { setContactNotes(new Map()); return; }
         fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts/notes/by-ids`, {
@@ -317,6 +317,7 @@ const WhatsappBroadcast = () => {
             body: JSON.stringify({ ids }),
         }).then(r => r.json()).then(d => { if (d.status) setContactNotes(new Map(d.data.map(n => [n.contact_book_id, n.note_body]))); }).catch(() => {});
     }, [contactList]);
+    useEffect(() => { fetchContactNotes(); }, [fetchContactNotes]);
 
     // Batch-check active membership for the current contact page
     useEffect(() => {
@@ -806,7 +807,7 @@ const WhatsappBroadcast = () => {
 
         // Batch-fetch notes for response logs (by phone/WaId)
     const [responseNotes, setResponseNotes] = useState(new Map());
-    useEffect(() => {
+    const fetchResponseNotes = useCallback(() => {
         const phones = [...new Set(responses.map(c => c.WaId).filter(Boolean))];
         if (!phones.length) { setResponseNotes(new Map()); return; }
         fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts/notes/by-phones`, {
@@ -814,6 +815,7 @@ const WhatsappBroadcast = () => {
             body: JSON.stringify({ phones }),
         }).then(r => r.json()).then(d => { if (d.status) setResponseNotes(new Map(d.data.map(n => [n.phone, n.note_body]))); }).catch(() => {});
     }, [responses]);
+    useEffect(() => { fetchResponseNotes(); }, [fetchResponseNotes]);
     
      // Batch-check active membership for response logs
     const [activeMemberPhonesResponses, setActiveMemberPhonesResponses] = useState(new Map());
@@ -1443,6 +1445,7 @@ const WhatsappBroadcast = () => {
                 contactId={notepadContactId}
                 contactPhone={notepadContactPhone}
                 contactName={notepadContactName}
+                onSaved={() => { fetchContactNotes(); fetchResponseNotes(); }}
             />
 
         </Box>

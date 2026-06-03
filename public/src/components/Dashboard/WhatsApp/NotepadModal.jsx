@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { useAlertDialog } from '../../Providers/AlertProvider';
 
-export default function NotepadModal({ open, onClose, contactId, contactPhone, contactName }) {
+export default function NotepadModal({ open, onClose, contactId, contactPhone, contactName, onSaved }) {
     const [resolvedId, setResolvedId] = useState(null);
     const [note, setNote] = useState('');
     const [noteId, setNoteId] = useState(null);
@@ -50,6 +50,7 @@ export default function NotepadModal({ open, onClose, contactId, contactPhone, c
         }
         reset();
         onClose();
+        onSaved?.();
     };
 
     const doSave = async () => {
@@ -70,6 +71,7 @@ export default function NotepadModal({ open, onClose, contactId, contactPhone, c
             setSaving(false);
             reset();
             onClose();
+            onSaved?.();
         }
     };
 
