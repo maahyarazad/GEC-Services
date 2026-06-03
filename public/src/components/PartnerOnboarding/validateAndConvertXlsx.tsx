@@ -1,4 +1,7 @@
 import ExcelJS from "exceljs";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
+
+
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const REQUIRED_HEADERS = [
@@ -157,9 +160,15 @@ export async function validateAndConvertXlsx(
         }
       });
 
-      // 2. Duplicate Mobile Number
-      const phone = recordData["Mobile Number"];
-      if (phone !== "") {
+      // 2. Duplicate + phone validation
+      const rawPhone = recordData["Mobile Number"];
+      if (rawPhone !== "") {
+        // Trim whitespace, strip non-digit/non-plus chars, then ensure leading +
+        let phone = rawPhone.trim().replace(/[^\d+]/g, '');
+        if (phone && !phone.startsWith('+')) phone = '+' + phone;
+        // Store the cleaned phone back so the CSV gets the normalised value
+        recordData["Mobile Number"] = phone;
+
         if (phonesSeen.has(phone)) {
           reasons.push(
             `Duplicate "Mobile Number" (first seen at row ${phonesSeen.get(phone)})`
@@ -167,6 +176,17 @@ export async function validateAndConvertXlsx(
         } else {
           phonesSeen.set(phone, originalIndex);
         }
+
+        const parsed = parsePhoneNumberFromString(phone);
+        if (!parsed || !parsed.isValid()) {
+          reasons.push(`"Mobile Number" is not a valid international phone number`);
+        }
+      }
+
+      // 3. Email validation
+      const email = recordData["Company Email"];
+      if (email !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        reasons.push(`"Company Email" is not a valid email address`);
       }
 
       if (reasons.length > 0) {

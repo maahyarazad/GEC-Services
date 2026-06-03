@@ -284,3 +284,53 @@ synchronized records.
 - [ ] Query defaults to loading only non-synchronized records on page load
 - [ ] A toggle or filter control allows users to also view synchronized records
 - [ ] Switching the filter does not require a full page reload
+
+
+
+# Feature Ticket 6: Add Google Phone Validation to `validateAndConvertXlsx.tsx`
+
+## Description
+
+Use `parsePhoneNumberFromString` from `libphonenumber-js` to validate phone numbers during the XLSX import process.
+
+```javascript
+const { parsePhoneNumberFromString } = require("libphonenumber-js");
+```
+
+If a row contains an invalid phone number, mark the row as a faulty record and add it to the `FaultyRecord` collection.
+
+
+# Feature Ticket 6.1: Enhance Phone and Email Validation in `validateAndConvertXlsx.tsx`
+
+## Description
+
+For each phone number record:
+
+1. Trim any leading and trailing whitespace.
+2. Remove any unwanted characters using a regular expression.
+3. Ensure the phone number starts with a `+` before passing it to the `parsePhoneNumberFromString` function.
+
+Use a regular expression to validate email addresses as well. Any row containing an invalid phone number or email address should be added to the `FaultyRecord` list.
+
+
+# Feature Ticket 6.2: Enhance Phone Validation in Partner Onboarding
+
+## Description
+
+Add phone number validation to the **Delivery Info** step of the Partner Onboarding process.
+
+Use `parsePhoneNumberFromString` from `libphonenumber-js` to validate phone numbers.
+
+```javascript
+const { parsePhoneNumberFromString } = require("libphonenumber-js");
+```
+
+Before validation:
+
+1. Trim any leading and trailing whitespace.
+2. Remove any unwanted characters using a regular expression.
+3. Ensure the phone number starts with a `+` before passing it to the `parsePhoneNumberFromString` function.
+
+If the phone number is invalid, display an appropriate validation error and prevent the user from proceeding until the issue is resolved.
+
+

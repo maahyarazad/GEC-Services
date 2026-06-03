@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -91,6 +92,7 @@ const INITIAL_WIZARD_STATE = {
     deliveryAddress: "",
     contactPerson: "",
     phoneNumber: "",
+    phoneNumberError: "",
     valid: false,
     csvBlob: null,
     csvFile: null,
@@ -273,6 +275,22 @@ export default function PartnerOnboarding() {
 
         fetchDeliveryInfo();
     }, [activeStep]);
+
+    // ── Phone validation ──────────────────────────────────────────────────
+    const validateAndSetPhone = (raw: string) => {
+        // 1. Trim whitespace  2. Strip non-digit/non-plus chars  3. Ensure leading +
+        let cleaned = raw.trim().replace(/[^\d+]/g, '');
+        if (cleaned && !cleaned.startsWith('+')) cleaned = '+' + cleaned;
+        // Validate whenever the field is non-empty — including when all chars get stripped (e.g. "Arne Ziegler")
+        let error = "";
+        if (raw.trim()) {
+            const parsed = cleaned ? parsePhoneNumberFromString(cleaned) : null;
+            if (!parsed || !parsed.isValid()) {
+                error = "Please enter a valid UAE or international phone number (e.g. +971 55 1234238 or +49 151 12345678)";
+            }
+        }
+        setWiz({ phoneNumber: raw, phoneNumberError: error });
+    };
 
     // ── Token check ───────────────────────────────────────────────────────
     const getToken = async () => {
@@ -583,9 +601,11 @@ export default function PartnerOnboarding() {
                 <FieldLabel>Phone Number *</FieldLabel>
                 <TextField
                     fullWidth
-                    placeholder="+971 XX XXX XXXX"
+                    placeholder="+971 55 123 4238 or +49 151 12345678"
                     value={wizardState.phoneNumber}
-                    onChange={(e) => setWiz({ phoneNumber: e.target.value })}
+                    onChange={(e) => validateAndSetPhone(e.target.value)}
+                    error={!!wizardState.phoneNumberError}
+                    helperText={wizardState.phoneNumberError || ""}
                     sx={fieldSx}
                 />
             </Box>
@@ -685,7 +705,8 @@ export default function PartnerOnboarding() {
         if (activeStep === 2 && (
             !wizardState.deliveryAddress.trim() ||
             !wizardState.contactPerson.trim() ||
-            !wizardState.phoneNumber.trim()
+            !wizardState.phoneNumber.trim() ||
+            !!wizardState.phoneNumberError
         )) {
             return true;
         }
