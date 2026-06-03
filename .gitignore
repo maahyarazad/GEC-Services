@@ -77,7 +77,7 @@ Thumbs.db
 *.db-*
 *.sqlite
 *.sqlite3
-
+*.pdf
 *.pkpass
 
 twilio_media/

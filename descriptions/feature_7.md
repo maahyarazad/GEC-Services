@@ -466,6 +466,7 @@ Before performing the insert, the system must check whether a record with the sa
 * If a matching phone number exists, the operation must be converted from an **INSERT** to an **UPDATE**.
 * This behavior is mandatory and must always be applied.
 
+
 #### 1.1 Additional Validation for the Add Flag
 
 When processing records with the `add` flag, the following restriction must be enforced:
@@ -515,3 +516,40 @@ For records with the `update` flag:
 
 * If another record with the same phone number exists, the update operation must be rejected for that specific record, and processing must continue with the remaining records.
 
+### 2. German Speaking Separation
+
+View Partner Delivery Location DataGrid
+
+## Description
+
+We need to add a new **Delivery & Tracking** section to the dashboard.
+
+The main section component should be split into two panels:
+
+### Left Panel (1/4 Width)
+
+Display the partner list.
+
+- Reuse the same data source currently used for fetching partners (refer to the `rightTableRows` implementation in `MemberCardDataGrid.jsx`).
+- The list should check `partner_onboarding_data`.
+- If delivery location data exists for a partner with the same partner name, that partner should be available for selection/clicking.
+
+### Right Panel (3/4 Width)
+
+When a partner is selected from the left panel:
+
+1. Display the partner's delivery locations at the top of the right panel by fetching the data from the corresponding delivery location table.
+2. Below the delivery locations, add a **CustomDataGrid**.
+3. The grid should be based on the existing **Partner Employee List Submission** implementation and fetch the corresponding partner data when a partner is selected.
+4. Reuse the same logic as `MemberCardDataGrid.jsx` and the `rightTableRows` dataset.
+5. Add an additional filter so that only **German-speaking people** are displayed.
+
+
+### 2. Handling German-Speaking Sync
+
+The `/api/member-card-sync` endpoint should handle synchronization separately based on the record language.
+
+* In the `DeliveryTrackingSection`, the **Sync** action should apply only to German-speaking (`de`) records.
+* In the `PartnerOnboardingSection`, the **Sync** action should apply only to English-speaking (`en`) records.
+
+This separation must be enforced both in the UI and in the synchronization logic to ensure that each section processes only its designated language group.

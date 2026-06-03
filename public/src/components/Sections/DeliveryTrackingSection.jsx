@@ -12,7 +12,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 import TextField from '@mui/material/TextField';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
+import Button from '@mui/material/Button';
 import CustomDataGrid from '../CustomDataGrid';
+import { useSnackbar } from '../Providers/Snackbar';
 
 // ─── Column definitions (mirrors PartnerOnboardingSection) ───────────────────
 
@@ -136,6 +138,11 @@ const DeliveryTrackingSection = () => {
     // ── Selected partner ───────────────────────────────────────────────────────
     const [selectedPartner, setSelectedPartner] = useState(null);
 
+    // ── Sync state ────────────────────────────────────────────────────────────
+    const [syncing, setSyncing] = useState(false);
+
+    const { showSnackbar } = useSnackbar();
+
     // ── Delivery info state ────────────────────────────────────────────────────
     const [deliveryInfo, setDeliveryInfo] = useState(null);
     const [deliveryLoading, setDeliveryLoading] = useState(false);
@@ -217,6 +224,33 @@ const DeliveryTrackingSection = () => {
             .then(d => setDeliveryInfo(d.data ?? null))
             .catch(console.error)
             .finally(() => setDeliveryLoading(false));
+    };
+
+    // ── Sync ───────────────────────────────────────────────────────────────────
+
+    const handleSync = async () => {
+        if (!selectedPartner) return;
+        setSyncing(true);
+        try {
+            const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-card-sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ partner: selectedPartner, language: 'de' }),
+            });
+            const d = await r.json();
+            if (d.status) {
+                showSnackbar(`Synced "${selectedPartner}" (DE): ${d.updated} updated, ${d.inserted} inserted, ${d.deactivated} deactivated`);
+                fetchData(selectedPartner, paginationModel, sortModel, filterItems, showSynced);
+            } else {
+                showSnackbar(`Sync failed: ${d.message}`, 'error');
+            }
+        } catch (e) {
+            console.error('Sync failed', e);
+            showSnackbar('Sync failed — check console', 'error');
+        } finally {
+            setSyncing(false);
+        }
     };
 
     // ── DataGrid fetch ─────────────────────────────────────────────────────────
@@ -331,14 +365,26 @@ const DeliveryTrackingSection = () => {
                                 <Typography variant="subtitle2" fontWeight={700}>
                                     🇩🇪 German-Speaking Employees — {selectedPartner}
                                 </Typography>
-                                <Chip
-                                    label={showSynced ? 'Showing All' : 'Pending Only'}
-                                    size="small"
-                                    color={showSynced ? 'default' : 'warning'}
-                                    variant={showSynced ? 'outlined' : 'filled'}
-                                    onClick={() => { setShowSynced(s => !s); setPaginationModel(p => ({ ...p, page: 0 })); }}
-                                    sx={{ cursor: 'pointer' }}
-                                />
+                                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        color="warning"
+                                        disabled={syncing}
+                                        onClick={handleSync}
+                                        sx={{ fontSize: 11, textTransform: 'none', whiteSpace: 'nowrap', py: 0 }}
+                                    >
+                                        {syncing ? <CircularProgress size={14} color="inherit" /> : 'Sync (DE)'}
+                                    </Button>
+                                    <Chip
+                                        label={showSynced ? 'Showing All' : 'Pending Only'}
+                                        size="small"
+                                        color={showSynced ? 'default' : 'warning'}
+                                        variant={showSynced ? 'outlined' : 'filled'}
+                                        onClick={() => { setShowSynced(s => !s); setPaginationModel(p => ({ ...p, page: 0 })); }}
+                                        sx={{ cursor: 'pointer' }}
+                                    />
+                                </Box>
                             </Box>
                             <Box sx={{ flex: 1, minHeight: 0 }}>
                                 <CustomDataGrid

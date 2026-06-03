@@ -340,16 +340,19 @@ router.get("/api/partner-onboarding-pending-counts", (req, res) => {
 });
 
 router.post("/api/member-card-sync", (req, res) => {
-  const { partner } = req.body;
+  const { partner, language } = req.body;
   if (!partner) return res.status(400).json({ status: false, message: "partner is required" });
+  if (!language || !['en', 'de'].includes(language))
+    return res.status(400).json({ status: false, message: "language must be 'en' or 'de'" });
 
   try {
     const sync = db.transaction(() => {
-      // Step 0 — load the pending batch for this partner
+      // Step 0 — load the pending batch for this partner, filtered by language
       const batch = db.prepare(`
       WITH unsynced_table AS (
   SELECT * FROM partner_onboarding_data
   WHERE LOWER(partner) = LOWER(?)
+    AND LOWER(language) = LOWER(?)
     AND metadata_createdAt >= datetime('now', '-1 month')
     AND synchronized != 1
 ),
@@ -364,7 +367,7 @@ deduped AS (
 SELECT *
 FROM deduped
 WHERE rn = 1;
-      `).all(partner);
+      `).all(partner, language);
 
       if (batch.length === 0) return { updated: 0, inserted: 0, deactivated: 0 };
 

@@ -327,7 +327,7 @@ const MemberCardDataGrid = () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ partner }),
+                body: JSON.stringify({ partner, language: 'en' }),
             });
             const d = await r.json();
             if (d.status) {
