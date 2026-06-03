@@ -216,6 +216,7 @@ const MemberCardDataGrid = () => {
     const [partnerStats, setPartnerStats] = useState([]);
     const [partnerStatsLoading, setPartnerStatsLoading] = useState(false);
     const [syncingPartner, setSyncingPartner] = useState(null);
+    const [partnerSyncKey, setPartnerSyncKey] = useState(0);
 
     // GEC grouped partners (right table)
     const [gecPartners, setGecPartners] = useState([]);
@@ -334,6 +335,7 @@ const MemberCardDataGrid = () => {
                 showSnackbar(`Synced "${partner}": ${d.updated} updated, ${d.inserted} inserted, ${d.deactivated} deactivated`);
                 fetchPartnerStats();
                 fetchPendingCounts();
+                setPartnerSyncKey(k => k + 1);
             } else {
                 showSnackbar(`Sync failed: ${d.message}`, 'error');
             }
@@ -789,7 +791,7 @@ const MemberCardDataGrid = () => {
                 headerTitle="Partner Employee List Submission"
             >
                 <div style={{ width: '100%', height: 'calc(100vh - 125px)' }}>
-                    <PartnerOnboardingSection />
+                    <PartnerOnboardingSection refreshKey={partnerSyncKey} />
                 </div>
             </SlideMenu>
 

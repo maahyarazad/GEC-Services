@@ -91,7 +91,7 @@ function buildFilterParams(filterItems = []) {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const PartnerOnboardingSection = () => {
+const PartnerOnboardingSection = ({ refreshKey = 0 }) => {
     const [registrationList, setRegistrationList] = useState([]);
     const [loading,          setLoading]          = useState(false);
     const [isDownloading,    setIsDownloading]    = useState(false);
@@ -125,7 +125,7 @@ const PartnerOnboardingSection = () => {
         }
     }, []);
 
-    useEffect(() => { fetchData(paginationModel, sortModel, filterItems, showSynced); }, [paginationModel, sortModel, filterItems, showSynced]);
+    useEffect(() => { fetchData(paginationModel, sortModel, filterItems, showSynced); }, [paginationModel, sortModel, filterItems, showSynced, refreshKey]);
 
     const handleExport = async () => {
         try {

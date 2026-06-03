@@ -158,6 +158,28 @@ const DeliveryTrackingSection = () => {
 
     // ── Fetch partner lists ────────────────────────────────────────────────────
 
+    const fetchPendingCounts = useCallback(async () => {
+        try {
+            const d = await fetch(`${import.meta.env.VITE_SERVERURL}/api/partner-onboarding-pending-counts`, { credentials: 'include' }).then(r => r.json());
+            const pcMap = {};
+            (d.data ?? []).forEach(({ partner, pending_count }) => {
+                pcMap[(partner ?? '').toLowerCase().trim()] = pending_count;
+            });
+            setPendingCounts(pcMap);
+        } catch (e) {
+            console.error('Failed to fetch pending counts', e);
+        }
+    }, []);
+
+    const fetchPartnerStats = useCallback(async () => {
+        try {
+            const d = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-card-partner-stats`, { credentials: 'include' }).then(r => r.json());
+            setPartnerStats(d.data ?? []);
+        } catch (e) {
+            console.error('Failed to fetch partner stats', e);
+        }
+    }, []);
+
     useEffect(() => {
         setPartnersLoading(true);
         Promise.all([
@@ -242,6 +264,8 @@ const DeliveryTrackingSection = () => {
             if (d.status) {
                 showSnackbar(`Synced "${selectedPartner}" (DE): ${d.updated} updated, ${d.inserted} inserted, ${d.deactivated} deactivated`);
                 fetchData(selectedPartner, paginationModel, sortModel, filterItems, showSynced);
+                fetchPendingCounts();
+                fetchPartnerStats();
             } else {
                 showSnackbar(`Sync failed: ${d.message}`, 'error');
             }
