@@ -334,89 +334,134 @@ Before validation:
 If the phone number is invalid, display an appropriate validation error and prevent the user from proceeding until the issue is resolved.
 
 
-# Feature Ticket 7: Fortify the Partner Onboarding Logic
+# Feature Ticket 7: Fortify the Member Card Sync
 
 ## Description
 
 This section of the code in the partner onboarding process plays a crucial role.
 
 ```js
-// Valid values per CHECK constraints
-const VALID_TITLES = ["Mr.", "Ms.", "Mrs.", "Dr.", ""];
-const VALID_GENDERS = ["", "m", "f"];
-const VALID_LANGUAGES = ["en", "de"];
-const VALID_ACTION_TYPES = ["add", "update", "delete"];
+router.post("/api/member-card-sync", (req, res) => {
+  const { partner } = req.body;
+  if (!partner) return res.status(400).json({ status: false, message: "partner is required" });
 
-const insertContact = db.prepare(`
-  INSERT OR IGNORE INTO partner_onboarding_data (
-      title,
-      firstname,
-      lastname,
-      gender,
-      mobile_number,
-      email,
-      partner,
-      birthday,
-      language,
-      action_type
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`);
+  try {
+    const sync = db.transaction(() => {
+      // Step 0 — load the pending batch for this partner
+      const batch = db.prepare(`
+      WITH unsynced_table AS (
+  SELECT * FROM partner_onboarding_data
+  WHERE LOWER(partner) = LOWER(?)
+    AND metadata_createdAt >= datetime('now', '-1 month')
+    AND synchronized != 1
+),
+deduped AS (
+  SELECT *,
+    ROW_NUMBER() OVER (
+      PARTITION BY mobile_number
+      ORDER BY metadata_createdAt DESC
+    ) AS rn
+  FROM unsynced_table
+)
+SELECT *
+FROM deduped
+WHERE rn = 1;
+      `).all(partner);
 
-const insertMany = db.transaction((contacts, partner) => {
-  let inserted = 0;
+      if (batch.length === 0) return { updated: 0, inserted: 0, deactivated: 0 };
 
-  for (const row of contacts) {
-    // Normalise keys to lowercase
-    const r = Object.fromEntries(
-      Object.entries(row).map(([k, v]) => [
-        k.toLowerCase().trim(),
-        String(v ?? "").trim(),
-      ])
-    );
+      const addBatch    = batch.filter(r => r.action_type === 'add');
+      const updateBatch = batch.filter(r => r.action_type === 'update');
+      const deleteBatch = batch.filter(r => r.action_type === 'delete');
 
-    // Sanitise CHECK constraint fields — fall back to "" if value is invalid
-    const title = VALID_TITLES.includes(r.title) ? r.title : "";
-    const gender = VALID_GENDERS.includes(r.gender) ? r.gender : "";
-    const language = VALID_LANGUAGES.includes(r.language) ? r.language : "en";
-    const action_type = VALID_ACTION_TYPES.includes(r["add/update/delete"]) ? r["add/update/delete"] : "add";
+      let updated = 0;
+      let deactivated = 0;
 
-    let birthday = null;
-    if (r["date of birth"]) {
-      const ddmmyyyy = r["date of birth"].match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-      if (ddmmyyyy) {
-        birthday = `${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`; // → YYYY-MM-DD
-      } else if (/^\d{4}-\d{2}-\d{2}/.test(r["date of birth"])) {
-        birthday = r["date of birth"];
+      // STEP 1:  Handle 'update' action: apply field changes to existing member_card rows
+      const updateStmt = db.prepare(`
+        UPDATE member_card
+        SET firstname = ?, lastname = ?, title = ?,
+            gender    = CASE ? WHEN 'm' THEN 'Herr' WHEN 'f' THEN 'Frau' ELSE NULL END,
+            email = ?, birthday = ?,
+            type      = CASE ? WHEN 'de' THEN 5 ELSE 7 END,
+            active = 1,
+            remarks = 'synchronized ' || datetime('now'),
+            metadata_modifiedAt = datetime('now')
+        WHERE LOWER(partner) = LOWER(?) AND mobile_number = ?
+      `);
+      for (const r of updateBatch) {
+        updated += updateStmt.run(r.firstname, r.lastname, r.title, r.gender, r.email, r.birthday, r.language, r.partner, r.mobile_number).changes;
       }
-    }
 
-    const info = insertContact.run(
-      title,
-      r["first name"],
-      r["last name"],
-      gender,
-      r["mobile number"],
-      r["company email"],
-      partner,
-      r["date of birth"],
-      language,
-      action_type
-    );
+      // STEP 2: Handle 'delete' action: soft-delete matching member_card rows
+      const deleteStmt = db.prepare(`
+        UPDATE member_card SET active = 0, remarks = 'synchronized delete ' || datetime('now')
+        WHERE LOWER(partner) = LOWER(?) AND mobile_number = ?
+      `);
+      for (const r of deleteBatch) {
+        deactivated += deleteStmt.run(r.partner, r.mobile_number).changes;
+      }
 
-    if (info.changes > 0) inserted++;
+      // STEP 3: Handle 'add' action: batch INSERT / UPDATE / DEACTIVATE (original logic)
+      let insertResult = { changes: 0 };
+      let deactivateResult = { changes: 0 };
+      let updateResult = { changes: 0 };
+
+      if (addBatch.length > 0) {
+       
+        // INSERT new members whose mobile_number is not yet in member_card
+        insertResult = db.prepare(`
+          INSERT INTO member_card (partner, mobile_number, firstname, lastname, title, gender, email, birthday, active, type, remarks)
+          SELECT pod.partner, pod.mobile_number, pod.firstname, pod.lastname,
+                 pod.title,
+                 CASE pod.gender WHEN 'm' THEN 'Herr' WHEN 'f' THEN 'Frau' ELSE NULL END,
+                 pod.email, pod.birthday,
+                 1,
+                 CASE pod.language WHEN 'de' THEN 5 ELSE 7 END,
+                 'synchronized ' || datetime('now')
+          FROM partner_onboarding_data AS pod
+          WHERE LOWER(pod.partner) = LOWER(?)
+            AND pod.metadata_createdAt >= datetime('now', '-1 month')
+            AND pod.synchronized != 1
+            AND (pod.action_type IS NULL OR pod.action_type = 'add')
+            AND NOT EXISTS (
+                SELECT 1 FROM member_card AS mc
+                WHERE LOWER(mc.partner) = LOWER(pod.partner)
+                  AND mc.mobile_number = pod.mobile_number
+            )
+        `).run(partner);
+
+       
+      }
+
+      // Step 4 — Mark all batch records as synchronized
+      db.prepare(`
+        UPDATE partner_onboarding_data
+        SET synchronized = 1
+        WHERE LOWER(partner) = LOWER(?)
+          AND metadata_createdAt >= datetime('now', '-1 month')
+          AND synchronized != 1
+      `).run(partner);
+
+      return {
+        updated:     updated + updateResult.changes,
+        inserted:    insertResult.changes,
+        deactivated: deactivated + deactivateResult.changes,
+      };
+    });
+
+    const result = sync();
+    return res.json({ status: true, ...result });
+  } catch (error) {
+    console.error("Error in /api/member-card-sync:", error);
+    res.status(500).json({ status: false, message: "Server error" });
   }
-
-  return inserted;
 });
 ```
 
-
-
 ### 1. Enhance Add Logic
 
-The current implementation uses a pure `INSERT OR IGNORE INTO` operation for records with the `add` flag.
-
-Before performing the insert, the system must check whether a record with the same phone number already exists in `partner_onboarding_data`.
+Before performing the insert, the system must check whether a record with the same phone number already exists in `member_card`.
 
 * If a matching phone number exists, the operation must be converted from an **INSERT** to an **UPDATE**.
 * This behavior is mandatory and must always be applied.
