@@ -86,6 +86,7 @@ const TemplateForm = () => {
     const [currentResponseMessage, setCurrentResponseMessage] = useState("");
     const [phoneRegistered, setPhoneRegistered] = useState(false);
     const [validOtp, setValidOtp] = useState(null);
+    const [otpKey, setOtpKey] = useState(0);
     const [exapndedDescriptionMobileView, setExapndedDescriptionMobileView] = useState(false);
     const [global_whatsapp, setGlobalWhatsapp] = useState("");
     const [showDivFirst, setShowDivFirst] = useState(false);
@@ -352,6 +353,7 @@ const TemplateForm = () => {
                 setGlobalWhatsapp(values["email"]);
                 setCurrentResponseStatus(otp_response.ok);
                 setValidOtp(true);
+                setOtpKey((k) => k + 1);
 
                 statusRef.current.innerText = "OTP sent to " + values.email;
 
@@ -993,6 +995,7 @@ const TemplateForm = () => {
                                                                         />
                                                                         {validOtp && (
                                                                             <OtpTimer
+                                                                                key={otpKey}
                                                                                 initialSeconds={300}
                                                                                 loginResponseData={currentResponseStatus}
                                                                                 onExpiredChange={handleExpiredChange}
@@ -1008,7 +1011,7 @@ const TemplateForm = () => {
                                                                     <Button
                                                                         variant="contained"
                                                                         color="primary"
-                                                                        disabled={validOtp === true}
+                                                                        disabled={false}
                                                                         type="button"
                                                                         onClick={async () => {
                                                                             const formErrors = await validateForm(); // validate entire form

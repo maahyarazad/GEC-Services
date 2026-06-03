@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const rateLimit = require("express-rate-limit");
-
+const { getPool } = require('../services/mysqlService');
 const router = express.Router();
 const {
   generateRecordId,
@@ -97,7 +97,7 @@ const sendOtpToEmail = async (data, req, res) => {
 
   try {
     if (process.env.ENVIRONMENT === "PRODUCTION") {
-      await email_otp(data);
+        await email_otp(data);
     }
 
     return { status: true, code: 200, message: "OTP sent successfully" };
@@ -107,49 +107,67 @@ const sendOtpToEmail = async (data, req, res) => {
   }
 };
 
-router.post(
-  "/send-otp",
+router.post("/send-otp", otpLimiter, async (req, res) => {
+  try {
+    set_limiter_map(req);
 
-  otpLimiter,
-  async (req, res) => {
-    try {
-      set_limiter_map(req);
+    const { event, email } = req.body;
 
-      const data = req.body;
-
-      if (data?.event === "Partner Onboarding Authentication") {
-        const result = await fetchPartnerFromGEC(req);
-        const data = await result.json();
-        if(!data.success) return res.status(400).json({ status: false, message: data.message });
-        
-        return res.status(200).json({
-          status: true
-        });
-      }
-
-      //    const response = await sendOtpToPhone(data.whatsapp, req, res);
-      const response = await sendOtpToEmail(data, req, res);
-
-      if (response.status) {
-        return res.status(200).json({
-          status: true,
-          message: "Login Success",
-          // data: data.page_data,
-          session: req.session,
-        });
-      } else {
-        return res.status(response.code).json({
-          status: false,
-          message: response.message,
-        });
-      }
-      //02434
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ status: false, message: error.message });
+    if (event === "Partner Onboarding Authentication") {
+      return await handlePartnerOtp(req, res);
     }
+
+    return await handleStandardOtp(req, res);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ status: false, message: error.message });
   }
-);
+});
+
+// --- Handlers ---
+
+async function handlePartnerOtp(req, res) {
+  const { email } = req.body;
+
+  const partnerData = await fetchPartnerFromGEC(email);
+  if (!partnerData?.length) {
+    return res.status(400).json({
+      status: false,
+      message: `${email} is not active in our system - if you think this is a mistake, please contact us`,
+    });
+  }
+
+
+  return res.status(200).json({
+      status: true,
+      message: `${email} is not active in our system - if you think this is a mistake, please contact us`,
+    });
+
+//   return await sendOtpResponse(req, res, { includeLoginMessage: false });
+}
+
+async function handleStandardOtp(req, res) {
+  return await sendOtpResponse(req, res, { includeLoginMessage: true });
+}
+
+// --- Shared OTP sender ---
+
+async function sendOtpResponse(req, res, { includeLoginMessage }) {
+  const response = await sendOtpToEmail(req.body, req, res);
+
+  if (response.status) {
+    return res.status(200).json({
+      status: true,
+      ...(includeLoginMessage && { message: "Login Success" }),
+      session: req.session,
+    });
+  }
+
+  return res.status(response.code).json({
+    status: false,
+    message: response.message,
+  });
+}
 
 router.post("/send-otp-mobile", otpLimiter, async (req, res) => {
   try {
@@ -250,28 +268,30 @@ router.post("/otp-check", async (req, res) => {
   }
 });
 
-async function fetchPartnerFromGEC(req) {
-    const data = req.body;
-    const baseUrl = process.env.ENVIRONMENT === "PRODUCTION" ? `${process.env.GEC__ORIGIN}/api/`: `${process.env.GEC__ORIGIN}`
-  // ── 1. Fetch partner ──────────────────────────────────────────
-  return await fetch(
-    
-    `${baseUrl}partners/get-partner-with-email?email=${data.email}`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        services_secret: process.env.SERVICES_SECRET,
-      },
-    }
-  );
-}
+
+const fetchPartnerFromGEC = async (email) => {
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      ` SELECT wpc.firstName, wpc.email, wpc.partnerId, p.title, p.status
+        FROM web_partner_contact wpc 
+        LEFT JOIN web_partner AS p ON p.id = wpc.partnerId
+        WHERE p.status = '1' AND LOWER(TRIM(wpc.email)) = LOWER(TRIM(?)) LIMIT 1`,
+      email
+    );
+    return rows.length ? rows : [];
+  } catch (err) {
+    console.error("fetchPartnerFromGEC:", err);
+  }
+};
+
 
 router.post("/partner-otp-check", async (req, res) => {
   try {
     const data = req.body;
 
-    const partnerFetch = await fetchPartnerFromGEC(req);
+    const partnerData = await fetchPartnerFromGEC(data.email);
+    
     // ── 2. OTP validation (PRODUCTION only) ──────────────────────
     if (process.env.ENVIRONMENT === "PRODUCTION") {
       if (Date.now() > req.session.otpExpires) {
@@ -298,11 +318,10 @@ router.post("/partner-otp-check", async (req, res) => {
       dbService.create("registration_client_access", data);
     }
 
-    const partnerData = await partnerFetch.json();
-
+    
     // ── 4. Sign token & set cookie ───────────────────────────────
     const token = jwt.sign(
-      { partner: partnerData.data[0] },
+      { partner: partnerData[0] },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
@@ -317,7 +336,7 @@ router.post("/partner-otp-check", async (req, res) => {
     return res.status(200).json({
       status: true,
       message: "Verification successful",
-      data: { ...partnerData.data[0] },
+      data: { ...partnerData[0] },
     });
   } catch (error) {
     console.error(error);

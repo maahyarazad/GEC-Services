@@ -85,6 +85,8 @@ const INITIAL_WIZARD_STATE = {
     otpResponseStatus: null,    // truthy = OTP was sent successfully
     otpResponseMessage: "",     // human-readable message from server
     otpValid: true,             // controls OtpTimer visibility
+    initialSeconds: null,
+    otpKey: 0,                  // incremented on each successful send to force timer remount
 
     // Step 1 — Upload
     uploadedFile: null,         // the File object
@@ -193,14 +195,15 @@ export default function PartnerOnboarding() {
 
 
             if (res.ok) {
-                const data = await res.json();
                 otpRef?.current?.clear();
                 if (statusRef.current) {
                     statusRef.current.classList.remove("text-danger");
                     statusRef.current.innerText = "OTP sent to " + wizardState.email;
                 }
-                setWiz({ otpResponseStatus: true, otpResponseMessage: data.message, otpValid: true });
+                setWiz({ otpResponseStatus: true, otpValid: true, initialSeconds: 300, otpKey: wizardState.otpKey + 1 });
                 otpFocus?.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                const data = await res.json().catch(() => ({}));
+                setWiz({ otpResponseMessage: data.message ?? "" });
             } else {
                 const data = await res.json().catch(() => ({}));
                 showSnackbar(data.message || `Unexpected error (${res.status}). Please try again.`, "error");
@@ -458,8 +461,10 @@ export default function PartnerOnboarding() {
                             <OtpInput useGECStyle={true} ref={otpRef} onComplete={(val) => handlePostOTP(val)} />
                             {wizardState.otpValid && (
                                 <OtpTimer
-                                    initialSeconds={300}
+                                    key={wizardState.otpKey}
+                                    initialSeconds={wizardState.initialSeconds ?? 300}
                                     loginResponseData={wizardState.otpResponseStatus}
+                                    onResend={handleSendOtp}
                                     onExpiredChange={handleExpiredChange}
                                 />
                             )}
