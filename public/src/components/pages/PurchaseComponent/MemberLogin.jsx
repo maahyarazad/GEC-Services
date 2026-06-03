@@ -38,6 +38,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
     const otpRef = useRef();
     const otpFocus = useRef();
     const [validOtp, setValidOtp] = useState(null);
+    const [otpKey, setOtpKey] = useState(0);
     const [currentResponseStatus, setCurrentResponseStatus] = useState(null);
     const [currentResponseMessage, setCurrentResponseMessage] = useState(null);
     const { showSnackbar } = useSnackbar();
@@ -270,6 +271,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
 
                 setCurrentResponseStatus(otp_response.ok);
                 setValidOtp(true);
+                setOtpKey((k) => k + 1);
 
                 statusRef.current.innerText = "OTP sent to " + wizardState?.member.email;
 
@@ -746,6 +748,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                                     />
                                                     {validOtp && (
                                                         <OtpTimer
+                                                            key={otpKey}
                                                             initialSeconds={300}
                                                             loginResponseData={currentResponseStatus}
                                                             onExpiredChange={handleExpiredChange}

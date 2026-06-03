@@ -218,7 +218,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                     otpState: {
                         ...prev.otpState,
                         currentResponseStatus: true, validOtp: true, currentResponseMessage: `OTP sent to  ${mobile_number}`, otp_data: response_data.data,
-                        initialSeconds: 300, responseMessageStyle: true
+                        initialSeconds: 300, responseMessageStyle: true, otpKey: (prev.otpState?.otpKey ?? 0) + 1
                     }
                 }));
                 otpFocus?.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -640,7 +640,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                                    />
                                                    {wizardState.otpState?.validOtp && (
                                                        <OtpTimer
-                                                           key={wizardState.otpState?.initialSeconds}
+                                                           key={wizardState.otpState?.otpKey}
                                                            initialSeconds={wizardState.otpState?.initialSeconds}
                                                            loginResponseData={wizardState.otpState?.currentResponseStatus}
                                                            onExpiredChange={handleExpiredChange}
