@@ -21,6 +21,26 @@ interface ActionCellProps {
     noteContent?: string;
 }
 
+const slotPropsStyle = {
+        tooltip: {
+            sx: {
+                backgroundColor: "#1e1e1e",
+                color: "#fff",
+                fontSize: "12px",
+                padding: "10px 14px",
+                borderRadius: "12px",
+                maxWidth: 350,
+                lineHeight: 1.8,
+                boxShadow: 3,
+            },
+        },
+        arrow: {
+            sx: {
+                color: "#1e1e1e",
+            },
+        },
+    }
+    
 export default function ActionCell({
     params,
     onModifyContact,
@@ -61,7 +81,7 @@ export default function ActionCell({
                         {lines.slice(0, 5).join('\n')}{lines.length > 5 ? '\n…' : ''}
                     </span>
                 );
-            })()}>
+            })()} slotProps={slotPropsStyle} arrow>
                 <IconButton
                     onClick={() => onOpenNotepad?.(params.row)}
                     sx={{ color: noteContent ? "#e65100" : "#9e9e9e", "&:hover": { backgroundColor: "#fff8e1" } }}
