@@ -130,7 +130,7 @@ export const responseColumns = ({ onViewJson, onViewHistory, activeMemberPhones,
                         <VscDebugAlt size={20} color="#EF5350" />
                     </IconButton>
                 </Tooltip>
-                <Tooltip title={noteTitle(notes?.get(params.row.WaId))}>
+                <Tooltip title={noteTitle(notes?.get(params.row.WaId))} slotProps={slotPropsStyle} arrow>
                     <IconButton
                         onClick={() => onOpenNotepad?.(params.row.WaId, params.row.full_name || params.row.ProfileName)}
                         sx={{ color: notes?.get(params.row.WaId) ? "#e65100" : "#9e9e9e", "&:hover": { backgroundColor: "#fff8e1" } }}
