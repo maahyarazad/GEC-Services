@@ -28,3 +28,70 @@ The `OtpTimer` component in `OTPInput` is not visible in PartnerOnboarding.tsx
 1. the OTPInput is nit visible in PartnerOnboarding.tsx 
 
 Review the implementation pattern used in `MemberLogin.jsx` and apply the same pattern to PartnerOnboarding.tsx
+
+
+# Feature Ticket: Change Server Request to Stored Procedure Call
+
+## Description
+
+Replace the external API request with a direct MySQL stored procedure call.
+
+Use the MySQL database and execute the following stored procedure to retrieve the data:
+
+```js
+const rows = await query("CALL sp_get_partner_contact_grouped_list()");
+```
+
+The `/api/gec-grouped-partners` endpoint should no longer make a request to the GEC service. Instead, it should fetch the data directly from the database using the stored procedure above.
+
+The endpoint should continue to return only active partners (`status === '1'`) to maintain compatibility with the existing API response format.
+
+The following implementation should be replaced:
+
+```js
+router.get("/api/gec-grouped-partners", async (req, res) => {
+  try {
+    const baseUrl =
+      process.env.ENVIRONMENT === "PRODUCTION"
+        ? `${process.env.GEC__ORIGIN}/api/`
+        : `${process.env.GEC__ORIGIN}`;
+
+    const fetchRes = await fetch(
+      `${baseUrl}partners/get-grouped-partner-list`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          services_secret: process.env.SERVICES_SECRET,
+        },
+      }
+    );
+
+    if (!fetchRes.ok) {
+      return res
+        .status(502)
+        .json({ status: false, message: "GEC fetch failed" });
+    }
+
+    const partnerData = await fetchRes.json();
+
+    return res.json({
+      status: true,
+      data: partnerData?.data.filter((x) => x.status === "1") ?? [],
+    });
+  } catch (error) {
+    console.error("Error in /api/gec-grouped-partners:", error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+```
+
+
+# Bug Ticket: Partner Onboarding Issue – Legacy Admin Partners Shows All Partners
+
+## Description
+
+In the **Legacy Admin Partners** right panel, the system should display all partners, including those that are not available in the Services system.
+
+Partners that do not exist in the Services system should still be displayed in the list and be marked with a gray status chip to indicate that they are not currently available in Services.
+

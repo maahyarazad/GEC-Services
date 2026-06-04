@@ -294,24 +294,27 @@ const MemberCardDataGrid = () => {
     // ─── Right-table rows: GEC partners + local-only rows with chip ──────────
 
     const rightTableRows = useMemo(() => {
+        const gecTitles   = new Set(gecPartners.map((p) => (p.group_name ?? '').toLowerCase().trim()));
         const statsTitles = new Set(partnerStats.map((s) => (s.partner ?? '').toLowerCase().trim()));
 
-        const gecOnlyPartners = gecPartners
-            .filter((p) => !statsTitles.has((p.group_name ?? '').toLowerCase().trim()))
-            .map((p) => ({
-                ...p,
-                _notInServices: true,
-                _pendingCount: pendingCounts[(p.group_name ?? '').toLowerCase().trim()] ?? 0,
-            }));
-        return [
-            ...partnerStats.map((s) => ({
+        // All GEC partners — chip reflects whether they are set up in the local Services system
+        const gecRows = gecPartners.map((p) => ({
+            ...p,
+            _notInServices: !statsTitles.has((p.group_name ?? '').toLowerCase().trim()),
+            _pendingCount: pendingCounts[(p.group_name ?? '').toLowerCase().trim()] ?? 0,
+        }));
+
+        // Local-only partners that have no GEC entry — always marked not in Services
+        const localOnlyRows = partnerStats
+            .filter((s) => !gecTitles.has((s.partner ?? '').toLowerCase().trim()))
+            .map((s) => ({
                 group_name: s.partner,
                 member_count: s.member_count,
-                _notInServices: false,
+                _notInServices: true,
                 _pendingCount: pendingCounts[(s.partner ?? '').toLowerCase().trim()] ?? 0,
-            })),
-            ...gecOnlyPartners,
-        ];
+            }));
+
+        return [...gecRows, ...localOnlyRows];
     }, [gecPartners, partnerStats, pendingCounts]);
 
     const summaryStats = useMemo(() => {
@@ -410,7 +413,7 @@ const MemberCardDataGrid = () => {
             label: 'Status',
             render: (row) =>
                 row._notInServices ? (
-                    <Chip label="Not in Services" size="small" color="warning" variant="outlined" sx={{ fontSize: 11 }} />
+                    <Chip label="Not in Services" size="small" color="default" variant="outlined" sx={{ fontSize: 11 }} />
                 ) : (
                     <Chip label="In Services" size="small" color="success" variant="outlined" sx={{ fontSize: 11 }} />
                 ),
