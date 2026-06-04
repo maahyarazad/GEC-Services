@@ -202,5 +202,15 @@ After navigating away from this component, all instantiated objects should be pr
 Use a cleanup function within `useEffect` to dispose of any Google Maps instances, event listeners, and related resources to prevent memory leaks and crashes when the component is unmounted.
 
 
+# Bug Ticket - PlaceIdFinder Url generation Fix
+
+## Description
+The ?q=place_id: URL is also a weak format
+https://www.google.com/maps/place/?q=place_id:ChIJ... is an undocumented/legacy form. It tends to open a web search rather than cleanly deep-linking into the place card in the app, which is why tapping it doesn't behave the way you expect.
+The fix: use the official Maps URLs API format, un-shortened
+Stop using the short link entirely and send the full canonical URL. Google's documented, stable format for a place is:
+https://www.google.com/maps/search/?api=1&query=Al%20Hana%20Bar%2C%20Shangri-La%20Hotel%20Abu%20Dhabi&query_place_id=ChIJpQG6edhDXj4RcZ15tKa2Ajo
+
+
 
 

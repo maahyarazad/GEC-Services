@@ -24,7 +24,7 @@ export default function PlaceIdFinder() {
     const autocompleteRef = useRef(null);
 
     const mapsUrl = placeId
-        ? `https://www.google.com/maps/place/?q=place_id:${placeId}`
+        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(placeName)}&query_place_id=${placeId}`
         : '';
 
     useEffect(() => {

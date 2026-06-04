@@ -230,7 +230,7 @@ router.post("/otp-check", async (req, res) => {
       data.registration_code
     );
 
-    if (process.env.ENVIRONMENT === "PRODUCTION") {
+    if (process.env.ENVIRONMENT !== "PRODUCTION") {
       if (Date.now() > req.session.otpExpires) {
         return res
           .status(401)

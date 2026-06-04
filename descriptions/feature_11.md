@@ -24,3 +24,5 @@ Update the log display so that:
 
 - All entries in the **Error** tab are labeled as **ERR**.
 - All entries in the **Output** tab are labeled as **INFO**.
+
+
