@@ -104,6 +104,7 @@ export default function PlaceIdFinder() {
                     fields: ['displayName', 'formattedAddress', 'location', 'id'],
                 });
 
+                if (cancelled) return;
                 if (!place.location) return;
 
                 if (place.viewport) map.fitBounds(place.viewport);
@@ -153,6 +154,7 @@ export default function PlaceIdFinder() {
             }
 
             if (infoWindowInstance) {
+                infoWindowInstance.setContent(null);
                 infoWindowInstance.close();
                 infoWindowInstance = null;
             }

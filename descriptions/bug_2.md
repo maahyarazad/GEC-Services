@@ -134,3 +134,29 @@ below is the d.data sample please fix the right panel - it should show all the l
     }
 ]
 ```
+
+# Bug Ticket: PlaceIdFinder Crash
+
+## Description
+
+Switching between tabs in the dashboard causes the application to crash.
+
+The issue appears to occur when the `PlaceIdFinder` component is unmounted and remounted during tab navigation.
+
+Error log:
+
+```txt
+main.js:205 Uncaught TypeError: Cannot read properties of undefined (reading 'getRootNode')
+
+react-dom-client.development.js:9362 An error occurred in the <PlaceIdFinder> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+```
+
+## Expected Behavior
+
+Switching between dashboard tabs should not cause the application to crash. The `PlaceIdFinder` component should properly clean up any active instances, event listeners, and external resources when it is unmounted.
+
+
+
