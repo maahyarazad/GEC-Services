@@ -139,8 +139,7 @@ async function handlePartnerOtp(req, res) {
 
 
   return res.status(200).json({
-      status: true,
-      message: `${email} is not active in our system - if you think this is a mistake, please contact us`,
+      status: true
     });
 
 //   return await sendOtpResponse(req, res, { includeLoginMessage: false });

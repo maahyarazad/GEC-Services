@@ -553,3 +553,15 @@ The `/api/member-card-sync` endpoint should handle synchronization separately ba
 * In the `PartnerOnboardingSection`, the **Sync** action should apply only to English-speaking (`en`) records.
 
 This separation must be enforced both in the UI and in the synchronization logic to ensure that each section processes only its designated language group.
+
+
+# Feature Enhancement – Refetch Data After Sync
+
+## Description
+
+The **Sync** action modifies the system state and affects data idempotency. Therefore, the UI must be refreshed after each successful synchronization.
+
+* In the `DeliveryTrackingSection`, the UI should automatically refetch and refresh the data after every successful **Sync** operation.
+* In the `PartnerOnboardingSection`, the UI should automatically refetch and refresh the data after every successful **Sync** operation.
+
+This ensures that users always see the latest state of the data immediately after synchronization completes.

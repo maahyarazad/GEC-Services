@@ -79,10 +79,10 @@ const Jobs = {
             // );
 
             if (malformed.length > 0) {
-                console.warn("[normilizeMemberPhoneNumbers] Could not parse — manual review required:");
-                malformed.forEach(({ id, mobile_number }) =>
-                    console.warn(`  id=${id}  raw="${mobile_number}"`)
-                );
+                // console.warn("[normilizeMemberPhoneNumbers] Could not parse — manual review required:");
+                // malformed.forEach(({ id, mobile_number }) =>
+                //     console.warn(`  id=${id}  raw="${mobile_number}"`)
+                // );
             }
         } catch (error) {
             console.error("Error normalizing mobile numbers:", error);
