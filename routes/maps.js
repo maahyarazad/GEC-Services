@@ -42,7 +42,7 @@ const upload = multer({ storage });
 router.get("/api/maps/config", (req, res) => {
     const apiKey = process.env.GOOGLE_MAPS_API_KEY;
     if (!apiKey) return res.status(500).json({ status: false, message: "GOOGLE_MAPS_API_KEY is not configured" });
-    return res.json({ status: true, apiKey });
+    return res.json({ status: true, apiKey, mapId: process.env.GOOGLE_MAPS_MAP_ID ?? '' });
 });
 
 router.get("/static-map", (req, res) => {

@@ -20,6 +20,7 @@ export default function PlaceIdFinder() {
     const [placeAddress, setPlaceAddress] = useState('');
     const [copied, setCopied]             = useState(false);
     const [initError, setInitError]       = useState('');
+    const [mapId, setMapId]               = useState('');
     const mapRef          = useRef(null);
     const autocompleteRef = useRef(null);
 
@@ -44,9 +45,10 @@ export default function PlaceIdFinder() {
                 { credentials: 'include' }
             );
             if (!res.ok) throw new Error('Failed to load Maps configuration');
-            const { apiKey } = await res.json();
+            const { apiKey, mapId: fetchedMapId } = await res.json();
             if (!apiKey) throw new Error('Maps API key not configured on server');
             if (cancelled) return;
+            setMapId(fetchedMapId ?? '');
 
             ensureMapsBootstrap(apiKey);
 
@@ -202,9 +204,9 @@ export default function PlaceIdFinder() {
             >
                 <gmp-map
                     ref={mapRef}
-                    center="-33.8688, 151.2195"
+                    center="25.2048, 55.2708"
                     zoom="13"
-                    map-id="DEMO_MAP_ID"
+                    map-id={mapId || undefined}
                     style={{ width: '100%', height: '100%' }}
                 >
                     <gmp-place-autocomplete
