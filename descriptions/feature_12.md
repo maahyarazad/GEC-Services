@@ -175,3 +175,32 @@ gmp-place-autocomplete {
     border-radius: 10px;
 }
 ```
+
+
+# Feature Ticket 12.1 - Serve Google Maps Configuration from the Server
+
+## Description
+
+Ensure that the `ensureMapsBootstrap` instance used by `PlaceIdFinder` is provided by the server rather than hardcoded in the client.
+
+The server should use `process.env.GOOGLE_MAPS_API_KEY` to configure the Google Maps integration.
+
+The implementation should follow security best practices to minimize exposure of the API key. The key must not be hardcoded in the frontend source code. Instead, the client should obtain the required configuration from the server at runtime.
+
+Additionally:
+
+* Use the API key in environment variable **GOOGLE_MAPS_API_KEY**
+* Ensure the frontend does not contain any hardcoded Google Maps credentials.
+
+
+# Bug Ticket - PlaceIdFinder Crash
+
+## Description
+
+After navigating away from this component, all instantiated objects should be properly destroyed and set to `null`.
+
+Use a cleanup function within `useEffect` to dispose of any Google Maps instances, event listeners, and related resources to prevent memory leaks and crashes when the component is unmounted.
+
+
+
+
