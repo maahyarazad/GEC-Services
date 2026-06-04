@@ -15,3 +15,14 @@ Update the log display so that:
 
 - All entries in the **Error** tab are labeled as **ERR**.
 - All entries in the **Output** tab are labeled as **INFO**.
+
+# Feature Ticket 11.2 - WhatsApp Enhancement
+
+## Description
+
+Update the log display so that:
+
+- All entries in the **Error** tab are labeled as **ERR**.
+- All entries in the **Output** tab are labeled as **INFO**.
+
+

@@ -58,7 +58,7 @@ const ContactBookDataGrid = ({
     onOpenNotepad?: (row: any) => void;
     notes?: Map<number, string>;
 }) => {
-    const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: false, activeMemberPhones, onOpenNotepad, notes };
+    const columnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: true, activeMemberPhones, onOpenNotepad, notes };
     const contactBookColumnProps = { onModifyContact, onDeleteContact, onSwitchBlacklist, viewEventSpeedDial: true, activeMemberPhones, onOpenNotepad, notes };
 
     const serverSideProps = {

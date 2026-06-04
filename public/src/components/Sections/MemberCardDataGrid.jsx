@@ -260,7 +260,7 @@ const MemberCardDataGrid = () => {
         try {
             const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/gec-grouped-partners`, { credentials: 'include' });
             const d = await r.json();
-
+            debugger;
             setGecPartners(d.data ?? []);
         } catch (e) {
             console.error('GEC partners fetch failed', e);
@@ -291,34 +291,37 @@ const MemberCardDataGrid = () => {
 
     useEffect(() => { fetchPendingCounts(); }, [fetchPendingCounts]);
 
-    // ─── Right-table rows: GEC partners + local-only rows with chip ──────────
+    // ─── Right-table rows: legacy (local) partners + GEC-only extras ─────────
 
     const rightTableRows = useMemo(() => {
+        const gecTitles   = new Set(gecPartners.map((p) => (p.group_name ?? '').toLowerCase().trim()));
         const statsTitles = new Set(partnerStats.map((s) => (s.partner ?? '').toLowerCase().trim()));
 
-        const gecOnlyPartners = gecPartners
+        // All legacy (local DB) partners — chip reflects whether they exist in GEC Services
+        const legacyRows = partnerStats.map((s) => ({
+            group_name: s.partner,
+            member_count: s.member_count,
+            _notInServices: !gecTitles.has((s.partner ?? '').toLowerCase().trim()),
+            _pendingCount: pendingCounts[(s.partner ?? '').toLowerCase().trim()] ?? 0,
+        }));
+
+        // GEC-only partners not already shown via legacyRows — always not in local Services
+        const gecOnlyRows = gecPartners
             .filter((p) => !statsTitles.has((p.group_name ?? '').toLowerCase().trim()))
             .map((p) => ({
                 ...p,
                 _notInServices: true,
                 _pendingCount: pendingCounts[(p.group_name ?? '').toLowerCase().trim()] ?? 0,
             }));
-        return [
-            ...partnerStats.map((s) => ({
-                group_name: s.partner,
-                member_count: s.member_count,
-                _notInServices: false,
-                _pendingCount: pendingCounts[(s.partner ?? '').toLowerCase().trim()] ?? 0,
-            })),
-            ...gecOnlyPartners,
-        ];
+
+        return [...legacyRows, ...gecOnlyRows];
     }, [gecPartners, partnerStats, pendingCounts]);
 
     const summaryStats = useMemo(() => {
         const inServices = rightTableRows.filter((r) => !r._notInServices).length;
         const notInServices = rightTableRows.filter((r) => r._notInServices).length;
         const totalMembers = partnerStats.reduce((sum, s) => sum + (Number(s.member_count) || 0), 0);
-        return { inServices, notInServices, totalMembers };
+        return { inServices, notInServices, totalMembers, total: rightTableRows.length };
     }, [rightTableRows, partnerStats]);
 
     const handleSync = async (partner) => {
@@ -410,7 +413,7 @@ const MemberCardDataGrid = () => {
             label: 'Status',
             render: (row) =>
                 row._notInServices ? (
-                    <Chip label="Not in Services" size="small" color="warning" variant="outlined" sx={{ fontSize: 11 }} />
+                    <Chip label="Not in Services" size="small" color="default" variant="outlined" sx={{ fontSize: 11 }} />
                 ) : (
                     <Chip label="In Services" size="small" color="success" variant="outlined" sx={{ fontSize: 11 }} />
                 ),
@@ -672,6 +675,12 @@ const MemberCardDataGrid = () => {
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1, alignItems: 'center' }}>
 
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <Chip
+                            label={`Total Legacy Admin Partners: ${summaryStats.total}`}
+                            size="small"
+                            color="default"
+                            variant="outlined"
+                        />
                         <Chip
                             label={`Legacy Partners In Services: ${summaryStats.inServices}`}
                             size="small"

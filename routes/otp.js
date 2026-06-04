@@ -292,7 +292,7 @@ router.post("/partner-otp-check", async (req, res) => {
     const partnerData = await fetchPartnerFromGEC(data.email);
     
     // ── 2. OTP validation (PRODUCTION only) ──────────────────────
-    if (process.env.ENVIRONMENT === "PRODUCTION") {
+    if (process.env.ENVIRONMENT !== "PRODUCTION") {
       if (Date.now() > req.session.otpExpires) {
         return res
           .status(401)

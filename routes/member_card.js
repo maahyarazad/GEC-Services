@@ -12,6 +12,7 @@ const { membership_pass_email } = require("../services/emailService");
 const uniqid = require("uniqid");
 const path = require("path");
 const db = dbService.getDB();
+const { getPool } = require('../services/mysqlService');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -269,24 +270,9 @@ router.post("/member-logout", (req, res) => {
 
 router.get("/api/gec-grouped-partners", async (req, res) => {
   try {
-   const baseUrl = process.env.ENVIRONMENT === "PRODUCTION" ? `${process.env.GEC__ORIGIN}/api/`: `${process.env.GEC__ORIGIN}`
-
-    const fetchRes = await fetch(`${baseUrl}partners/get-grouped-partner-list`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        services_secret: process.env.SERVICES_SECRET,
-      },
-    });
-
-    if (!fetchRes.ok) {
-      return res.status(502).json({ status: false, message: "GEC fetch failed" });
-    }
-    
-    const partnerData = await fetchRes.json();
-
-
-    return res.json({ status: true, data: partnerData?.data.filter(x=> x.status === '1') ?? [] });
+    const pool = getPool();
+    const [rows] = await pool.query("CALL sp_get_partner_contact_grouped_list()");
+    return res.json({ status: true, data: rows[0] ?? [] });
   } catch (error) {
     console.error("Error in /api/gec-grouped-partners:", error);
     res.status(500).json({ status: false, message: "Server error" });
