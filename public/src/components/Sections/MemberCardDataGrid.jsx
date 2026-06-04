@@ -260,7 +260,7 @@ const MemberCardDataGrid = () => {
         try {
             const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/gec-grouped-partners`, { credentials: 'include' });
             const d = await r.json();
-
+            debugger;
             setGecPartners(d.data ?? []);
         } catch (e) {
             console.error('GEC partners fetch failed', e);
@@ -291,37 +291,37 @@ const MemberCardDataGrid = () => {
 
     useEffect(() => { fetchPendingCounts(); }, [fetchPendingCounts]);
 
-    // ─── Right-table rows: GEC partners + local-only rows with chip ──────────
+    // ─── Right-table rows: legacy (local) partners + GEC-only extras ─────────
 
     const rightTableRows = useMemo(() => {
         const gecTitles   = new Set(gecPartners.map((p) => (p.group_name ?? '').toLowerCase().trim()));
         const statsTitles = new Set(partnerStats.map((s) => (s.partner ?? '').toLowerCase().trim()));
 
-        // All GEC partners — chip reflects whether they are set up in the local Services system
-        const gecRows = gecPartners.map((p) => ({
-            ...p,
-            _notInServices: !statsTitles.has((p.group_name ?? '').toLowerCase().trim()),
-            _pendingCount: pendingCounts[(p.group_name ?? '').toLowerCase().trim()] ?? 0,
+        // All legacy (local DB) partners — chip reflects whether they exist in GEC Services
+        const legacyRows = partnerStats.map((s) => ({
+            group_name: s.partner,
+            member_count: s.member_count,
+            _notInServices: !gecTitles.has((s.partner ?? '').toLowerCase().trim()),
+            _pendingCount: pendingCounts[(s.partner ?? '').toLowerCase().trim()] ?? 0,
         }));
 
-        // Local-only partners that have no GEC entry — always marked not in Services
-        const localOnlyRows = partnerStats
-            .filter((s) => !gecTitles.has((s.partner ?? '').toLowerCase().trim()))
-            .map((s) => ({
-                group_name: s.partner,
-                member_count: s.member_count,
+        // GEC-only partners not already shown via legacyRows — always not in local Services
+        const gecOnlyRows = gecPartners
+            .filter((p) => !statsTitles.has((p.group_name ?? '').toLowerCase().trim()))
+            .map((p) => ({
+                ...p,
                 _notInServices: true,
-                _pendingCount: pendingCounts[(s.partner ?? '').toLowerCase().trim()] ?? 0,
+                _pendingCount: pendingCounts[(p.group_name ?? '').toLowerCase().trim()] ?? 0,
             }));
 
-        return [...gecRows, ...localOnlyRows];
+        return [...legacyRows, ...gecOnlyRows];
     }, [gecPartners, partnerStats, pendingCounts]);
 
     const summaryStats = useMemo(() => {
         const inServices = rightTableRows.filter((r) => !r._notInServices).length;
         const notInServices = rightTableRows.filter((r) => r._notInServices).length;
         const totalMembers = partnerStats.reduce((sum, s) => sum + (Number(s.member_count) || 0), 0);
-        return { inServices, notInServices, totalMembers };
+        return { inServices, notInServices, totalMembers, total: rightTableRows.length };
     }, [rightTableRows, partnerStats]);
 
     const handleSync = async (partner) => {
@@ -675,6 +675,12 @@ const MemberCardDataGrid = () => {
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1, alignItems: 'center' }}>
 
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                        <Chip
+                            label={`Total Legacy Admin Partners: ${summaryStats.total}`}
+                            size="small"
+                            color="default"
+                            variant="outlined"
+                        />
                         <Chip
                             label={`Legacy Partners In Services: ${summaryStats.inServices}`}
                             size="small"

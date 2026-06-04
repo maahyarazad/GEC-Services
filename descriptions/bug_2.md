@@ -91,7 +91,46 @@ router.get("/api/gec-grouped-partners", async (req, res) => {
 
 ## Description
 
-In the **Legacy Admin Partners** right panel, the system should display all partners, including those that are not available in the Services system.
 
-Partners that do not exist in the Services system should still be displayed in the list and be marked with a gray status chip to indicate that they are not currently available in Services.
+below is the d.data sample please fix the right panel - it should show all the legacy admin partners 
 
+```js
+ const fetchGecPartners = useCallback(async () => {
+        setGecLoading(true);
+        try {
+            const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/gec-grouped-partners`, { credentials: 'include' });
+            const d = await r.json();
+            
+            setGecPartners(d.data ?? []);
+        } catch (e) {
+            console.error('GEC partners fetch failed', e);
+        } finally {
+            setGecLoading(false);
+        }
+    }, []);
+```
+
+```js
+[
+    [
+        {
+            "group_name": "****** | ******",
+            "subsidiaries": null,
+            "email_count": 1,
+            "fullname": "****** ******t",
+            "emails": "******=******@zub**********ational.com",
+            "divions": "Entscheidungsträger"
+        },
+       
+    ],
+    {
+        "fieldCount": 0,
+        "affectedRows": 0,
+        "insertId": 0,
+        "info": "",
+        "serverStatus": 34,
+        "warningStatus": 0,
+        "changedRows": 0
+    }
+]
+```

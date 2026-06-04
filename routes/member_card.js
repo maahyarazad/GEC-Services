@@ -272,8 +272,7 @@ router.get("/api/gec-grouped-partners", async (req, res) => {
   try {
     const pool = getPool();
     const [rows] = await pool.query("CALL sp_get_partner_contact_grouped_list()");
-    const data = (rows[0] ?? []).filter((x) => x.status === '1');
-    return res.json({ status: true, data });
+    return res.json({ status: true, data: rows[0] ?? [] });
   } catch (error) {
     console.error("Error in /api/gec-grouped-partners:", error);
     res.status(500).json({ status: false, message: "Server error" });
