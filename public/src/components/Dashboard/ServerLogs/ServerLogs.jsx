@@ -21,8 +21,8 @@ function detectLevel(line) {
     return 'info';
 }
 
-function toEntry(line, ts = Date.now()) {
-    return { line, level: detectLevel(line), ts };
+function toEntry(line, ts = Date.now(), forcedLevel = null) {
+    return { line, level: forcedLevel ?? detectLevel(line), ts };
 }
 
 export default function ServerLogs() {
@@ -56,7 +56,8 @@ export default function ServerLogs() {
             const d = await res.json();
             if (!d.status) return;
 
-            const entries = d.lines.map(l => toEntry(l));
+            const forcedLevel = type === 'error' ? 'error' : 'info';
+            const entries = d.lines.map(l => toEntry(l, Date.now(), forcedLevel));
             setHasMore(d.hasMore);
             return entries;
         } catch {
@@ -84,9 +85,10 @@ export default function ServerLogs() {
         es.onmessage = (e) => {
             try {
                 const msg = JSON.parse(e.data);
-                if (msg.type === 'line') appendLines([toEntry(msg.line, msg.ts)]);
+                const forcedLevel = logTypeRef.current === 'error' ? 'error' : 'info';
+                if (msg.type === 'line') appendLines([toEntry(msg.line, msg.ts, forcedLevel)]);
                 if (msg.type === 'status') setStatusMsg(msg.message);
-                if (msg.type === 'error')  appendLines([toEntry(`[ERROR] ${msg.message}`)]);
+                if (msg.type === 'error')  appendLines([toEntry(`[ERROR] ${msg.message}`, Date.now(), 'error')]);
             } catch (_) {}
         };
 
