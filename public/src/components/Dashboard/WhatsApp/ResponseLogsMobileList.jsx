@@ -1,5 +1,6 @@
-import { useRef } from 'react';
-import { Box, Typography, CircularProgress, TablePagination } from '@mui/material';
+import { useRef, useState, useMemo } from 'react';
+import { Box, Typography, CircularProgress, TablePagination, InputBase } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 import { BiSolidCheckCircle } from 'react-icons/bi';
 import { FaStickyNote } from 'react-icons/fa';
 
@@ -157,8 +158,36 @@ export default function ResponseLogsMobileList({
     onViewJson,
     onOpenNotepad,
 }) {
+    const [search, setSearch] = useState('');
+
+    const filteredRows = useMemo(() => {
+        const term = search.trim().toLowerCase();
+        if (!term) return rows;
+        return rows.filter((row) => {
+            const name = (row.full_name || row.ProfileName || '').toLowerCase();
+            return name.includes(term);
+        });
+    }, [rows, search]);
+
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper' }}>
+            {/* Search bar */}
+            <Box sx={{
+                display: 'flex', alignItems: 'center', gap: 1,
+                px: 2, py: 1,
+                borderBottom: '1px solid', borderColor: 'divider',
+                bgcolor: '#f0f2f5',
+            }}>
+                <SearchIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+                <InputBase
+                    placeholder="Search by name…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    sx={{ flex: 1, fontSize: 14 }}
+                    inputProps={{ 'aria-label': 'search contacts' }}
+                />
+            </Box>
+
             <Box sx={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
                 {loading && (
                     <Box sx={{
@@ -169,12 +198,14 @@ export default function ResponseLogsMobileList({
                         <CircularProgress size={32} />
                     </Box>
                 )}
-                {rows.length === 0 && !loading && (
+                {filteredRows.length === 0 && !loading && (
                     <Box sx={{ py: 6, textAlign: 'center' }}>
-                        <Typography variant="body2" color="text.secondary">No messages</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            {search ? 'No results found' : 'No messages'}
+                        </Typography>
                     </Box>
                 )}
-                {rows.map((row) => (
+                {filteredRows.map((row) => (
                     <ResponseItem
                         key={row.id}
                         row={row}
