@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { FaWhatsapp } from "react-icons/fa";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import { Divider } from "@mui/material";
+import { Divider, useTheme, useMediaQuery } from "@mui/material";
 import { Button } from '@mui/material'
 import Modal from '../../Modal';
 import SlideMenu from '../../SlideMenu/SlideMenu';
@@ -46,6 +46,7 @@ import CreateTwilioTemplate from "./CreateTwilioTemplate";
 import { SiTwilio } from "react-icons/si";
 import ActiveEventCard from "./ActiveEventCard";
 import GuestListPanel from "./GuestListPanel";
+import ResponseLogsMobileList from "./ResponseLogsMobileList";
 import NotepadModal from "./NotepadModal";
 import { BsPeopleFill } from "react-icons/bs";
 const WhatsappBroadcast = () => {
@@ -55,6 +56,9 @@ const WhatsappBroadcast = () => {
     const { openDialog } = useAlertDialog();
     const [data, setData] = useState();
     const [groupedByTypeKey, setGroupedByTypeKey] = useState();
+
+    const theme = useTheme();
+    const isMobileView = useMediaQuery(theme.breakpoints.down('sm'));
 
     const [openPanel, setOpenPanel] = useState(null);
     const [mobileTemplatesOpen, setMobileTemplatesOpen] = useState(false);
@@ -1161,29 +1165,43 @@ const WhatsappBroadcast = () => {
 
                     {openPanel === 'response-logs' && (
                         <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
-                            <CustomDataGrid
-                                rows={responses}
-                                columns={responseColumns({ onViewJson, onViewHistory, activeMemberPhones: activeMemberPhonesResponses, onOpenNotepad: handleOpenNotepadByPhone, notes: responseNotes })}
-                                loading={loading_logs}
-                                showToolbar
+                            {isMobileView ? (
+                                <ResponseLogsMobileList
+                                    rows={responses}
+                                    loading={loading_logs}
+                                    rowCount={responsesRowCount}
+                                    paginationModel={responsesPaginationModel}
+                                    onPaginationModelChange={setResponsesPaginationModel}
+                                    activeMemberPhones={activeMemberPhonesResponses}
+                                    notes={responseNotes}
+                                    onViewJson={onViewJson}
+                                    onOpenNotepad={handleOpenNotepadByPhone}
+                                />
+                            ) : (
+                                <CustomDataGrid
+                                    rows={responses}
+                                    columns={responseColumns({ onViewJson, onViewHistory, activeMemberPhones: activeMemberPhonesResponses, onOpenNotepad: handleOpenNotepadByPhone, notes: responseNotes })}
+                                    loading={loading_logs}
+                                    showToolbar
 
-                                filterMode='server'
-                                sortingMode='server'
-                                paginationMode='server'
+                                    filterMode='server'
+                                    sortingMode='server'
+                                    paginationMode='server'
 
-                                rowCount={responsesRowCount}
-                                paginationModel={responsesPaginationModel}
-                                onPaginationModelChange={setResponsesPaginationModel}
-                                rowsPerPageOptions={[25, 50, 100]}
+                                    rowCount={responsesRowCount}
+                                    paginationModel={responsesPaginationModel}
+                                    onPaginationModelChange={setResponsesPaginationModel}
+                                    rowsPerPageOptions={[25, 50, 100]}
 
-                                sortModel={responsesSortModel}
-                                onSortModelChange={setResponsesSortModel}
+                                    sortModel={responsesSortModel}
+                                    onSortModelChange={setResponsesSortModel}
 
-                                filterItems={responsesFilterItems}
-                                onFilterItemsChange={setResponsesFilterItems}
+                                    filterItems={responsesFilterItems}
+                                    onFilterItemsChange={setResponsesFilterItems}
 
-                                disableRowSelectionOnClick
-                            />
+                                    disableRowSelectionOnClick
+                                />
+                            )}
                         </div>
                     )}
                 </>
