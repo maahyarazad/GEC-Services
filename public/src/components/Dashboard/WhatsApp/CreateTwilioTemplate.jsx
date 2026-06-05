@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
@@ -10,6 +11,7 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Tooltip from '@mui/material/Tooltip';
 import { SiAutoprefixer } from 'react-icons/si';
+import { MdAdd, MdClose } from 'react-icons/md';
 import { useSnackbar } from '../../Providers/Snackbar';
 
 const slugify = (val) =>
@@ -33,7 +35,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
         friendly_name: '',
         language: 'de',
         body: '',
-        variable_example: 'Hans Smith',
+        variable_examples: ['Hans Smith'],
         type: 'twilio/quick-reply',
         buttons: DEFAULT_BUTTONS.map((b) => ({ ...b })),
     });
@@ -47,6 +49,33 @@ export default function CreateTwilioTemplate({ onSuccess }) {
             );
             return { ...prev, buttons };
         });
+
+    const setVariableExample = (index, value) =>
+        setForm((prev) => {
+            const variable_examples = prev.variable_examples.map((v, i) => i === index ? value : v);
+            return { ...prev, variable_examples };
+        });
+
+    const addVariable = () =>
+        setForm((prev) => ({ ...prev, variable_examples: [...prev.variable_examples, ''] }));
+
+    const removeVariable = (index) =>
+        setForm((prev) => ({
+            ...prev,
+            variable_examples: prev.variable_examples.filter((_, i) => i !== index),
+        }));
+
+    // Derive variable names from the body in order of first appearance
+    const bodyVars = useMemo(() => {
+        const seen = new Set();
+        const result = [];
+        const pattern = /\{\{([^}]+)\}\}/g;
+        let m;
+        while ((m = pattern.exec(form.body)) !== null) {
+            if (!seen.has(m[1])) { seen.add(m[1]); result.push(m[1]); }
+        }
+        return result;
+    }, [form.body]);
 
     const isSlugified = form.friendly_name !== '' && form.friendly_name === slugify(form.friendly_name);
     const isBodyFilled = form.body.trim() !== '';
@@ -78,7 +107,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                     friendly_name: form.friendly_name.trim(),
                     language: form.language,
                     body: form.body,
-                    variable_example: form.variable_example.trim() || null,
+                    variable_examples: form.variable_examples.map((v) => v.trim()).filter(Boolean),
                     type: form.type,
                     buttons: form.type === 'twilio/quick-reply'
                         ? form.buttons.filter((b) => b.title.trim())
@@ -93,7 +122,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                     friendly_name: '',
                     language: 'de',
                     body: '',
-                    variable_example: 'Hans',
+                    variable_examples: ['Hans Smith'],
                     type: 'twilio/quick-reply',
                     buttons: DEFAULT_BUTTONS.map((b) => ({ ...b })),
                 });
@@ -113,7 +142,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
             <Typography variant="body2" color="text.secondary">
                 Creates a <strong>{form.type}</strong> content template and submits it for WhatsApp approval.
-                Use <code>{'{{1}}'}</code> in the body for the personalisation variable.
+                Use <code>{'{{1}}'}</code>, <code>{'{{2}}'}</code>, <code>{'{{3}}'}</code>… in the body for personalisation variables.
             </Typography>
 
             <Divider />
@@ -177,16 +206,38 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                 multiline
                 minRows={7}
                 size="small"
-                helperText="Use {{1}} for the personalisation variable"
+                helperText="Use {{1}}, {{2}}, {{3}}… for personalisation variables"
             />
 
-            <TextField
-                label="Example value for {{1}}"
-                value={form.variable_example}
-                onChange={(e) => set('variable_example', e.target.value)}
-                size="small"
-                helperText='Actual sample shown to WhatsApp for approval, e.g. "Hans" or "Maria"'
-            />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                    Sample values shown to WhatsApp for approval
+                </Typography>
+                {form.variable_examples.map((val, i) => (
+                    <Box key={i} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                        <TextField
+                            label={`Example value for {{${bodyVars[i] ?? i + 1}}}`}
+                            value={val}
+                            onChange={(e) => setVariableExample(i, e.target.value)}
+                            size="small"
+                            sx={{ flex: 1 }}
+                        />
+                        {form.variable_examples.length > 1 && (
+                            <IconButton size="small" onClick={() => removeVariable(i)} tabIndex={-1}>
+                                <MdClose size={18} />
+                            </IconButton>
+                        )}
+                    </Box>
+                ))}
+                <Button
+                    size="small"
+                    startIcon={<MdAdd />}
+                    onClick={addVariable}
+                    sx={{ alignSelf: 'flex-start', textTransform: 'none' }}
+                >
+                    Add Variable
+                </Button>
+            </Box>
 
             {form.type === 'twilio/quick-reply' && (
                 <>

@@ -103,7 +103,7 @@ router.get("/api/whatsapp/list", async (req, res) => {
 
 router.post("/api/twilio/create-template", async (req, res) => {
   try {
-    const { friendly_name, language, body, variable_example, buttons, type } = req.body;
+    const { friendly_name, language, body, variable_examples, buttons, type } = req.body;
 
     if (!friendly_name || !language || !body) {
       return res.status(400).json({ status: false, message: "friendly_name, language, and body are required" });
@@ -120,19 +120,25 @@ router.post("/api/twilio/create-template", async (req, res) => {
         ? { body, actions }
         : { body };
 
-    let _variable;
-    if (typePayload.body.includes(`{{`)) {
-        const match = typePayload.body.match(/\{\{(.*?)\}\}/);
-        if (match) {
-            _variable = match[1]; // captured text between {{ and }}
-        }
+    // Build variables map from all {{...}} occurrences in order of first appearance.
+    // Supports both numeric ({{1}}) and named ({{gender}}) Twilio variable styles.
+    const variables = {};
+    const varPattern = /\{\{([^}]+)\}\}/g;
+    const seenVars = [];
+    let varMatch;
+    while ((varMatch = varPattern.exec(typePayload.body)) !== null) {
+      const name = varMatch[1];
+      if (!seenVars.includes(name)) seenVars.push(name);
     }
-
+    seenVars.forEach((name, i) => {
+      const sample = (variable_examples || [])[i];
+      if (sample) variables[name] = sample;
+    });
 
     const payload = {
       friendly_name,
       language,
-      ...(variable_example ? { variables: { [_variable]: variable_example } } : {}),
+      ...(Object.keys(variables).length > 0 ? { variables } : {}),
       types: {
         [templateType]: typePayload,
       },

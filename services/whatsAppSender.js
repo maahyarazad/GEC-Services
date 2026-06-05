@@ -362,7 +362,7 @@ async function sendMessageToPhone(
         throw new Error(`Unsupported template type: ${templateType}`);
     }
 
-    const result = await twilioClient.messages.create(messageOptions);
+    // const result = await twilioClient.messages.create(messageOptions);
 
     await Promise.resolve(
       db
