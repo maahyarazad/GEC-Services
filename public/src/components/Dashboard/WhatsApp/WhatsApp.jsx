@@ -1331,8 +1331,8 @@ const WhatsappBroadcast = () => {
                         overflowY: 'scroll',
                         '& .MuiButton-root': {
                             minHeight: { xs: 55, sm: 'unset' },
-                            fontSize: { xs: '1rem', sm: 'inherit' },
-                            padding: { xs: '10px 16px', sm: 'unset' },
+                            fontSize: { md: '0.8rem' ,xs: '1rem' },
+                            padding: { md: '6px 12px', xs: '5px 8px' },
                         },
                     }}
                 >
@@ -1354,20 +1354,20 @@ const WhatsappBroadcast = () => {
                     <Divider sx={{ my: 1 }} component="div"/>
 
                     {/* MIDDLE — navigation & utility buttons */}
-                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('contact-book')}>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('contact-book')}>
                         <RiContactsBook2Fill size={17} style={{ marginRight: 4 }} /> Contact Book
                     </Button>
-                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('guest-list')}>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('guest-list')}>
                         <BsPeopleFill size={17} style={{ marginRight: 4 }} /> Guest List
                     </Button>
-                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('event-list')}>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('event-list')}>
                         <BsCalendar2Event size={17} style={{ marginRight: 4 }} /> Event List
                     </Button>
                     <Divider sx={{ my: 1 }} component="div"/>
-                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('response-logs')}>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('response-logs')}>
                         <RiUserReceivedFill style={{ marginRight: 4 }} /> Response Logs
                     </Button>
-                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('delivery-logs')}>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('delivery-logs')}>
                         <RiCheckDoubleFill style={{ marginRight: 4 }} /> Delivery Logs
                     </Button>
 
