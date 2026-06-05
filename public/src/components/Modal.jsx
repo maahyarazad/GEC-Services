@@ -94,11 +94,14 @@ useEffect(() => {
                         right: 0,
                         bottom: 0,
                         width: "100%",
-                        height: "100%",
+                        height: "100dvh",
+                        maxHeight: "100dvh",
                         transform: "none",
                         borderRadius: 0,
                         margin: 0,
-                        overflowY: "auto",
+                        overflow: "hidden",
+                        display: "flex",
+                        flexDirection: "column",
                     }
                     : {
                         position: "fixed",
@@ -130,7 +133,7 @@ useEffect(() => {
                     <IoClose size={25} />
                 </button>
             </div>
-            <div className="modal-body">{children}</div>
+            <div className="modal-body" style={isMobile ? { flex: 1, overflowY: "auto", maxHeight: "none" } : undefined}>{children}</div>
         </ReactModal>
     );
 };
