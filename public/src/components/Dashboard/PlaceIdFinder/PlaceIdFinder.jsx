@@ -20,7 +20,6 @@ export default function PlaceIdFinder() {
     const [placeAddress, setPlaceAddress] = useState('');
     const [copied, setCopied]             = useState(false);
     const [initError, setInitError]       = useState('');
-    const [mapId, setMapId]               = useState('');
     const mapRef          = useRef(null);
     const autocompleteRef = useRef(null);
 
@@ -46,9 +45,9 @@ export default function PlaceIdFinder() {
             );
             if (!res.ok) throw new Error('Failed to load Maps configuration');
             const { apiKey, mapId: fetchedMapId } = await res.json();
+            // debugger;
             if (!apiKey) throw new Error('Maps API key not configured on server');
             if (cancelled) return;
-            setMapId(fetchedMapId ?? '');
 
             ensureMapsBootstrap(apiKey);
 
@@ -62,6 +61,11 @@ export default function PlaceIdFinder() {
             const mapEl  = mapRef.current;
             const autoEl = autocompleteRef.current;
             if (!mapEl || !autoEl) return;
+
+            // Set map-id via setAttribute before innerMap initialises so Advanced Markers work.
+            // React 19 assigns custom-element props as JS properties; gmp-map's center/zoom/map-id
+            // setters expect specific types, so we drive them imperatively instead of via JSX.
+            if (fetchedMapId) mapEl.setAttribute('map-id', fetchedMapId);
 
             autoElRef = autoEl;
 
@@ -78,6 +82,8 @@ export default function PlaceIdFinder() {
             if (cancelled) return;
 
             mapInstance = map;
+            map.setCenter({ lat: 25.2048, lng: 55.2708 });
+            map.setZoom(13);
             map.setOptions({ clickableIcons: false, mapTypeControl: false, streetViewControl: false });
             boundsListener = map.addListener('bounds_changed', () => {
                 const bounds = map.getBounds();
@@ -204,9 +210,7 @@ export default function PlaceIdFinder() {
             >
                 <gmp-map
                     ref={mapRef}
-                    center="25.2048, 55.2708"
-                    zoom="13"
-                    map-id={mapId || undefined}
+                    map-id="DEMO_MAP_ID"
                     style={{ width: '100%', height: '100%' }}
                 >
                     <gmp-place-autocomplete

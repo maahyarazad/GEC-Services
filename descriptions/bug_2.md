@@ -139,19 +139,16 @@ below is the d.data sample please fix the right panel - it should show all the l
 
 ## Description
 
-Switching between tabs in the dashboard causes the application to crash.
+Switching between tabs in the dashboard causes the application to crash. fix the MAP_ID AND USE GOOGLE RECOMMENDED DOSC
 
 The issue appears to occur when the `PlaceIdFinder` component is unmounted and remounted during tab navigation.
 
 Error log:
 
 ```txt
-main.js:205 Uncaught TypeError: Cannot read properties of undefined (reading 'getRootNode')
-
-react-dom-client.development.js:9362 An error occurred in the <PlaceIdFinder> component.
-
-Consider adding an error boundary to your tree to customize error handling behavior.
-Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+main.js:478 The map is initialized without a valid Map ID, which will prevent use of Advanced Markers.
+log @ main.js:478Understand this error
+main.js:186 Uncaught InvalidValueError: <gmp-map>: Cannot set property "center" to 25.2048, 55.2708: not a LatLng or LatLngLiteral with finite coordinates: not an Object
 ```
 
 ## Expected Behavior
