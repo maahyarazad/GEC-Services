@@ -229,3 +229,15 @@ Change the entire html structre and the text area and send button and the ChatVi
             </div>
         </form>
 ```
+
+
+
+# Feature Ticket Part 6: WhatsApp Section Mobile UI Improvement
+
+## Description
+
+
+In mobile view:
+
+* The **id="action-tab"**, which contains the ActiveEventCard and buttons. the buttons are small in mobile view meaning thier hieght is not same as the other action buttns 
+please increase the size in mobile view
