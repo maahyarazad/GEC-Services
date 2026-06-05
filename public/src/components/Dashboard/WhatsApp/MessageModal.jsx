@@ -117,6 +117,7 @@ const MessageModal = ({
                                     <option value="expert_guest">Expert Guest</option>
                                     <option value="difa">Difa</option>
                                     <option value="only_guest">Guest</option>
+                                    <option value="medical_society">Medical Society</option>
                                     <option value="Wüstenkinder">Wüstenkinder</option>
                                 </select>
                             </div>
