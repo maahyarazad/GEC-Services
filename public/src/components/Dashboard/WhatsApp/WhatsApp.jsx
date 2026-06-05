@@ -1308,8 +1308,11 @@ const WhatsappBroadcast = () => {
                             xs: 'none',
                             md: '100vh',
                         },
-
                         overflowY: 'auto',
+                        '& .MuiButton-root': {
+                            minHeight: { xs: 44, sm: 'unset' },
+                            fontSize: { xs: '0.8rem', sm: 'inherit' },
+                        },
                     }}
                 >
                     {/* TOP — active event card */}
