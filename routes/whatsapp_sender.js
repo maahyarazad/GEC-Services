@@ -6,11 +6,7 @@ const {
   handleAutoResponse,
   fetchHistory,
 } = require("../services/whatsAppSender");
-const twilioClient = require("twilio")(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-const crypto = require("crypto");
+
 
 const dbService = require("../services/dbService");
 const db = dbService.getDB();
@@ -22,6 +18,22 @@ const streamPipeline = promisify(pipeline);
 const fetch = require("node-fetch");
 const { getCountCacheKey, countCache } = require("../services/cacheService");
 const MessagingResponse = require("twilio").twiml.MessagingResponse;
+const dayjs = require("dayjs");
+const utc = require("dayjs/plugin/utc");
+const timezone = require("dayjs/plugin/timezone");
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const UAE_TZ = "Asia/Dubai";
+
+// Helper: parse any date string → UAE dayjs object
+const toUAE = (dateStr) => {
+  if (!dateStr) return null;
+
+  return dayjs.utc(dateStr).tz(UAE_TZ).format("YYYY-MM-DD HH:mm:ss");;
+};
+
 
 router.post("/api/whatsapp/send", (req, res) => {
   // Fire and forget: run messageSender but don't await
@@ -478,7 +490,7 @@ router.get("/api/whatsapp/twilio-response-logs", async (req, res) => {
       .prepare(`${baseCTE} SELECT COUNT(*) AS count FROM base ${whereClause}`)
       .get(...filterParams).count;
 
-    const data = db
+    const _data = db
       .prepare(
         `${baseCTE}
          SELECT * FROM base
@@ -487,6 +499,14 @@ router.get("/api/whatsapp/twilio-response-logs", async (req, res) => {
          LIMIT ? OFFSET ?`
       )
       .all(...filterParams, limit, pageNumber * limit);
+
+    // Twilio ISO → UAE
+    const data = (_data ?? []).map((item) => {
+    return {
+        ...item,
+        received_at: item.received_at ? toUAE(item.received_at) : null,
+    };
+    });
 
     return res.json({
       status: true,
@@ -507,7 +527,7 @@ router.post(
   async (req, res) => {
     try {
       const eventId = req.query.eventId ?? undefined;
-      const { From, Body, ButtonPayload, ButtonText } = req.body;
+      const { From, ButtonPayload } = req.body;
       const response = new MessagingResponse();
       response.message("");
 
