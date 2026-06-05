@@ -306,9 +306,33 @@ async function sendMessageToPhone(
             const splitted = contactBook_requested_variables.split(" ");
 
             let stringBuilder = "";
-            splitted.map((item) => {
-              if (valid_requested_variables.includes(item))
-                stringBuilder += `${contactPayload[item]} `;
+            splitted.forEach((item) => {
+              if (!valid_requested_variables.includes(item)) return;
+
+              switch (contactPayload.language) {
+                case "de":
+                  switch (contactPayload[item]) {
+                    case "male":
+                      stringBuilder += `Herr`;
+                      return;
+                    case "female":
+                      stringBuilder += `Frau`;
+                      return;
+                  }
+                  break;
+                case "en":
+                  switch (contactPayload[item]) {
+                    case "male":
+                      stringBuilder += `Mr.`;
+                      return;
+                    case "female":
+                      stringBuilder += `Ms.`;
+                      return;
+                  }
+                  break;
+              }
+
+              stringBuilder += `${contactPayload[item]} `;
             });
 
             if (stringBuilder === "") {
@@ -362,7 +386,7 @@ async function sendMessageToPhone(
         throw new Error(`Unsupported template type: ${templateType}`);
     }
 
-    // const result = await twilioClient.messages.create(messageOptions);
+    const result = await twilioClient.messages.create(messageOptions);
 
     await Promise.resolve(
       db
@@ -597,38 +621,37 @@ async function fetchTwilioMessagesDetails(sentMessages) {
 async function handleAutoResponse(From, ButtonPayload) {
   try {
     if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
-        const from = From.replace("whatsapp:", "");
-    
-        const contact = db
-          .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
-          .get(from);
-        if (!contact) return;
-    
-        const event = db
-          .prepare(`SELECT * FROM events WHERE active_event = 1`)
-          .get();
-        if (!event) return;
-    
-        const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
-        const type = guestTypes.includes(contact.type) ? "guest" : "general";
-        const lang = contact.language === "de" ? "de" : "en";
-    
-        const templates = await fetchContentTemplates();
-        const template = templates.result.find(
-          (x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc"
-        );
-    
-        const phoneList = [{ id: "8176278162873", phone: contact.phone }];
-        const payload = { 1: event[`auto_response_${type}_${lang}`] };
-    
-        await messageSender({ body: { template, phoneList, payload } });
-    
-        dbService.create("event_guest_list", {
-          contact_book_id: Number(contact.id),
-          event_id: Number(event.id),
-        });
-    }
+      const from = From.replace("whatsapp:", "");
 
+      const contact = db
+        .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
+        .get(from);
+      if (!contact) return;
+
+      const event = db
+        .prepare(`SELECT * FROM events WHERE active_event = 1`)
+        .get();
+      if (!event) return;
+
+      const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
+      const type = guestTypes.includes(contact.type) ? "guest" : "general";
+      const lang = contact.language === "de" ? "de" : "en";
+
+      const templates = await fetchContentTemplates();
+      const template = templates.result.find(
+        (x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc"
+      );
+
+      const phoneList = [{ id: "8176278162873", phone: contact.phone }];
+      const payload = { 1: event[`auto_response_${type}_${lang}`] };
+
+      await messageSender({ body: { template, phoneList, payload } });
+
+      dbService.create("event_guest_list", {
+        contact_book_id: Number(contact.id),
+        event_id: Number(event.id),
+      });
+    }
   } catch (e) {
     console.error(e);
   }

@@ -92,7 +92,16 @@ useEffect(() => {
                 onMouseDown={handleMouseDown}
                 style={{ cursor: "grab", userSelect: "none" }}
             >
-                <h2>{title}</h2>
+                <h2
+                    title={title}
+                    style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        minWidth: 0,
+                        flex: 1,
+                    }}
+                >{title}</h2>
                 <button className="modal-close-btn" onClick={onRequestClose}>
                     <IoClose size={25} />
                 </button>
