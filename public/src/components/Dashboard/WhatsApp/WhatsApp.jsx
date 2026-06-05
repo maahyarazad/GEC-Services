@@ -1172,6 +1172,8 @@ const WhatsappBroadcast = () => {
                                     rowCount={responsesRowCount}
                                     paginationModel={responsesPaginationModel}
                                     onPaginationModelChange={setResponsesPaginationModel}
+                                    filterItems={responsesFilterItems}
+                                    onFilterItemsChange={setResponsesFilterItems}
                                     activeMemberPhones={activeMemberPhonesResponses}
                                     notes={responseNotes}
                                     onViewJson={onViewJson}

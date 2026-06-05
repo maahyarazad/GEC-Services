@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Box, Typography, CircularProgress, TablePagination, InputBase } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { BiSolidCheckCircle } from 'react-icons/bi';
@@ -147,12 +147,17 @@ function ResponseItem({ row, activeMemberPhones, notes, onViewJson, onOpenNotepa
     );
 }
 
+const SEARCH_DEBOUNCE_MS = 800;
+const MOBILE_SEARCH_FILTER_ID = 'mobile-name-search';
+
 export default function ResponseLogsMobileList({
     rows = [],
     loading = false,
     rowCount = 0,
     paginationModel,
     onPaginationModelChange,
+    filterItems = [],
+    onFilterItemsChange,
     activeMemberPhones,
     notes,
     onViewJson,
@@ -160,14 +165,20 @@ export default function ResponseLogsMobileList({
 }) {
     const [search, setSearch] = useState('');
 
-    const filteredRows = useMemo(() => {
-        const term = search.trim().toLowerCase();
-        if (!term) return rows;
-        return rows.filter((row) => {
-            const name = (row.full_name || row.ProfileName || '').toLowerCase();
-            return name.includes(term);
-        });
-    }, [rows, search]);
+    // 800 ms debounce → push full_name filter to server
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const term = search.trim();
+            const withoutMine = (filterItems ?? []).filter((f) => f.id !== MOBILE_SEARCH_FILTER_ID);
+            const next = term
+                ? [...withoutMine, { id: MOBILE_SEARCH_FILTER_ID, field: 'full_name', operator: 'contains', value: term }]
+                : withoutMine;
+            onFilterItemsChange?.(next);
+            onPaginationModelChange?.({ ...(paginationModel ?? {}), page: 0 });
+        }, SEARCH_DEBOUNCE_MS);
+        return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [search]);
 
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper' }}>
@@ -198,14 +209,14 @@ export default function ResponseLogsMobileList({
                         <CircularProgress size={32} />
                     </Box>
                 )}
-                {filteredRows.length === 0 && !loading && (
+                {rows.length === 0 && !loading && (
                     <Box sx={{ py: 6, textAlign: 'center' }}>
                         <Typography variant="body2" color="text.secondary">
-                            {search ? 'No results found' : 'No messages'}
+                            {search.trim() ? 'No results found' : 'No messages'}
                         </Typography>
                     </Box>
                 )}
-                {filteredRows.map((row) => (
+                {rows.map((row) => (
                     <ResponseItem
                         key={row.id}
                         row={row}
