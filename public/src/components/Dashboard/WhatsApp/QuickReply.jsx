@@ -4,7 +4,7 @@ import { Button, CircularProgress } from '@mui/material';
 import ChatView from './ChatView';
 import './QuickReply.css';
 
-const QuickReply = ({ CloseModal, incoming_message, contact_name }) => {
+const QuickReply = ({ CloseModal, incoming_message }) => {
     const { showSnackbar } = useSnackbar();
     const [loading, setLoading] = useState(false);
     const [loadingHistory, setLoadingHistory] = useState(true);
@@ -81,16 +81,10 @@ const QuickReply = ({ CloseModal, incoming_message, contact_name }) => {
     return (
         <form onSubmit={handleSubmit}>
             <div className="container pt-2">
-                <div className="container pt-2 d-flex align-items-center gap-2">
-                    <div className="avatar-circle">
-                        {contact_name?.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="contact-name">{contact_name}</span>
-                </div>
-
-                <div className="py-2 d-flex justify-content-start align-items-center">
+                <div className="py-2 d-flex justify-content-start align-items-stretch" style={{ minHeight: '50%' }}>
                     <ChatView messages={history} loadingHistory={loadingHistory} />
                 </div>
+
 
                 <div className="row">
                     <div className="col mb-3">
@@ -119,6 +113,7 @@ const QuickReply = ({ CloseModal, incoming_message, contact_name }) => {
                         </Button>
                     </div>
                 </div>
+
             </div>
         </form>
     );

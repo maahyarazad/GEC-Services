@@ -120,7 +120,7 @@ useEffect(() => {
                 style={{ cursor: isMobile ? "default" : "grab", userSelect: "none" }}
             >
                 <h2
-                    title={title}
+                    title={typeof title === 'string' ? title : undefined}
                     style={{
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
