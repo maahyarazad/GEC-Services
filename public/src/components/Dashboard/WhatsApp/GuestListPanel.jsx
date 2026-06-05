@@ -1,4 +1,3 @@
-import { DataGrid } from '@mui/x-data-grid';
 import { guestListColumns } from './WhatsAppComponentConfig';
 import EventSearch from './EventSearch';
 import { Box } from '@mui/material';
@@ -6,8 +5,9 @@ import { getSelectedGuestList } from '../../../features/eventSlice';
 import { useAppSelector } from '../../../store/hooks';
 import { useState, useEffect, useCallback } from 'react';
 import NotepadModal from './NotepadModal';
+import CustomDataGrid from '../../CustomDataGrid';
 
-export default function GuestListPanel({ onGuestAttend, onRemoveGuest, paginationModel, setPaginationModel }) {
+export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
     const selectedGuestList = useAppSelector(getSelectedGuestList);
     const [activeMemberPhones, setActiveMemberPhones] = useState(new Map());
     const [guestNotes, setGuestNotes] = useState(new Map());
@@ -70,13 +70,10 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, paginatio
                 height: { xs: '60dvh', md: '85dvh' },
                 width: { xs: '100%', md: 'auto' },
             }}>
-                <DataGrid
+                <CustomDataGrid
                     rows={selectedGuestList}
                     columns={guestListColumns({ onGuestAttend, onRemoveGuest, activeMemberPhones, onOpenNotepad: handleOpenNotepad, notes: guestNotes })}
-                    paginationModel={paginationModel}
-                    onPaginationModelChange={setPaginationModel}
-                    pageSizeOptions={[25, 50, 100]}
-                    pagination
+                    rowsPerPageOptions={[25, 50, 100]}
                     disableRowSelectionOnClick
                     showToolbar
                 />

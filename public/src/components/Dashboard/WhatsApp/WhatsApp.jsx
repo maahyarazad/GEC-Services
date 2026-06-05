@@ -57,6 +57,7 @@ const WhatsappBroadcast = () => {
     const [groupedByTypeKey, setGroupedByTypeKey] = useState();
 
     const [openPanel, setOpenPanel] = useState(null);
+    const [mobileTemplatesOpen, setMobileTemplatesOpen] = useState(false);
     // null | 'contact-book' | 'event-list' | 'response-logs' | 'delivery-logs' | 'report' | 'report-type' | 'report-type-attendance'
     const [loading, setLoading] = useState(true);
     const [viewJsonModal, setViewJsonModal] = useState(false);
@@ -975,7 +976,14 @@ const WhatsappBroadcast = () => {
                 return "Payload";
 
             case "instant_reply":
-                return "Instant Reply";
+                return (
+                    <div className="d-flex align-items-center gap-2">
+                        <div className="avatar-circle">
+                            {JSON_Value_Response_Log?.full_name?.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="contact-name">{JSON_Value_Response_Log?.full_name}</span>
+                    </div>
+                );
 
             default:
                 return "";
@@ -1240,8 +1248,6 @@ const WhatsappBroadcast = () => {
                 <GuestListPanel
                     onGuestAttend={onGuestAttend}
                     onRemoveGuest={onRemoveGuestRequest}
-                    paginationModel={contactPaginationModel}
-                    setPaginationModel={setContactPaginationModel}
                 />
             </SlideMenu>
 
@@ -1299,7 +1305,7 @@ const WhatsappBroadcast = () => {
                             md: 'none',
                         },
                         maxHeight: {
-                            xs: '200px',
+                            xs: 'none',
                             md: '100vh',
                         },
 
@@ -1399,16 +1405,40 @@ const WhatsappBroadcast = () => {
                         sx={{ textTransform: 'none', justifyContent: 'flex-start', color: blueGrey[400], '&:hover': { color: blueGrey[400] }, borderColor: blueGrey[400] }} title='Remaining Invitations for the Current Event' onClick={() => handleSetOpenPanel('report-missing-sid')}>
                         <MdPersonSearch size={17} style={{ marginRight: 4 }} /> Remaining Invitations
                     </Button>
+
+                    {/* Mobile-only: open TwilioTemplateDataGrid */}
+                    <Divider sx={{ my: 1, display: { xs: 'block', sm: 'none' } }} component="div" />
+                    <Button
+                        variant="outlined"
+                        color="secondary"
+                        size="small"
+                        sx={{ display: { xs: 'flex', sm: 'none' }, textTransform: 'none', justifyContent: 'flex-start' }}
+                        onClick={() => setMobileTemplatesOpen(true)}
+                    >
+                        <SiTwilio size={17} style={{ marginRight: 4 }} /> View Templates
+                    </Button>
                 </Box>
 
-                {/* ── Vertical divider ── */}
-                <Divider orientation="vertical" flexItem sx={{ borderColor: 'grey.300' }} />
+                {/* ── Vertical divider (desktop only) ── */}
+                <Divider orientation="vertical" flexItem sx={{ borderColor: 'grey.300', display: { xs: 'none', sm: 'block' } }} />
 
-                {/* ── Main content area ── */}
-                <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                {/* ── Main content area (desktop only; shown via modal on mobile) ── */}
+                <Box sx={{ flexGrow: 1, minWidth: 0, display: { xs: 'none', sm: 'block' } }}>
                     {groupedByTypeKey && <TwilioTemplateDataGrid groupedByTypeKey={groupedByTypeKey} messageState={messageState} handleMessageStateChange={handleMessageStateChange} />}
                     {twilioCreditLow && <TwilioCreditWarning twilioCreditLow={twilioCreditLow} twilioCreditLowMessage={twilioCreditLowMessage} />}
                 </Box>
+
+                {/* ── Mobile: templates modal ── */}
+                <Modal
+                    isOpen={mobileTemplatesOpen}
+                    onRequestClose={() => setMobileTemplatesOpen(false)}
+                    title="Templates"
+                >
+                    <Box>
+                        {groupedByTypeKey && <TwilioTemplateDataGrid groupedByTypeKey={groupedByTypeKey} messageState={messageState} handleMessageStateChange={handleMessageStateChange} />}
+                        {twilioCreditLow && <TwilioCreditWarning twilioCreditLow={twilioCreditLow} twilioCreditLowMessage={twilioCreditLowMessage} />}
+                    </Box>
+                </Modal>
 
             </Box>
 

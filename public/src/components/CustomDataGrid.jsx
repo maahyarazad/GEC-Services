@@ -108,7 +108,6 @@ function FilterPanel({ columns, filters, onFiltersChange, onClose }) {
           const col = filterableColumns.find((c) => c.field === patch.field);
           const ops = col ? getOperators(col) : OPERATORS.string;
           updated.operator = ops[0].value;
-          updated.value = '';
         }
         return updated;
       })

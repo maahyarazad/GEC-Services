@@ -625,6 +625,12 @@ tr.eventhide {
   transition: transform 300ms ease-out, opacity 300ms ease-out;
 }
 
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 0.5rem;
+  }
+}
+
 .modal-content_after-open {
   transform: translateY(0);
   opacity: 1;
