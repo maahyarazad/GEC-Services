@@ -1,22 +1,32 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactModal from "react-modal";
 import { IoClose } from "react-icons/io5";
 
-const Modal = ({ isOpen, onRequestClose, title, children, _style = null, onAfterOpen }) => {
+const MOBILE_BREAKPOINT = 768;
+
+const Modal = ({ isOpen, onRequestClose, title, children, onAfterOpen }) => {
 
     const idRef = useRef(Math.floor(Date.now() + Math.random() * 100));
     const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [isMobile, setIsMobile] = useState(() => window.innerWidth <= MOBILE_BREAKPOINT);
     const dragging = useRef(false);
     const offset = useRef({ x: 0, y: 0 });
 
+    useEffect(() => {
+        const mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
+        const handler = (e) => setIsMobile(e.matches);
+        mq.addEventListener('change', handler);
+        return () => mq.removeEventListener('change', handler);
+    }, []);
+
 useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !isMobile) {
         setPosition({
             x: window.innerWidth / 2,
             y: window.innerHeight / 2,
         });
     }
-}, [isOpen]);
+}, [isOpen, isMobile]);
 
     useEffect(() => {
         const handleEsc = (event) => {
@@ -76,21 +86,35 @@ useEffect(() => {
             shouldCloseOnOverlayClick={true}
             shouldCloseOnEsc={true}
             style={{
-                content: {
-                    position: "fixed",
-                    top: position.y,
-                    left: position.x,
-                    transform: "translate(-50%, -50%)",
-                    right: "auto",
-                    bottom: "auto",
-                }
+                content: isMobile
+                    ? {
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        width: "100%",
+                        height: "100%",
+                        transform: "none",
+                        borderRadius: 0,
+                        margin: 0,
+                        overflowY: "auto",
+                    }
+                    : {
+                        position: "fixed",
+                        top: position.y,
+                        left: position.x,
+                        transform: "translate(-50%, -50%)",
+                        right: "auto",
+                        bottom: "auto",
+                    }
             }}
         >
-            {/* Drag handle — only the header is draggable */}
+            {/* Drag handle — only the header is draggable (disabled on mobile) */}
             <div
                 className="modal-header"
-                onMouseDown={handleMouseDown}
-                style={{ cursor: "grab", userSelect: "none" }}
+                onMouseDown={isMobile ? undefined : handleMouseDown}
+                style={{ cursor: isMobile ? "default" : "grab", userSelect: "none" }}
             >
                 <h2
                     title={title}

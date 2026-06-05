@@ -28,3 +28,21 @@ This is a very long message title that excee...
 ```
 
 The title should remain within the available space and display an ellipsis when truncated.
+
+
+# Feature Ticket Part 2: Mobile Modal Enhancements
+
+## Description
+
+All modal components should display in **full-screen mode** on mobile devices to provide a better user experience and improve usability on smaller screens.
+
+## Expected Behavior
+
+### Desktop
+
+* Modals should continue to display using their current width and height settings.
+
+### Mobile
+
+* Modals should occupy the full viewport width and height.
+* Content should be optimized for touch interaction.
