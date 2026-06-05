@@ -1330,8 +1330,9 @@ const WhatsappBroadcast = () => {
                         },
                         overflowY: 'scroll',
                         '& .MuiButton-root': {
-                            minHeight: { xs: 44, sm: 'unset' },
-                            fontSize: { xs: '0.8rem', sm: 'inherit' },
+                            minHeight: { xs: 55, sm: 'unset' },
+                            fontSize: { xs: '1rem', sm: 'inherit' },
+                            padding: { xs: '10px 16px', sm: 'unset' },
                         },
                     }}
                 >
