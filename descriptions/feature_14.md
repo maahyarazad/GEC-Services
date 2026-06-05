@@ -146,3 +146,86 @@ reduce the padding to 0.5rem
     padding: 1rem;
 }
 ```
+
+
+# Feature Ticket Part 5: Fix QuickReply and ChatView Height Allocation
+
+## Description
+
+The modal header currently occupies approximately **5% of the total viewport height**.
+
+### Desktop View
+
+Update the layout so that:
+
+* The **QuickReply** section always has a fixed height of **80% of the viewport height (80vh)**.
+* The **ChatView** section should occupy **80% of the available height within the QuickReply component**.
+* The remaining space within QuickReply can be used for the input area, controls, or other UI elements.
+
+### Mobile View
+
+Update the layout so that:
+
+* The modal opens in **full-screen mode**, consistent with other mobile modals in the application.
+* The **QuickReply** section should occupy **85% of the total viewport height (85vh)**.
+* The remaining height should be allocated to the modal header and any required footer or action controls.
+
+## Expected Result
+
+* The QuickReply and ChatView areas should maintain consistent sizing across different screen sizes.
+* Scrolling should occur within the content areas rather than causing the entire modal layout to shift.
+* The layout should remain stable and responsive in both desktop and mobile views.
+
+# Feature Ticket Part 5: Fix QuickReply and ChatView html structure
+
+
+## Description
+
+Change the entire html structre and the text area and send button and the ChatView should take the entire width
+
+```jsx
+ <form
+            onSubmit={handleSubmit}
+            style={{
+                height: isMobile ? '85vh' : '80vh',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+            }}
+        >
+            {/* ChatView — 80% of form height */}
+            <div style={{ height: '80%', display: 'flex', alignItems: 'stretch' }}>
+                <ChatView messages={history} loadingHistory={loadingHistory} />
+            </div>
+
+            {/* Input area — remaining 20% */}
+            <div style={{ flex: 1, overflow: 'auto', padding: '0.5rem 0' }}>
+                <div className="row">
+                    <div className="col mb-2">
+                        <label>Your Message:</label>
+                        <textarea
+                            rows={2}
+                            name="message"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            className="form-control"
+                        />
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-12">
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            type="submit"
+                            disabled={loading}
+                            sx={{ textTransform: 'none', width: '100%' }}
+                            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+                        >
+                            {loading ? "Sending..." : "Send"}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </form>
+```

@@ -80,10 +80,12 @@ const QuickReply = ({ CloseModal, incoming_message }) => {
 
     return (
         <form onSubmit={handleSubmit}>
-            <div className="container pt-2">
-                <div className="py-2 d-flex justify-content-start align-items-stretch" style={{ minHeight: '50%' }}>
+            <div className="container">
+                    
+                    
+                    
                     <ChatView messages={history} loadingHistory={loadingHistory} />
-                </div>
+               
 
 
                 <div className="row">
