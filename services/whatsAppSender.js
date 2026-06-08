@@ -387,10 +387,11 @@ async function sendMessageToPhone(
                   break;
               }
 
-              stringBuilder += `${contactPayload[item] ?? ""} `;
+              stringBuilder += `${contactPayload[item] ?? null}`;
             });
 
             if (stringBuilder === "") {
+              // the fall back is the variable name - not sure what we can consider as the fallback for null values!!!
               contentVariables[key] = payload[key];
             } else {
               contentVariables[key] = stringBuilder.trimEnd();
