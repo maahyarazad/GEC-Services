@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
@@ -42,6 +43,7 @@ import PlayStore from '../../assets/download-play-store.png';
 
 const steps = ['Check Your Current Status', 'Update Your Profile', 'Get Your Membership Pass'];
 const PurchaseMemberShip = () => {
+    const navigate = useNavigate();
     const [activeStep, setActiveStep] = React.useState(0);
     const [skipped, setSkipped] = React.useState(new Set());
     const [slideDirection, setSlideDirection] = React.useState('left');
@@ -441,12 +443,9 @@ const PurchaseMemberShip = () => {
                             <Box
                                 component="span"
                                 sx={footerLinkSx}
-                                onClick={() => {
-                                    window.location.href =
-                                        "mailto:development3@german-emirates-club.com";
-                                }}
+                                onClick={() => navigate('/support')}
                             >
-                                Contact support
+                                Raise a Ticket
                             </Box>
                         </Typography>
                     </Box>
