@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { FaWhatsapp } from "react-icons/fa";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import { Divider } from "@mui/material";
+import { Divider, useTheme, useMediaQuery } from "@mui/material";
 import { Button } from '@mui/material'
 import Modal from '../../Modal';
 import SlideMenu from '../../SlideMenu/SlideMenu';
@@ -46,6 +46,7 @@ import CreateTwilioTemplate from "./CreateTwilioTemplate";
 import { SiTwilio } from "react-icons/si";
 import ActiveEventCard from "./ActiveEventCard";
 import GuestListPanel from "./GuestListPanel";
+import ResponseLogsMobileList from "./ResponseLogsMobileList";
 import NotepadModal from "./NotepadModal";
 import { BsPeopleFill } from "react-icons/bs";
 const WhatsappBroadcast = () => {
@@ -55,6 +56,9 @@ const WhatsappBroadcast = () => {
     const { openDialog } = useAlertDialog();
     const [data, setData] = useState();
     const [groupedByTypeKey, setGroupedByTypeKey] = useState();
+
+    const theme = useTheme();
+    const isMobileView = useMediaQuery(theme.breakpoints.down('sm'));
 
     const [openPanel, setOpenPanel] = useState(null);
     const [mobileTemplatesOpen, setMobileTemplatesOpen] = useState(false);
@@ -1161,29 +1165,45 @@ const WhatsappBroadcast = () => {
 
                     {openPanel === 'response-logs' && (
                         <div style={{ width: '100%', height: 'calc(100vh - 105px)' }}>
-                            <CustomDataGrid
-                                rows={responses}
-                                columns={responseColumns({ onViewJson, onViewHistory, activeMemberPhones: activeMemberPhonesResponses, onOpenNotepad: handleOpenNotepadByPhone, notes: responseNotes })}
-                                loading={loading_logs}
-                                showToolbar
+                            {isMobileView ? (
+                                <ResponseLogsMobileList
+                                    rows={responses}
+                                    loading={loading_logs}
+                                    rowCount={responsesRowCount}
+                                    paginationModel={responsesPaginationModel}
+                                    onPaginationModelChange={setResponsesPaginationModel}
+                                    filterItems={responsesFilterItems}
+                                    onFilterItemsChange={setResponsesFilterItems}
+                                    activeMemberPhones={activeMemberPhonesResponses}
+                                    notes={responseNotes}
+                                    onViewJson={onViewJson}
+                                    onOpenNotepad={handleOpenNotepadByPhone}
+                                />
+                            ) : (
+                                <CustomDataGrid
+                                    rows={responses}
+                                    columns={responseColumns({ onViewJson, onViewHistory, activeMemberPhones: activeMemberPhonesResponses, onOpenNotepad: handleOpenNotepadByPhone, notes: responseNotes })}
+                                    loading={loading_logs}
+                                    showToolbar
 
-                                filterMode='server'
-                                sortingMode='server'
-                                paginationMode='server'
+                                    filterMode='server'
+                                    sortingMode='server'
+                                    paginationMode='server'
 
-                                rowCount={responsesRowCount}
-                                paginationModel={responsesPaginationModel}
-                                onPaginationModelChange={setResponsesPaginationModel}
-                                rowsPerPageOptions={[25, 50, 100]}
+                                    rowCount={responsesRowCount}
+                                    paginationModel={responsesPaginationModel}
+                                    onPaginationModelChange={setResponsesPaginationModel}
+                                    rowsPerPageOptions={[25, 50, 100]}
 
-                                sortModel={responsesSortModel}
-                                onSortModelChange={setResponsesSortModel}
+                                    sortModel={responsesSortModel}
+                                    onSortModelChange={setResponsesSortModel}
 
-                                filterItems={responsesFilterItems}
-                                onFilterItemsChange={setResponsesFilterItems}
+                                    filterItems={responsesFilterItems}
+                                    onFilterItemsChange={setResponsesFilterItems}
 
-                                disableRowSelectionOnClick
-                            />
+                                    disableRowSelectionOnClick
+                                />
+                            )}
                         </div>
                     )}
                 </>
@@ -1310,8 +1330,9 @@ const WhatsappBroadcast = () => {
                         },
                         overflowY: 'scroll',
                         '& .MuiButton-root': {
-                            minHeight: { xs: 44, sm: 'unset' },
-                            fontSize: { xs: '0.8rem', sm: 'inherit' },
+                            minHeight: { xs: 55, sm: 'unset' },
+                            fontSize: { md: '0.8rem' ,xs: '1rem' },
+                            padding: { md: '6px 12px', xs: '5px 8px' },
                         },
                     }}
                 >
@@ -1333,20 +1354,20 @@ const WhatsappBroadcast = () => {
                     <Divider sx={{ my: 1 }} component="div"/>
 
                     {/* MIDDLE — navigation & utility buttons */}
-                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('contact-book')}>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('contact-book')}>
                         <RiContactsBook2Fill size={17} style={{ marginRight: 4 }} /> Contact Book
                     </Button>
-                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('guest-list')}>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('guest-list')}>
                         <BsPeopleFill size={17} style={{ marginRight: 4 }} /> Guest List
                     </Button>
-                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('event-list')}>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('event-list')}>
                         <BsCalendar2Event size={17} style={{ marginRight: 4 }} /> Event List
                     </Button>
                     <Divider sx={{ my: 1 }} component="div"/>
-                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('response-logs')}>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('response-logs')}>
                         <RiUserReceivedFill style={{ marginRight: 4 }} /> Response Logs
                     </Button>
-                    <Button variant="outlined" color="primary" size="small" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('delivery-logs')}>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('delivery-logs')}>
                         <RiCheckDoubleFill style={{ marginRight: 4 }} /> Delivery Logs
                     </Button>
 

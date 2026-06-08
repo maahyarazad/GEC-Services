@@ -107,16 +107,21 @@ function App() {
             document.documentElement.style.setProperty("--vh", `${vh}px`);
         };
 
-        // Run at start
         setVhVar();
-
-        // Update on resize / orientation change
         window.addEventListener("resize", setVhVar);
 
         return () => {
             window.removeEventListener("resize", setVhVar);
         };
+    }, []);
 
+    useEffect(() => {
+        const handler = (e) => {
+            e.preventDefault();
+            e.prompt();
+        };
+        window.addEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handler);
     }, []);
     return (
         <BrowserRouter>

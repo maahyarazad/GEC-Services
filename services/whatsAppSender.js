@@ -71,6 +71,60 @@ function extractPlaceholders(text) {
   return matches.map((m) => m[1]); // returns ["1", "2", ...]
 }
 
+async function enrichPhoneListWithContactData(phoneList, db) {
+  const phoneNumbers = phoneList.map((item) => item.phone);
+
+  const placeholders = phoneNumbers.map(() => "?").join(", ");
+
+  const query = `
+    SELECT 
+      id,
+      title,
+      first_name,
+      last_name,
+      gender,
+      phone,
+      language,
+      type,
+      club_partner_name,
+      blacklist,
+      contentSid
+    FROM contact_book
+    WHERE phone IN (${placeholders})
+  `;
+
+  // better-sqlite3: prepare first, then call .all() on the statement
+  const contactRows = db.prepare(query).all(...phoneNumbers);
+
+  const contactMap = new Map(contactRows.map((row) => [row.phone, row]));
+
+  const enrichedList = phoneList.map((item) => {
+    const contact = contactMap.get(item.phone);
+
+    if (!contact) {
+      return { ...item, contactFound: false };
+    }
+
+    return {
+      ...item,
+      contactFound: true,
+      contactId: contact.id,
+      title: contact.title,
+      first_name: contact.first_name,
+      last_name: contact.last_name,
+      gender: contact.gender,
+      language: contact.language,
+      type: contact.type,
+      club_partner_name: contact.club_partner_name,
+      blacklist: contact.blacklist,
+      contentSid: contact.contentSid,
+    };
+  });
+
+  return enrichedList;
+}
+
+
 // Helper to detect placeholders in body
 function hasPlaceholders(text) {
   return /{{\s*[^}]+\s*}}/.test(text);
@@ -196,13 +250,13 @@ const messageSender = async (req) => {
         }
 
         if (process.env.ENVIRONMENT === "PRODUCTION") {
-          return await sendMessageToPhone(
-            el.phone,
-            template,
-            payload,
-            el,
-            eventId
-          );
+            return await sendMessageToPhone(
+              el.phone,
+              template,
+              payload,
+              el,
+              eventId
+            );
         }
       } catch (err) {
         console.error(`Error sending message to ${el.phone}:`, err);
@@ -254,7 +308,8 @@ const messageSender = async (req) => {
         }
       }
     } else {
-      await Promise.all(phoneList.map((x) => safeSendMessage(x, eventId)));
+      const enrichedPhoneList = await enrichPhoneListWithContactData(phoneList, db);
+      await Promise.all(enrichedPhoneList.map((x) => safeSendMessage(x, eventId)));
     }
 
     return { status: true };
@@ -332,10 +387,11 @@ async function sendMessageToPhone(
                   break;
               }
 
-              stringBuilder += `${contactPayload[item]} `;
+              stringBuilder += `${contactPayload[item] ?? null}`;
             });
 
             if (stringBuilder === "") {
+              // the fall back is the variable name - not sure what we can consider as the fallback for null values!!!
               contentVariables[key] = payload[key];
             } else {
               contentVariables[key] = stringBuilder.trimEnd();
@@ -589,6 +645,67 @@ async function fetchHistory(phone) {
   }
 }
 
+async function fetchEvent(From) {
+  try {
+    const from = From.replace("whatsapp:", "");
+    const toNumber = `whatsapp:+${from}`;
+
+//console.log(`fetchEvent const From = ${From}`);
+//console.log(`fetchEvent const from = ${from}`);
+
+
+
+    const historyQuery = `
+      -- Received messages
+      SELECT
+          json_extract(tr.payload, '$.Body')              AS body,
+          json_extract(tr.payload, '$.MediaUrl0')         AS media_url,
+          json_extract(tr.payload, '$.MediaContentType0') AS media_type,
+          NULL                                            AS messageSid,
+          NULL                                            AS contentSid,
+          NULL                                            AS event_id,
+          datetime(tr.received_at, '+4 hours')            AS received_at,
+          'r'                                             AS type
+      FROM twilio_responses tr
+      WHERE json_extract(tr.payload, '$.WaId') = ?
+
+      UNION ALL
+
+      -- Sent messages
+      SELECT
+          NULL                                            AS body,
+          NULL                                            AS media_url,
+          NULL                                            AS media_type,
+          ttm.messageSid                                  AS messageSid,
+          ttm.contentSid                                  AS contentSid,
+          ttm.event_id                                    AS event_id,
+          datetime(td.metadata_createdAt, '+4 hours')     AS received_at,
+          's'                                             AS type
+      FROM twilio_delivery td
+      INNER JOIN twilio_template_message ttm
+          ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+      WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
+        AND json_extract(td.response, '$.To')           = ?
+        AND ttm.contentSid IS NOT NULL
+
+      ORDER BY received_at DESC
+      LIMIT 1;
+    `;
+
+    // First ? = WaId (bare number), second ? = To (whatsapp:+...)
+    const row = db.prepare(historyQuery).all(from, From)[0];
+
+    const eventId = (row?.type === 's' ? row.event_id : null) ?? 0;
+
+    //console.log(`fetchEvent const eventId = ${eventId}`);
+    
+    return Number(eventId);
+  } catch (error) {
+    console.error("Failed to fetch event:", error);
+    throw error;
+  }
+}
+
 async function fetchTwilioMessagesDetails(sentMessages) {
   // Map each messageSid to a fetch Promise
   const fetchPromises = sentMessages.map(async (msg) => {
@@ -628,10 +745,16 @@ async function handleAutoResponse(From, ButtonPayload) {
         .get(from);
       if (!contact) return;
 
+
+      const event_id = await fetchEvent(From);
+
+      //console.log(`handleAutoResponse const event_id = ${event_id}`);
       const event = db
-        .prepare(`SELECT * FROM events WHERE active_event = 1`)
-        .get();
+        .prepare(`SELECT * FROM events WHERE id = ?`)
+        .get(event_id);
       if (!event) return;
+
+        //console.log(`handleAutoResponse const event = ${JSON.stringify(event)}`);
 
       const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
       const type = guestTypes.includes(contact.type) ? "guest" : "general";
@@ -645,6 +768,8 @@ async function handleAutoResponse(From, ButtonPayload) {
       const phoneList = [{ id: "8176278162873", phone: contact.phone }];
       const payload = { 1: event[`auto_response_${type}_${lang}`] };
 
+    //console.log(`handleAutoResponse const payload = ${JSON.stringify(payload)}`);
+      
       await messageSender({ body: { template, phoneList, payload } });
 
       dbService.create("event_guest_list", {

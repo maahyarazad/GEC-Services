@@ -67,16 +67,16 @@ const MediaBubble = ({ media_url, media_type }) => {
 
 const ChatView = ({ messages, loadingHistory }) => {
     let lastDate = null;
-    const bottomRef = useRef(null);
+    const containerRef = useRef(null);
 
     useEffect(() => {
-        if (!loadingHistory && messages?.length) {
-            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (!loadingHistory && messages?.length && containerRef.current) {
+            containerRef.current.scrollTop = containerRef.current.scrollHeight;
         }
     }, [messages, loadingHistory]);
 
     return (
-        <div className="chat-container">
+        <div className="chat-container" ref={containerRef}>
             {loadingHistory ? (
                 <div className="d-flex justify-content-center align-items-center w-100 h-100">
                     <CircularProgress size={30} color="inherit" />
@@ -130,7 +130,6 @@ const ChatView = ({ messages, loadingHistory }) => {
                 })
             )}
 
-            <div ref={bottomRef} />
         </div>
     );
 };
