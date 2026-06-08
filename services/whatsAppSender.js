@@ -641,7 +641,7 @@ console.log(`fetchEvent const from = ${from}`);
 
     
     console.log(`fetchEvent const rows = ${rows}`);
-    
+
     const lastRow = rows.at(-1);
     const eventId = (lastRow?.type === 's' ? lastRow.event_id : null) ?? 0;
 
@@ -699,10 +699,13 @@ async function handleAutoResponse(From, ButtonPayload) {
 
       const event_id = await fetchEvent(From);
 
+      console.log(`handleAutoResponse const event_id = ${event_id}`);
       const event = db
         .prepare(`SELECT * FROM events WHERE event_id = ?`)
         .get(event_id);
       if (!event) return;
+
+        console.log(`handleAutoResponse const event = ${event}`);
 
       const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
       const type = guestTypes.includes(contact.type) ? "guest" : "general";
@@ -716,6 +719,7 @@ async function handleAutoResponse(From, ButtonPayload) {
       const phoneList = [{ id: "8176278162873", phone: contact.phone }];
       const payload = { 1: event[`auto_response_${type}_${lang}`] };
 
+    console.log(`handleAutoResponse const payload = ${payload}`);
       
       await messageSender({ body: { template, phoneList, payload } });
 
