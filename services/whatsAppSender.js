@@ -593,9 +593,10 @@ async function fetchEvent(From) {
   try {
     const from = From.replace("whatsapp:", "");
     const toNumber = `whatsapp:+${from}`;
+    
 console.log(`fetchEvent const From = ${From}`);
 console.log(`fetchEvent const from = ${from}`);
-console.log(`fetchEvent toNumber from = ${toNumber}`);
+
 
 
     const historyQuery = `
@@ -636,7 +637,7 @@ console.log(`fetchEvent toNumber from = ${toNumber}`);
     `;
 
     // First ? = WaId (bare number), second ? = To (whatsapp:+...)
-    const rows = db.prepare(historyQuery).all(from, toNumber);
+    const rows = db.prepare(historyQuery).all(from, From);
 
     console.log(rows);
     // Received rows have event_id = NULL, so grab the first row that actually has one
