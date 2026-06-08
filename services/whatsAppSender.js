@@ -593,7 +593,7 @@ async function fetchEvent(From) {
   try {
     const from = From.replace("whatsapp:", "");
     const toNumber = `whatsapp:+${from}`;
-    
+
 console.log(`fetchEvent const From = ${From}`);
 console.log(`fetchEvent const from = ${from}`);
 
@@ -639,11 +639,18 @@ console.log(`fetchEvent const from = ${from}`);
     // First ? = WaId (bare number), second ? = To (whatsapp:+...)
     const rows = db.prepare(historyQuery).all(from, From);
 
-    console.log(rows);
-    // Received rows have event_id = NULL, so grab the first row that actually has one
-    const eventId = rows.find((r) => r.event_id != null)?.event_id ?? null;
+    
+    console.log(`fetchEvent const rows = ${rows}`);
+    
+    const lastRow = rows.at(-1);
+    const eventId = (lastRow?.type === 's' ? lastRow.event_id : null) ?? 0;
 
-    return eventId;
+    console.log(`fetchEvent const lastRow = ${lastRow}`);
+    console.log(`fetchEvent const eventId = ${eventId}`);
+    
+    
+    
+    return Number(eventId);
   } catch (error) {
     console.error("Failed to fetch event:", error);
     throw error;
