@@ -754,7 +754,7 @@ async function handleAutoResponse(From, ButtonPayload) {
         .get(event_id);
       if (!event) return;
 
-        console.log(`handleAutoResponse const event = ${event}`);
+        console.log(`handleAutoResponse const event = ${JSON.stringify(event)}`);
 
       const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
       const type = guestTypes.includes(contact.type) ? "guest" : "general";
@@ -768,7 +768,7 @@ async function handleAutoResponse(From, ButtonPayload) {
       const phoneList = [{ id: "8176278162873", phone: contact.phone }];
       const payload = { 1: event[`auto_response_${type}_${lang}`] };
 
-    console.log(`handleAutoResponse const payload = ${payload}`);
+    console.log(`handleAutoResponse const payload = ${JSON.stringify(payload)}`);
       
       await messageSender({ body: { template, phoneList, payload } });
 
