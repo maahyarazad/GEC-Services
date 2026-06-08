@@ -689,22 +689,15 @@ console.log(`fetchEvent const from = ${from}`);
         AND ttm.contentSid IS NOT NULL
 
       ORDER BY received_at DESC
-      LIMIT 2;
+      LIMIT 1;
     `;
 
     // First ? = WaId (bare number), second ? = To (whatsapp:+...)
-    const rows = db.prepare(historyQuery).all(from, From);
+    const row = db.prepare(historyQuery).all(from, From)[0];
 
-    
-    console.log(`fetchEvent const rows = ${rows}`);
+    const eventId = (row?.type === 's' ? row.event_id : null) ?? 0;
 
-    const lastRow = rows.at(-1);
-    const eventId = (lastRow?.type === 's' ? lastRow.event_id : null) ?? 0;
-
-    console.log(`fetchEvent const lastRow = ${lastRow}`);
     console.log(`fetchEvent const eventId = ${eventId}`);
-    
-    
     
     return Number(eventId);
   } catch (error) {
