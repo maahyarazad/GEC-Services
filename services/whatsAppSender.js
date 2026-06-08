@@ -71,6 +71,60 @@ function extractPlaceholders(text) {
   return matches.map((m) => m[1]); // returns ["1", "2", ...]
 }
 
+async function enrichPhoneListWithContactData(phoneList, db) {
+  const phoneNumbers = phoneList.map((item) => item.phone);
+
+  const placeholders = phoneNumbers.map(() => "?").join(", ");
+
+  const query = `
+    SELECT 
+      id,
+      title,
+      first_name,
+      last_name,
+      gender,
+      phone,
+      language,
+      type,
+      club_partner_name,
+      blacklist,
+      contentSid
+    FROM contact_book
+    WHERE phone IN (${placeholders})
+  `;
+
+  // better-sqlite3: prepare first, then call .all() on the statement
+  const contactRows = db.prepare(query).all(...phoneNumbers);
+
+  const contactMap = new Map(contactRows.map((row) => [row.phone, row]));
+
+  const enrichedList = phoneList.map((item) => {
+    const contact = contactMap.get(item.phone);
+
+    if (!contact) {
+      return { ...item, contactFound: false };
+    }
+
+    return {
+      ...item,
+      contactFound: true,
+      contactId: contact.id,
+      title: contact.title,
+      first_name: contact.first_name,
+      last_name: contact.last_name,
+      gender: contact.gender,
+      language: contact.language,
+      type: contact.type,
+      club_partner_name: contact.club_partner_name,
+      blacklist: contact.blacklist,
+      contentSid: contact.contentSid,
+    };
+  });
+
+  return enrichedList;
+}
+
+
 // Helper to detect placeholders in body
 function hasPlaceholders(text) {
   return /{{\s*[^}]+\s*}}/.test(text);
@@ -196,13 +250,13 @@ const messageSender = async (req) => {
         }
 
         if (process.env.ENVIRONMENT === "PRODUCTION") {
-          return await sendMessageToPhone(
-            el.phone,
-            template,
-            payload,
-            el,
-            eventId
-          );
+            return await sendMessageToPhone(
+              el.phone,
+              template,
+              payload,
+              el,
+              eventId
+            );
         }
       } catch (err) {
         console.error(`Error sending message to ${el.phone}:`, err);
@@ -254,7 +308,8 @@ const messageSender = async (req) => {
         }
       }
     } else {
-      await Promise.all(phoneList.map((x) => safeSendMessage(x, eventId)));
+      const enrichedPhoneList = await enrichPhoneListWithContactData(phoneList, db);
+      await Promise.all(enrichedPhoneList.map((x) => safeSendMessage(x, eventId)));
     }
 
     return { status: true };
@@ -332,7 +387,7 @@ async function sendMessageToPhone(
                   break;
               }
 
-              stringBuilder += `${contactPayload[item]} `;
+              stringBuilder += `${contactPayload[item] ?? ""} `;
             });
 
             if (stringBuilder === "") {
