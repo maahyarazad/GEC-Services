@@ -701,7 +701,7 @@ async function handleAutoResponse(From, ButtonPayload) {
 
       console.log(`handleAutoResponse const event_id = ${event_id}`);
       const event = db
-        .prepare(`SELECT * FROM events WHERE event_id = ?`)
+        .prepare(`SELECT * FROM events WHERE id = ?`)
         .get(event_id);
       if (!event) return;
 
