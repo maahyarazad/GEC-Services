@@ -593,6 +593,10 @@ async function fetchEvent(From) {
   try {
     const from = From.replace("whatsapp:", "");
     const toNumber = `whatsapp:+${from}`;
+console.log(`fetchEvent const From = ${From}`);
+console.log(`fetchEvent const from = ${from}`);
+console.log(`fetchEvent toNumber from = ${toNumber}`);
+
 
     const historyQuery = `
       -- Received messages
