@@ -391,14 +391,14 @@ async function sendMessageToPhone(
                   break;
               }
 
-              stringBuilder += `${contactPayload[item] ?? null}`;
+              stringBuilder += `${contactPayload[item]}`;
             });
 
             if (stringBuilder === "") {
-              // the fall back is the variable name - not sure what we can consider as the fallback for null values!!!
-              contentVariables[key] = payload[key];
+                contentVariables[key] = payload[key];
             } else {
-              contentVariables[key] = stringBuilder.trimEnd();
+               // If the ContactPayload doesn't have the value of the Template we simple make it empty 
+              contentVariables[key] = stringBuilder.trimEnd() === 'null' ? '' : stringBuilder.trimEnd();;
             }
           } else {
             contentVariables[key] = payload[key];
