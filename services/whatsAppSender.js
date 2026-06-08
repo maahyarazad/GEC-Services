@@ -650,8 +650,8 @@ async function fetchEvent(From) {
     const from = From.replace("whatsapp:", "");
     const toNumber = `whatsapp:+${from}`;
 
-console.log(`fetchEvent const From = ${From}`);
-console.log(`fetchEvent const from = ${from}`);
+//console.log(`fetchEvent const From = ${From}`);
+//console.log(`fetchEvent const from = ${from}`);
 
 
 
@@ -697,7 +697,7 @@ console.log(`fetchEvent const from = ${from}`);
 
     const eventId = (row?.type === 's' ? row.event_id : null) ?? 0;
 
-    console.log(`fetchEvent const eventId = ${eventId}`);
+    //console.log(`fetchEvent const eventId = ${eventId}`);
     
     return Number(eventId);
   } catch (error) {
@@ -748,13 +748,13 @@ async function handleAutoResponse(From, ButtonPayload) {
 
       const event_id = await fetchEvent(From);
 
-      console.log(`handleAutoResponse const event_id = ${event_id}`);
+      //console.log(`handleAutoResponse const event_id = ${event_id}`);
       const event = db
         .prepare(`SELECT * FROM events WHERE id = ?`)
         .get(event_id);
       if (!event) return;
 
-        console.log(`handleAutoResponse const event = ${JSON.stringify(event)}`);
+        //console.log(`handleAutoResponse const event = ${JSON.stringify(event)}`);
 
       const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
       const type = guestTypes.includes(contact.type) ? "guest" : "general";
@@ -768,7 +768,7 @@ async function handleAutoResponse(From, ButtonPayload) {
       const phoneList = [{ id: "8176278162873", phone: contact.phone }];
       const payload = { 1: event[`auto_response_${type}_${lang}`] };
 
-    console.log(`handleAutoResponse const payload = ${JSON.stringify(payload)}`);
+    //console.log(`handleAutoResponse const payload = ${JSON.stringify(payload)}`);
       
       await messageSender({ body: { template, phoneList, payload } });
 
