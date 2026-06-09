@@ -292,16 +292,45 @@ router.get("/api/admin/support/tickets", authorize.authorize_admin, (req, res) =
 // GET /api/admin/support/tickets/:id — single ticket with attachments, comments, activity
 router.get("/api/admin/support/tickets/:id", authorize.authorize_admin, (req, res) => {
   try {
-    const ticket = db.prepare("SELECT * FROM support_tickets WHERE id = ?").get(req.params.id);
+    const ticket = db.prepare(`
+      SELECT t.*,
+             u.firstName AS assigned_firstName,
+             u.lastName  AS assigned_lastName,
+             u.email     AS assigned_email
+      FROM support_tickets t
+      LEFT JOIN GIC_Users u ON t.assigned_to = u.id
+      WHERE t.id = ?
+    `).get(req.params.id);
     if (!ticket) return res.status(404).json({ status: false, message: "Not found." });
 
     const attachments = db.prepare("SELECT id, original_name, mime_type, file_size, created_at FROM support_ticket_attachments WHERE ticket_id = ?").all(ticket.id);
-    const comments    = db.prepare("SELECT * FROM support_ticket_comments WHERE ticket_id = ? ORDER BY created_at ASC").all(ticket.id);
-    const activity    = db.prepare("SELECT * FROM support_ticket_activity WHERE ticket_id = ? ORDER BY created_at ASC").all(ticket.id);
+    const comments    = db.prepare(`
+      SELECT c.*, u.firstName AS admin_firstName, u.lastName AS admin_lastName
+      FROM support_ticket_comments c
+      LEFT JOIN GIC_Users u ON c.admin_id = u.id
+      WHERE c.ticket_id = ? ORDER BY c.created_at ASC
+    `).all(ticket.id);
+    const activity    = db.prepare(`
+      SELECT a.*, u.firstName AS admin_firstName, u.lastName AS admin_lastName
+      FROM support_ticket_activity a
+      LEFT JOIN GIC_Users u ON a.admin_id = u.id
+      WHERE a.ticket_id = ? ORDER BY a.created_at ASC
+    `).all(ticket.id);
 
     return res.json({ status: true, data: { ...ticket, attachments, comments, activity } });
   } catch (err) {
     console.error("Admin ticket detail error:", err);
+    return res.status(500).json({ status: false, message: "Server error." });
+  }
+});
+
+// GET /api/admin/support/admins — list of admin users for assignment
+router.get("/api/admin/support/admins", authorize.authorize_admin, (_req, res) => {
+  try {
+    const admins = db.prepare("SELECT id, firstName, lastName, email FROM GIC_Users WHERE role = 'admin' ORDER BY firstName, lastName").all();
+    return res.json({ status: true, data: admins });
+  } catch (err) {
+    console.error("Admin list error:", err);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 });

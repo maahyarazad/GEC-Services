@@ -1,9 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import {
     Box, Chip, Typography, Button, TextField, MenuItem, Alert,
+    IconButton, Tooltip,
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import CustomDataGrid from '../../CustomDataGrid';
 import TicketDetailModal from './TicketDetailModal';
 
@@ -16,32 +18,42 @@ const STATUS_OPTIONS   = ['Open', 'In Progress', 'Waiting for Customer', 'Resolv
 const PRIORITY_OPTIONS = ['Low', 'Medium', 'High'];
 const CATEGORY_OPTIONS = ['Bug Report', 'Technical Issue', 'Feature Request', 'Account Issue', 'General Inquiry'];
 
-const columns = [
-    { field: 'ticket_number', headerName: 'Ticket #', width: 200, renderCell: ({ value }) => (
-        <Typography sx={{ fontFamily: 'monospace', fontSize: 13, color: 'primary.main', fontWeight: 600 }}>{value}</Typography>
-    )},
-    { field: 'subject',       headerName: 'Subject',   flex: 1, minWidth: 180 },
-    { field: 'category',      headerName: 'Category',  width: 160 },
-    { field: 'priority',      headerName: 'Priority',  width: 110, renderCell: ({ value }) => (
-        <Chip label={value} color={PRIORITY_COLOR[value] ?? 'default'} size="small" />
-    )},
-    { field: 'status',        headerName: 'Status',    width: 180, renderCell: ({ value }) => (
-        <Chip label={value} color={STATUS_COLOR[value] ?? 'default'} size="small" />
-    )},
-    { field: 'full_name',     headerName: 'Customer',  width: 160 },
-    { field: 'created_at',    headerName: 'Created',   width: 160, renderCell: ({ value }) => value ? new Date(value).toLocaleDateString() : '' },
-    { field: 'updated_at',    headerName: 'Updated',   width: 160, renderCell: ({ value }) => value ? new Date(value).toLocaleDateString() : '' },
-];
-
 export default function SupportSection() {
-    const [filters, setFilters]     = useState({ status: '', priority: '', category: '', search: '', dateFrom: '', dateTo: '' });
+    const [filters, setFilters]       = useState({ status: '', priority: '', category: '', search: '', dateFrom: '', dateTo: '' });
     const [pagination, setPagination] = useState({ page: 0, pageSize: 25 });
-    const [rows, setRows]           = useState([]);
-    const [rowCount, setRowCount]   = useState(0);
-    const [loading, setLoading]     = useState(false);
-    const [error, setError]         = useState('');
+    const [rows, setRows]             = useState([]);
+    const [rowCount, setRowCount]     = useState(0);
+    const [loading, setLoading]       = useState(false);
+    const [error, setError]           = useState('');
     const [selectedId, setSelectedId] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0);
+
+    const columns = [
+        {
+            field: 'actions', headerName: 'Actions', width: 80, sortable: false, filterable: false,
+            renderCell: ({ row }) => (
+                <Tooltip title="View ticket">
+                    <IconButton size="small" color="primary" onClick={(e) => { e.stopPropagation(); setSelectedId(row.id); }}>
+                        <OpenInNewIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+            ),
+        },
+        { field: 'ticket_number', headerName: 'Ticket #', width: 200, renderCell: ({ value }) => (
+            <Typography sx={{ fontFamily: 'monospace', fontSize: 13, color: 'primary.main', fontWeight: 600 }}>{value}</Typography>
+        )},
+        { field: 'subject',    headerName: 'Subject',  flex: 1, minWidth: 180 },
+        { field: 'category',   headerName: 'Category', width: 160 },
+        { field: 'priority',   headerName: 'Priority', width: 110, renderCell: ({ value }) => (
+            <Chip label={value} color={PRIORITY_COLOR[value] ?? 'default'} size="small" />
+        )},
+        { field: 'status',     headerName: 'Status',   width: 180, renderCell: ({ value }) => (
+            <Chip label={value} color={STATUS_COLOR[value] ?? 'default'} size="small" />
+        )},
+        { field: 'full_name',  headerName: 'Customer', width: 160 },
+        { field: 'created_at', headerName: 'Created',  width: 160, renderCell: ({ value }) => value ? new Date(value).toLocaleDateString() : '' },
+        { field: 'updated_at', headerName: 'Updated',  width: 160, renderCell: ({ value }) => value ? new Date(value).toLocaleDateString() : '' },
+    ];
 
     const fetchTickets = useCallback(async () => {
         setLoading(true);
@@ -145,8 +157,6 @@ export default function SupportSection() {
                     paginationModel={pagination}
                     onPaginationModelChange={setPagination}
                     getRowId={(r) => r.id}
-                    onRowClick={(params) => setSelectedId(params.row.id)}
-                    sx={{ cursor: 'pointer' }}
                 />
             </Box>
 

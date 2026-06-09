@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import {
     Box, Typography, Button, Chip, Divider, TextField, MenuItem,
     CircularProgress, Alert, IconButton, Paper, Stack, Switch, FormControlLabel,
+    Avatar,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import Modal from '../../Modal';
 import { useSnackbar } from '../../Providers/Snackbar';
 
@@ -33,17 +35,26 @@ function InfoRow({ label, children }) {
 }
 InfoRow.propTypes = { label: () => null, children: () => null };
 
+function adminDisplayName(a) {
+    if (!a) return null;
+    const name = [a.firstName, a.lastName].filter(Boolean).join(' ');
+    return name || a.email;
+}
+
 // eslint-disable-next-line react/prop-types
 export default function TicketDetailModal({ ticketId, onClose }) {
     const { showSnackbar } = useSnackbar();
-    const [ticket, setTicket]       = useState(null);
-    const [loading, setLoading]     = useState(true);
-    const [error, setError]         = useState('');
-    const [status, setStatus]       = useState('');
-    const [saving, setSaving]       = useState(false);
-    const [comment, setComment]     = useState('');
-    const [isPublic, setIsPublic]   = useState(false);
-    const [posting, setPosting]     = useState(false);
+    const [ticket, setTicket]         = useState(null);
+    const [loading, setLoading]       = useState(true);
+    const [error, setError]           = useState('');
+    const [status, setStatus]         = useState('');
+    const [saving, setSaving]         = useState(false);
+    const [comment, setComment]       = useState('');
+    const [isPublic, setIsPublic]     = useState(false);
+    const [posting, setPosting]       = useState(false);
+    const [admins, setAdmins]         = useState([]);
+    const [assignTo, setAssignTo]     = useState('');
+    const [assigning, setAssigning]   = useState(false);
 
     const fetchTicket = async () => {
         setLoading(true);
@@ -54,6 +65,7 @@ export default function TicketDetailModal({ ticketId, onClose }) {
             if (!res.ok || !data.status) { setError(data.message ?? 'Failed to load.'); return; }
             setTicket(data.data);
             setStatus(data.data.status);
+            setAssignTo(data.data.assigned_to ?? '');
         } catch {
             setError('Network error.');
         } finally {
@@ -61,7 +73,18 @@ export default function TicketDetailModal({ ticketId, onClose }) {
         }
     };
 
-    useEffect(() => { fetchTicket(); }, [ticketId]); // eslint-disable-line react-hooks/exhaustive-deps
+    const fetchAdmins = async () => {
+        try {
+            const res  = await fetch(`${SERVER_URL}/api/admin/support/admins`, { credentials: 'include' });
+            const data = await res.json();
+            if (res.ok && data.status) setAdmins(data.data);
+        } catch { /* non-critical */ }
+    };
+
+    useEffect(() => {
+        fetchTicket();
+        fetchAdmins();
+    }, [ticketId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const saveStatus = async () => {
         if (status === ticket?.status) return;
@@ -80,6 +103,25 @@ export default function TicketDetailModal({ ticketId, onClose }) {
             showSnackbar('Network error.', 'error');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const saveAssign = async () => {
+        setAssigning(true);
+        try {
+            const res  = await fetch(`${SERVER_URL}/api/admin/support/tickets/${ticketId}/assign`, {
+                method: 'PATCH', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ admin_id: assignTo || null }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.status) { showSnackbar(data.message ?? 'Failed.', 'error'); return; }
+            showSnackbar('Ticket assigned.', 'success');
+            fetchTicket();
+        } catch {
+            showSnackbar('Network error.', 'error');
+        } finally {
+            setAssigning(false);
         }
     };
 
@@ -111,6 +153,8 @@ export default function TicketDetailModal({ ticketId, onClose }) {
         a.click();
     };
 
+    const assignChanged = String(assignTo) !== String(ticket?.assigned_to ?? '');
+
     return (
         <Modal
             isOpen
@@ -126,13 +170,32 @@ export default function TicketDetailModal({ ticketId, onClose }) {
 
                     {/* Ticket info */}
                     <Section title="Ticket Information">
-                        <InfoRow label="Customer">{ticket.full_name} &lt;{ticket.email}&gt;</InfoRow>
+                        <InfoRow label="Customer">
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                                <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{ticket.full_name}</Typography>
+                                <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>{ticket.email}</Typography>
+                            </Box>
+                        </InfoRow>
                         <InfoRow label="Category">{ticket.category}</InfoRow>
                         <InfoRow label="Priority"><Chip label={ticket.priority} color={PRIORITY_COLOR[ticket.priority] ?? 'default'} size="small" /></InfoRow>
                         <InfoRow label="Status"><Chip label={ticket.status} color={STATUS_COLOR[ticket.status] ?? 'default'} size="small" /></InfoRow>
                         <InfoRow label="Created">{new Date(ticket.created_at).toLocaleString()}</InfoRow>
                         <InfoRow label="Updated">{new Date(ticket.updated_at).toLocaleString()}</InfoRow>
                         {ticket.resolved_at && <InfoRow label="Resolved">{new Date(ticket.resolved_at).toLocaleString()}</InfoRow>}
+                        <InfoRow label="Assigned To">
+                            {ticket.assigned_to ? (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Avatar sx={{ width: 22, height: 22, fontSize: 11, bgcolor: 'primary.main' }}>
+                                        {(ticket.assigned_firstName?.[0] ?? ticket.assigned_email?.[0] ?? '?').toUpperCase()}
+                                    </Avatar>
+                                    <Typography sx={{ fontSize: 13 }}>
+                                        {adminDisplayName({ firstName: ticket.assigned_firstName, lastName: ticket.assigned_lastName, email: ticket.assigned_email })}
+                                    </Typography>
+                                </Box>
+                            ) : (
+                                <Typography sx={{ fontSize: 13, color: 'text.secondary', fontStyle: 'italic' }}>Unassigned</Typography>
+                            )}
+                        </InfoRow>
                     </Section>
 
                     <Divider sx={{ mb: 2 }} />
@@ -190,6 +253,35 @@ export default function TicketDetailModal({ ticketId, onClose }) {
 
                     <Divider sx={{ mb: 2 }} />
 
+                    {/* Assign ticket */}
+                    <Section title="Assign Ticket">
+                        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                            <TextField
+                                select size="small" value={assignTo} onChange={(e) => setAssignTo(e.target.value)}
+                                sx={{ minWidth: 220 }}
+                                slotProps={{ input: { startAdornment: !assignTo ? <PersonOutlineIcon fontSize="small" sx={{ mr: 1, color: 'text.disabled' }} /> : null } }}
+                            >
+                                <MenuItem value=""><em>Unassigned</em></MenuItem>
+                                {admins.map((a) => (
+                                    <MenuItem key={a.id} value={a.id}>
+                                        {adminDisplayName(a)}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                            <Button
+                                variant="contained" size="small"
+                                disabled={assigning || !assignChanged}
+                                onClick={saveAssign}
+                                sx={{ textTransform: 'none' }}
+                                startIcon={assigning ? <CircularProgress size={14} color="inherit" /> : null}
+                            >
+                                Save Assignment
+                            </Button>
+                        </Box>
+                    </Section>
+
+                    <Divider sx={{ mb: 2 }} />
+
                     {/* Activity timeline */}
                     {ticket.activity?.length > 0 && (
                         <>
@@ -202,6 +294,11 @@ export default function TicketDetailModal({ ticketId, onClose }) {
                                             </Typography>
                                             <Typography variant="caption">
                                                 {a.action}{a.old_value && a.new_value ? `: ${a.old_value} → ${a.new_value}` : ''}
+                                                {(a.admin_firstName || a.admin_lastName) && (
+                                                    <Typography component="span" variant="caption" color="text.secondary">
+                                                        {' '}by {[a.admin_firstName, a.admin_lastName].filter(Boolean).join(' ')}
+                                                    </Typography>
+                                                )}
                                             </Typography>
                                         </Box>
                                     ))}
@@ -218,8 +315,15 @@ export default function TicketDetailModal({ ticketId, onClose }) {
                                 <Stack spacing={1.5}>
                                     {ticket.comments.map((c, i) => (
                                         <Paper key={i} variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: c.is_public ? '#f0f7ff' : '#fff8e1' }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                                <Chip label={c.is_public ? 'Public' : 'Internal'} size="small" color={c.is_public ? 'info' : 'default'} />
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5, flexWrap: 'wrap', gap: 1 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <Chip label={c.is_public ? 'Public' : 'Internal'} size="small" color={c.is_public ? 'info' : 'default'} />
+                                                    {(c.admin_firstName || c.admin_lastName) && (
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            {[c.admin_firstName, c.admin_lastName].filter(Boolean).join(' ')}
+                                                        </Typography>
+                                                    )}
+                                                </Box>
                                                 <Typography variant="caption" color="text.secondary">{new Date(c.created_at).toLocaleString()}</Typography>
                                             </Box>
                                             <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{c.comment}</Typography>
