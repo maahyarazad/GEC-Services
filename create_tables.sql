@@ -354,3 +354,52 @@ CREATE TABLE IF NOT EXISTS contact_book_notes (
     note_body TEXT,
     FOREIGN KEY (contact_book_id) REFERENCES contact_book(id)
 );
+
+
+ CREATE TABLE IF NOT EXISTS support_tickets (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_number TEXT    UNIQUE NOT NULL,
+    full_name     TEXT    NOT NULL,
+    email         TEXT    NOT NULL,
+    subject       TEXT    NOT NULL,
+    category      TEXT    NOT NULL,
+    priority      TEXT    NOT NULL,
+    description   TEXT    NOT NULL,
+    status        TEXT    NOT NULL DEFAULT 'Open',
+    assigned_to   INTEGER,
+    created_at    DATETIME DEFAULT (datetime('now')),
+    updated_at    DATETIME DEFAULT (datetime('now')),
+    resolved_at   DATETIME
+  );
+
+  CREATE TABLE IF NOT EXISTS support_ticket_attachments (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id     INTEGER NOT NULL,
+    original_name TEXT    NOT NULL,
+    file_name     TEXT    NOT NULL,
+    mime_type     TEXT    NOT NULL,
+    file_size     INTEGER NOT NULL,
+    created_at    DATETIME DEFAULT (datetime('now')),
+    FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS support_ticket_comments (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id  INTEGER NOT NULL,
+    admin_id   INTEGER,
+    comment    TEXT    NOT NULL,
+    is_public  INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT (datetime('now')),
+    FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS support_ticket_activity (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id  INTEGER NOT NULL,
+    admin_id   INTEGER,
+    action     TEXT NOT NULL,
+    old_value  TEXT,
+    new_value  TEXT,
+    created_at DATETIME DEFAULT (datetime('now')),
+    FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
+  );

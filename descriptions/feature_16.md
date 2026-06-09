@@ -23,3 +23,11 @@ Need help?{" "}
 ### 2. Replace "Contact Support" with "Raise a Ticket"
 
 In both the `PartnerOnboarding` and `PurchaseMembership` components, replace the **"Contact Support"** action with **"Raise a Ticket"** so users are directed to the Support Portal instead of opening an email client.
+
+
+
+# Feature Ticket 17: Support Portal UI Improvements
+
+
+## Description
+Each Input field in the SupportPortal and TicketTracker component label should have use the same GEC style color on focus 

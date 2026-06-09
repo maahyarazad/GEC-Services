@@ -81,6 +81,9 @@ export const fieldSx = {
         bottom: 5,
         top: -6,
     },
+    "& .MuiInputLabel-root.Mui-focused": {
+        color: GEC.goldDark,
+    },
     "& .MuiOutlinedInput-root": {
         background: "#faf8f3",
         borderRadius: 2,
