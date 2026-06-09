@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useSnackbar } from '../Providers/Snackbar';
 import {
     Box, Button, TextField, MenuItem, Typography, Paper, Container,
     LinearProgress, Chip, CircularProgress,
@@ -40,9 +41,9 @@ export default function SupportPortal() {
     const [errors, setErrors] = useState({});
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(null);
-    const [serverError, setServerError] = useState('');
     const fileInputRef = useRef(null);
     const navigate = useNavigate();
+    const { showSnackbar } = useSnackbar();
 
     const validate = () => {
         const e = {};
@@ -87,19 +88,23 @@ export default function SupportPortal() {
         if (Object.keys(e2).length) { setErrors(e2); return; }
 
         setSubmitting(true);
-        setServerError('');
 
         const fd = new FormData();
         Object.entries(form).forEach(([k, v]) => fd.append(k, v));
         files.forEach((f) => fd.append('attachments', f));
 
         try {
-            const res = await fetch(`${SERVER_URL}/api/support/ticket`, { method: 'POST', body: fd });
+            const res = await fetch(`${SERVER_URL}/support/ticket`, { method: 'POST', body: fd ,credentials: "include" });
             const data = await res.json();
-            if (!res.ok || !data.status) { setServerError(data.message ?? 'Submission failed.'); return; }
+            debugger;
+            if (!res.ok || !data.status) {
+                showSnackbar(data.message ?? 'Submission failed.', 'error');
+                return;
+            }
             setSubmitted(data.ticket_number);
+            showSnackbar(data.message, 'success');
         } catch {
-            setServerError('Network error. Please try again.');
+            showSnackbar('Network error. Please try again.', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -212,18 +217,6 @@ export default function SupportPortal() {
 
                         <Box sx={dividerSx} />
 
-                        {serverError && (
-                            <Box
-                                sx={{
-                                    mb: 3, p: 2, borderRadius: 2,
-                                    background: '#fff5f5', border: '1px solid #fca5a5',
-                                    color: '#b91c1c', fontSize: 14,
-                                }}
-                            >
-                                {serverError}
-                            </Box>
-                        )}
-
                         <Box
                             component="form"
                             onSubmit={handleSubmit}
@@ -233,25 +226,25 @@ export default function SupportPortal() {
                             <TextField
                                 label="Full Name" name="full_name" required
                                 value={form.full_name} onChange={handleChange}
-                                error={!!errors.full_name} helperText={errors.full_name}
+                                error={!!errors.full_name} helperText={errors.full_name || ' '}
                                 sx={fieldSx}
                             />
                             <TextField
                                 label="Email Address" name="email" type="email" required
                                 value={form.email} onChange={handleChange}
-                                error={!!errors.email} helperText={errors.email}
+                                error={!!errors.email} helperText={errors.email || ' '}
                                 sx={fieldSx}
                             />
                             <TextField
                                 label="Subject" name="subject" required
                                 value={form.subject} onChange={handleChange}
-                                error={!!errors.subject} helperText={errors.subject}
+                                error={!!errors.subject} helperText={errors.subject || ' '}
                                 sx={{ gridColumn: { sm: '1 / -1' }, ...fieldSx }}
                             />
                             <TextField
                                 select label="Category" name="category" required
                                 value={form.category} onChange={handleChange}
-                                error={!!errors.category} helperText={errors.category}
+                                error={!!errors.category} helperText={errors.category || ' '}
                                 sx={fieldSx}
                             >
                                 {CATEGORIES.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
@@ -259,7 +252,7 @@ export default function SupportPortal() {
                             <TextField
                                 select label="Priority" name="priority" required
                                 value={form.priority} onChange={handleChange}
-                                error={!!errors.priority} helperText={errors.priority}
+                                error={!!errors.priority} helperText={errors.priority || ' '}
                                 sx={fieldSx}
                             >
                                 {PRIORITIES.map((p) => <MenuItem key={p} value={p}>{p}</MenuItem>)}
@@ -267,7 +260,7 @@ export default function SupportPortal() {
                             <TextField
                                 label="Description" name="description" required multiline rows={5}
                                 value={form.description} onChange={handleChange}
-                                error={!!errors.description} helperText={errors.description}
+                                error={!!errors.description} helperText={errors.description || ' '}
                                 sx={{ gridColumn: { sm: '1 / -1' }, ...fieldSx }}
                             />
 

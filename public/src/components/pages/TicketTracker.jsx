@@ -60,17 +60,16 @@ export default function TicketTracker() {
         setTicket(null);
 
         try {
-            const authRes = await fetch(`${SERVER_URL}/api/support/ticket/status`, {
+            const authRes = await fetch(`${SERVER_URL}/support/ticket/status`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ticketNumber: ticketNumber.trim() }),
+                credentials: "include",
             });
             const authData = await authRes.json();
             if (!authRes.ok || !authData.status) { setError(authData.message ?? 'Ticket not found.'); return; }
-
-            const res = await fetch(`${SERVER_URL}/api/support/ticket/track`, {
-                headers: { Authorization: `Bearer ${authData.token}` },
-            });
+            debugger;
+            const res = await fetch(`${SERVER_URL}/support/ticket/track`, {  method: 'GET',credentials: "include"});
             const data = await res.json();
             if (!res.ok || !data.status) { setError(data.message ?? 'Failed to load ticket.'); return; }
             setTicket(data.data);
@@ -96,7 +95,7 @@ export default function TicketTracker() {
                         />
 
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-                            <ConfirmationNumberOutlinedIcon sx={{ fontSize: 28, color: GEC.goldDark }} />
+                            {/* <ConfirmationNumberOutlinedIcon sx={{ fontSize: 28, color: GEC.goldDark }} /> */}
                             <Typography variant="h5" sx={titleSx}>
                                 Track Your{' '}
                                 <Box component="span" sx={{ color: GEC.goldDark }}>Ticket</Box>

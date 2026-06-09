@@ -8,64 +8,15 @@ const jwt = require("jsonwebtoken");
 const rateLimit = require("express-rate-limit");
 const dbService = require("../services/dbService");
 const db = dbService.getDB();
-const { sendRawEmailWithAttachments } = require("../services/emailService");
+const { sendRawEmailWithAttachments_AppSupport } = require("../services/emailService");
 const authorize = require("../middleware/auth");
 const { fromBuffer } = require("file-type");
-
+const authorization_middleware = require("../middleware/auth");
 // ─── Storage directory ───────────────────────────────────────────────────────
 const STORAGE_DIR = path.resolve(__dirname, "../support_attachments");
 if (!fs.existsSync(STORAGE_DIR)) fs.mkdirSync(STORAGE_DIR, { recursive: true });
 
-// ─── DB init ─────────────────────────────────────────────────────────────────
-db.exec(`
-  CREATE TABLE IF NOT EXISTS support_tickets (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    ticket_number TEXT    UNIQUE NOT NULL,
-    full_name     TEXT    NOT NULL,
-    email         TEXT    NOT NULL,
-    subject       TEXT    NOT NULL,
-    category      TEXT    NOT NULL,
-    priority      TEXT    NOT NULL,
-    description   TEXT    NOT NULL,
-    status        TEXT    NOT NULL DEFAULT 'Open',
-    assigned_to   INTEGER,
-    created_at    DATETIME DEFAULT (datetime('now')),
-    updated_at    DATETIME DEFAULT (datetime('now')),
-    resolved_at   DATETIME
-  );
 
-  CREATE TABLE IF NOT EXISTS support_ticket_attachments (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    ticket_id     INTEGER NOT NULL,
-    original_name TEXT    NOT NULL,
-    file_name     TEXT    NOT NULL,
-    mime_type     TEXT    NOT NULL,
-    file_size     INTEGER NOT NULL,
-    created_at    DATETIME DEFAULT (datetime('now')),
-    FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS support_ticket_comments (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    ticket_id  INTEGER NOT NULL,
-    admin_id   INTEGER,
-    comment    TEXT    NOT NULL,
-    is_public  INTEGER NOT NULL DEFAULT 0,
-    created_at DATETIME DEFAULT (datetime('now')),
-    FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS support_ticket_activity (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    ticket_id  INTEGER NOT NULL,
-    admin_id   INTEGER,
-    action     TEXT NOT NULL,
-    old_value  TEXT,
-    new_value  TEXT,
-    created_at DATETIME DEFAULT (datetime('now')),
-    FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
-  );
-`);
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ALLOWED_MIME = new Set([
@@ -160,10 +111,11 @@ function confirmationEmailHtml({ full_name, ticket_number, subject, category, pr
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
-// POST /api/support/ticket — public submission
+// POST /support/ticket — public submission
 router.post(
-  "/api/support/ticket",
+  "/support/ticket",
   submitLimiter,
+  authorization_middleware.authorize_member_or_partner,
   upload.array("attachments", MAX_FILES),
   async (req, res) => {
     try {
@@ -226,7 +178,7 @@ router.post(
       const ticket = db.prepare("SELECT * FROM support_tickets WHERE id = ?").get(ticketId);
 
       // Send confirmation email (non-blocking)
-      sendRawEmailWithAttachments({
+      sendRawEmailWithAttachments_AppSupport({
         to: ticket.email,
         subject: `Support Ticket Received - ${ticket_number}`,
         html: confirmationEmailHtml(ticket),
@@ -240,8 +192,8 @@ router.post(
   }
 );
 
-// POST /api/support/ticket/status — public tracking auth
-router.post("/api/support/ticket/status", trackLimiter, (req, res) => {
+// POST /support/ticket/status — public tracking auth
+router.post("/support/ticket/status", trackLimiter, (req, res) => {
   try {
     const { ticketNumber } = req.body;
     if (!ticketNumber?.trim())
@@ -254,23 +206,32 @@ router.post("/api/support/ticket/status", trackLimiter, (req, res) => {
     if (!ticket)
       return res.status(404).json({ status: false, message: "Ticket not found." });
 
-    const token = jwt.sign({ ticketId: ticket.id, ticketNumber: ticket.ticket_number }, process.env.JWT_SECRET, { expiresIn: "2h" });
-    return res.json({ status: true, token });
+
+
+     const token = jwt.sign({ ticketId: ticket.id, ticketNumber: ticket.ticket_number }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    
+        res.cookie("ticket-token", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          maxAge: 60 * 60 * 1000, // 1 hour
+        });
+
+
+    
+    return res.json({ status: true });
   } catch (err) {
     console.error("Ticket tracking auth error:", err);
     return res.status(500).json({ status: false, message: "An unexpected error occurred." });
   }
 });
 
-// GET /api/support/ticket/track — public ticket details (JWT from header)
-router.get("/api/support/ticket/track", trackLimiter, (req, res) => {
+// GET /support/ticket/track — public ticket details (JWT from header)
+router.get("/support/ticket/track",trackLimiter,authorization_middleware.authorize_ticket , (req, res) => {
   try {
-    const authHeader = req.headers["authorization"];
-    if (!authHeader?.startsWith("Bearer "))
-      return res.status(401).json({ status: false, message: "Unauthorized." });
+    
+    const token = req?.cookies['ticket-token'];
 
-    const token = authHeader.slice(7);
-    let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch {

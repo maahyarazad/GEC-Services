@@ -5,6 +5,7 @@ const multer = require("multer");
 const { parse } = require("csv-parse/sync");
 const dbService = require("../services/dbService");
 require("dotenv").config();
+const authorization_middleware = require("../middleware/auth");
 const db = dbService.getDB();
 // ── Multer: keep file in memory, CSV only ──────────────────────────────────
 const upload = multer({
@@ -88,11 +89,8 @@ const insertMany = db.transaction((contacts, partner) => {
 });
 
 // ── Delivery info pre-fill ─────────────────────────────────────────────────
-router.get("/partner-delivery-info", (req, res) => {
+router.get("/partner-delivery-info",authorization_middleware.authorize_partner,(req, res) => {
   try {
-    const partnerToken = req.cookies["partner-usr"];
-    if (!partnerToken) return res.status(401).json({ status: false, message: "Unauthorized" });
-    jwt.verify(partnerToken, process.env.JWT_SECRET);
 
     const { partner } = req.query;
     if (!partner) return res.status(400).json({ status: false, message: "partner query param is required" });
@@ -121,7 +119,7 @@ router.get("/partner-delivery-info", (req, res) => {
 });
 
 // ── Existing endpoint ──────────────────────────────────────────────────────
-router.post("/partner-auto-login", async (req, res) => {
+router.post("/partner-auto-login",authorization_middleware.authorize_partner ,async (req, res) => {
   try {
     const partnerToken = req.cookies["partner-usr"];
     if (!partnerToken) {
@@ -145,13 +143,8 @@ router.post("/partner-auto-login", async (req, res) => {
 });
 
 // ── New CSV upload endpoint ────────────────────────────────────────────────
-router.post("/upload-csv", upload.single("file"), (req, res) => {
+router.post("/upload-csv",authorization_middleware.authorize_partner ,upload.single("file"), (req, res) => {
   try {
-    // 1. Auth guard — reuse the same partner cookie
-    const partnerToken = req.cookies["partner-usr"];
-    if (!partnerToken) {
-      return res.status(401).json({ status: false, message: "Unauthorized" });
-    }
 
     const partner = req.body.partner;
     const deliveryAddress = req.body.delivery_address || null;
@@ -163,8 +156,6 @@ router.post("/upload-csv", upload.single("file"), (req, res) => {
         .status(400)
         .json({ status: false, message: "Partner is required" });
     }
-
-    jwt.verify(partnerToken, process.env.JWT_SECRET); // throws if invalid
 
     // 2. Check a file was actually attached
     if (!req.file) {

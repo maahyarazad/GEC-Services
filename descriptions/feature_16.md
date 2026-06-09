@@ -30,4 +30,12 @@ In both the `PartnerOnboarding` and `PurchaseMembership` components, replace the
 
 
 ## Description
-Each Input field in the SupportPortal and TicketTracker component label should have use the same GEC style color on focus 
+Validation errors change the layout of the input fields, preserve the height and space for the validation errors so the input fields don't go up and down.
+
+
+# Feature Ticket 18: Support Portal UI Improvements
+
+
+## Description
+Use SnackBar to reflect the Server API responses in SupportPortal
+
