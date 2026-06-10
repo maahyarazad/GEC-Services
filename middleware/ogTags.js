@@ -30,6 +30,8 @@ function buildOgTags({ title, description, url, image }) {
     `<meta property="og:title" content="${escape(title)}" />`,
     `<meta property="og:description" content="${escape(description)}" />`,
     `<meta property="og:image" content="${escape(image)}" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
     `<meta property="og:url" content="${escape(url)}" />`,
     `<meta property="og:type" content="website" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
