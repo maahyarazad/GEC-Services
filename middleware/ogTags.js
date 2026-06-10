@@ -3,6 +3,12 @@ const fs = require("fs").promises;
 
 const DEFAULT_OG_IMAGE = "https://services.german-emirates-club.com/uploads/og_image.png";
 
+const DEFAULT_OG = {
+  title: "Services - German Emirates Club",
+  description: "Services - German Emirates Club",
+  image: DEFAULT_OG_IMAGE,
+};
+
 const OG_ROUTES = {
   "/support": {
     title: "Support - German Emirates Club",
@@ -44,10 +50,10 @@ function buildOgTags({ title, description, url, image }) {
 
 async function serveWithOgTags(req, res) {
   const indexPath = path.join(__dirname, "../public", "index.html");
-  const ogMeta = OG_ROUTES[req.path];
-  if (!ogMeta) {
-    return res.sendFile(indexPath);
-  }
+  const ogMeta = OG_ROUTES[req.path] ?? {
+    ...DEFAULT_OG,
+    url: `https://services.german-emirates-club.com${req.path}`,
+  };
   try {
     let html = await fs.readFile(indexPath, "utf8");
     html = html.replace("</head>", `    ${buildOgTags(ogMeta)}\n  </head>`);
