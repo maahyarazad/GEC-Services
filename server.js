@@ -153,11 +153,6 @@ app.use("/", events);
 app.use("/api/", gec_members);
 app.use("/", support);
 
-// Route to serve your main HTML file
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
 app.get("*", serveWithOgTags);
 
 // Attach websocket to same server

@@ -12,6 +12,12 @@ const DEFAULT_OG = {
 };
 
 const OG_ROUTES = {
+  "/": {
+    title: "Services - German Emirates Club",
+    description: "Exclusive services and benefits for members of the German Emirates Club.",
+    url: BASE_URL,
+    image: DEFAULT_OG_IMAGE,
+  },
   "/support": {
     title: "Support - German Emirates Club",
     description: "Get support from the German Emirates Club team.",
