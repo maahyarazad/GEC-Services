@@ -69,3 +69,8 @@ styled GEC forms — a token is generated and verified on each submit.
 
 
 
+# Bug: Missing reCAPTCHA token
+
+Eventhough I've set the secret and key I still get the recaptcha error without even being checked.
+
+

@@ -13,6 +13,7 @@ const SCRIPT_ID = 'gec-recaptcha-v3';
 let loadPromise = null;
 
 function loadRecaptcha() {
+    
     if (window.grecaptcha?.execute) return Promise.resolve(window.grecaptcha);
     if (loadPromise) return loadPromise;
 
