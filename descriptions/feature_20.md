@@ -56,3 +56,19 @@ These tags are injected **client-side**, so social / link-preview crawlers
 will **not** see them. For real link previews the tags must be present in the
 server's initial HTML (server-side injection per route, or SSR/prerendering).
 
+# Bug Ticket 20: Open Graph Meta Tags Not Rendering with Helmet
+
+## Description
+
+After inspecting the rendered document in the browser, the Open Graph (OG) meta tags are not visible in the page source. As a result, social media platforms may not be able to retrieve the correct metadata when sharing links.
+
+## Investigation Required
+
+* Verify that React Helmet is correctly configured and rendering the OG meta tags.
+* Check whether the application is using client-side rendering only, which may prevent crawlers from detecting dynamically injected meta tags.
+* Confirm that the OG tags are present in the server-rendered HTML response.
+* Test the affected pages using social media debugging tools to verify metadata detection.
+
+## Expected Result
+
+All required Open Graph meta tags should be present in the rendered HTML document and detectable by social media crawlers and link preview tools.

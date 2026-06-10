@@ -1,4 +1,4 @@
-# Feature Ticket 19: Dashboard Support Center UI Improvement
+# Feature Ticket 21: Dashboard Support Center UI Improvement
 
 ## Description
 
@@ -24,7 +24,7 @@ The modal already existed and opened on row click. Changes made:
 
 
 
-# Feature Ticket 19: Support Center Logic Change
+# Feature Ticket 22: Support Center Logic Change
 
 ## Description
 
@@ -79,3 +79,45 @@ So I put this script in head of index html
 <script src="https://www.google.com/recaptcha/enterprise.js?render=6Lei5xYtAAAAAAIOcrcQJP__y2XyfzxtLbHfWTg0" defer></script>
 
 and it shows up everywhere I need this only in SupportPortal and TicketTracker components
+
+
+
+# Feature Ticket 23: Support Center — Two-Way Email Communication
+
+## Description
+Enable two-way email communication between support staff and ticket submitters,
+keeping all messages synced within the Admin Dashboard ticket thread.
+
+## User Stories
+- As an **admin**, I can reply to or comment on a ticket from the Dashboard,
+  and the submitter receives my message as an email reply within the existing thread.
+- As a **ticket submitter**, I can reply to the support email
+  (app.support@german-emirates-club.com) and my reply is automatically appended
+  to the correct ticket in the Dashboard.
+
+## Acceptance Criteria
+- [ ] Admin replies sent from the Dashboard trigger an outbound email to the submitter.
+- [ ] Outbound emails use a ticket-scoped Reply-To header
+      (e.g. `app.support+ticket-23@german-emirates-club.com`) for thread matching.
+- [ ] An IMAP listener monitors the support inbox for inbound replies.
+- [ ] Inbound emails are matched to the correct ticket via the Reply-To/ticket ID
+      in the email subject or headers.
+- [ ] Matched replies are appended to the ticket thread in the Dashboard.
+- [ ] Unmatched emails (no ticket ID found) are flagged for manual review
+      or create a new ticket.
+- [ ] Admin receives a Dashboard notification when a new inbound reply arrives.
+- [ ] Submitter receives an email notification when an admin replies.
+
+## Technical Notes
+- Use IMAP IDLE or polling to monitor `app.support@german-emirates-club.com`.
+- Encode the ticket ID in the `Reply-To` header on every outbound email.
+- Parse inbound emails for the ticket ID in `References`, `In-Reply-To`,
+  or subject line before falling back to manual matching.
+
+## Out of Scope
+- Live chat or real-time messaging inside the Dashboard.
+- Support for attachments in email replies (handle in a separate ticket).
+
+## Dependencies
+- Outbound email service (SMTP) already configured.
+- Admin Dashboard ticket detail view (must support appending new messages).

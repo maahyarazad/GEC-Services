@@ -9,7 +9,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useNavigate } from 'react-router-dom';
 import GECLogo from '../../assets/background.webp';
-import Seo from '../Seo';
 import { executeRecaptcha, useRecaptchaBadge } from '../utils/recaptcha';
 import {
     GEC,
@@ -122,18 +121,9 @@ export default function SupportPortal() {
         }
     };
 
-    const seo = (
-        <Seo
-            title="Support - German Emirates Club"
-            description="Get support from the German Emirates Club team."
-            url="https://services.german-emirates-club.com/support"
-        />
-    );
-
     if (submitted) {
         return (
             <Box sx={pageWrapperSx}>
-                {seo}
                 <Container maxWidth="md" sx={containerSx}>
                     <Paper elevation={0} sx={paperSx}>
                         <Box sx={topAccentBarSx} />
@@ -216,7 +206,6 @@ export default function SupportPortal() {
 
     return (
         <Box sx={pageWrapperSx}>
-            {seo}
             <Container maxWidth="md" sx={containerSx}>
                 <Paper elevation={0} sx={paperSx}>
                     <Box sx={topAccentBarSx} />

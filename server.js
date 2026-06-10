@@ -2,7 +2,6 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const fs = require("fs").promises;
 
 const app = express();
 const PORT = process.env.PORT || 5500;
@@ -34,6 +33,7 @@ const gec_members = require("./routes/gec_members.js");
 const support = require("./routes/support.js");
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
+const { serveWithOgTags } = require("./middleware/ogTags");
 const { createWebSocketServer } = require("./websocket/admin.js");
 const imapPoller = require("./services/imapPoller.js");
 const cron = require("node-cron");
@@ -158,9 +158,7 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+app.get("*", serveWithOgTags);
 
 // Attach websocket to same server
 const io = createWebSocketServer(server, allowedOrigins);
