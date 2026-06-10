@@ -113,36 +113,90 @@ async function validateFile(file) {
 function confirmationEmailHtml({ full_name, ticket_number, subject, category, priority, created_at }) {
   const year = new Date().getFullYear();
   return `
-    <!DOCTYPE html><html><head><meta charset="UTF-8"></head>
-    <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
-        <tr><td align="center">
-          <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:8px;overflow:hidden;">
-            <tr><td style="background:#1976d2;padding:24px 32px;">
-              <h1 style="color:#fff;margin:0;font-size:22px;">Support Ticket Received</h1>
-            </td></tr>
-            <tr><td style="padding:32px;">
-              <p style="margin:0 0 16px;">Dear <strong>${full_name}</strong>,</p>
-              <p style="margin:0 0 24px;">We have received your support request and will get back to you as soon as possible.</p>
-              <table width="100%" cellpadding="8" cellspacing="0" style="background:#f8f9fa;border-radius:6px;margin-bottom:24px;">
-                <tr><td style="font-weight:600;width:40%;">Ticket Number</td><td><strong style="color:#1976d2;">${ticket_number}</strong></td></tr>
-                <tr><td style="font-weight:600;">Subject</td><td>${subject}</td></tr>
-                <tr><td style="font-weight:600;">Category</td><td>${category}</td></tr>
-                <tr><td style="font-weight:600;">Priority</td><td>${priority}</td></tr>
-                <tr><td style="font-weight:600;">Status</td><td>Open</td></tr>
-                <tr><td style="font-weight:600;">Submitted</td><td>${new Date(created_at).toLocaleString()}</td></tr>
-              </table>
-              <p style="margin:0 0 8px;">You can track your ticket status at any time using your ticket number.</p>
-              <p style="margin:0 0 24px;color:#666;font-size:13px;">Keep this email for your records.</p>
-              <p style="margin:0;">Best regards,<br/><strong>GEC Support Team</strong></p>
-            </td></tr>
-            <tr><td style="background:#f8f9fa;padding:16px 32px;text-align:center;color:#999;font-size:12px;">
-              &copy; ${year} German Emirates Club. All rights reserved.
-            </td></tr>
-          </table>
-        </td></tr>
-      </table>
-    </body></html>`;
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Support Ticket Received</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
+      <thead>
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 0 10px rgba(0,0,0,0.1); margin:40px auto;">
+              <tr>
+                <td bgcolor="#D9B144" style="color:#ffffff; text-align:center; padding:20px; font-size:22px; font-weight:bold; border-top-left-radius:8px; border-top-right-radius:8px;">
+                  Support Ticket Received
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; padding:0 30px 30px;">
+              <tr>
+                <td style="padding:20px; font-size:16px; color:#333333; line-height:1.6;">
+                  <p>Dear <strong>${full_name}</strong>,</p>
+                  <p>Thank you for reaching out. We have received your support request and our team will get back to you as soon as possible.</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:0 20px 20px;">
+                  <table width="100%" cellpadding="8" cellspacing="0" border="0" style="border-collapse:collapse; font-size:15px; color:#333333;">
+                    <tr style="background-color:#faf8f3; border-bottom:1px solid #e8dfc0;">
+                      <td style="font-weight:600; width:40%; padding:10px 12px;">Ticket Number</td>
+                      <td style="padding:10px 12px;"><strong style="color:#D9B144; font-family:monospace; letter-spacing:1px;">${ticket_number}</strong></td>
+                    </tr>
+                    <tr style="border-bottom:1px solid #e8dfc0;">
+                      <td style="font-weight:600; padding:10px 12px;">Subject</td>
+                      <td style="padding:10px 12px;">${subject}</td>
+                    </tr>
+                    <tr style="background-color:#faf8f3; border-bottom:1px solid #e8dfc0;">
+                      <td style="font-weight:600; padding:10px 12px;">Category</td>
+                      <td style="padding:10px 12px;">${category}</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid #e8dfc0;">
+                      <td style="font-weight:600; padding:10px 12px;">Priority</td>
+                      <td style="padding:10px 12px;">${priority}</td>
+                    </tr>
+                    <tr style="background-color:#faf8f3; border-bottom:1px solid #e8dfc0;">
+                      <td style="font-weight:600; padding:10px 12px;">Status</td>
+                      <td style="padding:10px 12px;">Open</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600; padding:10px 12px;">Submitted</td>
+                      <td style="padding:10px 12px;">${new Date(created_at).toLocaleString()}</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:0 20px 20px; font-size:16px; color:#333333; line-height:1.6;">
+                  <p>You can track your ticket status at any time using your ticket number at
+                    <a href="https://services.german-emirates-club.com/support/track" style="color:#D9B144; text-decoration:none;">services.german-emirates-club.com/support/track</a>.
+                  </p>
+                  <p>If you have any questions, feel free to contact us at
+                    <a href="mailto:office2@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office2@german-emirates-club.com</a>.
+                  </p>
+                  <p>Warm regards,<br />The German Emirates Club Support Team</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
+                  &copy; ${year} German Emirates Club. All rights reserved.
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>`;
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
