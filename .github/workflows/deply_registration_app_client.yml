@@ -30,6 +30,7 @@ jobs:
         working-directory: public
         env:
           VITE_SERVERURL: ${{ secrets.VITE_SERVERURL }}
+          VITE_RECAPTCHA_SITE_KEY: ${{ secrets.VITE_RECAPTCHA_SITE_KEY }}
         run: npm run build
 
       - name: Setup SSH
