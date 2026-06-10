@@ -21,3 +21,51 @@ The modal already existed and opened on row click. Changes made:
 3. **Assign Ticket section** — new section (below Change Status) with a dropdown of all admin users and a "Save Assignment" button, wired to the existing `PATCH /api/admin/support/tickets/:id/assign` endpoint.
 4. **Activity timeline** — now shows the admin name alongside each activity entry ("by First Last").
 5. **Comments** — now shows the admin name who posted each comment next to the Public/Internal chip.
+
+
+
+# Feature Ticket 19: Support Center Logic Change
+
+## Description
+
+Replace the token-based validation mechanism with Google reCAPTCHA, allowing users to submit and track support tickets without authentication while still preventing spam and abuse.
+
+## Implementation
+
+Uses **reCAPTCHA v3** (invisible / score-based) so no widget is added to the
+styled GEC forms — a token is generated and verified on each submit.
+
+### Backend (`routes/support.js`)
+
+* Added a `verifyRecaptcha(token, remoteIp)` helper that POSTs to Google's
+  `siteverify` endpoint (via `node-fetch`). It supports both v2 and v3
+  (score threshold of `0.5` enforced only when a score is returned) and
+  **fails open** when `RECAPTCHA_SECRET_KEY` is not configured, so local dev
+  keeps working without keys.
+* `POST /support/ticket` — removed `authorize_member_or_partner`; now verifies
+  the `recaptchaToken` form field before processing the submission.
+* `GET /support/ticket/track` — removed the `authorize_ticket` middleware and
+  all JWT/cookie logic. It now reads `ticketNumber` + `recaptchaToken` from the
+  query string, verifies reCAPTCHA, and looks the ticket up by number directly.
+* Removed the now-obsolete `POST /support/ticket/status` token-issuing route and
+  the unused `jsonwebtoken` / `authorization_middleware` imports.
+
+### Frontend
+
+* New helper `components/utils/recaptcha.js` — lazy-loads the reCAPTCHA v3 script
+  once and exposes `executeRecaptcha(action)`. Returns `''` when
+  `VITE_RECAPTCHA_SITE_KEY` is unset (matches the backend's fail-open behaviour).
+1. **SupportPortal** — calls `executeRecaptcha('submit_ticket')` and appends the
+   token to the `FormData` before POSTing.
+2. **TicketTracker** — calls `executeRecaptcha('track_ticket')` and issues a
+   single `GET /support/ticket/track?ticketNumber=…&recaptchaToken=…`, replacing
+   the previous two-step status/track cookie flow.
+
+### Configuration
+
+* `RECAPTCHA_SECRET_KEY` added to the server `.env` (server-side secret).
+* `VITE_RECAPTCHA_SITE_KEY` added to `public/.env` (public site key).
+  Both must be populated with a reCAPTCHA v3 key pair in production.
+
+
+

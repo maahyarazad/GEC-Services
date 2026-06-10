@@ -3,9 +3,9 @@ import {
     Box, Button, TextField, Typography, Paper, Container,
     CircularProgress, Chip, Divider,
 } from '@mui/material';
-import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined';
 import { useNavigate } from 'react-router-dom';
 import GECLogo from '../../assets/background.webp';
+import { executeRecaptcha } from '../utils/recaptcha';
 import {
     GEC,
     pageWrapperSx,
@@ -59,17 +59,18 @@ export default function TicketTracker() {
         setError('');
         setTicket(null);
 
+        let recaptchaToken;
         try {
-            const authRes = await fetch(`${SERVER_URL}/support/ticket/status`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ticketNumber: ticketNumber.trim() }),
-                credentials: "include",
-            });
-            const authData = await authRes.json();
-            if (!authRes.ok || !authData.status) { setError(authData.message ?? 'Ticket not found.'); return; }
-            debugger;
-            const res = await fetch(`${SERVER_URL}/support/ticket/track`, {  method: 'GET',credentials: "include"});
+            recaptchaToken = await executeRecaptcha('track_ticket');
+        } catch {
+            setError('Could not verify reCAPTCHA. Please try again.');
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const params = new URLSearchParams({ ticketNumber: ticketNumber.trim(), recaptchaToken });
+            const res = await fetch(`${SERVER_URL}/support/ticket/track?${params.toString()}`, { method: 'GET' });
             const data = await res.json();
             if (!res.ok || !data.status) { setError(data.message ?? 'Failed to load ticket.'); return; }
             setTicket(data.data);

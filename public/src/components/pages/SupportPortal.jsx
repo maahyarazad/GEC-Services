@@ -9,6 +9,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { useNavigate } from 'react-router-dom';
 import GECLogo from '../../assets/background.webp';
+import { executeRecaptcha } from '../utils/recaptcha';
 import {
     GEC,
     pageWrapperSx,
@@ -89,14 +90,23 @@ export default function SupportPortal() {
 
         setSubmitting(true);
 
+        let recaptchaToken;
+        try {
+            recaptchaToken = await executeRecaptcha('submit_ticket');
+        } catch {
+            showSnackbar('Could not verify reCAPTCHA. Please try again.', 'error');
+            setSubmitting(false);
+            return;
+        }
+
         const fd = new FormData();
         Object.entries(form).forEach(([k, v]) => fd.append(k, v));
         files.forEach((f) => fd.append('attachments', f));
+        fd.append('recaptchaToken', recaptchaToken);
 
         try {
-            const res = await fetch(`${SERVER_URL}/support/ticket`, { method: 'POST', body: fd ,credentials: "include" });
+            const res = await fetch(`${SERVER_URL}/support/ticket`, { method: 'POST', body: fd });
             const data = await res.json();
-            debugger;
             if (!res.ok || !data.status) {
                 showSnackbar(data.message ?? 'Submission failed.', 'error');
                 return;

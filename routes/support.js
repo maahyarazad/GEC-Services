@@ -4,14 +4,13 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const uniqid = require("uniqid");
-const jwt = require("jsonwebtoken");
+const fetch = require("node-fetch");
 const rateLimit = require("express-rate-limit");
 const dbService = require("../services/dbService");
 const db = dbService.getDB();
 const { sendRawEmailWithAttachments_AppSupport } = require("../services/emailService");
 const authorize = require("../middleware/auth");
 const { fromBuffer } = require("file-type");
-const authorization_middleware = require("../middleware/auth");
 // ─── Storage directory ───────────────────────────────────────────────────────
 const STORAGE_DIR = path.resolve(__dirname, "../support_attachments");
 if (!fs.existsSync(STORAGE_DIR)) fs.mkdirSync(STORAGE_DIR, { recursive: true });
@@ -44,6 +43,43 @@ const upload = multer({
 // ─── Rate limiters ───────────────────────────────────────────────────────────
 const submitLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, standardHeaders: true, legacyHeaders: false });
 const trackLimiter  = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false });
+
+// ─── reCAPTCHA verification ──────────────────────────────────────────────────
+const RECAPTCHA_SECRET    = process.env.RECAPTCHA_SECRET_KEY;
+const RECAPTCHA_MIN_SCORE = 0.5;
+
+// Verifies a Google reCAPTCHA token. Supports both v2 (no score) and v3
+// (score-based); the score threshold is only enforced when present.
+// Fails open when no secret is configured (e.g. local dev) so the public
+// support flow keeps working — set RECAPTCHA_SECRET_KEY in production.
+async function verifyRecaptcha(token, remoteIp) {
+  if (!RECAPTCHA_SECRET) {
+    console.warn("RECAPTCHA_SECRET_KEY not configured — skipping reCAPTCHA verification.");
+    return { ok: true };
+  }
+  if (!token) return { ok: false, reason: "Missing reCAPTCHA token." };
+
+  try {
+    const params = new URLSearchParams({ secret: RECAPTCHA_SECRET, response: token });
+    if (remoteIp) params.append("remoteip", remoteIp);
+
+    const resp = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+    const data = await resp.json();
+
+    if (!data.success) return { ok: false, reason: "reCAPTCHA verification failed." };
+    if (typeof data.score === "number" && data.score < RECAPTCHA_MIN_SCORE)
+      return { ok: false, reason: "reCAPTCHA score too low. Please try again." };
+
+    return { ok: true };
+  } catch (err) {
+    console.error("reCAPTCHA verification error:", err);
+    return { ok: false, reason: "Could not verify reCAPTCHA. Please try again." };
+  }
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function generateTicketNumber() {
@@ -111,14 +147,18 @@ function confirmationEmailHtml({ full_name, ticket_number, subject, category, pr
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
-// POST /support/ticket — public submission
+// POST /support/ticket — public submission (reCAPTCHA-protected)
 router.post(
   "/support/ticket",
   submitLimiter,
-  authorization_middleware.authorize_member_or_partner,
   upload.array("attachments", MAX_FILES),
   async (req, res) => {
     try {
+      // reCAPTCHA validation (replaces member/partner token auth)
+      const recaptcha = await verifyRecaptcha(req.body.recaptchaToken, req.ip);
+      if (!recaptcha.ok)
+        return res.status(400).json({ status: false, message: recaptcha.reason });
+
       const { full_name, email, subject, category, priority, description } = req.body;
 
       // Validation
@@ -192,56 +232,23 @@ router.post(
   }
 );
 
-// POST /support/ticket/status — public tracking auth
-router.post("/support/ticket/status", trackLimiter, (req, res) => {
+// GET /support/ticket/track — public ticket details (reCAPTCHA-protected)
+router.get("/support/ticket/track", trackLimiter, async (req, res) => {
   try {
-    const { ticketNumber } = req.body;
+    const { ticketNumber, recaptchaToken } = req.query;
+
+    // reCAPTCHA validation (replaces ticket-token auth)
+    const recaptcha = await verifyRecaptcha(recaptchaToken, req.ip);
+    if (!recaptcha.ok)
+      return res.status(400).json({ status: false, message: recaptcha.reason });
+
     if (!ticketNumber?.trim())
       return res.status(400).json({ status: false, message: "Ticket number is required." });
 
-    const ticket = db.prepare(
-      "SELECT id, ticket_number FROM support_tickets WHERE ticket_number = ?"
-    ).get(ticketNumber.trim().toUpperCase());
-
-    if (!ticket)
-      return res.status(404).json({ status: false, message: "Ticket not found." });
-
-
-
-     const token = jwt.sign({ ticketId: ticket.id, ticketNumber: ticket.ticket_number }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    
-        res.cookie("ticket-token", token, {
-          httpOnly: true,
-          secure: true,
-          sameSite: "none",
-          maxAge: 60 * 60 * 1000, // 1 hour
-        });
-
-
-    
-    return res.json({ status: true });
-  } catch (err) {
-    console.error("Ticket tracking auth error:", err);
-    return res.status(500).json({ status: false, message: "An unexpected error occurred." });
-  }
-});
-
-// GET /support/ticket/track — public ticket details (JWT from header)
-router.get("/support/ticket/track",trackLimiter,authorization_middleware.authorize_ticket , (req, res) => {
-  try {
-    
-    const token = req?.cookies['ticket-token'];
-
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch {
-      return res.status(401).json({ status: false, message: "Invalid or expired token." });
-    }
-
     const ticket = db.prepare(`
       SELECT id, ticket_number, subject, category, priority, status, created_at, updated_at, resolved_at
-      FROM support_tickets WHERE id = ?
-    `).get(decoded.ticketId);
+      FROM support_tickets WHERE ticket_number = ?
+    `).get(ticketNumber.trim().toUpperCase());
 
     if (!ticket) return res.status(404).json({ status: false, message: "Ticket not found." });
 
