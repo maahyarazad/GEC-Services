@@ -197,9 +197,7 @@ function confirmationEmailHtml({ full_name, ticket_number, subject, category, pr
                   <p>You can track your ticket status at any time using your ticket number at
                     <a href="https://services.german-emirates-club.com/support/track" style="color:#D9B144; text-decoration:none;">services.german-emirates-club.com/support/track</a>.
                   </p>
-                  <p>If you have any questions, feel free to contact us at
-                    <a href="mailto:office2@german-emirates-club.com" style="color:#D9B144; text-decoration:none;">office2@german-emirates-club.com</a>.
-                  </p>
+                  
                   <p>Warm regards,<br />The German Emirates Club Support Team</p>
                 </td>
               </tr>
