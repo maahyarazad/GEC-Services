@@ -1,13 +1,15 @@
 import { useState, useCallback, useEffect } from 'react';
 import {
     Box, Chip, Typography, Button, TextField, MenuItem, Alert,
-    IconButton, Tooltip,
+    IconButton, Tooltip, Badge,
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import MarkEmailUnreadIcon from '@mui/icons-material/MarkEmailUnread';
 import CustomDataGrid from '../../CustomDataGrid';
 import TicketDetailModal from './TicketDetailModal';
+import { useWebSocket } from '../WebSocketContext';
 
 const SERVER_URL = import.meta.env.VITE_SERVERURL;
 
@@ -27,14 +29,25 @@ export default function SupportSection() {
     const [error, setError]           = useState('');
     const [selectedId, setSelectedId] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0);
+    const { onEvent } = useWebSocket();
+
+    // Auto-refresh grid when a customer reply arrives via IMAP
+    useEffect(() => {
+        const cleanup = onEvent('support:new_reply', () => setRefreshKey((k) => k + 1));
+        return cleanup;
+    }, [onEvent]);
 
     const columns = [
         {
             field: 'actions', headerName: 'Actions', width: 80, sortable: false, filterable: false,
             renderCell: ({ row }) => (
-                <Tooltip title="View ticket">
-                    <IconButton size="small" color="primary" onClick={(e) => { e.stopPropagation(); setSelectedId(row.id); }}>
-                        <OpenInNewIcon fontSize="small" />
+                <Tooltip title={row.has_unread_customer_reply ? 'New customer reply — view ticket' : 'View ticket'}>
+                    <IconButton size="small" color={row.has_unread_customer_reply ? 'success' : 'primary'} onClick={(e) => { e.stopPropagation(); setSelectedId(row.id); }}>
+                        <Badge color="success" variant="dot" invisible={!row.has_unread_customer_reply}>
+                            {row.has_unread_customer_reply
+                                ? <MarkEmailUnreadIcon fontSize="small" />
+                                : <OpenInNewIcon fontSize="small" />}
+                        </Badge>
                     </IconButton>
                 </Tooltip>
             ),

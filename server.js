@@ -35,6 +35,7 @@ const support = require("./routes/support.js");
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
 const { createWebSocketServer } = require("./websocket/admin.js");
+const imapPoller = require("./services/imapPoller.js");
 const cron = require("node-cron");
 // Setup DB connection
 const betterSqlite3 = require("better-sqlite3");
@@ -162,7 +163,8 @@ app.get("*", (req, res) => {
 });
 
 // Attach websocket to same server
-createWebSocketServer(server, allowedOrigins);
+const io = createWebSocketServer(server, allowedOrigins);
+imapPoller.start(io);
 
 // https://crontab.guru/
 // Maahyar CM: node cron expression is different than normal expression use this site to check 

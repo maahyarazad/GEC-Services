@@ -112,25 +112,31 @@ async function sendRawEmailWithAttachments_AppSupport({
   text = "",
   attachments = [],
   bcc = [],
+  inReplyTo,
+  references,
+  messageId,
 }) {
   const transporter = nodemailer.createTransport({
     secure: false,
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
     auth: {
-      user: process.env.SMTP_SUPPORT_SENDER, 
-      pass: process.env.SMTP_SUPPORT_SENDER_PASS, 
+      user: process.env.SMTP_SUPPORT_SENDER,
+      pass: process.env.SMTP_SUPPORT_SENDER_PASS,
     }
   });
 
   const mailOptions = {
     from: process.env.SMTP_SUPPORT_SENDER,
     to,
-    bcc: bcc,
+    bcc,
     subject,
     text,
     html,
     attachments,
+    ...(inReplyTo  && { inReplyTo }),
+    ...(references && { references }),
+    ...(messageId  && { messageId }),
   };
 
   try {

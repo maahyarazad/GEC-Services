@@ -311,24 +311,36 @@ export default function TicketDetailModal({ ticketId, onClose }) {
                     {/* Comments */}
                     {ticket.comments?.length > 0 && (
                         <>
-                            <Section title="Comments">
+                            <Section title="Message Thread">
                                 <Stack spacing={1.5}>
-                                    {ticket.comments.map((c, i) => (
-                                        <Paper key={i} variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: c.is_public ? '#f0f7ff' : '#fff8e1' }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5, flexWrap: 'wrap', gap: 1 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                    <Chip label={c.is_public ? 'Public' : 'Internal'} size="small" color={c.is_public ? 'info' : 'default'} />
-                                                    {(c.admin_firstName || c.admin_lastName) && (
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            {[c.admin_firstName, c.admin_lastName].filter(Boolean).join(' ')}
-                                                        </Typography>
-                                                    )}
+                                    {ticket.comments.map((c, i) => {
+                                        const isCustomer = c.source === 'customer';
+                                        const isInternal = !c.is_public;
+                                        return (
+                                            <Paper key={i} variant="outlined" sx={{
+                                                p: 2, borderRadius: 2,
+                                                bgcolor: isCustomer ? '#f0fdf4' : isInternal ? '#fff8e1' : '#f0f7ff',
+                                                borderColor: isCustomer ? '#bbf7d0' : isInternal ? '#fde68a' : '#bfdbfe',
+                                            }}>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5, flexWrap: 'wrap', gap: 1 }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                        <Chip
+                                                            label={isCustomer ? 'Customer' : c.is_public ? 'Public Reply' : 'Internal Note'}
+                                                            size="small"
+                                                            color={isCustomer ? 'success' : c.is_public ? 'info' : 'default'}
+                                                        />
+                                                        {!isCustomer && (c.admin_firstName || c.admin_lastName) && (
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                {[c.admin_firstName, c.admin_lastName].filter(Boolean).join(' ')}
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
+                                                    <Typography variant="caption" color="text.secondary">{new Date(c.created_at).toLocaleString()}</Typography>
                                                 </Box>
-                                                <Typography variant="caption" color="text.secondary">{new Date(c.created_at).toLocaleString()}</Typography>
-                                            </Box>
-                                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{c.comment}</Typography>
-                                        </Paper>
-                                    ))}
+                                                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{c.comment}</Typography>
+                                            </Paper>
+                                        );
+                                    })}
                                 </Stack>
                             </Section>
                             <Divider sx={{ mb: 2 }} />
@@ -346,7 +358,7 @@ export default function TicketDetailModal({ ticketId, onClose }) {
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
                             <FormControlLabel
                                 control={<Switch checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} size="small" />}
-                                label={<Typography variant="body2">{isPublic ? 'Public (visible to customer)' : 'Internal note (admin only)'}</Typography>}
+                                label={<Typography variant="body2">{isPublic ? 'Public reply — customer will be notified by email' : 'Internal note — admin only'}</Typography>}
                             />
                             <Button
                                 variant="contained" size="small"
