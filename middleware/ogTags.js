@@ -1,7 +1,7 @@
 const path = require("path");
 const fs = require("fs").promises;
 
-const DEFAULT_OG_IMAGE = "https://services.german-emirates-club.com/uploads/background.webp";
+const DEFAULT_OG_IMAGE = "https://services.german-emirates-club.com/uploads/og_image.png";
 
 const OG_ROUTES = {
   "/support": {
@@ -10,18 +10,21 @@ const OG_ROUTES = {
     url: "https://services.german-emirates-club.com/support",
     image: DEFAULT_OG_IMAGE,
   },
-  "/membership": {
-    title: "Membership - German Emirates Club",
-    description: "Join the German Emirates Club and become a member today.",
-    url: "https://services.german-emirates-club.com/membership",
-    image: DEFAULT_OG_IMAGE,
-  },
-  "/partner-onboarding": {
-    title: "Partner Onboarding - German Emirates Club",
-    description: "Become a partner of the German Emirates Club. Start your onboarding here.",
-    url: "https://services.german-emirates-club.com/partner-onboarding",
-    image: "https://services.german-emirates-club.com/images/partner-preview.jpg",
-  },
+ "/membership": {
+  title: "Membership - German Emirates Club",
+  description:
+    "Activate your German Emirates Club Membership Pass and access exclusive privileges, discounts, and lifestyle benefits across the UAE.",
+  url: "https://services.german-emirates-club.com/membership",
+  image: DEFAULT_OG_IMAGE,
+},
+
+"/partner-onboarding": {
+  title: "Partner Onboarding - German Emirates Club",
+  description:
+    "Submit and manage your employee list to onboard your team into the German Emirates Club corporate membership program.",
+  url: "https://services.german-emirates-club.com/partner-onboarding",
+  image: DEFAULT_OG_IMAGE,
+},
 };
 
 function buildOgTags({ title, description, url, image }) {
