@@ -44,7 +44,18 @@ function loadRecaptcha() {
  * @returns {Promise<string>} The reCAPTCHA token, or '' when no site key is set.
  */
 export async function executeRecaptcha(action) {
-    if (!SITE_KEY) return '';
+    if (!SITE_KEY) {
+        // Env vars are inlined when the Vite dev server starts / the app is built.
+        // A missing key here almost always means the running bundle predates the
+        // VITE_RECAPTCHA_SITE_KEY entry in public/.env — restart the dev server
+        // (or rebuild) to pick it up. Surface it loudly instead of silently
+        // sending an empty token (which the server rejects as "Missing reCAPTCHA token").
+        console.error(
+            '[reCAPTCHA] VITE_RECAPTCHA_SITE_KEY is not set in the running bundle. ' +
+            'Restart the Vite dev server (or rebuild) after editing public/.env.'
+        );
+        return '';
+    }
     const grecaptcha = await loadRecaptcha();
     return grecaptcha.execute(SITE_KEY, { action });
 }
