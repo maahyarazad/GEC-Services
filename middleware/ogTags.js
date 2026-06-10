@@ -3,9 +3,11 @@ const fs = require("fs").promises;
 
 const DEFAULT_OG_IMAGE = "https://services.german-emirates-club.com/uploads/og_image.png";
 
+const BASE_URL = "https://services.german-emirates-club.com";
+
 const DEFAULT_OG = {
   title: "Services - German Emirates Club",
-  description: "Services - German Emirates Club",
+  description: "Exclusive services and benefits for members of the German Emirates Club.",
   image: DEFAULT_OG_IMAGE,
 };
 
@@ -13,24 +15,23 @@ const OG_ROUTES = {
   "/support": {
     title: "Support - German Emirates Club",
     description: "Get support from the German Emirates Club team.",
-    url: "https://services.german-emirates-club.com/support",
+    url: `${BASE_URL}/support`,
     image: DEFAULT_OG_IMAGE,
   },
- "/membership": {
-  title: "Membership - German Emirates Club",
-  description:
-    "Activate your German Emirates Club Membership Pass and access exclusive privileges, discounts, and lifestyle benefits across the UAE.",
-  url: "https://services.german-emirates-club.com/membership",
-  image: DEFAULT_OG_IMAGE,
-},
-
-"/partner-onboarding": {
-  title: "Partner Onboarding - German Emirates Club",
-  description:
-    "Submit and manage your employee list to onboard your team into the German Emirates Club corporate membership program.",
-  url: "https://services.german-emirates-club.com/partner-onboarding",
-  image: DEFAULT_OG_IMAGE,
-},
+  "/membership": {
+    title: "Membership - German Emirates Club",
+    description:
+      "Activate your German Emirates Club Membership Pass and access exclusive privileges, discounts, and lifestyle benefits across the UAE.",
+    url: `${BASE_URL}/membership`,
+    image: DEFAULT_OG_IMAGE,
+  },
+  "/partner-onboarding": {
+    title: "Partner Onboarding - German Emirates Club",
+    description:
+      "Submit and manage your employee list to onboard your team into the German Emirates Club corporate membership program.",
+    url: `${BASE_URL}/partner-onboarding`,
+    image: DEFAULT_OG_IMAGE,
+  },
 };
 
 function buildOgTags({ title, description, url, image }) {
@@ -52,7 +53,7 @@ async function serveWithOgTags(req, res) {
   const indexPath = path.join(__dirname, "../public", "index.html");
   const ogMeta = OG_ROUTES[req.path] ?? {
     ...DEFAULT_OG,
-    url: `https://services.german-emirates-club.com${req.path}`,
+    url: `${BASE_URL}${req.path}`,
   };
   try {
     let html = await fs.readFile(indexPath, "utf8");
