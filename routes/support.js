@@ -10,7 +10,7 @@ const dbService = require("../services/dbService");
 const db = dbService.getDB();
 const { sendRawEmailWithAttachments_AppSupport } = require("../services/emailService");
 const authorize = require("../middleware/auth");
-const { fromBuffer } = require("file-type");
+const { fileTypeFromBuffer } = require("file-type");
 // ─── Storage directory ───────────────────────────────────────────────────────
 const STORAGE_DIR = path.resolve(__dirname, "../support_attachments");
 if (!fs.existsSync(STORAGE_DIR)) fs.mkdirSync(STORAGE_DIR, { recursive: true });
@@ -121,7 +121,7 @@ async function validateFile(file) {
   if (!ALLOWED_EXT.has(ext)) return { valid: false, reason: `File extension ${ext} not allowed` };
   if (file.size > MAX_FILE_SIZE) return { valid: false, reason: "File exceeds 1 MB limit" };
 
-  const detected = await fromBuffer(file.buffer);
+  const detected = await fileTypeFromBuffer(file.buffer);
   const mime = detected?.mime ?? (ext === ".txt" ? "text/plain" : null);
   if (!mime || !ALLOWED_MIME.has(mime)) return { valid: false, reason: "File type not permitted" };
 
