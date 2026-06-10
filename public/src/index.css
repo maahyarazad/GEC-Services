@@ -213,3 +213,12 @@ button {
     scroll-behavior: auto !important;
   }
 }
+
+/* reCAPTCHA badge: hidden globally; only shown on pages that opt in via the
+   useRecaptchaBadge() hook (Support Portal / Ticket Tracker). */
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
+body.recaptcha-visible .grecaptcha-badge {
+  visibility: visible !important;
+}

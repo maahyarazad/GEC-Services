@@ -7,6 +7,8 @@
 // (e.g. local dev), executeRecaptcha resolves to an empty string and the server
 // verification fails open, so the support flow keeps working without keys.
 
+import { useEffect } from 'react';
+
 const SITE_KEY  = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 const SCRIPT_ID = 'gec-recaptcha-v3';
 
@@ -59,4 +61,20 @@ export async function executeRecaptcha(action) {
     }
     const grecaptcha = await loadRecaptcha();
     return grecaptcha.execute(SITE_KEY, { action });
+}
+
+/**
+ * React hook: loads reCAPTCHA and reveals its badge while the calling component
+ * is mounted, then hides the badge again on unmount. Pair this with the CSS in
+ * index.css (the badge is hidden globally by default and only shown when the
+ * <body> carries the `recaptcha-visible` class). Use it in the pages that
+ * actually use reCAPTCHA so the badge never lingers on other routes.
+ */
+export function useRecaptchaBadge() {
+    useEffect(() => {
+        if (!SITE_KEY) return undefined;
+        document.body.classList.add('recaptcha-visible');
+        loadRecaptcha().catch(() => { /* surfaced by executeRecaptcha on submit */ });
+        return () => document.body.classList.remove('recaptcha-visible');
+    }, []);
 }

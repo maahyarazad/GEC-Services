@@ -73,4 +73,9 @@ styled GEC forms — a token is generated and verified on each submit.
 
 Eventhough I've set the secret and key I still get the recaptcha error without even being checked.
 
+# Bug: reCAPTCHA shows up everywhere
 
+So I put this script in head of index html 
+<script src="https://www.google.com/recaptcha/enterprise.js?render=6Lei5xYtAAAAAAIOcrcQJP__y2XyfzxtLbHfWTg0" defer></script>
+
+and it shows up everywhere I need this only in SupportPortal and TicketTracker components

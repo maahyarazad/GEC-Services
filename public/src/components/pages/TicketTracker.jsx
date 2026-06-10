@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import GECLogo from '../../assets/background.webp';
-import { executeRecaptcha } from '../utils/recaptcha';
+import { executeRecaptcha, useRecaptchaBadge } from '../utils/recaptcha';
 import {
     GEC,
     pageWrapperSx,
@@ -51,6 +51,7 @@ export default function TicketTracker() {
     const [error, setError] = useState('');
     const [ticket, setTicket] = useState(null);
     const navigate = useNavigate();
+    useRecaptchaBadge();
 
     const handleTrack = async (e) => {
         e.preventDefault();

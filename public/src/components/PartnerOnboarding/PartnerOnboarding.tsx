@@ -28,6 +28,7 @@ import OtpInput from "../utils/OtpInput";
 import { validateAndConvertXlsx } from './validateAndConvertXlsx.tsx';
 import { IoMdCloseCircleOutline } from "react-icons/io";
 import ResultPanel from "./ResultPanel";
+import Seo from "../Seo";
 import {
     GEC, wizardCompletedBannerSx,
     GoldConnector,
@@ -729,6 +730,12 @@ export default function PartnerOnboarding() {
     // ── Render ────────────────────────────────────────────────────────────
     return (
         <Box sx={pageWrapperSx}>
+            <Seo
+                title="Partner Onboarding - German Emirates Club"
+                description="Become a partner of the German Emirates Club. Start your onboarding here."
+                url="https://services.german-emirates-club.com/partner-onboarding"
+                image="https://services.german-emirates-club.com/images/partner-preview.jpg"
+            />
             <Container maxWidth="sm" sx={containerSx}>
                 <Paper elevation={0} sx={paperSx}>
                     {/* Top accent bar */}

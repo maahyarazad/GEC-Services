@@ -37,6 +37,7 @@ import {
 
 import AppStore from '../../assets/download-app-store.png';
 import PlayStore from '../../assets/download-play-store.png';
+import Seo from '../Seo';
 
 
 
@@ -128,6 +129,11 @@ const PurchaseMemberShip = () => {
     return (
         <SnackbarProvider useGECStyle>
         <Box sx={pageWrapperSx}>
+            <Seo
+                title="Membership - German Emirates Club"
+                description="Join the German Emirates Club and become a member today."
+                url="https://services.german-emirates-club.com/membership"
+            />
             <Container
                 maxWidth="md"
                 sx={{
