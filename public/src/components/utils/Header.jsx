@@ -8,7 +8,7 @@ import Tooltip from "@mui/material/Tooltip";
 import { useNavigate } from "react-router";
 import { config } from '../../ui_config';
 import GECLogo from '../../assets/background.webp'
-export const Header = ({ adminUser, setAdminUser, showMenu, burgerActive, setBurgerActive }) => {
+export const Header = ({ adminUser, adminEmail, setAdminUser, showMenu, burgerActive, setBurgerActive }) => {
 
 
     const handleBurgerMenu = () => {
@@ -72,6 +72,12 @@ export const Header = ({ adminUser, setAdminUser, showMenu, burgerActive, setBur
 
                     <div className={`align-items-end d-flex ${showMenu ? "" : ''}`}>
 
+                        {adminEmail && (
+                            <strong className={`pe-3 ${showMenu ? "d-none" : ''}`}>
+                                <p className="logged-in-as">Logged in as: {adminEmail}</p>
+                            </strong>
+                        )}
+
                         <strong className={`pe-2 ${showMenu ? "d-none" : ''}`}>
                             <p id="setTheTime">{dateTime}</p>
                         </strong>
@@ -91,5 +97,6 @@ export const Header = ({ adminUser, setAdminUser, showMenu, burgerActive, setBur
 };
 
 Header.propTypes = {
-    xTasks: PropTypes.array.isRequired,
+    xTasks: PropTypes.array,
+    adminEmail: PropTypes.string,
 };

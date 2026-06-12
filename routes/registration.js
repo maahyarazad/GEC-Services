@@ -19,6 +19,7 @@ const path = require("path");
 const fs = require("fs");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const authorization_middleware = require("../middleware/auth");
 const rateLimit = require("express-rate-limit");
 const dayjs = require("dayjs");
@@ -559,6 +560,66 @@ router.post("/admin/login", upload.none(), loginLimiter, (req, res) => {
   return res.status(401).json({ error: "Invalid password" });
 });
 
+// Auto login an admin user via an HMAC token generated server-side with GEC_SECRET.
+// Token = HMAC_SHA256(email, GEC_SECRET) — the secret never leaves the server, the
+// client only ever presents a token it cannot forge.
+router.get("/admin/auto-login", loginLimiter, (req, res) => {
+  try {
+    const email = typeof req.query.email === "string" ? req.query.email.trim() : "";
+    const token = typeof req.query.token === "string" ? req.query.token.trim() : "";
+
+    if (!email || !token) {
+      return res.status(401).json({ success: false, error: "Missing credentials" });
+    }
+
+    const secret = process.env.GEC_SECRET;
+    if (!secret) {
+      console.error("GEC_SECRET is not configured");
+      return res.status(500).json({ success: false, error: "Server misconfiguration" });
+    }
+
+    const expected = crypto
+      .createHmac("sha256", secret)
+      .update(email)
+      .digest("hex");
+
+    // Timing-safe comparison; bail out early on length mismatch since
+    // timingSafeEqual throws when buffer lengths differ.
+    const provided = token.toLowerCase();
+    const expectedBuf = Buffer.from(expected, "utf8");
+    const providedBuf = Buffer.from(provided, "utf8");
+
+    const valid =
+      expectedBuf.length === providedBuf.length &&
+      crypto.timingSafeEqual(expectedBuf, providedBuf);
+
+    if (!valid) {
+      return res.status(401).json({ success: false, error: "Invalid token" });
+    }
+
+    const oneWeekInSeconds = 7 * 24 * 60 * 60;
+    const oneWeekInMilliseconds = oneWeekInSeconds * 1000;
+
+    const sessionToken = jwt.sign(
+      { role: "admin", email, mapboxToken: process.env.VITE_APP_MAPBOX_TOKEN },
+      process.env.JWT_SECRET,
+      { expiresIn: `${oneWeekInSeconds}s` }
+    );
+
+    res.cookie("a-usr", sessionToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: oneWeekInMilliseconds,
+    });
+
+    return res.json({ success: true, email });
+  } catch (err) {
+    console.error("Auto-login error:", err);
+    return res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
 router.post("/admin/logout", (req, res) => {
   const token = req?.cookies["a-usr"];
   if (!token) {
@@ -594,7 +655,7 @@ router.get("/admin/check-auth", (req, res) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (decoded.role === "admin") {
-      return res.json({ authenticated: true });
+      return res.json({ authenticated: true, email: decoded.email || null });
     }
     return res.status(401).json({ authenticated: false });
   } catch {
