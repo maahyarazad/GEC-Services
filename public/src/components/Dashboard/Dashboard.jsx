@@ -23,7 +23,7 @@ import { FcSurvey } from "react-icons/fc";
 import { GiArchiveRegister } from "react-icons/gi";
 import { GoShieldLock } from "react-icons/go";
 import { GrCatalogOption } from "react-icons/gr";
-import { MdPictureAsPdf, MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight, MdTerminal, MdLocalShipping, MdLocationOn } from "react-icons/md";
+import { MdPictureAsPdf, MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight, MdTerminal, MdLocalShipping, MdLocationOn, MdSupportAgent } from "react-icons/md";
 import { PiBriefcaseDuotone } from "react-icons/pi";
 
 // Utils
@@ -44,6 +44,7 @@ const PDFGenerator = React.lazy(() => import("./PDFGenerator/PDFGenerator"));
 const ServerLogs = React.lazy(() => import("./ServerLogs/ServerLogs"));
 const DeliveryTrackingSection = React.lazy(() => import("../Sections/DeliveryTrackingSection"));
 const PlaceIdFinder = React.lazy(() => import("./PlaceIdFinder/PlaceIdFinder"));
+const SupportSection = React.lazy(() => import("./Support/SupportSection"));
 
 // import RegistrationList from "./Registration/RegistrationList";
 // import RegistrationDataGrid from "../gallery/RegistrationDataGrid";
@@ -76,10 +77,46 @@ const Admin = ({ data }) => {
     const [loginClass, setLoginClass] = useState(null);
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
     const [adminUser, setAdminUser] = useState(false);
+    const [adminEmail, setAdminEmail] = useState(null);
     const [showPassword, setShowPassowrd] = useState(false);
 
     const checkAuth = useCallback(async () => {
         try {
+            // If the URL carries admin auto-login params, validate them server-side first.
+            const params = new URLSearchParams(window.location.search);
+            const autoEmail = params.get("email");
+            const autoToken = params.get("token");
+
+            if (autoEmail && autoToken) {
+                const autoRes = await fetch(
+                    `${import.meta.env.VITE_SERVERURL}/admin/auto-login?email=${encodeURIComponent(autoEmail)}&token=${encodeURIComponent(autoToken)}`,
+                    {
+                        method: "GET",
+                        credentials: "include",
+                    }
+                );
+
+                if (autoRes.ok) {
+                    const autoData = await autoRes.json();
+                    if (autoData.success) {
+                        setAdminUser(true);
+                        setAdminEmail(autoData.email || autoEmail);
+
+                        // Strip the sensitive credentials from the URL so the token
+                        // isn't left in history / shareable links.
+                        params.delete("email");
+                        params.delete("token");
+                        const remaining = params.toString();
+                        window.history.replaceState(
+                            {},
+                            "",
+                            `/admin${remaining ? `?${remaining}` : ""}`
+                        );
+                        return;
+                    }
+                }
+                // Auto-login failed → fall through to the normal session check / login page.
+            }
 
             const res = await fetch(`${import.meta.env.VITE_SERVERURL}/admin/check-auth`, {
                 method: "GET",
@@ -97,6 +134,7 @@ const Admin = ({ data }) => {
             if (res.ok) {
                 const data = await res.json();
                 setAdminUser(true);
+                setAdminEmail(data.email || null);
             }
 
 
@@ -239,6 +277,10 @@ const Admin = ({ data }) => {
             icon: <MdLocationOn size={20} />,
             label: "Place ID Finder",
         },
+        {
+            icon: <MdSupportAgent size={20} />,
+            label: "Support Center",
+        },
     ];
 
     const [tabValue, setTabValue] = useState(0);
@@ -356,6 +398,9 @@ const Admin = ({ data }) => {
         case 10:
             content = <PlaceIdFinder />;
             break;
+        case 11:
+            content = <SupportSection />;
+            break;
     }
 
 
@@ -372,7 +417,7 @@ const Admin = ({ data }) => {
         <FallBackLoader />
     ) : adminUser ? (
         <>
-            <Header adminUser={adminUser} setAdminUser={setAdminUser} showMenu={showMenu} burgerActive={burgerActive} setBurgerActive={setBurgerActive} />
+            <Header adminUser={adminUser} adminEmail={adminEmail} setAdminUser={setAdminUser} showMenu={showMenu} burgerActive={burgerActive} setBurgerActive={setBurgerActive} />
             <div className={`admin${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
                 <div className={burgerActive ? "show" : ""}>
                     {!showMenu && (

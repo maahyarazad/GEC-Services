@@ -2,7 +2,6 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const fs = require("fs").promises;
 
 const app = express();
 const PORT = process.env.PORT || 5500;
@@ -31,9 +30,12 @@ const health_check = require("./routes/health_check.js");
 const server_logs = require("./routes/server_logs.js");
 const account_deletion = require("./routes/account_deletion.js");
 const gec_members = require("./routes/gec_members.js");
+const support = require("./routes/support.js");
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
+const { serveWithOgTags } = require("./middleware/ogTags");
 const { createWebSocketServer } = require("./websocket/admin.js");
+const imapPoller = require("./services/imapPoller.js");
 const cron = require("node-cron");
 // Setup DB connection
 const betterSqlite3 = require("better-sqlite3");
@@ -149,18 +151,13 @@ app.use("/", contact_book);
 app.use("/", external_route);
 app.use("/", events);
 app.use("/api/", gec_members);
+app.use("/", support);
 
-// Route to serve your main HTML file
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+app.get("*", serveWithOgTags);
 
 // Attach websocket to same server
-createWebSocketServer(server, allowedOrigins);
+const io = createWebSocketServer(server, allowedOrigins);
+imapPoller.start(io);
 
 // https://crontab.guru/
 // Maahyar CM: node cron expression is different than normal expression use this site to check 

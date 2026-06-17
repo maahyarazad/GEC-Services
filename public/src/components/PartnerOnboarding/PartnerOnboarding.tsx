@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 import Box from "@mui/material/Box";
@@ -109,6 +110,7 @@ const INITIAL_WIZARD_STATE = {
 
 // ── Main Component ────────────────────────────────────────────────────────
 export default function PartnerOnboarding() {
+    const navigate = useNavigate();
     const [activeStep, setActiveStep] = useState(0);
     const [wizardState, setWizardState] = useState(INITIAL_WIZARD_STATE);
 
@@ -804,10 +806,8 @@ export default function PartnerOnboarding() {
                             sx={{ display: "block", textAlign: "center", mt: 3, color: "#a89b7a" }}
                         >
                             Need help?{" "}
-                            <Box component="span" sx={footerLinkSx} onClick={() => {
-                                window.location.href = "mailto:development3@german-emirates-club.com";
-                            }}>
-                                Contact partner support
+                            <Box component="span" sx={footerLinkSx} onClick={() => navigate('/support')}>
+                                Raise a Ticket
                             </Box>
                         </Typography>
                     </Box>

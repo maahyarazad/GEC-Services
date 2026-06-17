@@ -100,7 +100,51 @@ async function sendRawEmailWithAttachments({
     console.log("Email sent:", response.messageId);
     return response;
   } catch (error) {
-    console.error("SendGrid SMTP error:", error);
+    console.error("sendRawEmailWithAttachments SMTP error:", error);
+    throw error;
+  }
+}
+
+async function sendRawEmailWithAttachments_AppSupport({
+  to,
+  subject,
+  html,
+  text = "",
+  attachments = [],
+  bcc = [],
+  inReplyTo,
+  references,
+  messageId,
+}) {
+  const transporter = nodemailer.createTransport({
+    secure: false,
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    auth: {
+      user: process.env.SMTP_SUPPORT_SENDER,
+      pass: process.env.SMTP_SUPPORT_SENDER_PASS,
+    }
+  });
+
+  const mailOptions = {
+    from: process.env.SMTP_SUPPORT_SENDER,
+    to,
+    bcc,
+    subject,
+    text,
+    html,
+    attachments,
+    ...(inReplyTo  && { inReplyTo }),
+    ...(references && { references }),
+    ...(messageId  && { messageId }),
+  };
+
+  try {
+    const response = await transporter.sendMail(mailOptions);
+    console.log("Email sent:", response.messageId);
+    return response;
+  } catch (error) {
+    console.error("sendRawEmailWithAttachments_AppSupport SMTP error:", error);
     throw error;
   }
 }
@@ -1832,6 +1876,7 @@ module.exports = {
   membership_courtacy_at_venue_message,
   membership_pass_email,
   membership__invitation,
+  sendRawEmailWithAttachments_AppSupport
 };
 
 

@@ -8,6 +8,8 @@ const SuccessTemplatePage = React.lazy(() => import("./components/templates/Succ
 const GuestRegistration = React.lazy(() => import("./components/guestRegistration/GuestRegistration"));
 const PurchaseMemberShip = React.lazy(() => import("./components/pages/PurchaseMemberShip"));
 const PartnerOnboarding = React.lazy(() => import("./components/PartnerOnboarding/PartnerOnboarding"));
+const SupportPortal = React.lazy(() => import("./components/pages/SupportPortal"));
+const TicketTracker = React.lazy(() => import("./components/pages/TicketTracker"));
 // const Admin = React.lazy(() => import("./components/admin/Admin"));
 import Dashboard from "./components/Dashboard/Dashboard";
 
@@ -78,6 +80,8 @@ function AppRoutes() {
                 <Route path="/registration/:event/success" element={<SuccessTemplatePage />} />
                 <Route path="/guest-registration/:eventSlug" element={<GuestRegistration />} />
                 <Route path="/membership" element={<PurchaseMemberShip />} />
+                <Route path="/support" element={<SupportPortal />} />
+                <Route path="/support/track" element={<TicketTracker />} />
                 <Route path="/partner-onboarding" element={
                     <SnackbarProvider useGECStyle={true}>
                         <PartnerOnboarding />
