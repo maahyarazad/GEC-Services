@@ -7,6 +7,24 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
 export default function ResultPanel({wizardState}){
     
+    const successAlertSx = {
+    background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+    border: "1px solid rgba(34, 197, 94, 0.3)",
+    borderLeft: "4px solid #16a34a",
+    color: "#14532d",
+    fontWeight: 500,
+    borderRadius: "10px",
+    boxShadow: "0 4px 20px rgba(34, 197, 94, 0.12), 0 1px 4px rgba(0,0,0,0.06)",
+    padding: "10px 16px",
+    "& .MuiAlert-icon": { color: "#16a34a", fontSize: "20px" },
+    "& .MuiAlert-message": { padding: 0, fontSize: "0.875rem", lineHeight: 1.5 },
+    "& .MuiAlert-action": {
+        paddingTop: 0,
+        "& .MuiIconButton-root": { color: "#15803d", opacity: 0.7 },
+    },
+};
+
+
     return (
   <Box sx={{ maxHeight: 180, overflowY: "auto", py: 1 }}>
 
@@ -30,7 +48,7 @@ export default function ResultPanel({wizardState}){
 
     {/* ── No faults ── */}
     {!wizardState.faultyRecords?.length && (
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.5, bgcolor: "success.light", borderRadius: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.5, ...successAlertSx }}>
         <CheckCircleOutlineIcon color="success" fontSize="small" />
         <Typography variant="body2" color="success.dark">
           All rows passed validation. Ready to import.
