@@ -8,7 +8,7 @@ const authorization_middleware = require("../middleware/auth");
 const { exportTableAsCSV } = require("../services/csvParser");
 const { generateMemberPass } = require("../services/applePassService");
 const { generateMemberGooglePass } = require("../services/googlePassService");
-const { membership_pass_email } = require("../services/emailService");
+const { membership_pass_email, sendBatchEmails } = require("../services/emailService");
 const uniqid = require("uniqid");
 const path = require("path");
 const db = dbService.getDB();
@@ -282,24 +282,41 @@ router.get("/api/gec-grouped-partners", async (req, res) => {
 router.get("/api/member-card-partner-stats", (req, res) => {
   try {
     const stmt = db.prepare(`
-      SELECT
-          mc.partner,
-          mc.member_count,
-          COALESCE(pod.total_records, 0) AS available_update
-      FROM (
-          SELECT partner, COUNT(*) AS member_count
-          FROM member_card
-          GROUP BY partner
-      ) AS mc
-      LEFT JOIN (
-          SELECT partner, COUNT(*) AS total_records
-          FROM partner_onboarding_data
-          WHERE metadata_createdAt >= datetime('now', '-1 month')
-            AND synchronized != 1
-          GROUP BY partner
-      ) AS pod
-        ON LOWER(mc.partner) = LOWER(pod.partner)
-      ORDER BY available_update DESC, mc.member_count DESC
+     WITH mc AS (
+    SELECT
+        partner,
+        COUNT(*) AS member_count,
+        REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+            lower(trim(partner)),
+        'Ü', 'u'), 'ü', 'u'),
+        'Ö', 'o'), 'ö', 'o'),
+        'Ä', 'a'), 'ä', 'a'),
+        'ß', 'ss') AS norm_partner
+    FROM member_card
+    GROUP BY norm_partner
+),
+pod AS (
+    SELECT
+        partner,
+        COUNT(*) AS total_records,
+        REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+            lower(trim(partner)),
+        'Ü', 'u'), 'ü', 'u'),
+        'Ö', 'o'), 'ö', 'o'),
+        'Ä', 'a'), 'ä', 'a'),
+        'ß', 'ss') AS norm_partner
+    FROM partner_onboarding_data
+    WHERE metadata_createdAt >= datetime('now', '-1 month')
+      AND synchronized != 1
+    GROUP BY norm_partner
+)
+SELECT
+    mc.partner,
+    mc.member_count,
+    COALESCE(pod.total_records, 0) AS available_update
+FROM mc
+LEFT JOIN pod ON mc.norm_partner = pod.norm_partner
+ORDER BY available_update DESC, mc.member_count DESC;
     `);
     const data = stmt.all();
     return res.json({ status: true, data });
@@ -331,14 +348,35 @@ router.post("/api/member-card-sync", (req, res) => {
   if (!language || !['en', 'de'].includes(language))
     return res.status(400).json({ status: false, message: "language must be 'en' or 'de'" });
 
+
+  const corporateCardEmailSet = new Set();
+
+
   try {
     const sync = db.transaction(() => {
       // Step 0 — load the pending batch for this partner, filtered by language
       const batch = db.prepare(`
-      WITH unsynced_table AS (
-  SELECT * FROM partner_onboarding_data
-  WHERE LOWER(partner) = LOWER(?)
-    AND LOWER(language) = LOWER(?)
+WITH norm_params AS (
+  SELECT
+    REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+      lower(trim(?)),
+    'Ü', 'u'), 'ü', 'u'),
+    'Ö', 'o'), 'ö', 'o'),
+    'Ä', 'a'), 'ä', 'a'),
+    'ß', 'ss') AS partner_norm,
+    lower(trim(?)) AS language_norm
+),
+unsynced_table AS (
+  SELECT pod.*
+  FROM partner_onboarding_data pod
+  CROSS JOIN norm_params np
+  WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+            lower(trim(pod.partner)),
+        'Ü', 'u'), 'ü', 'u'),
+        'Ö', 'o'), 'ö', 'o'),
+        'Ä', 'a'), 'ä', 'a'),
+        'ß', 'ss') = np.partner_norm
+    AND lower(trim(pod.language)) = np.language_norm
     AND metadata_createdAt >= datetime('now', '-1 month')
     AND synchronized != 1
 ),
@@ -372,6 +410,7 @@ WHERE rn = 1;
         SELECT id FROM member_card
         WHERE mobile_number = ? AND LOWER(partner) != LOWER(?) LIMIT 1
       `);
+
       const updateStmt = db.prepare(`
         UPDATE member_card
         SET firstname = ?, lastname = ?, title = ?, birthday = ?, email = ?, active = 1,
@@ -379,6 +418,7 @@ WHERE rn = 1;
             metadata_modifiedAt = datetime('now')
         WHERE LOWER(partner) = LOWER(?) AND mobile_number = ?
       `);
+
       for (const r of updateBatch) {
         if (checkPhoneConflict.get(r.mobile_number, r.partner)) continue;
         updated += updateStmt.run(r.firstname, r.lastname, r.title, r.birthday, r.email, r.partner, r.mobile_number).changes;
@@ -389,6 +429,7 @@ WHERE rn = 1;
         UPDATE member_card SET active = 0, remarks = 'synchronized delete ' || datetime('now')
         WHERE LOWER(partner) = LOWER(?) AND mobile_number = ?
       `);
+
       for (const r of deleteBatch) {
         deactivated += deleteStmt.run(r.partner, r.mobile_number).changes;
       }
@@ -405,18 +446,22 @@ WHERE rn = 1;
           )
         LIMIT 1
       `);
+
       const checkMcByPhone = db.prepare(
         `SELECT id FROM member_card WHERE mobile_number = ? LIMIT 1`
       );
+
       const getMaxCardNumber = db.prepare(
         `SELECT MAX(card_number) AS max_num FROM member_card WHERE CAST(card_number AS TEXT) LIKE ?`
       );
+
       const insertMcStmt = db.prepare(`
         INSERT INTO member_card (
           partner, mobile_number, firstname, lastname, title, gender,
           email, birthday, active, type, card_number, card_expiry_date, remarks
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, datetime('now', '+1 year'), 'synchronized')
       `);
+
       const updateMcAddStmt = db.prepare(`
         UPDATE member_card
         SET firstname = ?, lastname = ?, title = ?,
@@ -452,23 +497,44 @@ WHERE rn = 1;
             r.partner, mobile_number, r.firstname, r.lastname, r.title,
             mcGender, r.email, r.birthday, mcType, newCardNumber
           );
-          if (info.changes > 0) inserted++;
+          if (info.changes > 0) {
+            corporateCardEmailSet.add(r);
+            inserted++
+            };
         }
       }
 
       // STEP 4 — Mark all batch records as synchronized
-      db.prepare(`
-        UPDATE partner_onboarding_data
-        SET synchronized = 1
-        WHERE LOWER(partner) = LOWER(?)
-          AND metadata_createdAt >= datetime('now', '-1 month')
-          AND synchronized != 1
-      `).run(partner);
+    db.prepare(`
+  UPDATE partner_onboarding_data
+  SET synchronized = 1
+  WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+            lower(trim(partner)),
+        'Ü', 'u'), 'ü', 'u'),
+        'Ö', 'o'), 'ö', 'o'),
+        'Ä', 'a'), 'ä', 'a'),
+        'ß', 'ss')
+      =
+      REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+            lower(trim(?)),
+        'Ü', 'u'), 'ü', 'u'),
+        'Ö', 'o'), 'ö', 'o'),
+        'Ä', 'a'), 'ä', 'a'),
+        'ß', 'ss')
+    AND metadata_createdAt >= datetime('now', '-1 month')
+    AND synchronized != 1
+`).run(partner);
 
       return { updated, inserted, deactivated };
     });
 
     const result = sync();
+
+    if(corporateCardEmailSet.size > 0){
+        sendBatchEmails(corporateCardEmailSet);
+    }
+
+
     return res.json({ status: true, ...result });
   } catch (error) {
     console.error("Error in /api/member-card-sync:", error);

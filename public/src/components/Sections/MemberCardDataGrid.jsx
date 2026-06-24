@@ -260,7 +260,7 @@ const MemberCardDataGrid = () => {
         try {
             const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/gec-grouped-partners`, { credentials: 'include' });
             const d = await r.json();
-            debugger;
+            
             setGecPartners(d.data ?? []);
         } catch (e) {
             console.error('GEC partners fetch failed', e);

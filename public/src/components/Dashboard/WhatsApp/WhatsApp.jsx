@@ -1326,7 +1326,7 @@ const WhatsappBroadcast = () => {
                         },
                         maxHeight: {
                             xs: '88dvh',
-                            md: '100dvh',
+                            md: '82dvh',
                         },
                         overflowY: 'scroll',
                         '& .MuiButton-root': {

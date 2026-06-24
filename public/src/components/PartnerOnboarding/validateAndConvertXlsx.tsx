@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
+import { object } from "yup";
 
 
 
@@ -14,6 +15,7 @@ const REQUIRED_HEADERS = [
   "Date of Birth",
   "Language",
   "Add/Update/Delete",
+  "Normalized 🔒"
 ];
 
 // Fields that must not be empty in any data row
@@ -24,6 +26,7 @@ const MANDATORY_FIELDS = [
   "Mobile Number",
   "Language",
   "Add/Update/Delete",
+  "Normalized 🔒"
 ];
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -74,17 +77,20 @@ export async function validateAndConvertXlsx(
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(arrayBuffer);
 
-    const worksheet = workbook.worksheets[0];
+    
+    const worksheet = workbook.worksheets.find(x => x._name === 'employee_list');
+    
     if (!worksheet) {
       return { valid: false, error: "The file is empty." };
     }
 
-    // ── Extract rows ─────────────────────────────────────────────────────
-    const rows: unknown[][] = [];
-    worksheet.eachRow((row) => {
-        const rawValues = Array.isArray(row.values) ? (row.values as unknown[]).slice(1) : [];
+    
+// ── Extract rows ─────────────────────────────────────────────────────
+const rows: unknown[][] = [];
+worksheet.eachRow((row) => {
+    const rawValues = Array.isArray(row.values) ? (row.values as unknown[]).slice(1) : [];
 
-        const normalizedValues = rawValues.map((cell) => {
+    const normalizedValues = rawValues.map((cell) => {
             // ExcelJS hyperlink cells come as { text, hyperlink } — unwrap to plain value
             if (
                 cell !== null &&
@@ -97,9 +103,17 @@ export async function validateAndConvertXlsx(
             return cell;
         });
 
-        rows.push(normalizedValues);
-    });
+            // Skip rows where the first 9 cells (A:I) are all empty
+            const isEmpty = normalizedValues.slice(0, 8).every(
+                (cell) => cell === null || cell === undefined || String(cell).trim() === ""
+            );
 
+            if (!isEmpty) {
+                rows.push(normalizedValues);
+            }
+});
+
+    
     if (rows.length === 0) {
       return { valid: false, error: "The file is empty." };
     }
@@ -111,6 +125,7 @@ export async function validateAndConvertXlsx(
       (required) => !fileHeaders.includes(required)
     );
 
+    
     if (missingHeaders.length > 0) {
       return {
         valid: false,
@@ -132,6 +147,7 @@ export async function validateAndConvertXlsx(
         row.some((cell) => cellToString(cell) !== "")
       );
 
+      
     if (allDataRows.length === 0) {
       return {
         valid: false,
@@ -150,7 +166,9 @@ export async function validateAndConvertXlsx(
       // Build a readable record for the faulty report
       const recordData: Record<string, string> = {};
       REQUIRED_HEADERS.forEach((h) => {
-        recordData[h] = cellToString(row[headerIndexMap[h]]);
+
+        recordData[h] = typeof row[headerIndexMap[h]] === 'object' ? row[headerIndexMap[h]]?.result : cellToString(row[headerIndexMap[h]]);        
+        
       });
 
       // 1. Empty mandatory fields
@@ -160,14 +178,16 @@ export async function validateAndConvertXlsx(
         }
       });
 
+      
       // 2. Duplicate + phone validation
-      const rawPhone = recordData["Mobile Number"];
+      const rawPhone = recordData["Normalized 🔒"];
+      
       if (rawPhone !== "") {
         // Trim whitespace, strip non-digit/non-plus chars, then ensure leading +
         let phone = rawPhone.trim().replace(/[^\d+]/g, '');
         if (phone && !phone.startsWith('+')) phone = '+' + phone;
         // Store the cleaned phone back so the CSV gets the normalised value
-        recordData["Mobile Number"] = phone;
+        recordData["Normalized 🔒"] = phone;
 
         if (phonesSeen.has(phone)) {
           reasons.push(

@@ -1858,9 +1858,22 @@ async function membership_courtacy_at_venue_message(data) {
     });
   } catch (error) {
     console.log(error);
-    throw error;
+    
   }
+
 }
+const sendBatchEmails = (corporateCardEmailSet) => {
+  try {
+    corporateCardEmailSet.forEach(async (r) => {
+      await membership__invitation(r);
+    });
+  } catch (error) {
+    dbService.create("error_log", {
+      error: error.toString(),
+      origin_function: "sendBatchEmails",
+    });
+  }
+};
 
 module.exports = {
   send_party_invitation,
