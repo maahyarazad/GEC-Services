@@ -28,4 +28,30 @@ async function generateQRWithText(event_page, code) {
     }
 }
 
-module.exports = { generateQRWithText };
+
+/**
+ * Generate a QR code with embedded text over it.
+ * @param {string} data - The data to encode in the QR code.
+ */
+async function generateQR_WhatsApp(event, code) {
+
+    const tempPath = path.join(__dirname, '..','qr_files', `${event}`);
+
+    if (!fs.existsSync(tempPath)) {
+        fs.mkdirSync(tempPath, { recursive: true });
+    }
+
+    const filePath = path.join(tempPath, `${code}.png`)
+    try {
+
+        const qeValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event}?guest-code=${code}`;
+        await QRCode.toFile(filePath, qeValue);
+
+    } catch (error) {
+        console.error('Error generating QR with text:', error);
+        throw error;
+    }
+}
+
+
+module.exports = { generateQRWithText, generateQR_WhatsApp };

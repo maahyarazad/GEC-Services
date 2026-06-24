@@ -397,7 +397,7 @@ router.get("/support/ticket/track", trackLimiter, async (req, res) => {
     if (!ticket) return res.status(404).json({ status: false, message: "Ticket not found." });
 
     const comments = db.prepare(`
-      SELECT comment, created_at FROM support_ticket_comments
+      SELECT comment, source, created_at FROM support_ticket_comments
       WHERE ticket_id = ? AND is_public = 1 ORDER BY created_at ASC
     `).all(ticket.id);
 

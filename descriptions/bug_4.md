@@ -1,3 +1,35 @@
+# Bug Ticket: IMAP Poller Cannot Read Inbox Messages
+
+## Target Files
+
+- `imapPoller.js`
+- `support.js`
+
+## Description
+
+The IMAP poller is unable to correctly read incoming messages from the Inbox. use the JS code is provided in sample section
+
+Review the provided example implementation and use it as a reference to identify and resolve the issue in `imapPoller.js`.
+
+Additionally, review how `support.js` processes incoming messages and ensure that new emails are correctly consumed, parsed, and reflected in the UI.
+
+## Requirements
+
+1. Review the example implementation for retrieving Inbox messages via IMAP.
+2. Fix any issues in `imapPoller.js` that prevent Inbox messages from being fetched correctly.
+3. Verify that incoming emails are parsed and processed correctly.
+4. Review and update the message consumption logic in `support.js`.
+5. Ensure that newly received messages are reflected in the UI without errors.
+6. Verify that message metadata (sender, subject, timestamp, content, etc.) is displayed correctly.
+7. Add or update logging where necessary to assist with troubleshooting and validation.
+
+## Expected Result
+
+Incoming emails should be successfully retrieved from the Inbox, processed by the backend, and displayed correctly in the UI.
+
+## Sample 
+
+```js
 'use strict';
 // Standalone IMAP connectivity diagnostic for the support mailbox.
 // Usage:  node scripts/test-imap.js
@@ -91,3 +123,5 @@ const pass = process.env.SMTP_SUPPORT_SENDER_PASS;
     }
   }
 })();
+```
+
