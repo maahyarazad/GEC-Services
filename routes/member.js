@@ -51,7 +51,7 @@ router.get('/api/member-csv-data', async (req, res) => {
         res.send(csv); // Send the actual CSV string
 
     } catch (error) {
-        console.error("Error in fetching data from member table:", error);
+        console.error(`${Date.now()} - Error in fetching data from member table:`, error);
         res.status(500).json({ status: false, message: 'Server error' });
     }
 });
@@ -71,7 +71,7 @@ router.get('/api/member', async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error in /member:", error);
+        console.error(`${Date.now()} - Error in /member:`, error);
         res.status(500).json({ status: false, message: 'Server error' });
     }
 });
@@ -87,7 +87,7 @@ router.get('/api/member-count', async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error in /member:", error);
+        console.error(`${Date.now()} - Error in /member:`, error);
         res.status(500).json({ status: false, message: 'Server error' });
     }
 });
@@ -125,7 +125,7 @@ router.post("/api/member",  upload.single('attachment_file'), async (req, res) =
         return res.json({ status: false, message: create_result.error });
 
     } catch (error) {
-        console.error("Edit error:", error);
+        console.error(`${Date.now()} - Edit error:`, error);
         res.status(500).json({ status: false, message: "Server error" });
     }
 });
@@ -152,7 +152,7 @@ router.post("/api/active-member-switch",  upload.none(), async (req, res) => {
         return res.json({ status: false, message: "Bad Request! Record not found" });
 
     } catch (error) {
-        console.error("Edit error:", error);
+        console.error(`${Date.now()} - Edit error:`, error);
         res.status(500).json({ status: false, message: error.message });
     }
 });
@@ -168,7 +168,7 @@ router.post("/api/send-invitation-email",  upload.none(), async (req, res) => {
         return res.json({ status: false, message: "Request completed" });
 
     } catch (error) {
-        console.error("Edit error:", error);
+        console.error(`${Date.now()} - Edit error:`, error);
         res.status(500).json({ status: false, message: error.message });
     }
 });

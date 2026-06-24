@@ -13,7 +13,7 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^7.2.0",
+    "@mui/icons-material": "^7.3.11",
     "@mui/material": "^7.3.2",
     "@mui/x-data-grid": "^8.6.0",
     "@mui/x-date-pickers": "^8.11.0",
@@ -46,7 +46,7 @@
     "crypto-js": "^4.2.0",
     "dayjs": "^1.x",
     "dayjs-plugin-utc": "^0.1.2",
-    "exceljs": "^4.4.0",
+    "exceljs": "^3.4.0",
     "formik": "^2.4.6",
     "framer-motion": "^12.23.5",
     "js-cookie": "^3.0.5",

@@ -66,12 +66,12 @@ router.post(
       const data = req.body;
 
       const { uniqeCodeAccess, ...registration_data } = data;
-      console.log("uniqeCodeAccess: ", uniqeCodeAccess);
-      console.log("registration_data: ", registration_data);
+      console.log(`${Date.now()} - uniqeCodeAccess: `, uniqeCodeAccess);
+      console.log(`${Date.now()} - registration_data: `, registration_data);
 
       // EDIT MODE
       if (registration_data.id) {
-        console.log("edit mode");
+        console.log(`${Date.now()} - edit mode`);
         const existing = dbService.findById(
           table_name,
           registration_data.id
@@ -89,7 +89,7 @@ router.post(
           "page",
           registration_data.page
         );
-        console.log("check duplicate record");
+        console.log(`${Date.now()} - check duplicate record`);
 
         if (duplicate_record.length > 0 && duplicate_record[0].id !== existing.id) {
           return res.status(400).json({
@@ -136,7 +136,7 @@ router.post(
       );
 
       if (duplicate_record > 0) {
-        console.log("duplicate");
+        console.log(`${Date.now()} - duplicate`);
 
         return res
           .status(400)
@@ -148,15 +148,15 @@ router.post(
       }
 
       if (registration_data.event_location) {
-        console.log("event_location");
+        console.log(`${Date.now()} - event_location`);
         const parts = registration_data.event_location.split(", ");
-        console.log("parts ", parts);
+        console.log(`${Date.now()} - parts `, parts);
         const map = await generateMapImage({
           lat: parts[0],
           lon: parts[1],
           event_name: registration_data.page,
         });
-        console.log("this is map", map);
+        console.log(`${Date.now()} - this is map`, map);
 
         // console.log("mapfile ", mapfile);
       }
@@ -215,7 +215,7 @@ router.post(
 
 
     } catch (error) {
-      console.error(error);
+      console.error(`${Date.now()} -`, error);
       res.status(500).json({ status: false, message: "Server error" });
     }
   }
@@ -243,7 +243,7 @@ router.patch("/api/registration-config-switch",  async (req, res) => {
 
     res.status(200).json({ status: true, message: "Record switched successfully" });
   } catch (error) {
-    console.error(error);
+    console.error(`${Date.now()} -`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -268,7 +268,7 @@ router.get("/api/registration-config", async (req, res) => {
 
     res.json({ status: true, message: "Data fetched successfully", rows });
   } catch (error) {
-    console.error(error);
+    console.error(`${Date.now()} -`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -295,7 +295,7 @@ router.patch("/api/registration-config-archive",  async (req, res) => {
 
     res.status(200).json({ status: true, message: "Record archived successfully" });
   } catch (error) {
-    console.error(error);
+    console.error(`${Date.now()} -`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -330,7 +330,7 @@ router.post("/registration-config/optional-login", async (req, res) => {
 
 
   } catch (error) {
-    console.error(error);
+    console.error(`${Date.now()} -`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -437,7 +437,7 @@ router.post("/registration-config-access", upload.none(), loginLimiter, async (r
       session: req.session,
     });
   } catch (error) {
-    console.error(error);
+    console.error(`${Date.now()} -`, error);
     return res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -480,7 +480,7 @@ router.post(
 
 
     } catch (error) {
-      console.error("Edit error:", error);
+      console.error(`${Date.now()} - Edit error:`, error);
       res.status(500).json({ status: false, message: "Server error" });
     }
   }
@@ -499,7 +499,7 @@ router.get('/api/registration-config-list',  async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error(`${Date.now()} -`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -520,7 +520,7 @@ router.get('/api/event-clean-up',  async (req, res) => {
       await fs.access(passPath); // throws if not exists
       await fs.rm(passPath, { recursive: true, force: true });
     } catch (error) {
-      console.error(error);
+      console.error(`${Date.now()} -`, error);
     }
 
 
@@ -528,7 +528,7 @@ router.get('/api/event-clean-up',  async (req, res) => {
       await fs.access(qrPath); // throws if not exists
       await fs.rm(qrPath, { recursive: true, force: true });
     } catch (error) {
-      console.error(error);
+      console.error(`${Date.now()} -`, error);
     }
 
 
@@ -539,7 +539,7 @@ router.get('/api/event-clean-up',  async (req, res) => {
 
 
   } catch (error) {
-    console.error(error);
+    console.error(`${Date.now()} -`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });

@@ -62,7 +62,7 @@ router.post("/account-deletion-request", express.json(), async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Account deletion error:", error);
+    console.error(`${Date.now()} - Account deletion error:`, error);
 
     return res.status(500).json({
       success: false,

@@ -24,7 +24,7 @@ const GSheetService = {
 
             // Fetch CSV
             const response = await fetch(process.env.GOOGLE_SHEET_CARDHOLDER);
-            console.log(response);
+            console.log(`${Date.now()} -`, response);
             const csvData = await response.text();
 
             // Convert CSV text → JSON
@@ -89,11 +89,11 @@ const GSheetService = {
 
 
             dbService.createBulk(table_name, newObject);
-            console.log("G-sheet data successfully fetched and processed.");
+            console.log(`${Date.now()} - G-sheet data successfully fetched and processed.`);
 
 
         } catch (err) {
-            console.error(err);
+            console.error(`${Date.now()} -`, err);
 
         }
     },
@@ -171,14 +171,14 @@ const GSheetService = {
 
 
             if (register_list.length > 0) {
-                register_list.forEach(x => console.log(x));
+                register_list.forEach(x => console.log(`${Date.now()} -`, x));
                 const result = await sendBulkRegistration(register_list);
                 return result;
             }
 
 
         } catch (err) {
-            console.error(err);
+            console.error(`${Date.now()} -`, err);
             throw err;
         }
     },
@@ -214,11 +214,11 @@ const sendBulkRegistration = async (register_list) => {
                 register_list[i].completed = true;
             }else{
                 register_list[i].completed = false;
-                console.log("Register failed:", register_list[i].email);
+                console.log(`${Date.now()} - Register failed:`, register_list[i].email);
             }
             
             const data = await response.json();
-            console.log("Registered:", form.email, data);
+            console.log(`${Date.now()} - Registered:`, form.email, data);
 
             // Optional: small delay to avoid spamming server
             await new Promise((r) => setTimeout(r, 200)); // 200ms delay
@@ -226,7 +226,7 @@ const sendBulkRegistration = async (register_list) => {
 
         return register_list;
     } catch (err) {
-        console.error("Bulk registration error:", err);
+        console.error(`${Date.now()} - Bulk registration error:`, err);
     }
 };
 

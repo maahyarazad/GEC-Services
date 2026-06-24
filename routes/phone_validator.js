@@ -30,7 +30,7 @@ router.get('/api/validate-number', async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error in /api/validate-number:", error);
+    console.error(`${Date.now()} - Error in /api/validate-number:`, error);
     res.status(500).json({ status: false, message: 'Server error' });
   }
 });

@@ -25,7 +25,7 @@ router.put("/api/events", (req, res) => {
 
     return res.json({ status: true, result });
   } catch (error) {
-    console.error("Error in PUT /api/events:", error);
+    console.error(`${Date.now()} - Error in PUT /api/events:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -50,7 +50,7 @@ router.post("/api/events", async (req, res) => {
     });
     return res.status(201).json({ status: true, result });
   } catch (error) {
-    console.error("Error in POST /api/events:", error);
+    console.error(`${Date.now()} - Error in POST /api/events:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -63,7 +63,7 @@ router.get("/api/events", async (req, res) => {
 
     return res.json({ status: true, data, total });
   } catch (error) {
-    console.error("Error in GET /api/events:", error);
+    console.error(`${Date.now()} - Error in GET /api/events:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -76,7 +76,7 @@ router.get("/api/events/active", (req, res) => {
     ).get();
     return res.json({ status: true, event: row ?? null });
   } catch (error) {
-    console.error("Error in GET /api/events/active:", error);
+    console.error(`${Date.now()} - Error in GET /api/events/active:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -93,7 +93,7 @@ router.get("/api/events/latest", async (req, res) => {
 
     return res.json({ status: true, rows });
   } catch (error) {
-    console.error("Error in GET /api/events:", error);
+    console.error(`${Date.now()} - Error in GET /api/events:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -128,7 +128,7 @@ router.patch("/api/events/:id/auto-response", (req, res) => {
 
     return res.json({ status: true });
   } catch (error) {
-    console.error("Error in PATCH /api/events/:id/auto-response:", error);
+    console.error(`${Date.now()} - Error in PATCH /api/events/:id/auto-response:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -153,7 +153,7 @@ router.patch("/api/events/:id/active", (req, res) => {
 
     return res.json({ status: true });
   } catch (error) {
-    console.error("Error in PATCH /api/events/:id/active:", error);
+    console.error(`${Date.now()} - Error in PATCH /api/events/:id/active:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -166,7 +166,7 @@ router.delete("/api/events/:id", (req, res) => {
 
     return res.json({ status: true, data: result });
   } catch (error) {
-    console.error("Error in DELETE /api/events:", error);
+    console.error(`${Date.now()} - Error in DELETE /api/events:`, error);
     return res.status(500).json({ status: false, message: error.message });
   }
 });

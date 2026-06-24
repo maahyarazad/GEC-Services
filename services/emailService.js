@@ -47,10 +47,10 @@ async function sendEmail({ to, subject, html, text }) {
 
   try {
     const response = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", response.messageId);
+    console.log(`${Date.now()} - Email sent:`, response.messageId);
     return response;
   } catch (error) {
-    console.error("SendGrid SMTP error:", error);
+    console.error(`${Date.now()} - SendGrid SMTP error:`, error);
     throw error;
   }
   // try {
@@ -97,10 +97,10 @@ async function sendRawEmailWithAttachments({
 
   try {
     const response = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", response.messageId);
+    console.log(`${Date.now()} - Email sent:`, response.messageId);
     return response;
   } catch (error) {
-    console.error("sendRawEmailWithAttachments SMTP error:", error);
+    console.error(`${Date.now()} - sendRawEmailWithAttachments SMTP error:`, error);
     throw error;
   }
 }
@@ -141,10 +141,10 @@ async function sendRawEmailWithAttachments_AppSupport({
 
   try {
     const response = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", response.messageId);
+    console.log(`${Date.now()} - Email sent:`, response.messageId);
     return response;
   } catch (error) {
-    console.error("sendRawEmailWithAttachments_AppSupport SMTP error:", error);
+    console.error(`${Date.now()} - sendRawEmailWithAttachments_AppSupport SMTP error:`, error);
     throw error;
   }
 }
@@ -353,7 +353,7 @@ async function comfirm_message_email(reqBody) {
     // console.log(response);
     // // return response;
   } catch (error) {
-    console.log(error);
+    console.log(`${Date.now()} -`, error);
     throw error;
   }
 }
@@ -593,7 +593,7 @@ async function event_confirm_registration_email(reqBody) {
       bcc,
     });
   } catch (error) {
-    console.error("Failed to send registration email:", error);
+    console.error(`${Date.now()} - Failed to send registration email:`, error);
     throw error;
   }
 }
@@ -845,7 +845,7 @@ async function membership_pass_email({ data }) {
       attachments,
     });
   } catch (error) {
-    console.error("Failed to send registration email:", error);
+    console.error(`${Date.now()} - Failed to send registration email:`, error);
     throw error;
   }
 }
@@ -952,7 +952,7 @@ Thank you,
       attachments,
     });
   } catch (error) {
-    console.error("Failed to send registration email:", error);
+    console.error(`${Date.now()} - Failed to send registration email:`, error);
     throw error;
   }
 }
@@ -1185,7 +1185,7 @@ Teilnahme.</p>
       attachments,
     });
   } catch (error) {
-    console.error("Failed to send registration email:", error);
+    console.error(`${Date.now()} - Failed to send registration email:`, error);
     throw error;
   }
 }
@@ -1259,7 +1259,7 @@ async function email_otp(reqBody) {
       text: `Your OTP code is: ${otp}. It is valid for 1 minutes.`,
     });
   } catch (error) {
-    console.log(error);
+    console.log(`${Date.now()} -`, error);
     throw error;
   }
 }
@@ -1332,7 +1332,7 @@ async function email_request_received(reqBody) {
       text: `Your request for ${title} has been received. Our team will contact you soon.`,
     });
   } catch (error) {
-    console.log(error);
+    console.log(`${Date.now()} -`, error);
     throw error;
   }
 }
@@ -1524,7 +1524,7 @@ async function company_data_confirmation_email(reqBody) {
       text: `We have received your company information for ${event_name}.`,
     });
   } catch (error) {
-    console.log(error);
+    console.log(`${Date.now()} -`, error);
     throw error;
   }
 }
@@ -1594,7 +1594,7 @@ async function gic__reset_password(reqBody) {
       text: `Your temporary password is: ${password}. Please log in and reset your password immediately.`,
     });
   } catch (error) {
-    console.log(error);
+    console.log(`${Date.now()} -`, error);
     throw error;
   }
 }
@@ -1674,7 +1674,7 @@ async function emailMembershipCard(reqBody, pkpassBuffer) {
       attachments: attachments,
     });
   } catch (error) {
-    console.log(error);
+    console.log(`${Date.now()} -`, error);
     throw error;
   }
 }
@@ -1797,7 +1797,7 @@ async function send_party_invitation(data) {
       text: `🎉 You're Invited: German Emirates Club 20th Anniversary Celebration`,
     });
   } catch (error) {
-    console.log(error);
+    console.log(`${Date.now()} -`, error);
     throw error;
   }
 }
@@ -1857,7 +1857,7 @@ async function membership_courtacy_at_venue_message(data) {
       )}`,
     });
   } catch (error) {
-    console.log(error);
+    console.log(`${Date.now()} -`, error);
     
   }
 

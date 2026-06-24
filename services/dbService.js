@@ -85,7 +85,7 @@ const dbService = {
       return { id: info.lastInsertRowid, status: true };
     } catch (error) {
       // You can log the error here if you want
-      console.error("DB insert error:", error);
+      console.error(`${Date.now()} - DB insert error:`, error);
       return { status: false, error: error.message || error.toString() };
     }
   },

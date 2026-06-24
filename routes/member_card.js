@@ -52,7 +52,7 @@ router.post("/member-card", upload.none(), async (req, res) => {
       message: "Success",
     });
   } catch (error) {
-    console.error("Error in /member-card:", error);
+    console.error(`${Date.now()} - Error in /member-card:`, error);
     return res.status(500).json({
       status: false,
       message: "Server error",
@@ -173,7 +173,7 @@ router.post(
         origin_function: "createMemberPass_route",
       });
 
-      console.error("Transaction failed:", error);
+      console.error(`${Date.now()} - Transaction failed:`, error);
       res.status(500).json({ status: false, message: "Server error" });
     }
   }
@@ -216,7 +216,7 @@ router.get("/member-card-login", upload.none(), async (req, res) => {
       memberRecord,
     });
   } catch (error) {
-    console.error(error);
+    console.error(`${Date.now()} -`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -241,7 +241,7 @@ router.post("/member-login", upload.none(), async (req, res) => {
       message: "Authentication Success",
     });
   } catch (error) {
-    console.error(error);
+    console.error(`${Date.now()} -`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -260,7 +260,7 @@ router.post("/member-logout", (req, res) => {
       message: "Member has been logged out successfully.",
     });
   } catch (error) {
-    console.error("Error clearing token:", error);
+    console.error(`${Date.now()} - Error clearing token:`, error);
     res.status(500).json({
       status: false,
       message: "Failed to log out. Please try again.",
@@ -274,7 +274,7 @@ router.get("/api/gec-grouped-partners", async (req, res) => {
     const [rows] = await pool.query("CALL sp_get_partner_contact_grouped_list()");
     return res.json({ status: true, data: rows[0] ?? [] });
   } catch (error) {
-    console.error("Error in /api/gec-grouped-partners:", error);
+    console.error(`${Date.now()} - Error in /api/gec-grouped-partners:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -321,7 +321,7 @@ ORDER BY available_update DESC, mc.member_count DESC;
     const data = stmt.all();
     return res.json({ status: true, data });
   } catch (error) {
-    console.error("Error in /api/member-card-partner-stats:", error);
+    console.error(`${Date.now()} - Error in /api/member-card-partner-stats:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -337,7 +337,7 @@ router.get("/api/partner-onboarding-pending-counts", (req, res) => {
     `).all();
     return res.json({ status: true, data });
   } catch (error) {
-    console.error("Error in /api/partner-onboarding-pending-counts:", error);
+    console.error(`${Date.now()} - Error in /api/partner-onboarding-pending-counts:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -537,7 +537,7 @@ WHERE rn = 1;
 
     return res.json({ status: true, ...result });
   } catch (error) {
-    console.error("Error in /api/member-card-sync:", error);
+    console.error(`${Date.now()} - Error in /api/member-card-sync:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -566,7 +566,7 @@ router.get("/api/member_card", (req, res) => {
 
     return res.json({ status: true, data, total });
   } catch (error) {
-    console.error("Error in /api/member_card:", error);
+    console.error(`${Date.now()} - Error in /api/member_card:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -585,7 +585,7 @@ router.get("/api/member-card-csv-data", async (req, res) => {
     res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
     res.send(csv); // Send the actual CSV string
   } catch (error) {
-    console.error("Error in fetching data from sql server:", error);
+    console.error(`${Date.now()} - Error in fetching data from sql server:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -638,7 +638,7 @@ router.get("/api/member_card_report", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error in /member:", error);
+    console.error(`${Date.now()} - Error in /member:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -698,7 +698,7 @@ router.post("/members/mobile-check", upload.none(), async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Error checking mobile number:", error.message);
+    console.error(`${Date.now()} - Error checking mobile number:`, error.message);
     return res.status(500).json({
       status: false,
       message: "An unexpected server error occurred. Please try again later.",
@@ -713,7 +713,7 @@ router.get("/api/partner-delivery-info", (req, res) => {
     const row = db.prepare(`SELECT * FROM partner_delivery_info WHERE LOWER(partner) = LOWER(?)`).get(partner);
     return res.json({ status: true, data: row ?? null });
   } catch (error) {
-    console.error("Error in /api/partner-delivery-info:", error);
+    console.error(`${Date.now()} - Error in /api/partner-delivery-info:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -724,7 +724,7 @@ router.get("/api/partners-with-delivery", (req, res) => {
     const rows = db.prepare(`SELECT LOWER(partner) AS partner_key FROM partner_delivery_info`).all();
     return res.json({ status: true, data: rows.map((r) => r.partner_key) });
   } catch (error) {
-    console.error("Error in /api/partners-with-delivery:", error);
+    console.error(`${Date.now()} - Error in /api/partners-with-delivery:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });

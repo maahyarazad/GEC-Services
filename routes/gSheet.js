@@ -32,7 +32,7 @@ router.get('/api/google-auto-register', async (req, res) => {
 
 
     } catch (err) {
-        console.error("Error auto register from G Sheet:", err);
+        console.error(`${Date.now()} - Error auto register from G Sheet:`, err);
         return res.status(500).json({
             status: false,
             message: "Server error",

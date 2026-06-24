@@ -109,7 +109,7 @@ router.post("/api/contacts/create", (req, res) => {
       id: result.id,
     });
   } catch (error) {
-    console.error("Failed to create contact:", error.message);
+    console.error(`${Date.now()} - Failed to create contact:`, error.message);
     res
       .status(500)
       .json({ status: false, message: "Failed to create contact" });
@@ -136,7 +136,7 @@ router.delete("/api/contacts", (req, res) => {
       message: "Contact deleted successfully",
     });
   } catch (error) {
-    console.error("Failed to delete contact:", error.message);
+    console.error(`${Date.now()} - Failed to delete contact:`, error.message);
     res
       .status(500)
       .json({ status: false, message: "Failed to delete contact" });
@@ -182,7 +182,7 @@ router.put("/api/contacts/modify", (req, res) => {
       message: "Contact updated successfully",
     });
   } catch (error) {
-    console.error("Failed to update contact:", error.message);
+    console.error(`${Date.now()} - Failed to update contact:`, error.message);
     res
       .status(500)
       .json({ status: false, message: "Failed to update contact" });
@@ -273,7 +273,7 @@ router.get("/api/contacts", (req, res) => {
       pageSize: limit,
     });
   } catch (error) {
-    console.error("Failed to fetch contacts:", error);
+    console.error(`${Date.now()} - Failed to fetch contacts:`, error);
     res
       .status(500)
       .json({ status: false, message: "Failed to fetch contacts" });
@@ -295,7 +295,7 @@ router.get("/api/contacts/clear-contact-book", async (req, res) => {
       changes: result.changes,
     });
   } catch (error) {
-    console.error("Failed to clear contact book:", error);
+    console.error(`${Date.now()} - Failed to clear contact book:`, error);
     res.status(500).json({
       status: false,
       message: "Failed to clear contact book",
@@ -334,7 +334,7 @@ router.get("/api/contacts/add-to-guest-list", async (req, res) => {
       data: result,
     });
   } catch (error) {
-    console.error("Failed to fetch contacts:", error);
+    console.error(`${Date.now()} - Failed to fetch contacts:`, error);
     res.status(500).json({
       status: false,
       message: "Failed to fetch contacts",
@@ -375,7 +375,7 @@ router.patch("/api/contacts/complete-attendance", async (req, res) => {
       message: "Attendance marked complete",
     });
   } catch (error) {
-    console.error("Failed to update attendance:", error);
+    console.error(`${Date.now()} - Failed to update attendance:`, error);
     res.status(500).json({
       status: false,
       message: "Failed to update attendance",
@@ -414,7 +414,7 @@ router.delete("/api/contacts/remove-guest", (req, res) => {
       message: "Guest deleted successfully",
     });
   } catch (error) {
-    console.error("Failed to delete guest:", error.message);
+    console.error(`${Date.now()} - Failed to delete guest:`, error.message);
     res.status(500).json({ status: false, message: "Failed to remove guest" });
   }
 });
@@ -430,7 +430,7 @@ router.get("/api/contacts/report/missing-content-sid", (_req, res) => {
     const result = db.prepare(query).all();
     res.status(200).json({ status: true, data: result });
   } catch (error) {
-    console.error("Failed to fetch missing content SID report:", error);
+    console.error(`${Date.now()} - Failed to fetch missing content SID report:`, error);
     res.status(500).json({ status: false, message: "Failed to fetch report" });
   }
 });
