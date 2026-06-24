@@ -125,6 +125,7 @@ app.use((req, res, next) => {
 app.use("/api/", authorize.authorize_admin);
 app.use("/uploads", express.static(path.join(__dirname, "file_storage")));
 app.use("/apple_pass", express.static(path.join(__dirname, "pass_storage")));
+app.use("/qr_codes", express.static(path.join(__dirname, "qr_files")));
 app.use("/maps", express.static(path.join(__dirname, "maps")));
 app.use("/", express.static(path.join(__dirname, "public")));
 
