@@ -1889,8 +1889,7 @@ module.exports = {
   membership_courtacy_at_venue_message,
   membership_pass_email,
   membership__invitation,
-  sendRawEmailWithAttachments_AppSupport,
-  sendBatchEmails,
+  sendRawEmailWithAttachments_AppSupport
 };
 
 
