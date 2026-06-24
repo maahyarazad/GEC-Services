@@ -12,6 +12,27 @@ const LOG_FILES = {
     error: path.join(LOG_DIR, 'node-services.german-emirates-club.com.error'),
 };
 
+// Extract a leading timestamp from a log line and strip it from the text.
+// Handles common PM2 / ISO formats, e.g.:
+//   2025-05-30T09:55:38.123Z message
+//   2025-05-30 09:55:38 +04:00: message
+//   2025-05-30 09:55:38: message
+//   [2025-05-30 09:55:38] message
+// Returns { line, ts } where ts is epoch-ms, or null when no timestamp is present.
+function parseLogLine(raw) {
+    const m = raw.match(
+        /^\[?\s*(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}:\d{2}(?:\.\d+)?)\s*([+-]\d{2}:?\d{2}|Z)?\]?\s*[:\-]?\s*/
+    );
+    if (m) {
+        const iso = `${m[1]}T${m[2]}${m[3] || ''}`;
+        const ts = Date.parse(iso);
+        if (!Number.isNaN(ts)) {
+            return { line: raw.slice(m[0].length), ts };
+        }
+    }
+    return { line: raw, ts: null };
+}
+
 // SSE stream — live new lines only (tail -n 0 -f)
 // Initial history is loaded separately via /api/logs/history
 router.get('/api/logs/stream', (req, res) => {
@@ -32,7 +53,11 @@ router.get('/api/logs/stream', (req, res) => {
 
     tail.stdout.on('data', (chunk) => {
         const lines = chunk.toString().split('\n').filter(l => l.trim().length > 0);
-        lines.forEach(line => send({ type: 'line', line, ts: Date.now() }));
+        lines.forEach(raw => {
+            const { line, ts } = parseLogLine(raw);
+            // Fall back to arrival time for live lines that carry no embedded timestamp.
+            send({ type: 'line', line, ts: ts ?? Date.now() });
+        });
     });
 
     tail.stderr.on('data', (chunk) => {
@@ -66,7 +91,9 @@ router.get('/api/logs/history', (req, res) => {
         // page 1 → last pageSize lines; page 2 → the block before that; etc.
         const endIdx = total - (page - 1) * pageSize;
         const startIdx = Math.max(0, endIdx - pageSize);
-        const lines = allLines.slice(startIdx, endIdx);
+        // Return each line with its own parsed timestamp so the client renders
+        // the real event time instead of the fetch time.
+        const lines = allLines.slice(startIdx, endIdx).map(parseLogLine);
 
         return res.json({
             status: true,

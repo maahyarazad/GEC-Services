@@ -25,6 +25,10 @@ function toEntry(line, ts = Date.now(), forcedLevel = null) {
     return { line, level: forcedLevel ?? detectLevel(line), ts };
 }
 
+function formatTs(ts) {
+    return ts ? new Date(ts).toLocaleTimeString() : '—';
+}
+
 export default function ServerLogs() {
     const [logType, setLogType]           = useState('out');
     const [lines, setLines]               = useState([]);
@@ -57,7 +61,9 @@ export default function ServerLogs() {
             if (!d.status) return;
 
             const forcedLevel = type === 'error' ? 'error' : 'info';
-            const entries = d.lines.map(l => toEntry(l, Date.now(), forcedLevel));
+            // Each history line now carries its own parsed timestamp (ts may be
+            // null when the log line has no embedded timestamp).
+            const entries = d.lines.map(({ line, ts }) => toEntry(line, ts, forcedLevel));
             setHasMore(d.hasMore);
             return entries;
         } catch {
@@ -303,9 +309,10 @@ export default function ServerLogs() {
                         >
                             <Typography
                                 component="span"
+                                title={ts ? new Date(ts).toLocaleString() : 'No timestamp in log line'}
                                 sx={{ color: '#484f58', fontFamily: 'monospace', fontSize: 11, flexShrink: 0, userSelect: 'none', minWidth: 72 }}
                             >
-                                {new Date(ts).toLocaleTimeString()}
+                                {formatTs(ts)}
                             </Typography>
 
                             <Typography
