@@ -54,7 +54,7 @@ router.get('/gic-user',async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error in /member:", error);
+        console.error(`${Date.now()} - Error in /member:`, error);
         res.status(500).json({ status: false, message: 'Server error' });
     }
 });
@@ -87,7 +87,7 @@ router.post('/api/gic-user/send-reset-password',  async (req, res) => {
        
 
     } catch (error) {
-        console.error("Error in /member:", error);
+        console.error(`${Date.now()} - Error in /member:`, error);
         res.status(500).json({ status: false, message: 'Server error' });
     }
 });

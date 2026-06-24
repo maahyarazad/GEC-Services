@@ -36,7 +36,7 @@ router.post('/api/invoice-save',  async (req, res) => {
        
 
     } catch (error) {
-        console.error("Error in /member:", error);
+        console.error(`${Date.now()} - Error in /member:`, error);
         res.status(500).json({ status: false, message: 'Server error' });
     }
 });
@@ -64,7 +64,7 @@ router.get('/api/invoice-list',  (req, res) => {
     return res.json({ status: true, data: invoices });
 
   } catch (error) {
-    console.error("Error in /invoice-list:", error);
+    console.error(`${Date.now()} - Error in /invoice-list:`, error);
     res.status(500).json({ status: false, message: 'Server error' });
   }
 });
@@ -98,7 +98,7 @@ router.get('/api/invoice-list-delete',  (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Error in /api/invoice-list-delete:", error);
+    console.error(`${Date.now()} - ❌ Error in /api/invoice-list-delete:`, error);
     res.status(500).json({
       status: false,
       message: "An unexpected server error occurred while deleting the invoice list.",

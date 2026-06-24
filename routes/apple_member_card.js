@@ -98,7 +98,7 @@ event_name: "test"
     
 
   } catch (err) {
-    console.error("Error generating pass:", err);
+    console.error(`${Date.now()} - Error generating pass:`, err);
     res.status(500).send("Error creating pass");
   }
 });

@@ -18,7 +18,7 @@ router.get('/api/survey',  async (req, res) => {
     });
     
   } catch (error) {
-    console.error("Error in /registration:", error);
+    console.error(`${Date.now()} - Error in /registration:`, error);
     res.status(500).json({ status: false, message: 'Server error' });
   }
 });
@@ -51,7 +51,7 @@ router.post('/api/update-survey',  async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error in /api/update-survey:", error);
+    console.error(`${Date.now()} - Error in /api/update-survey:`, error);
     res.status(500).json({
       status: false,
       message: "Internal server error while updating survey.",
@@ -73,7 +73,7 @@ router.get('/api/delete-survey',  async (req, res) => {
       });
     }
 
-    console.log(`🗑️ Deleting survey with ID: ${id}`);
+    console.log(`${Date.now()} - 🗑️ Deleting survey with ID: ${id}`);
 
     const result = dbService.remove("Company", id);
 
@@ -89,7 +89,7 @@ router.get('/api/delete-survey',  async (req, res) => {
       message: `Survey with ID ${id} has been successfully deleted.`,
     });
   } catch (error) {
-    console.error("❌ Error in /api/delete-survey:", error);
+    console.error(`${Date.now()} - ❌ Error in /api/delete-survey:`, error);
     return res.status(500).json({
       status: false,
       message: "An unexpected server error occurred while deleting the survey.",
@@ -116,7 +116,7 @@ router.get('/api/survey-csv-data',  async (req, res) => {
         res.send(csv); // Send the actual CSV string
 
     } catch (error) {
-        console.error("Error in fetching data from sql server:", error);
+        console.error(`${Date.now()} - Error in fetching data from sql server:`, error);
         res.status(500).json({ status: false, message: 'Server error' });
     }
 });

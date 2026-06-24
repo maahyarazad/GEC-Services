@@ -67,7 +67,7 @@ router.post("/static-map", upload.none(), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Map generation error:', error);
+    console.error(`${Date.now()} - Map generation error:`, error);
     return res.status(500).json({ status: false, message: error.message });
   }
 });

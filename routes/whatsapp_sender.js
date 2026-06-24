@@ -38,7 +38,7 @@ const toUAE = (dateStr) => {
 router.post("/api/whatsapp/send", (req, res) => {
   // Fire and forget: run messageSender but don't await
   messageSender(req).catch((error) => {
-    console.error("Background messageSender error:", error);
+    console.error(`${Date.now()} - Background messageSender error:`, error);
   });
 
   // Respond immediately
@@ -89,7 +89,7 @@ router.post("/api/whatsapp/quick-reply", async (req, res) => {
       .status(200)
       .json({ status: result.status, message: "Message sent successfully" });
   } catch (error) {
-    console.error("Failed to send message", error.message);
+    console.error(`${Date.now()} - Failed to send message`, error.message);
     res
       .status(500)
       .json({ status: false, message: "Failed to send the message" });
@@ -106,7 +106,7 @@ router.get("/api/whatsapp/list", async (req, res) => {
         res.status(401).json({ status: false, ...result.result });
     }
   } catch (error) {
-    console.error("Failed to send message", error);
+    console.error(`${Date.now()} - Failed to send message`, error);
     res
       .status(500)
       .json({ status: false, message: "Failed to fetch WhatsApp templates" });
@@ -199,7 +199,7 @@ router.post("/api/twilio/create-template", async (req, res) => {
       approval: approvalRes.ok ? approvalData : { error: approvalData },
     });
   } catch (error) {
-    console.error("Error in /api/twilio/create-template:", error);
+    console.error(`${Date.now()} - Error in /api/twilio/create-template:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -237,7 +237,7 @@ router.get("/api/twilio/approvals", async (req, res) => {
 
     return res.json({ status: true, approvals: approvalMap });
   } catch (error) {
-    console.error("Error in /api/twilio/approvals:", error);
+    console.error(`${Date.now()} - Error in /api/twilio/approvals:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -253,7 +253,7 @@ router.get("/api/whatsapp/history/:phone", async (req, res) => {
       res.status(500).json({ status: false, error: result });
     }
   } catch (error) {
-    console.error("Failed to send message", error);
+    console.error(`${Date.now()} - Failed to send message`, error);
     res
       .status(500)
       .json({ status: false, message: "Failed to fetch WhatsApp templates" });
@@ -305,7 +305,7 @@ router.post("/whatsapp/twilio-callback", async (req, res) => {
       handleDelivered();
     }
   } catch (error) {
-    console.error("Twilio callback error:", error);
+    console.error(`${Date.now()} - Twilio callback error:`, error);
     db.prepare(`INSERT INTO error_log (error, origin_function) VALUES (?, ?)`).run(
       error.message,
       "twilio-callback"
@@ -435,7 +435,7 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error in /api/whatsapp/twilio-delivery-logs:", error);
+    console.error(`${Date.now()} - Error in /api/whatsapp/twilio-delivery-logs:`, error);
     return res.status(500).json({
       status: false,
       message: "Server error",
@@ -516,7 +516,7 @@ router.get("/api/whatsapp/twilio-response-logs", async (req, res) => {
       pageSize: limit,
     });
   } catch (error) {
-    console.error("Error in /twilio-response-logs:", error);
+    console.error(`${Date.now()} - Error in /twilio-response-logs:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -543,7 +543,7 @@ router.post(
         payload: JSON.stringify(req.body),
       });
     } catch (err) {
-      console.error("Failed to store Twilio callback:", err);
+      console.error(`${Date.now()} - Failed to store Twilio callback:`, err);
     }
   }
 );
@@ -649,7 +649,7 @@ router.get("/api/whatsapp/insight", async (req, res) => {
       .status(200)
       .json({ status: true, data: { response_result, delivery_result } });
   } catch (err) {
-    console.error("Failed to fetch insights", err);
+    console.error(`${Date.now()} - Failed to fetch insights`, err);
     return res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -692,7 +692,7 @@ ORDER BY responses DESC;
 
     return res.status(200).json({ status: true, data: { attendance_result } });
   } catch (err) {
-    console.error("Failed to fetch insights", err);
+    console.error(`${Date.now()} - Failed to fetch insights`, err);
     return res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -734,7 +734,7 @@ ORDER BY total_count DESC;
 
     return res.status(200).json({ status: true, data: { delivery_result } });
   } catch (err) {
-    console.error("Failed to fetch insights", err);
+    console.error(`${Date.now()} - Failed to fetch insights`, err);
     return res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -782,7 +782,7 @@ router.get("/api/whatsapp/download-media", async (req, res) => {
     // Send the file for download to the client
     return res.download(filePath);
   } catch (error) {
-    console.error("Media download error:", error);
+    console.error(`${Date.now()} - Media download error:`, error);
     return res.status(500).json({
       status: false,
       message: "Failed to download media",
@@ -819,7 +819,7 @@ router.patch("/api/whatsapp/update-map-url", async (req, res) => {
       data: jsonData,
     });
   } catch (error) {
-    console.error("Update map URL error:", error);
+    console.error(`${Date.now()} - Update map URL error:`, error);
     return res.status(500).json({
       status: false,
       message: "Failed to update map URL",
@@ -839,7 +839,7 @@ router.get("/api/whatsapp/get-map-url", async (req, res) => {
       data: jsonData,
     });
   } catch (error) {
-    console.error("Get map URL error:", error);
+    console.error(`${Date.now()} - Get map URL error:`, error);
     return res.status(500).json({
       status: false,
       message: "Failed to get map URL",

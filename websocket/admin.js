@@ -25,9 +25,9 @@ function createWebSocketServer(server, allowedOrigins = []) {
     });
 
     io.engine.on("connection_error", (err) => {
-        console.error("⚠️ Socket.IO Engine connection error:", err.code, err.message);
+        console.error(`${Date.now()} - ⚠️ Socket.IO Engine connection error:`, err.code, err.message);
         if (err.req) {
-            console.error("Request headers:", err.req.headers);
+            console.error(`${Date.now()} - Request headers:`, err.req.headers);
         }
     });
 
@@ -74,7 +74,7 @@ function createWebSocketServer(server, allowedOrigins = []) {
         });
     });
 
-    console.log("✅ WebSocket server initialized with path /socket.io");
+    console.log(`${Date.now()} - ✅ WebSocket server initialized with path /socket.io`);
     return io;
 }
 

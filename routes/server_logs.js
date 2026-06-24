@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Two directories above server.js → ~/logs/
-const LOG_DIR = process.env.LOG_DIR || path.resolve(__dirname, '../../../logs');
+const LOG_DIR = process.env.ENVIRONMENT === 'PRODUCTION' ? path.resolve(__dirname, '../../../logs') : path.resolve(__dirname, "..");
 
 const LOG_FILES = {
     out:   path.join(LOG_DIR, 'node-services.german-emirates-club.com.out'),
@@ -13,13 +13,25 @@ const LOG_FILES = {
 };
 
 // Extract a leading timestamp from a log line and strip it from the text.
-// Handles common PM2 / ISO formats, e.g.:
+// Returns { line, ts } where ts is epoch-ms, or null when no timestamp is present.
+//
+// Primary format — emitted by the app's own console.log/console.error calls:
+//   1719230000000 - Received request for: /api/member
+// Fallback — common PM2 / ISO date prefixes:
 //   2025-05-30T09:55:38.123Z message
 //   2025-05-30 09:55:38 +04:00: message
-//   2025-05-30 09:55:38: message
 //   [2025-05-30 09:55:38] message
-// Returns { line, ts } where ts is epoch-ms, or null when no timestamp is present.
 function parseLogLine(raw) {
+    // New epoch-millisecond format: `${Date.now()} - <message>`
+    const epoch = raw.match(/^\s*(\d{12,})\s*-\s+/);
+    if (epoch) {
+        const ts = Number(epoch[1]);
+        if (Number.isFinite(ts)) {
+            return { line: raw.slice(epoch[0].length), ts };
+        }
+    }
+
+    // Fallback: ISO / PM2 date prefix
     const m = raw.match(
         /^\[?\s*(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}:\d{2}(?:\.\d+)?)\s*([+-]\d{2}:?\d{2}|Z)?\]?\s*[:\-]?\s*/
     );

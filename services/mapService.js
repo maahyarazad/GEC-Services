@@ -11,13 +11,13 @@ async function generateMapImage(
 ) {
   // Mapbox Implementation
 
-  console.log("generatemaps");
+  console.log(`${Date.now()} - generatemaps`);
   const zoomRange = 13;
 
   const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+ff0000(${lon},${lat}/${lon},${lat},${zoomRange}/500x500?access_token=${token}`;
-  console.log("generate url");
+  console.log(`${Date.now()} - generate url`);
   const response = await fetch(url, { method: "GET" });
-  console.log("response ", response);
+  console.log(`${Date.now()} - response `, response);
   if (!response.ok)
     throw new Error(
       response.status + " " + response.statusText || "Failed to fetch map image"

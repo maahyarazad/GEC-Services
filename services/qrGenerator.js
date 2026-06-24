@@ -23,7 +23,7 @@ async function generateQRWithText(event_page, code) {
         await QRCode.toFile(filePath, qeValue);
 
     } catch (error) {
-        console.error('Error generating QR with text:', error);
+        console.error(`${Date.now()} - Error generating QR with text:`, error);
         throw error;
     }
 }

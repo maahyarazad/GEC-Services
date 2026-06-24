@@ -23,7 +23,7 @@ async function normalizePhoneLocal(raw) {
 
         return null;
     } catch (e) {
-        console.error("Error in parsePhoneNumber:", e); 
+        console.error(`${Date.now()} - Error in parsePhoneNumber:`, e); 
         return null;
     }
 }
@@ -85,7 +85,7 @@ const Jobs = {
                 // );
             }
         } catch (error) {
-            console.error("Error normalizing mobile numbers:", error);
+            console.error(`${Date.now()} - Error normalizing mobile numbers:`, error);
         }
     },
 };
