@@ -1,13 +1,13 @@
-# Bug Ticket: Server Log Timestamp Enhancement
+# Bug: IMAP socket restarts server every 2 minutes 
 
 ## Target Files
 
-- `ServerLogs.jsx`
-- `server_logs.js`
+- `imapPoller.js`
+- `server.js`
 
 ## Description
 
-The timestamps displayed in the server logs are incorrect. All log entries currently show the same constant timestamp instead of the actual time when each event occurred.
+I have two web sockets in this application and as I checked the server logs imapPoller restarts the server every two minutes which is absolutley ridiculuous 
 
 ### Requirements
 
