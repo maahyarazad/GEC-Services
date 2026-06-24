@@ -46,7 +46,7 @@ async function generateQR_WhatsApp(contactId, eventId) {
 
         //http://localhost:5175/event-registration/contactId=1301&eventId=7
         const qeValue = `${process.env.CLIENT_ORIGIN}/event-registration/contactId=${contactId}&eventId=${eventId}`;
-        const filePathUrl = `${process.env.CLIENT_ORIGIN}/qr_codes/${eventId}-${contactId}.png`;
+        const filePathUrl = `https://services.german-emirates-club.com/qr_codes/${eventId}-${contactId}.png`;
         await QRCode.toFile(filePath, qeValue);
         return filePathUrl;
 

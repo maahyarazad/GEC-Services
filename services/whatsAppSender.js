@@ -364,6 +364,7 @@ async function sendMessageToPhone(
         "type",
         "club_partner_name",
         "blacklist",
+        "qr_code_url",
       ];
 
       Object.keys(payload).forEach((key) => {
@@ -434,12 +435,14 @@ async function sendMessageToPhone(
         }
         break;
       case "twilio/media":
-        messageOptions.body = data.body || "";
-        if (Array.isArray(data.media)) {
-          messageOptions.mediaUrls = [contactPayload['qr_code_url']];
-        } else if (typeof data.media === "string") {
-          messageOptions.mediaUrl = data.media;
-        }
+        // this for default
+        // messageOptions.body = data.body || "";
+        // if (Array.isArray(data.media)) {
+        //   messageOptions.mediaUrls = data.body;
+        // } else if (typeof data.media === "string") {
+        //   messageOptions.mediaUrl = data.media;
+        // }
+        
         break;
       case "twilio/list-picker":
         break;
