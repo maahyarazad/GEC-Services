@@ -33,19 +33,22 @@ async function generateQRWithText(event_page, code) {
  * Generate a QR code with embedded text over it.
  * @param {string} data - The data to encode in the QR code.
  */
-async function generateQR_WhatsApp(event, code) {
+async function generateQR_WhatsApp(contactId, eventId) {
 
-    const tempPath = path.join(__dirname, '..','qr_files', `${event}`);
+    const tempPath = path.join(__dirname, '..','qr_files');
 
     if (!fs.existsSync(tempPath)) {
         fs.mkdirSync(tempPath, { recursive: true });
     }
 
-    const filePath = path.join(tempPath, `${code}.png`)
+    const filePath = path.join(tempPath, `${eventId}-${contactId}.png`)
     try {
 
-        const qeValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event}?guest-code=${code}`;
+        //http://localhost:5175/event-registration/contactId=1301&eventId=7
+        const qeValue = `${process.env.CLIENT_ORIGIN}/event-registration/contactId=${contactId}&eventId=${eventId}`;
+        const filePathUrl = `${process.env.CLIENT_ORIGIN}/qr_codes/${eventId}-${contactId}.png`;
         await QRCode.toFile(filePath, qeValue);
+        return filePathUrl;
 
     } catch (error) {
         console.error('Error generating QR with text:', error);

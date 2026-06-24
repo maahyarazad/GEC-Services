@@ -5,6 +5,36 @@
 
 1. Add a new media template type in `CreateTwilioTemplate.jsx` to support sending a template creation 
 
+### Example Built Media Template
+
+```js
+{
+  "account_sid": "******",
+  "date_created": "2026-06-24T07:57:50Z",
+  "date_updated": "2026-06-24T08:00:00Z",
+  "friendly_name": "clubtime_dubai_7th_july_2026_reminder_en",
+  "language": "en",
+  "links": {
+    "approval_create": "https://content.twilio.com/v1/Content/******/ApprovalRequests/whatsapp",
+    "approval_fetch": "https://content.twilio.com/v1/Content/******/ApprovalRequests"
+  },
+  "sid": "******",
+  "types": {
+    "twilio/media": {
+      "body": "🔴 ATTENTION 🔴\n\nDear {{first_name}},\nthank you for registering for our ClubTime Dubai!\nWe look forward to welcoming you.\n\nDate: July 7, 2026\n🟨 We start at 7:00 PM\n\n📍Location: Media One Hotel, Restaurant QWERTY {{google_map_location}}\n\n•\tDress code: business casual\n•\tValet Parking and a Welcome drink (1 beer, 1 wine, or 1 soft drink) included\n\nWe look forward to a great evening! 👋\nBest regards, Sylvia and the German Emirates Club Team",
+      "media": [
+        "{{qr_code_url}}"
+      ]
+    }
+  },
+  "url": "https://content.twilio.com/v1/Content/******",
+  "variables": {
+    "first_name": "Maahyar Azad",
+    "google_map_location": "https://maps.app.goo.gl/m53EBxwzYHD3CotY7?g_st=awb",
+    "qr_code_url": "https://services.german-emirates-club.com/qr_codes/introduction-medical-german-society/gms-imgs-17715892355912574.png"
+  }
+}
+```
 
 ## Notes
 
@@ -33,6 +63,166 @@ In this page:
     element={<EventRegistration />}
 />
 ```
+
+```js
+router.post("/operator/login", upload.none(), loginLimiter, (req, res) => {
+  const { password } = req.body;
+
+  if (password === process.env.VITE_ADMIN_PASSWORD) {
+    const oneWeekInSeconds = 7 * 24 * 60 * 60;
+    const oneWeekInMilliseconds = oneWeekInSeconds * 1000;
+
+    const token = jwt.sign(
+      { role: "operator" },
+      process.env.JWT_SECRET,
+      { expiresIn: `${oneWeekInSeconds}s` }
+    );
+
+    res.cookie("o-usr", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: oneWeekInMilliseconds,
+    });
+
+    return res.json({ success: true });
+  }
+
+  // Invalid password counts towards rate limit
+  return res.status(401).json({ error: "Invalid password" });
+});
+
+// Auto login an admin user via an HMAC token generated server-side with GEC_SECRET.
+// Token = HMAC_SHA256(email, GEC_SECRET) — the secret never leaves the server, the
+// client only ever presents a token it cannot forge.
+router.get("/operator/auto-login", loginLimiter, (req, res) => {
+  try {
+    const email = typeof req.query.email === "string" ? req.query.email.trim() : "";
+    const token = typeof req.query.token === "string" ? req.query.token.trim() : "";
+
+    if (!email || !token) {
+      return res.status(401).json({ success: false, error: "Missing credentials" });
+    }
+
+    const secret = process.env.GEC_SECRET;
+    if (!secret) {
+      console.error("GEC_SECRET is not configured");
+      return res.status(500).json({ success: false, error: "Server misconfiguration" });
+    }
+
+    const expected = crypto
+      .createHmac("sha256", secret)
+      .update(email)
+      .digest("hex");
+
+    // Timing-safe comparison; bail out early on length mismatch since
+    // timingSafeEqual throws when buffer lengths differ.
+    const provided = token.toLowerCase();
+    const expectedBuf = Buffer.from(expected, "utf8");
+    const providedBuf = Buffer.from(provided, "utf8");
+
+    const valid =
+      expectedBuf.length === providedBuf.length &&
+      crypto.timingSafeEqual(expectedBuf, providedBuf);
+
+    if (!valid) {
+      return res.status(401).json({ success: false, error: "Invalid token" });
+    }
+
+    const oneWeekInSeconds = 7 * 24 * 60 * 60;
+    const oneWeekInMilliseconds = oneWeekInSeconds * 1000;
+
+    const sessionToken = jwt.sign(
+      { role: "operator" },
+      process.env.JWT_SECRET,
+      { expiresIn: `${oneWeekInSeconds}s` }
+    );
+
+    res.cookie("o-usr", sessionToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: oneWeekInMilliseconds,
+    });
+
+    return res.json({ success: true, email });
+  } catch (err) {
+    console.error("Auto-login error:", err);
+    return res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+```
+
+
+2. Load Event Registration Details
+
+After the operator logs in successfully, send the queryParam received from the URL to the following endpoint.
+
+Use the newly created authorize_operator middleware to protect the endpoint.
+
+```js
+router.patch("/registration/contacts/complete-attendance", operator_middleware, async (req, res) => {
+  try {
+    const { contactId, eventId } = req.query;
+
+    if (!contactId || !eventId) {
+      return res.status(400).json({
+        status: false,
+        message: "contactId and eventId are required",
+      });
+    }
+
+    const completeAttendanceQuery = `
+        UPDATE event_guest_list 
+        SET complete_attendance = 1
+        WHERE contact_book_id = ?
+        AND event_id = ?
+    `;
+
+    const stmt = db.prepare(completeAttendanceQuery);
+    const result = stmt.run(contactId, eventId);
+
+    if (result.changes === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "No matching guest found",
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "Attendance marked complete",
+    });
+  } catch (error) {
+    console.error("Failed to update attendance:", error);
+    res.status(500).json({
+      status: false,
+      message: "Failed to update attendance",
+    });
+  }
+});
+
+
+```
+
+
+
+## Part 3
+
+## Description
+
+### 1. Add "Use QR Code" Option to Message Modal
+
+In `MessageModal.jsx`, add a new switch labeled **Use QR Code**.
+
+Requirements:
+
+* Bind the switch value to `handleMessageStateChange`.
+* Add a new boolean property named `useQrCode`.
+* The switch should only be visible when **Use Guest List** is enabled.
+* Include the `useQrCode` value in the API request payload.
+
+
 
 
 ```md

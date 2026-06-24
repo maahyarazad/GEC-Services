@@ -11,6 +11,7 @@ const path = require("path");
 const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
+const {generateQR_WhatsApp} = require("../services/qrGenerator");
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -270,12 +271,20 @@ const messageSender = async (req) => {
     };
 
     if (useGuestList) {
+
       const query = `SELECT * FROM contact_book WHERE id IN(
              SELECT contact_book_id FROM event_guest_list WHERE event_id = ? and language = ? )`;
       const stmt = db.prepare(query);
       const result = stmt.all([Number(eventId), template.language.slice(0, 2)]);
 
-      await Promise.all(result.map((x) => safeSendMessage(x, eventId)));
+        await Promise.all(
+            result.map(async (x) => {
+                x.qr_code_url = await generateQR_WhatsApp(Number(x.id), Number(eventId));
+            })
+        );
+
+        
+        await Promise.all(result.map((x) => safeSendMessage(x, eventId)));
     }
 
     if (useContactBook) {
@@ -427,7 +436,7 @@ async function sendMessageToPhone(
       case "twilio/media":
         messageOptions.body = data.body || "";
         if (Array.isArray(data.media)) {
-          messageOptions.mediaUrls = data.media;
+          messageOptions.mediaUrls = [contactPayload['qr_code_url']];
         } else if (typeof data.media === "string") {
           messageOptions.mediaUrl = data.media;
         }
@@ -447,7 +456,7 @@ async function sendMessageToPhone(
     }
 
     const result = await twilioClient.messages.create(messageOptions);
-
+    
     await Promise.resolve(
       db
         .prepare(

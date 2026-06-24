@@ -20,6 +20,7 @@ const MessageModal = ({
         content,
         useContactBook,
         useGuestList,
+        useQrCode,
         useLanguage,
         useAudience,
         inputValue,
@@ -241,10 +242,26 @@ const MessageModal = ({
                                         if (useContactBook && e.target.checked) {
                                             handleMessageStateChange("useContactBook", !useContactBook);
                                         }
+                                        // Use QR Code only applies to guest lists — reset it when disabling.
+                                        if (!e.target.checked) {
+                                            handleMessageStateChange("useQrCode", false);
+                                        }
                                     }}
                                     color="primary"
                                 />
                             </div>
+
+                            {useGuestList && (
+                                <div className="d-flex align-items-center justify-content-between border rounded px-3 py-2">
+                                    <label className="form-label mb-0">Use QR Code</label>
+                                    <Switch
+                                        size="small"
+                                        checked={!!useQrCode}
+                                        onChange={(e) => handleMessageStateChange("useQrCode", e.target.checked)}
+                                        color="primary"
+                                    />
+                                </div>
+                            )}
 
                             <div className="d-flex align-items-center justify-content-between border rounded px-3 py-2">
                                 <label className="form-label mb-0">Pick Language From Contact Book</label>
