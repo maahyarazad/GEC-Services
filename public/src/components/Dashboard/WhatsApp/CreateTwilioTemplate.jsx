@@ -38,6 +38,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
         variable_examples: ['Hans Smith'],
         type: 'twilio/quick-reply',
         buttons: DEFAULT_BUTTONS.map((b) => ({ ...b })),
+        media_url: '',
     });
 
     const set = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
@@ -65,35 +66,51 @@ export default function CreateTwilioTemplate({ onSuccess }) {
             variable_examples: prev.variable_examples.filter((_, i) => i !== index),
         }));
 
-    // Derive variable names from the body in order of first appearance
-    const bodyVars = useMemo(() => {
+    const isMediaType = form.type === 'twilio/media';
+
+    // Derive variable names from the body (and media URL for media templates)
+    // in order of first appearance — Twilio resolves {{...}} across both.
+    const templateVars = useMemo(() => {
         const seen = new Set();
         const result = [];
         const pattern = /\{\{([^}]+)\}\}/g;
-        let m;
-        while ((m = pattern.exec(form.body)) !== null) {
-            if (!seen.has(m[1])) { seen.add(m[1]); result.push(m[1]); }
-        }
+        const scan = (text) => {
+            pattern.lastIndex = 0;
+            let m;
+            while ((m = pattern.exec(text || '')) !== null) {
+                if (!seen.has(m[1])) { seen.add(m[1]); result.push(m[1]); }
+            }
+        };
+        scan(form.body);
+        if (isMediaType) scan(form.media_url);
         return result;
-    }, [form.body]);
+    }, [form.body, form.media_url, isMediaType]);
 
     const isSlugified = form.friendly_name !== '' && form.friendly_name === slugify(form.friendly_name);
     const isBodyFilled = form.body.trim() !== '';
+    const isMediaFilled = !isMediaType || form.media_url.trim() !== '';
     const submitDisabledReason = !isBodyFilled && !isSlugified
         ? 'Message body and a normalized friendly name are required'
         : !isBodyFilled
         ? 'Message body is required'
+        : !isMediaFilled
+        ? 'A media URL (or {{variable}} placeholder) is required for media templates'
         : !isSlugified && !form.friendly_name
         ? 'Friendly name is required'
         : !isSlugified
         ? 'Friendly name must be normalized — click Normalize'
         : '';
-    const canSubmit = isSlugified && isBodyFilled && !submitting;
+    const canSubmit = isSlugified && isBodyFilled && isMediaFilled && !submitting;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!form.friendly_name.trim() || !form.body.trim()) {
             showSnackbar('Friendly name and body are required', 'error');
+            return;
+        }
+
+        if (isMediaType && !form.media_url.trim()) {
+            showSnackbar('A media URL is required for media templates', 'error');
             return;
         }
 
@@ -112,6 +129,9 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                     buttons: form.type === 'twilio/quick-reply'
                         ? form.buttons.filter((b) => b.title.trim())
                         : [],
+                    media: isMediaType && form.media_url.trim()
+                        ? [form.media_url.trim()]
+                        : [],
                 }),
             });
             const data = await res.json();
@@ -125,6 +145,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                     variable_examples: ['Hans Smith'],
                     type: 'twilio/quick-reply',
                     buttons: DEFAULT_BUTTONS.map((b) => ({ ...b })),
+                    media_url: '',
                 });
             } else {
                 showSnackbar(data.message || 'Failed to create template', 'error');
@@ -160,6 +181,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                 >
                     <ToggleButton value="twilio/quick-reply">Quick Reply</ToggleButton>
                     <ToggleButton value="twilio/text">Text only</ToggleButton>
+                    <ToggleButton value="twilio/media">Media</ToggleButton>
                 </ToggleButtonGroup>
             </Box>
 
@@ -198,6 +220,18 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                 </TextField>
             </Box>
 
+            {isMediaType && (
+                <TextField
+                    label="Media URL"
+                    value={form.media_url}
+                    onChange={(e) => set('media_url', e.target.value)}
+                    required
+                    size="small"
+                    placeholder="{{qr_code_url}}"
+                    helperText="Public image/PDF URL, or a {{variable}} placeholder (e.g. {{qr_code_url}}) resolved per-recipient"
+                />
+            )}
+
             <TextField
                 label="Message Body"
                 value={form.body}
@@ -216,7 +250,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                 {form.variable_examples.map((val, i) => (
                     <Box key={i} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                         <TextField
-                            label={`Example value for {{${bodyVars[i] ?? i + 1}}}`}
+                            label={`Example value for {{${templateVars[i] ?? i + 1}}}`}
                             value={val}
                             onChange={(e) => setVariableExample(i, e.target.value)}
                             size="small"

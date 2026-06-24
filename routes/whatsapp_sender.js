@@ -115,13 +115,36 @@ router.get("/api/whatsapp/list", async (req, res) => {
 
 router.post("/api/twilio/create-template", async (req, res) => {
   try {
-    const { friendly_name, language, body, variable_examples, buttons, type } = req.body;
+    const { friendly_name, language, body, variable_examples, buttons, type, media } = req.body;
 
     if (!friendly_name || !language || !body) {
       return res.status(400).json({ status: false, message: "friendly_name, language, and body are required" });
     }
 
+    const SUPPORTED_TYPES = ["twilio/quick-reply", "twilio/text", "twilio/media"];
     const templateType = type || "twilio/quick-reply";
+    if (!SUPPORTED_TYPES.includes(templateType)) {
+      return res.status(400).json({ status: false, message: `Unsupported template type: ${templateType}` });
+    }
+
+    // Normalize media into an array of non-empty URL / {{variable}} strings.
+    const mediaList = (Array.isArray(media) ? media : media ? [media] : [])
+      .map((m) => (typeof m === "string" ? m.trim() : ""))
+      .filter(Boolean);
+
+    // Validate the payload before sending it to Twilio.
+    if (templateType === "twilio/media") {
+      if (mediaList.length === 0) {
+        return res.status(400).json({ status: false, message: "A media URL is required for twilio/media templates" });
+      }
+      const mediaValid = mediaList.every(
+        (m) => /^https?:\/\/\S+$/i.test(m) || /^\{\{[^}]+\}\}$/.test(m)
+      );
+      if (!mediaValid) {
+        return res.status(400).json({ status: false, message: "Each media item must be an http(s) URL or a {{variable}} placeholder" });
+      }
+    }
+
     const actions = (buttons || []).map((b, i) => ({
       title: b.title || null,
       id: b.id || `btn_${i + 1}`,
@@ -130,18 +153,26 @@ router.post("/api/twilio/create-template", async (req, res) => {
     const typePayload =
       templateType === "twilio/quick-reply"
         ? { body, actions }
+        : templateType === "twilio/media"
+        ? { body, media: mediaList }
         : { body };
 
-    // Build variables map from all {{...}} occurrences in order of first appearance.
-    // Supports both numeric ({{1}}) and named ({{gender}}) Twilio variable styles.
+    // Build variables map from all {{...}} occurrences across the body and any
+    // media URLs, in order of first appearance. Supports both numeric ({{1}})
+    // and named ({{qr_code_url}}) Twilio variable styles.
     const variables = {};
     const varPattern = /\{\{([^}]+)\}\}/g;
     const seenVars = [];
-    let varMatch;
-    while ((varMatch = varPattern.exec(typePayload.body)) !== null) {
-      const name = varMatch[1];
-      if (!seenVars.includes(name)) seenVars.push(name);
-    }
+    const scanForVars = (text) => {
+      varPattern.lastIndex = 0;
+      let varMatch;
+      while ((varMatch = varPattern.exec(text || "")) !== null) {
+        const name = varMatch[1];
+        if (!seenVars.includes(name)) seenVars.push(name);
+      }
+    };
+    scanForVars(typePayload.body);
+    mediaList.forEach(scanForVars);
     seenVars.forEach((name, i) => {
       const sample = (variable_examples || [])[i];
       if (sample) variables[name] = sample;

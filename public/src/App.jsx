@@ -6,6 +6,7 @@ const Login = React.lazy(() => import("./components/utils/Login"));
 const TemplateForm = React.lazy(() => import("./components/templates/TemplateForm"));
 const SuccessTemplatePage = React.lazy(() => import("./components/templates/SuccessTemplatePage"));
 const GuestRegistration = React.lazy(() => import("./components/guestRegistration/GuestRegistration"));
+const EventRegistration = React.lazy(() => import("./components/eventRegistration/EventRegistration"));
 const PurchaseMemberShip = React.lazy(() => import("./components/pages/PurchaseMemberShip"));
 const PartnerOnboarding = React.lazy(() => import("./components/PartnerOnboarding/PartnerOnboarding"));
 const SupportPortal = React.lazy(() => import("./components/pages/SupportPortal"));
@@ -79,6 +80,7 @@ function AppRoutes() {
                 <Route path="/registration/:event" element={<TemplateForm />} />
                 <Route path="/registration/:event/success" element={<SuccessTemplatePage />} />
                 <Route path="/guest-registration/:eventSlug" element={<GuestRegistration />} />
+                <Route path="/event-registration/:queryParam" element={<EventRegistration />} />
                 <Route path="/membership" element={<PurchaseMemberShip />} />
                 <Route path="/support" element={<SupportPortal />} />
                 <Route path="/support/track" element={<TicketTracker />} />

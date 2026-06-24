@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { exportTableAsCSV } = require("../services/csvParser");
 const dbService = require("../services/dbService");
+const db = dbService.getDB();
 const multer = require("multer");
 const { generateQRWithText } = require("../services/qrGenerator");
 const { validateFileMimeType } = require("../services/validateFileType");
@@ -536,7 +537,7 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
 router.post("/admin/login", upload.none(), loginLimiter, (req, res) => {
   const { password } = req.body;
 
-  if (password === process.env.VITE_ADMIN_PASSWORD) {
+  if (!password === process.env.VITE_ADMIN_PASSWORD) return res.status(401).json({ error: "Invalid password" });
     const oneWeekInSeconds = 7 * 24 * 60 * 60;
     const oneWeekInMilliseconds = oneWeekInSeconds * 1000;
 
@@ -554,10 +555,7 @@ router.post("/admin/login", upload.none(), loginLimiter, (req, res) => {
     });
 
     return res.json({ success: true });
-  }
-
-  // Invalid password counts towards rate limit
-  return res.status(401).json({ error: "Invalid password" });
+  
 });
 
 // Auto login an admin user via an HMAC token generated server-side with GEC_SECRET.
@@ -620,6 +618,113 @@ router.get("/admin/auto-login", loginLimiter, (req, res) => {
   }
 });
 
+// ─── Operator auth (Event Registration page) ──────────────────────────────────
+// Operators authenticate with the shared admin password but receive a short-lived
+// session (6 hours) stored in the `o-usr` cookie with role "operator".
+
+router.post("/operator/login", upload.none(), loginLimiter, (req, res) => {
+  const { password } = req.body;
+
+  if (password !== process.env.VITE_OPERATOR_PASSWORD)
+    return res.status(401).json({ error: "Invalid password" });
+
+  const sixHoursInSeconds = 6 * 60 * 60;
+  const sixHoursInMilliseconds = sixHoursInSeconds * 1000;
+
+  const token = jwt.sign({ role: "operator" }, process.env.JWT_SECRET, {
+    expiresIn: `${sixHoursInSeconds}s`,
+  });
+
+  res.cookie("o-usr", token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: sixHoursInMilliseconds,
+  });
+
+  return res.json({ success: true });
+});
+
+// Auto login an operator via an HMAC token generated server-side with GEC_SECRET.
+// Token = HMAC_SHA256(email, GEC_SECRET) — the secret never leaves the server, the
+// client only ever presents a token it cannot forge.
+router.get("/operator/auto-login", loginLimiter, (req, res) => {
+  try {
+    const email = typeof req.query.email === "string" ? req.query.email.trim() : "";
+    const token = typeof req.query.token === "string" ? req.query.token.trim() : "";
+
+    if (!email || !token) {
+      return res.status(401).json({ success: false, error: "Missing credentials" });
+    }
+
+    const secret = process.env.GEC_SECRET;
+    if (!secret) {
+      console.error("GEC_SECRET is not configured");
+      return res.status(500).json({ success: false, error: "Server misconfiguration" });
+    }
+
+    const expected = crypto
+      .createHmac("sha256", secret)
+      .update(email)
+      .digest("hex");
+
+    // Timing-safe comparison; bail out early on length mismatch since
+    // timingSafeEqual throws when buffer lengths differ.
+    const provided = token.toLowerCase();
+    const expectedBuf = Buffer.from(expected, "utf8");
+    const providedBuf = Buffer.from(provided, "utf8");
+
+    const valid =
+      expectedBuf.length === providedBuf.length &&
+      crypto.timingSafeEqual(expectedBuf, providedBuf);
+
+    if (!valid) {
+      return res.status(401).json({ success: false, error: "Invalid token" });
+    }
+
+    const sixHoursInSeconds = 6 * 60 * 60;
+    const sixHoursInMilliseconds = sixHoursInSeconds * 1000;
+
+    const sessionToken = jwt.sign(
+      { role: "operator", email },
+      process.env.JWT_SECRET,
+      { expiresIn: `${sixHoursInSeconds}s` }
+    );
+
+    res.cookie("o-usr", sessionToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: sixHoursInMilliseconds,
+    });
+
+    return res.json({ success: true, email });
+  } catch (err) {
+    console.error("Auto-login error:", err);
+    return res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
+// Lets the Event Registration page detect an existing operator session on load.
+router.get("/operator/check-auth", (req, res) => {
+     const { password } = req.body;
+
+  if (password === process.env.VITE_OPERATOR_PASSWORD) {
+  }
+  const token = req?.cookies["o-usr"];
+  if (!token) return res.status(401).json({ authenticated: false });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role === "operator") {
+      return res.json({ authenticated: true, email: decoded.email || null });
+    }
+    return res.status(401).json({ authenticated: false });
+  } catch {
+    return res.status(401).json({ authenticated: false });
+  }
+});
+
 router.post("/admin/logout", (req, res) => {
   const token = req?.cookies["a-usr"];
   if (!token) {
@@ -673,5 +778,51 @@ router.get("/registration-data/:id", upload.none(), async (req, res) => {
     return res.status(401).json({ message: err });
   }
 });
+
+
+router.patch("/registration/contacts/complete-attendance", authorization_middleware.authorize_operator, async (req, res) => {
+  try {
+    const { contactId, eventId } = req.query;
+
+    if (!contactId || !eventId) {
+      return res.status(400).json({
+        status: false,
+        message: "contactId and eventId are required",
+      });
+    }
+
+    const completeAttendanceQuery = `
+        UPDATE event_guest_list 
+        SET complete_attendance = 1
+        WHERE contact_book_id = ?
+        AND event_id = ?
+    `;
+
+    const stmt = db.prepare(completeAttendanceQuery);
+    const result = stmt.run(contactId, eventId);
+
+    if (result.changes === 0) {
+      return res.status(404).json({
+        status: false,
+        message: "No matching guest found",
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "Attendance marked complete",
+    });
+  } catch (error) {
+    console.error("Failed to update attendance:", error);
+    res.status(500).json({
+      status: false,
+      message: "Failed to update attendance",
+    });
+  }
+});
+
+
+
+
 
 module.exports = router;
