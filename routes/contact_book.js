@@ -17,7 +17,9 @@ router.get("/api/contacts/lookup", (req, res) => {
 });
 
 // GET a single contact record by id (used by the Event Registration page)
-router.get("/api/contacts/:id", (req, res) => {
+// NOTE: constrain :id to digits so it doesn't shadow sibling word routes like
+// /api/contacts/add-to-guest-list or /api/contacts/clear-contact-book.
+router.get("/api/contacts/:id(\\d+)", (req, res) => {
   try {
     const { id } = req.params;
 
@@ -336,13 +338,12 @@ router.get("/api/contacts/add-to-guest-list", async (req, res) => {
   try {
     const { contactId, eventId } = req.query;
 
-    const duplicateQuery = ` SELECT EXISTS (
+    const duplicateQuery = `SELECT EXISTS (
     SELECT 1
     FROM event_guest_list
     WHERE contact_book_id = ?
       AND event_id = ?
 ) AS exists_flag;
-        
       `;
     const stmt = db.prepare(duplicateQuery);
     const duplicateCheck = await stmt.get(contactId, eventId);
