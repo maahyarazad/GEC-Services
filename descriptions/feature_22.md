@@ -251,3 +251,47 @@ Summary
 Verification: node --check passes on auth.js and registration.js; App.jsxrse cleanly via Babel.
 
 ```
+
+## Part 4
+
+### Description
+
+1. Add contact record information into **EventRegistration**.
+
+   Use the `/gec/members/check` endpoint to retrieve GEC membership data.
+
+2. Create an endpoint in `contact_book.js` to fetch contact information:
+
+```js
+router.get("/api/contacts/:id", (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ status: false, message: "ID is required" });
+    }
+
+    // Get record here
+
+    if (result.changes === 0) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Contact not found" });
+    }
+
+    res.status(200).json({
+      status: true,
+      // data:
+    });
+  } catch (error) {
+    console.error("Failed to get contact:", error.message);
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to get contact" });
+  }
+});
+```
+
+3. Use this endpoint to retrieve contact information and display all combined details in **EventRegistration**.
+
+4. Improve the overall layout and organize the data into categorized sections. Note that this page will be used only on mobile devices, so ensure it is mobile-friendly.

@@ -16,6 +16,35 @@ router.get("/api/contacts/lookup", (req, res) => {
   return res.json({ status: true, data: contact ?? null });
 });
 
+// GET a single contact record by id (used by the Event Registration page)
+router.get("/api/contacts/:id", (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ status: false, message: "ID is required" });
+    }
+
+    const contact = db.prepare("SELECT * FROM contact_book WHERE id = ?").get(id);
+
+    if (!contact) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Contact not found" });
+    }
+
+    res.status(200).json({
+      status: true,
+      data: contact,
+    });
+  } catch (error) {
+    console.error("Failed to get contact:", error.message);
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to get contact" });
+  }
+});
+
 // GET latest note for a contact
 router.get("/api/contacts/:id/notes", (req, res) => {
   const note = db.prepare(
