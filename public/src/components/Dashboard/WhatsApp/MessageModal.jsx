@@ -45,7 +45,7 @@ const MessageModal = ({
         ) {
             handleMessageStateChange("inputValue", {
                 ...state.inputValue,
-                qr_code_url: "{{qr_code_url}}",
+                qr_code_url: "qr_code_url",
             });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
