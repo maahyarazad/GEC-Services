@@ -295,3 +295,33 @@ router.get("/api/contacts/:id", (req, res) => {
 3. Use this endpoint to retrieve contact information and display all combined details in **EventRegistration**.
 
 4. Improve the overall layout and organize the data into categorized sections. Note that this page will be used only on mobile devices, so ensure it is mobile-friendly.
+
+
+## Part 5
+
+### Description
+
+1. Improve the **CreateTwilioTemplate.jsx** media type section by disabling the **Media URL** input field.
+
+2. Set the **Media URL** field value to:
+
+   ```text
+   https://services.german-emirates-club.com/qr_codes/7-1301.png
+   ```
+
+3. This value should only be applied when the selected template type is **Media Template**.
+
+
+
+## Part 6
+
+### Description
+
+1. Improve the user experience of the **MessageModal.jsx** modal. Whenever the variable name is equal to `'qr_code_url'`, automatically populate the corresponding value field.
+
+2. Set the **Variable `qr_code_url`** field value to:
+
+   ```text
+   {{qr_code_url}}
+   ```
+````

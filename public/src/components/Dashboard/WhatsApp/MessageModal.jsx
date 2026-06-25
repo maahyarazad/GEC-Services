@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Button, CircularProgress, Switch, IconButton, Tooltip } from "@mui/material";
 import { IoMdAdd } from "react-icons/io";
 import { TiDelete } from "react-icons/ti";
@@ -33,6 +33,23 @@ const MessageModal = ({
 
 
     const events = useAppSelector(getEvents);
+
+    // Auto-populate the qr_code_url variable so the operator doesn't have to type
+    // the placeholder — Twilio resolves {{qr_code_url}} to each guest's QR image.
+    useEffect(() => {
+        const vars = content?.variables;
+        if (
+            vars &&
+            Object.prototype.hasOwnProperty.call(vars, "qr_code_url") &&
+            inputValue.qr_code_url !== "{{qr_code_url}}"
+        ) {
+            handleMessageStateChange("inputValue", {
+                ...state.inputValue,
+                qr_code_url: "{{qr_code_url}}",
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [content]);
 
 
     const slotPropsStyle = {
@@ -309,6 +326,7 @@ const MessageModal = ({
                                                     })
                                                 }
                                                 placeholder={content.variables[key]}
+                                                disabled={key === "qr_code_url"}
                                                 required
                                             />
                                         </div>

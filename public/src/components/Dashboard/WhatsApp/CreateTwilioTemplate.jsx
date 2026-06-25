@@ -38,7 +38,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
         variable_examples: ['Hans Smith'],
         type: 'twilio/quick-reply',
         buttons: DEFAULT_BUTTONS.map((b) => ({ ...b })),
-        media_url: '',
+        media_url: '{{qr_code_url}}',
     });
 
     const set = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
@@ -226,6 +226,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                     value={form.media_url}
                     onChange={(e) => set('media_url', e.target.value)}
                     required
+                    disabled={true}
                     size="small"
                     placeholder="{{qr_code_url}}"
                     helperText="Public image/PDF URL, or a {{variable}} placeholder (e.g. {{qr_code_url}}) resolved per-recipient"
