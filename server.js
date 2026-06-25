@@ -31,6 +31,7 @@ const server_logs = require("./routes/server_logs.js");
 const account_deletion = require("./routes/account_deletion.js");
 const gec_members = require("./routes/gec_members.js");
 const support = require("./routes/support.js");
+const gec_endpoints = require("./routes/gec_endpoints.js");
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
 const { serveWithOgTags } = require("./middleware/ogTags");
@@ -153,6 +154,7 @@ app.use("/", external_route);
 app.use("/", events);
 app.use("/api/", gec_members);
 app.use("/", support);
+app.use("/", gec_endpoints);
 
 app.get("*", serveWithOgTags);
 
