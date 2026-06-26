@@ -151,16 +151,17 @@ const contactBookData = (conditions, useAudience, eventId) => {
             }
             AND contentSid IS NULL
         AND id        NOT IN (SELECT contact_book_id FROM excluded_guests)
-        AND type      NOT IN ('medical_society','Wüstenkinder', 'expert_guest', 'only_guest')
+        AND type      NOT IN ('Wüstenkinder', 'expert_guest', 'only_guest')
         GROUP BY phone
         ORDER BY
             CASE type
-                WHEN 'gec_staff'    THEN 1
-                WHEN 'club_partner' THEN 2
-                WHEN 'club_member'  THEN 3
-                WHEN 'expert'       THEN 4
-                WHEN 'difa'         THEN 5
-                ELSE                     6
+                WHEN 'gec_staff'               THEN 1
+                WHEN 'club_partner'            THEN 2
+                WHEN 'club_member'             THEN 3
+                WHEN 'expert'                  THEN 4
+                WHEN 'difa'                    THEN 5
+                WHEN 'medical_society'         THEN 6
+                ELSE                                7
             END;
             `;
   } else {
