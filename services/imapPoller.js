@@ -98,7 +98,7 @@ async function processInbox() {
     await client.logout();
     if (collected.length) console.log(`[IMAP Poller] Finished processing ${collected.length} message(s).`);
   } catch (err) {
-    console.error('[IMAP Poller] Connection/processing error:', err.message);
+    console.error(`${Date.now()} - [IMAP Poller] Connection/processing error:`, err.message);
     try { client.close(); } catch {}
   } finally {
     _running = false;
@@ -150,7 +150,7 @@ async function processMessage(client, msg) {
     await client.messageFlagsAdd({ uid: msg.uid }, ['\\Seen'], { uid: true });
 
     if (!ticket) {
-      console.log(`[IMAP Poller] Unmatched email — from: ${fromAddr}, subject: "${subject}"`);
+      console.log(`${Date.now()} - [IMAP Poller] Unmatched email — from: ${fromAddr}, subject: "${subject}"`);
       return;
     }
 
@@ -184,9 +184,9 @@ async function processMessage(client, msg) {
       });
     }
 
-    console.log(`[IMAP Poller] Matched reply from ${fromAddr} → ticket ${ticket.ticket_number}`);
+    console.log(`${Date.now()} - [IMAP Poller] Matched reply from ${fromAddr} → ticket ${ticket.ticket_number}`);
   } catch (err) {
-    console.error('[IMAP Poller] processMessage error:', err.message);
+    console.error(`${Date.now()} - [IMAP Poller] processMessage error:`, err.message);
   }
 }
 
@@ -199,7 +199,7 @@ function start(io) {
   }
 
   _io = io;
-  console.log('[IMAP Poller] Started — polling every 2 minutes.');
+  console.log(`${Date.now()} - [IMAP Poller] Started — polling every 2 minutes.`);
 
   // First poll after 15 s (let the server finish booting)
   setTimeout(() => processInbox().catch(console.error), 15_000);

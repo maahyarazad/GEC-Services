@@ -39,7 +39,7 @@ async function normalizePhone(raw) {
 
     return digits;
   } catch (err) {
-    console.error("[claudeAgent.normalizePhone] API error:", err.message);
+    console.error(`${Date.now()} - [claudeAgent.normalizePhone] API error:`, err.message);
     return null;
   }
 }

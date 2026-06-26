@@ -28,7 +28,7 @@ router.post('/news-letter-email/', async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Error in fetching data from sql server:", err);
+    console.error(`${Date.now()} - Error in fetching data from sql server:`, err);
     return res.status(500).json({ 
       status: false, 
       message: "Server error", 

@@ -50,7 +50,7 @@ router.get("/latest/:currency", async (req, res) => {
         res.json(data); // forward JSON to client
     }
     catch (err) {
-        console.error("Currency fetch error:", err);
+        console.error(`${Date.now()} - Currency fetch error:`, err);
         res.status(500).json({ error: "Failed to fetch currency data", details: err.message });
     }
 });
@@ -71,7 +71,7 @@ router.get('/payment', async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error in /member:", error);
+        console.error(`${Date.now()} - Error in /member:`, error);
         res.status(500).json({ status: false, message: 'Server error' });
     }
 });
@@ -116,7 +116,7 @@ router.post("/payment/create-record", upload.none(), async (req, res) => {
         const order = await prepareOrder(data, userTimezone);
 
         // Step 2: Forward the saved record to payment endpoint
-        console.log(order)
+        console.log(`${Date.now()} -`, order)
         const paymentResponse = await fetch(`${process.env.PAYMENNTTESTURL}`, {
             method: "POST",
             headers: {
@@ -139,7 +139,7 @@ router.post("/payment/create-record", upload.none(), async (req, res) => {
 
         const paymentData = await paymentResponse.json();
 
-        console.log(paymentData);
+        console.log(`${Date.now()} -`, paymentData);
         // Step 3: Return combined response
         return res.status(201).json({
             message: "Record created and payment initiated successfully!",
@@ -148,7 +148,7 @@ router.post("/payment/create-record", upload.none(), async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
+        console.log(`${Date.now()} -`, error);
         return res
             .status(500)
             .json({ message: "Internal Server Error", error: error.message });
@@ -266,7 +266,7 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
             // skip creating qrcode on refresh page
             try {
                 await fs.access(qrPath); // will throw if not found
-                console.log("QR already exists, skipping generation.");
+                console.log(`${Date.now()} - QR already exists, skipping generation.`);
             } catch {
                 await generateQRWithText(registration_config.event, registration_config.event_id);
                 
@@ -322,7 +322,7 @@ router.get("/payment/status/:checkoutId", async (req, res) => {
         }
 
     } catch (error) {
-        console.error("Error fetching payment status:", error);
+        console.error(`${Date.now()} - Error fetching payment status:`, error);
         return res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 
@@ -514,7 +514,7 @@ async function handleRegistration(data, sanitized) {
         }
 
     } catch (error) {
-        console.error(error);
+        console.error(`${Date.now()} -`, error);
         throw error
     }
 }
@@ -525,7 +525,7 @@ async function ProcessRequest(data) {
         await event_confirm_registration_email_with_invoice(data);
 
     } catch (error) {
-        console.error("Edit error:", error);
+        console.error(`${Date.now()} - Edit error:`, error);
         throw error;
     }
 }

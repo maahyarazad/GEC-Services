@@ -16,7 +16,7 @@ router.post("/api/registration-keys",async (req, res) => {
         }
 
     } catch (error) {
-        console.error("Edit error:", error);
+        console.error(`${Date.now()} - Edit error:`, error);
         return res.status(500).json({ status: false, message: error.message });
     }
 });

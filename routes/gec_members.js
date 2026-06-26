@@ -46,7 +46,7 @@ router.get('/gec/members/check', async (req, res) => {
 
     return res.json({ status: true, data: rows.length ? rows : [] });
   } catch (err) {
-    console.error('GEC members check error:', err);
+    console.error(`${Date.now()} - GEC members check error:`, err);
     return res.status(500).json({ status: false, message: 'Server error' });
   }
 });
@@ -97,7 +97,7 @@ router.post('/gec/members/check-batch', async (req, res) => {
 
     return res.json({ status: true, data: rows });
   } catch (err) {
-    console.error('GEC members batch check error:', err);
+    console.error(`${Date.now()} - GEC members batch check error:`, err);
     return res.status(500).json({ status: false, message: 'Server error' });
   }
 });

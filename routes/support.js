@@ -94,7 +94,7 @@ async function verifyRecaptcha(token, remoteIp) {
 
     return { ok: true };
   } catch (err) {
-    console.error("reCAPTCHA verification error:", err);
+    console.error(`${Date.now()} - reCAPTCHA verification error:`, err);
     return { ok: false, reason: "Could not verify reCAPTCHA. Please try again." };
   }
 }
@@ -366,11 +366,11 @@ router.post(
         to: ticket.email,
         subject: `Support Ticket Received - ${ticket_number}`,
         html: confirmationEmailHtml(ticket),
-      }).catch((err) => console.error("Support email error:", err));
+      }).catch((err) => console.error(`${Date.now()} - Support email error:`, err));
 
       return res.json({ status: true, ticket_number, message: "Ticket submitted successfully." });
     } catch (err) {
-      console.error("Support ticket creation error:", err);
+      console.error(`${Date.now()} - Support ticket creation error:`, err);
       return res.status(500).json({ status: false, message: "An unexpected error occurred." });
     }
   }
@@ -403,7 +403,7 @@ router.get("/support/ticket/track", trackLimiter, async (req, res) => {
 
     return res.json({ status: true, data: { ...ticket, comments } });
   } catch (err) {
-    console.error("Ticket track error:", err);
+    console.error(`${Date.now()} - Ticket track error:`, err);
     return res.status(500).json({ status: false, message: "An unexpected error occurred." });
   }
 });
@@ -435,7 +435,7 @@ router.get("/api/admin/support/tickets", authorize.authorize_admin, (req, res) =
 
     return res.json({ status: true, data: rows, total: count });
   } catch (err) {
-    console.error("Admin support list error:", err);
+    console.error(`${Date.now()} - Admin support list error:`, err);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 });
@@ -475,7 +475,7 @@ router.get("/api/admin/support/tickets/:id", authorize.authorize_admin, (req, re
 
     return res.json({ status: true, data: { ...ticket, attachments, comments, activity } });
   } catch (err) {
-    console.error("Admin ticket detail error:", err);
+    console.error(`${Date.now()} - Admin ticket detail error:`, err);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 });
@@ -486,7 +486,7 @@ router.get("/api/admin/support/admins", authorize.authorize_admin, (_req, res) =
     const admins = db.prepare("SELECT id, firstName, lastName, email FROM GIC_Users WHERE role = 'admin' ORDER BY firstName, lastName").all();
     return res.json({ status: true, data: admins });
   } catch (err) {
-    console.error("Admin list error:", err);
+    console.error(`${Date.now()} - Admin list error:`, err);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 });
@@ -507,7 +507,7 @@ router.patch("/api/admin/support/tickets/:id/status", authorize.authorize_admin,
 
     return res.json({ status: true, message: "Status updated." });
   } catch (err) {
-    console.error("Status update error:", err);
+    console.error(`${Date.now()} - Status update error:`, err);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 });
@@ -524,7 +524,7 @@ router.patch("/api/admin/support/tickets/:id/assign", authorize.authorize_admin,
 
     return res.json({ status: true, message: "Ticket assigned." });
   } catch (err) {
-    console.error("Assign error:", err);
+    console.error(`${Date.now()} - Assign error:`, err);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 });
@@ -569,12 +569,12 @@ router.post("/api/admin/support/tickets/:id/comment", authorize.authorize_admin,
           db.prepare("INSERT OR IGNORE INTO support_email_threads (ticket_id, message_id) VALUES (?, ?)")
             .run(ticket.id, info.messageId);
         }
-      }).catch((err) => console.error("Support reply email error:", err));
+      }).catch((err) => console.error(`${Date.now()} - Support reply email error:`, err));
     }
 
     return res.json({ status: true, id: result.lastInsertRowid, message: "Comment added." });
   } catch (err) {
-    console.error("Comment error:", err);
+    console.error(`${Date.now()} - Comment error:`, err);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 });
@@ -592,7 +592,7 @@ router.get("/api/admin/support/attachments/:attachmentId", authorize.authorize_a
     res.setHeader("Content-Type", attachment.mime_type);
     return res.sendFile(filePath);
   } catch (err) {
-    console.error("Attachment download error:", err);
+    console.error(`${Date.now()} - Attachment download error:`, err);
     return res.status(500).json({ status: false, message: "Server error." });
   }
 });

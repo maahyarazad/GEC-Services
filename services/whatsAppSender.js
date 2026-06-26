@@ -58,10 +58,10 @@ const otpSender = async (req) => {
       }),
     });
 
-    console.log("WhatsApp message sent:", whatsapp_sender_result);
+    console.log(`${Date.now()} - WhatsApp message sent:`, whatsapp_sender_result);
     return { status: true, result: whatsapp_sender_result.status };
   } catch (error) {
-    console.error("WhatsApp sender error:", error.message || error);
+    console.error(`${Date.now()} - WhatsApp sender error:`, error.message || error);
     return { status: false, result: error.message || error };
   }
 };
@@ -243,7 +243,7 @@ const messageSender = async (req) => {
         const phoneNumber = parsePhoneNumberFromString(el.phone);
 
         if (!phoneNumber || !phoneNumber.isValid()) {
-          console.error(`Error sending message to ${el.phone}:`, error);
+          console.error(`${Date.now()} - Error sending message to ${el.phone}:`, error);
           dbService.create("error_log", {
             error: error.toString(),
             origin_function: "sendMessageToPhone",
@@ -261,7 +261,7 @@ const messageSender = async (req) => {
             );
         }
       } catch (err) {
-        console.error(`Error sending message to ${el.phone}:`, err);
+        console.error(`${Date.now()} - Error sending message to ${el.phone}:`, err);
         dbService.create("error_log", {
           error: `Error sending message to ${el.phone} - ${err.toString()}`,
           origin_function: "sendMessageToPhone",
@@ -309,14 +309,14 @@ const messageSender = async (req) => {
       for (let i = 0; i < batches.length; i++) {
         const batch = batches[i];
 
-        console.log(`Sending batch ${i + 1} of ${batches.length}...`);
+        console.log(`${Date.now()} - Sending batch ${i + 1} of ${batches.length}...`);
         await Promise.all(batch.map((x) => safeSendMessage(x, eventId)));
-        console.log(`Batch ${i + 1} sent.`);
+        console.log(`${Date.now()} - Batch ${i + 1} sent.`);
 
         // Delay before sending next batch except after last batch
         if (i < batches.length - 1) {
           console.log(
-            `Waiting ${delayMs / 60000} minutes before next batch...`
+            `${Date.now()} - Waiting ${delayMs / 60000} minutes before next batch...`
           );
           await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
@@ -328,7 +328,7 @@ const messageSender = async (req) => {
 
     return { status: true };
   } catch (error) {
-    console.error("WhatsApp sender error:", error);
+    console.error(`${Date.now()} - WhatsApp sender error:`, error);
     // You can decide whether to return false or not here.
   }
 };
@@ -471,7 +471,7 @@ async function sendMessageToPhone(
 
     return result;
   } catch (error) {
-    console.error(`Failed to send message to ${phone}:`, error);
+    console.error(`${Date.now()} - Failed to send message to ${phone}:`, error);
     // swallow error so caller can continue
     return null;
   }
@@ -554,7 +554,7 @@ const fetchContentTemplates = async () => {
     });
     return { status: true, result: templates };
   } catch (error) {
-    console.error("WhatsApp sender error:", error);
+    console.error(`${Date.now()} - WhatsApp sender error:`, error);
     return { status: false, result: error };
   }
 };
@@ -578,7 +578,7 @@ const deleteContent = async (req, res) => {
     //     await twilioClient.content.v1.contents(element.sid).remove();
     // });
   } catch (error) {
-    console.error("WhatsApp sendser error:", error);
+    console.error(`${Date.now()} - WhatsApp sendser error:`, error);
 
     return { status: false, result: error };
   }
@@ -587,10 +587,10 @@ const deleteContent = async (req, res) => {
 async function getMessageBody(messageSid) {
   try {
     const message = await twilioClient.messages(messageSid).fetch();
-    console.log("Message Body:", message.body);
+    console.log(`${Date.now()} - Message Body:`, message.body);
     return message.body;
   } catch (error) {
-    console.error("Failed to fetch message:", error);
+    console.error(`${Date.now()} - Failed to fetch message:`, error);
     throw error;
   }
 }
@@ -657,7 +657,7 @@ async function fetchHistory(phone) {
       received_at: msg.received_at.format("YYYY-MM-DD HH:mm:ss"),
     }));
   } catch (error) {
-    console.error("Failed to fetch message:", error);
+    console.error(`${Date.now()} - Failed to fetch message:`, error);
     throw error;
   }
 }
@@ -718,7 +718,7 @@ async function fetchEvent(From) {
     
     return Number(eventId);
   } catch (error) {
-    console.error("Failed to fetch event:", error);
+    console.error(`${Date.now()} - Failed to fetch event:`, error);
     throw error;
   }
 }
@@ -735,7 +735,7 @@ async function fetchTwilioMessagesDetails(sentMessages) {
       };
     } catch (error) {
       console.error(
-        `Failed to fetch Twilio message for SID ${msg.messageSid}:`,
+        `${Date.now()} - Failed to fetch Twilio message for SID ${msg.messageSid}:`,
         error
       );
       return {
@@ -795,7 +795,7 @@ async function handleAutoResponse(From, ButtonPayload) {
       });
     }
   } catch (e) {
-    console.error(e);
+    console.error(`${Date.now()} -`, e);
   }
 }
 

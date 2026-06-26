@@ -315,10 +315,10 @@ const generateInvoice = async (data) => {
             stream.on("error", reject);
         });
 
-        console.log("PDF written to", outputPath);
+        console.log(`${Date.now()} - PDF written to`, outputPath);
 
     } catch (err) {
-        console.error("Error generating PDF:", err);
+        console.error(`${Date.now()} - Error generating PDF:`, err);
         throw err;
     }
 

@@ -113,7 +113,7 @@ router.get("/partner-delivery-info",authorization_middleware.authorize_partner,(
 
     return res.json({ status: true, data: row ?? null });
   } catch (error) {
-    console.error("Delivery info fetch error:", error);
+    console.error(`${Date.now()} - Delivery info fetch error:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -198,7 +198,7 @@ router.post("/upload-csv",authorization_middleware.authorize_partner ,upload.sin
       skipped: rows.length - inserted, // duplicates ignored
     });
   } catch (error) {
-    console.error("CSV upload error:", error);
+    console.error(`${Date.now()} - CSV upload error:`, error);
 
     // Multer file-type rejection
     if (error.message === "Only .csv files are allowed") {
@@ -265,7 +265,7 @@ const total = dbService._getTotalCount(
       pageSize: limit,
     });
   } catch (error) {
-    console.error("Error in /registration:", error);
+    console.error(`${Date.now()} - Error in /registration:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -314,7 +314,7 @@ router.get("/api/partner-delivery-employees", (req, res) => {
 
     return res.json({ success: true, data, total, page: pageNumber + 1, pageSize: limit });
   } catch (error) {
-    console.error("Error in /api/partner-delivery-employees:", error);
+    console.error(`${Date.now()} - Error in /api/partner-delivery-employees:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -348,7 +348,7 @@ router.post("/api/partner-onboarding/employee", (req, res) => {
 
     return res.status(201).json({ status: true, message: "Member added", id: result.lastInsertRowid });
   } catch (error) {
-    console.error("Add member error:", error);
+    console.error(`${Date.now()} - Add member error:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -388,7 +388,7 @@ router.put("/api/partner-onboarding/employee/:id", (req, res) => {
 
     return res.status(200).json({ status: true, message: "Member updated" });
   } catch (error) {
-    console.error("Update member error:", error);
+    console.error(`${Date.now()} - Update member error:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -407,7 +407,7 @@ router.delete("/api/partner-onboarding/employee/:id", (req, res) => {
 
     return res.status(200).json({ status: true, message: "Member deactivated" });
   } catch (error) {
-    console.error("Delete member error:", error);
+    console.error(`${Date.now()} - Delete member error:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });

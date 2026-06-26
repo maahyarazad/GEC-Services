@@ -28,19 +28,19 @@ router.get('/api/send-party-invitation', async (req, res) => {
             const k = data[i];
             try {
                 await send_party_invitation({ email: k.email });
-                console.log(`✅ Sent to: ${k.email}`);
+                console.log(`${Date.now()} - ✅ Sent to: ${k.email}`);
 
                 
                 await new Promise(r => setTimeout(r, 10));
 
                 
                 if ((i + 1) % 30 === 0) {
-                    console.log("⏸️ Pausing for 5 minutes to avoid SMTP limits...");
+                    console.log(`${Date.now()} - ⏸️ Pausing for 5 minutes to avoid SMTP limits...`);
                     await new Promise(r => setTimeout(r, 5 * 60 * 1000)); 
                 }
 
             } catch (err) {
-                console.error(`❌ Failed for ${k.email}:`, err.message);
+                console.error(`${Date.now()} - ❌ Failed for ${k.email}:`, err.message);
             }
         }
 
@@ -51,7 +51,7 @@ router.get('/api/send-party-invitation', async (req, res) => {
         });
 
     } catch (err) {
-        console.error("Error sending party invitation:", err);
+        console.error(`${Date.now()} - Error sending party invitation:`, err);
         return res.status(500).json({
             status: false,
             message: "Server error",

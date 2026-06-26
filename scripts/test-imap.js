@@ -13,15 +13,15 @@ const user = process.env.SMTP_SUPPORT_SENDER;
 const pass = process.env.SMTP_SUPPORT_SENDER_PASS;
 
 (async () => {
-  console.log('── IMAP diagnostic ─────────────────────────────');
-  console.log('Host :', host);
-  console.log('Port :', port, port === 993 ? '(implicit TLS)' : '(STARTTLS/plain)');
-  console.log('User :', user);
-  console.log('Pass :', pass ? `set (${pass.length} chars)` : 'NOT SET');
-  console.log('────────────────────────────────────────────────');
+  console.log(`${Date.now()} - ── IMAP diagnostic ─────────────────────────────`);
+  console.log(`${Date.now()} - Host :`, host);
+  console.log(`${Date.now()} - Port :`, port, port === 993 ? '(implicit TLS)' : '(STARTTLS/plain)');
+  console.log(`${Date.now()} - User :`, user);
+  console.log(`${Date.now()} - Pass :`, pass ? `set (${pass.length} chars)` : 'NOT SET');
+  console.log(`${Date.now()} - ────────────────────────────────────────────────`);
 
   if (!host || !user || !pass) {
-    console.error('❌ Missing host/user/pass. Set SMTP_SUPPORT_SENDER(+_PASS) and optionally IMAP_HOST/IMAP_PORT.');
+    console.error(`${Date.now()} - ❌ Missing host/user/pass. Set SMTP_SUPPORT_SENDER(+_PASS) and optionally IMAP_HOST/IMAP_PORT.`);
     process.exit(1);
   }
 
@@ -37,7 +37,7 @@ const pass = process.env.SMTP_SUPPORT_SENDER_PASS;
   let connected = false;
 
   try {
-    console.log('Connecting…');
+    console.log(`${Date.now()} - Connecting…`);
     await client.connect();
     connected = true;
     console.log('✅ Connected and authenticated.');
@@ -51,15 +51,15 @@ const pass = process.env.SMTP_SUPPORT_SENDER_PASS;
     const lock = await client.getMailboxLock('INBOX');
     try {
       const status = await client.status('INBOX', { messages: true, unseen: true });
-      console.log('\nINBOX status:');
-      console.log('  Total messages :', status.messages);
-      console.log('  Unseen         :', status.unseen);
+      console.log(`${Date.now()} -`, '\nINBOX status:');
+      console.log(`${Date.now()} -   Total messages :`, status.messages);
+      console.log(`${Date.now()} -   Unseen         :`, status.unseen);
 
       const unseen = await client.search({ seen: false }, { uid: true });
-      console.log('  Unseen UIDs    :', unseen.length ? unseen.join(', ') : '(none)');
+      console.log(`${Date.now()} -   Unseen UIDs    :`, unseen.length ? unseen.join(', ') : '(none)');
 
       if (unseen.length) {
-        console.log('\nMost recent unseen message headers:');
+        console.log(`${Date.now()} -`, '\nMost recent unseen message headers:');
         const last = unseen[unseen.length - 1];
         for await (const msg of client.fetch(String(last), { envelope: true }, { uid: true })) {
           console.log('  From   :', msg.envelope?.from?.map(f => f.address).join(', '));

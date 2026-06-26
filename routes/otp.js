@@ -102,7 +102,7 @@ const sendOtpToEmail = async (data, req, res) => {
 
     return { status: true, code: 200, message: "OTP sent successfully" };
   } catch (error) {
-    console.error("Failed to send OTP:", error.message);
+    console.error(`${Date.now()} - Failed to send OTP:`, error.message);
     return { status: false, code: 500, message: "Failed to send OTP" };
   }
 };
@@ -119,7 +119,7 @@ router.post("/send-otp", otpLimiter, async (req, res) => {
 
     return await handleStandardOtp(req, res);
   } catch (error) {
-    console.error(error);
+    console.error(`${Date.now()} -`, error);
     return res.status(500).json({ status: false, message: error.message });
   }
 });
@@ -211,7 +211,7 @@ router.post("/send-otp-mobile", otpLimiter, async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("Failed to send OTP:", error.message);
+    console.error(`${Date.now()} - Failed to send OTP:`, error.message);
     res.status(500).json({ status: false, message: "Failed to send OTP" });
   }
 });
@@ -258,7 +258,7 @@ router.post("/otp-check", async (req, res) => {
       });
     }
   } catch (error) {
-    console.error(error);
+    console.error(`${Date.now()} -`, error);
     return res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -276,7 +276,7 @@ const fetchPartnerFromGEC = async (email) => {
     );
     return rows.length ? rows : [];
   } catch (err) {
-    console.error("fetchPartnerFromGEC:", err);
+    console.error(`${Date.now()} - fetchPartnerFromGEC:`, err);
   }
 };
 
@@ -334,7 +334,7 @@ router.post("/partner-otp-check", async (req, res) => {
       data: { ...partnerData[0] },
     });
   } catch (error) {
-    console.error(error);
+    console.error(`${Date.now()} -`, error);
     return res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -355,7 +355,7 @@ router.post("/otp-check-mobile", async (req, res) => {
             }
 
             if (error) {
-              console.error("OTP verification error:", error);
+              console.error(`${Date.now()} - OTP verification error:`, error);
               return reject(error);
             }
 
@@ -373,7 +373,7 @@ router.post("/otp-check-mobile", async (req, res) => {
       message: "Verification successful",
     });
   } catch (err) {
-    console.error("OTP verification failed:", err);
+    console.error(`${Date.now()} - OTP verification failed:`, err);
 
     return res.status(401).json({
       status: false,

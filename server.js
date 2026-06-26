@@ -48,9 +48,9 @@ let db;
 
 try {
   db = new betterSqlite3(path.resolve(__dirname, "app.db"));
-  console.log("Connected to SQLite database (better-sqlite3).");
+  console.log(`${Date.now()} - Connected to SQLite database (better-sqlite3).`);
 } catch (err) {
-  console.error("Failed to connect to database:", err.message);
+  console.error(`${Date.now()} - Failed to connect to database:`, err.message);
   process.exit(1);
 }
 
@@ -64,7 +64,7 @@ try {
     // db.exec(sql);
     // console.log("Tables created or already exist.");
   } catch (err) {
-    console.error("Failed to create tables or read SQL file:", err.message);
+    console.error(`${Date.now()} - Failed to create tables or read SQL file:`, err.message);
   }
 })();
 
@@ -119,7 +119,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use((req, res, next) => {
-  console.log(`Received request for: ${req.url}`);
+  console.log(`${Date.now()} - Received request for: ${req.url}`);
   next();
 });
 
@@ -166,12 +166,12 @@ imapPoller.start(io);
 // Maahyar CM: node cron expression is different than normal expression use this site to check 
 cron.schedule("* */6 * * *", async () => {
   try {
-    console.log("[Cron | Every 6h] Starting: GSheet sync + phone normalization —", new Date());
+    console.log(`${Date.now()} - [Cron | Every 6h] Starting: GSheet sync + phone normalization —`, new Date());
     await GSheetService.GSheetParser();
     await Jobs.normilizeMemberPhoneNumbers();
-    console.log("[Cron | Every 6h] Completed —", new Date());
+    console.log(`${Date.now()} - [Cron | Every 6h] Completed —`, new Date());
   } catch (error) {
-    console.error("[Cron | Every 6h] Failed:", error);
+    console.error(`${Date.now()} - [Cron | Every 6h] Failed:`, error);
     dbService.create("error_log", {
       error: error.toString(),
       origin_function: "cron_6h_gsheet_normalize",
@@ -181,11 +181,11 @@ cron.schedule("* */6 * * *", async () => {
 
 cron.schedule("0 0 * * *", async () => {
   try {
-    console.log("[Cron | daily] Starting: MongoDB backup —", new Date());
+    console.log(`${Date.now()} - [Cron | daily] Starting: MongoDB backup —`, new Date());
     await MongoDbBackUpJob.run();
-    console.log("[Cron | daily] Completed —", new Date());
+    console.log(`${Date.now()} - [Cron | daily] Completed —`, new Date());
   } catch (error) {
-    console.error("[Cron | daily] Failed:", error);
+    console.error(`${Date.now()} - [Cron | daily] Failed:`, error);
     dbService.create("error_log", {
       error: error.toString(),
       origin_function: "cron_daily_mongo_backup",
@@ -197,5 +197,5 @@ cron.schedule("0 0 * * *", async () => {
 
 
 server.listen(PORT, () => {
-  console.log(`🚀 Server + WS listening on http://localhost:${PORT}`);
+  console.log(`${Date.now()} - 🚀 Server + WS listening on http://localhost:${PORT}`);
 });

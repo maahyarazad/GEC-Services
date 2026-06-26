@@ -15,9 +15,9 @@ const MongoDbBackUpJob = {
 
     const cmd = `mongodump --uri="${uri}" --out="${outputPath}"`;
 
-    console.log(`[MongoDbBackUpJob] Running backup → ${outputPath}`);
+    console.log(`${Date.now()} - [MongoDbBackUpJob] Running backup → ${outputPath}`);
     execSync(cmd, { stdio: "inherit" });
-    console.log(`[MongoDbBackUpJob] Backup complete → ${outputPath}`);
+    console.log(`${Date.now()} - [MongoDbBackUpJob] Backup complete → ${outputPath}`);
 
     return outputPath;
   },

@@ -305,7 +305,7 @@ router.post(
             if (event_date) {
               await generateApplePass(data);
 
-              console.log(data);
+              console.log(`${Date.now()} -`, data);
               const googleWalletLink = await generateGooglePass(data);
               await event_confirm_registration_email({
                 ...data,
@@ -329,7 +329,7 @@ router.post(
 
       return res.json({ status: false, message: create_result.error });
     } catch (error) {
-      console.error("Edit error:", error);
+      console.error(`${Date.now()} - Edit error:`, error);
       res.status(500).json({ status: false, message: "Server error" });
     }
   }
@@ -379,7 +379,7 @@ const total = dbService._getTotalCount(
       pageSize: limit,
     });
   } catch (error) {
-    console.error("Error in /registration:", error);
+    console.error(`${Date.now()} - Error in /registration:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -407,7 +407,7 @@ router.get("/api/registration-csv-data", async (req, res) => {
     res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
     res.send(csv); // Send the actual CSV string
   } catch (error) {
-    console.error("Error in fetching data from sql server:", error);
+    console.error(`${Date.now()} - Error in fetching data from sql server:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -529,7 +529,7 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
       message: "No registration record found for the provided event ID.",
     });
   } catch (error) {
-    console.error("Edit error:", error);
+    console.error(`${Date.now()} - Edit error:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
 });
@@ -572,7 +572,7 @@ router.get("/admin/auto-login", loginLimiter, (req, res) => {
 
     const secret = process.env.GEC_SECRET;
     if (!secret) {
-      console.error("GEC_SECRET is not configured");
+      console.error(`${Date.now()} - GEC_SECRET is not configured`);
       return res.status(500).json({ success: false, error: "Server misconfiguration" });
     }
 
@@ -613,7 +613,7 @@ router.get("/admin/auto-login", loginLimiter, (req, res) => {
 
     return res.json({ success: true, email });
   } catch (err) {
-    console.error("Auto-login error:", err);
+    console.error(`${Date.now()} - Auto-login error:`, err);
     return res.status(500).json({ success: false, error: "Server error" });
   }
 });

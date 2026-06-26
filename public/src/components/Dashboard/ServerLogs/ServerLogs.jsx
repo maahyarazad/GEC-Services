@@ -21,8 +21,29 @@ function detectLevel(line) {
     return 'info';
 }
 
-function toEntry(line, ts = Date.now(), forcedLevel = null) {
-    return { line, level: forcedLevel ?? detectLevel(line), ts };
+// Log lines are written by the server as `${Date.now()} - <message>`.
+// Pull the leading epoch-millisecond timestamp off the line and strip it.
+const EPOCH_RE = /^\s*(\d{12,})\s*-\s+/;
+
+function parseTimestamp(line) {
+    const m = line.match(EPOCH_RE);
+    if (m) {
+        const ts = Number(m[1]);
+        if (Number.isFinite(ts)) return { line: line.slice(m[0].length), ts };
+    }
+    return { line, ts: null };
+}
+
+function toEntry(rawLine, ts = null, forcedLevel = null) {
+    // Prefer an explicit ts (e.g. from the SSE/history payload); otherwise parse
+    // the timestamp embedded in the line itself. Either way the displayed text
+    // has the timestamp prefix removed.
+    const { line, ts: parsedTs } = parseTimestamp(rawLine);
+    return { line, level: forcedLevel ?? detectLevel(line), ts: ts ?? parsedTs };
+}
+
+function formatTs(ts) {
+    return ts ? new Date(ts).toLocaleTimeString() : '—';
 }
 
 export default function ServerLogs() {
@@ -57,7 +78,9 @@ export default function ServerLogs() {
             if (!d.status) return;
 
             const forcedLevel = type === 'error' ? 'error' : 'info';
-            const entries = d.lines.map(l => toEntry(l, Date.now(), forcedLevel));
+            // Each history line now carries its own parsed timestamp (ts may be
+            // null when the log line has no embedded timestamp).
+            const entries = d.lines.map(({ line, ts }) => toEntry(line, ts, forcedLevel));
             setHasMore(d.hasMore);
             return entries;
         } catch {
@@ -303,9 +326,10 @@ export default function ServerLogs() {
                         >
                             <Typography
                                 component="span"
+                                title={ts ? new Date(ts).toLocaleString() : 'No timestamp in log line'}
                                 sx={{ color: '#484f58', fontFamily: 'monospace', fontSize: 11, flexShrink: 0, userSelect: 'none', minWidth: 72 }}
                             >
-                                {new Date(ts).toLocaleTimeString()}
+                                {formatTs(ts)}
                             </Typography>
 
                             <Typography

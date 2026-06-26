@@ -23,7 +23,7 @@ const authorization_middleware = {
             process.env.EXTERNAL_ACCESS_SECRET
           );
         } catch (err) {
-          console.error(err);
+          console.error(`${Date.now()} -`, err);
         }
       }
 

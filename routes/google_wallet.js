@@ -24,7 +24,7 @@ const httpClient = new GoogleAuth({
 router.get('/google-wallet', async (req, res) => {
     try {
 
-        console.log(googleConfig.client_email); // just to check
+        console.log(`${Date.now()} -`, googleConfig.client_email); // just to check
 
         return res.json({
             status: true,
@@ -32,7 +32,7 @@ router.get('/google-wallet', async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error in /registration:", error);
+        console.error(`${Date.now()} - Error in /registration:`, error);
         return res.status(500).json({ status: false, message: 'Server error' });
     }
 });
