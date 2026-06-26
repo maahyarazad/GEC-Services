@@ -306,11 +306,12 @@ router.get("/api/contacts/:id", (req, res) => {
 2. Set the **Media URL** field value to:
 
    ```text
-   https://services.german-emirates-club.com/qr_codes/7-1301.png
+   {{qr_code_url}}
    ```
 
 3. This value should only be applied when the selected template type is **Media Template**.
 
+4. The example value should be disable and fix to this value 'https://services.german-emirates-club.com/qr_codes/7-1301.png'
 
 
 ## Part 6

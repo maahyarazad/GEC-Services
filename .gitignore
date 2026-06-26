@@ -32,7 +32,7 @@ build/
 certs/
 # test coverage
 coverage/
-
+tasks/
 # system files
 .DS_Store
 Thumbs.db
