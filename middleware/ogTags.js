@@ -58,6 +58,12 @@ function buildOgTags({ title, description, url, image }) {
 async function serveWithOgTags(req, res) {
   const indexPath = path.join(__dirname, "../public", "index.html");
   
+//   console.error('======req.path======')
+  console.error(req.path)
+//   console.error('======req.path======')
+//   console.error('======OG_ROUTES[req.path]======')
+  console.error(OG_ROUTES[req.path])
+//   console.error('======rOG_ROUTES[req.path]======')
   const ogMeta = OG_ROUTES[req.path] ?? {
     ...DEFAULT_OG,
     url: `${BASE_URL}${req.path}`,
