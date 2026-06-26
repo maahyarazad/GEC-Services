@@ -1862,7 +1862,7 @@ async function membership_courtacy_at_venue_message(data) {
   }
 
 }
-const sendBatchEmails = (corporateCardEmailSet) => {
+const sendBatchEmails = async (corporateCardEmailSet) => {
   try {
     corporateCardEmailSet.forEach(async (r) => {
       await membership__invitation(r);
@@ -1889,8 +1889,7 @@ module.exports = {
   membership_courtacy_at_venue_message,
   membership_pass_email,
   membership__invitation,
-  sendRawEmailWithAttachments_AppSupport
+  sendRawEmailWithAttachments_AppSupport,
+  sendBatchEmails
 };
 
-
-// +971 56 205 0066

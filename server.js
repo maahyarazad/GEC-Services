@@ -31,6 +31,7 @@ const server_logs = require("./routes/server_logs.js");
 const account_deletion = require("./routes/account_deletion.js");
 const gec_members = require("./routes/gec_members.js");
 const support = require("./routes/support.js");
+const gec_endpoints = require("./routes/gec_endpoints.js");
 const cookieParser = require("cookie-parser");
 const authorize = require("./middleware/auth");
 const { serveWithOgTags } = require("./middleware/ogTags");
@@ -125,6 +126,7 @@ app.use((req, res, next) => {
 app.use("/api/", authorize.authorize_admin);
 app.use("/uploads", express.static(path.join(__dirname, "file_storage")));
 app.use("/apple_pass", express.static(path.join(__dirname, "pass_storage")));
+app.use("/qr_codes", express.static(path.join(__dirname, "qr_files")));
 app.use("/maps", express.static(path.join(__dirname, "maps")));
 app.use("/", express.static(path.join(__dirname, "public")));
 
@@ -152,6 +154,7 @@ app.use("/", external_route);
 app.use("/", events);
 app.use("/api/", gec_members);
 app.use("/", support);
+app.use("/", gec_endpoints);
 
 app.get("*", serveWithOgTags);
 

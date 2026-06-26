@@ -161,6 +161,32 @@ const authorization_middleware = {
     }
   },
 
+  authorize_operator: (req, res, next) => {
+    try {
+      const token = req?.cookies["o-usr"];
+      if (!token) {
+        return res
+          .status(401)
+          .json({ authenticated: false, message: "Unauthorized" });
+      }
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      if (decoded?.role === "operator") {
+        req.user = decoded;
+        return next();
+      }
+
+      return res
+        .status(403)
+        .json({ authenticated: false, message: "Forbidden" });
+    } catch (err) {
+      return res
+        .status(401)
+        .json({ authenticated: false, message: "Invalid token" });
+    }
+  },
+
 };
 
 module.exports = authorization_middleware;

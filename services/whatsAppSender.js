@@ -11,6 +11,7 @@ const path = require("path");
 const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
+const {generateQR_WhatsApp} = require("../services/qrGenerator");
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -150,16 +151,17 @@ const contactBookData = (conditions, useAudience, eventId) => {
             }
             AND contentSid IS NULL
         AND id        NOT IN (SELECT contact_book_id FROM excluded_guests)
-        AND type      NOT IN ('medical_society','Wüstenkinder', 'expert_guest', 'only_guest')
+        AND type      NOT IN ('Wüstenkinder', 'expert_guest', 'only_guest')
         GROUP BY phone
         ORDER BY
             CASE type
-                WHEN 'gec_staff'    THEN 1
-                WHEN 'club_partner' THEN 2
-                WHEN 'club_member'  THEN 3
-                WHEN 'expert'       THEN 4
-                WHEN 'difa'         THEN 5
-                ELSE                     6
+                WHEN 'gec_staff'               THEN 1
+                WHEN 'club_partner'            THEN 2
+                WHEN 'club_member'             THEN 3
+                WHEN 'expert'                  THEN 4
+                WHEN 'difa'                    THEN 5
+                WHEN 'medical_society'         THEN 6
+                ELSE                                7
             END;
             `;
   } else {
@@ -270,12 +272,20 @@ const messageSender = async (req) => {
     };
 
     if (useGuestList) {
+
       const query = `SELECT * FROM contact_book WHERE id IN(
              SELECT contact_book_id FROM event_guest_list WHERE event_id = ? and language = ? )`;
       const stmt = db.prepare(query);
       const result = stmt.all([Number(eventId), template.language.slice(0, 2)]);
 
-      await Promise.all(result.map((x) => safeSendMessage(x, eventId)));
+        await Promise.all(
+            result.map(async (x) => {
+                x.qr_code_url = await generateQR_WhatsApp(Number(x.id), Number(eventId));
+            })
+        );
+
+        
+        await Promise.all(result.map((x) => safeSendMessage(x, eventId)));
     }
 
     if (useContactBook) {
@@ -355,6 +365,7 @@ async function sendMessageToPhone(
         "type",
         "club_partner_name",
         "blacklist",
+        "qr_code_url",
       ];
 
       Object.keys(payload).forEach((key) => {
@@ -425,12 +436,14 @@ async function sendMessageToPhone(
         }
         break;
       case "twilio/media":
-        messageOptions.body = data.body || "";
-        if (Array.isArray(data.media)) {
-          messageOptions.mediaUrls = data.media;
-        } else if (typeof data.media === "string") {
-          messageOptions.mediaUrl = data.media;
-        }
+        // this for default
+        // messageOptions.body = data.body || "";
+        // if (Array.isArray(data.media)) {
+        //   messageOptions.mediaUrls = data.body;
+        // } else if (typeof data.media === "string") {
+        //   messageOptions.mediaUrl = data.media;
+        // }
+        
         break;
       case "twilio/list-picker":
         break;
@@ -447,7 +460,7 @@ async function sendMessageToPhone(
     }
 
     const result = await twilioClient.messages.create(messageOptions);
-
+    
     await Promise.resolve(
       db
         .prepare(

@@ -68,18 +68,35 @@ async function processInbox() {
     await client.connect();
 
     const lock = await client.getMailboxLock('INBOX');
+    const collected = [];
     try {
+      const status = await client.status('INBOX', { messages: true, unseen: true });
+      console.log(`[IMAP Poller] INBOX status — total: ${status.messages}, unseen: ${status.unseen}`);
+
       const uids = await client.search({ seen: false }, { uid: true });
-      if (uids.length > 0) {
-        for await (const msg of client.fetch(uids, { source: true }, { uid: true })) {
-          await processMessage(client, msg);
+      if (uids && uids.length > 0) {
+        console.log(`[IMAP Poller] Fetching ${uids.length} unseen message(s): ${uids.join(', ')}`);
+        // IMPORTANT: only read inside the fetch loop. Issuing another IMAP command
+        // (e.g. messageFlagsAdd / DB work that awaits) while the fetch generator is
+        // still streaming blocks the connection and stalls the poll, so we collect
+        // everything first and process the messages after the loop completes.
+        for await (const msg of client.fetch(uids, { uid: true, source: true, envelope: true })) {
+          collected.push({ uid: msg.uid, source: msg.source, envelope: msg.envelope });
         }
+      } else {
+        console.log('[IMAP Poller] No unseen messages to process.');
+      }
+
+      // Safe now — the fetch iterator is closed, so further commands won't deadlock.
+      for (const msg of collected) {
+        await processMessage(client, msg);
       }
     } finally {
       lock.release();
     }
 
     await client.logout();
+    if (collected.length) console.log(`[IMAP Poller] Finished processing ${collected.length} message(s).`);
   } catch (err) {
     console.error(`${Date.now()} - [IMAP Poller] Connection/processing error:`, err.message);
     try { client.close(); } catch {}
@@ -91,17 +108,24 @@ async function processInbox() {
 async function processMessage(client, msg) {
   try {
     const parsed = await simpleParser(msg.source);
+    const env    = msg.envelope || {};
 
-    const fromAddr   = parsed.from?.value?.[0]?.address || '';
-    const subject    = parsed.subject || '';
-    const inReplyTo  = parsed.inReplyTo || '';
-    const refs       = Array.isArray(parsed.references) ? parsed.references : [];
-    const messageId  = parsed.messageId || '';
+    const fromAddr   = parsed.from?.value?.[0]?.address || env.from?.[0]?.address || '';
+    const subject    = parsed.subject || env.subject || '';
+    const inReplyTo  = parsed.inReplyTo || env.inReplyTo || '';
+    const refs       = Array.isArray(parsed.references)
+      ? parsed.references
+      : (parsed.references ? [parsed.references] : []);
+    const messageId  = parsed.messageId || env.messageId || '';
     const textBody   = parsed.text || '';
+    const sentDate   = parsed.date || env.date || null;
+
+    console.log(`[IMAP Poller] UID ${msg.uid} — from: ${fromAddr || '(unknown)'}, subject: "${subject}", date: ${sentDate || '(none)'}`);
 
     // Ignore messages we sent ourselves (avoids loops)
     if (fromAddr.toLowerCase() === (process.env.SMTP_SUPPORT_SENDER || '').toLowerCase()) {
       await client.messageFlagsAdd({ uid: msg.uid }, ['\\Seen'], { uid: true });
+      console.log(`[IMAP Poller] UID ${msg.uid} is an outbound copy — marked seen, skipping.`);
       return;
     }
 

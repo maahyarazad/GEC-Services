@@ -122,7 +122,6 @@ const guestCode = new URLSearchParams(location.search).get("guest-code");
             setStatusCode(response.status);
 
             
-            
             if (response.status === 200) {
                 
                 showSnackbar(response_data.message, 'success');

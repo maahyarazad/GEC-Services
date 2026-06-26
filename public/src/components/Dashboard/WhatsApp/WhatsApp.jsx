@@ -139,6 +139,7 @@ const WhatsappBroadcast = () => {
     const [messageState, setMessageState] = useState({
         useContactBook: false,
         useGuestList: false,
+        useQrCode: true,
         useLanguage: true,
         useAudience: 'club_member',
         phoneList: [],
@@ -702,6 +703,7 @@ const WhatsappBroadcast = () => {
                             body: JSON.stringify({
                                 useContactBook: messageState.useContactBook,
                                 useGuestList: messageState.useGuestList,
+                                useQrCode: messageState.useQrCode,
                                 useLanguage: messageState.useLanguage,
                                 useAudience: messageState.useAudience,
                                 phoneList: messageState.phoneList,

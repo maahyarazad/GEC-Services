@@ -137,12 +137,8 @@ async function handlePartnerOtp(req, res) {
     });
   }
 
-
-  return res.status(200).json({
-      status: true
-    });
-
-//   return await sendOtpResponse(req, res, { includeLoginMessage: false });
+  return await sendOtpResponse(req, res, { includeLoginMessage: false });
+  
 }
 
 async function handleStandardOtp(req, res) {

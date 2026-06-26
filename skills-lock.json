@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "skills-cli": {
+      "source": "xixu-me/skills",
+      "sourceType": "github",
+      "skillPath": "skills/skills-cli/SKILL.md",
+      "computedHash": "cc2d2556e7ef3e8466e5ff562c2966ecc7a9948b02f87ffc35950973722a7970"
+    }
+  }
+}

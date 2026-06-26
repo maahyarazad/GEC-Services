@@ -15,11 +15,18 @@ router.get('/gec/members/check', async (req, res) => {
     const pool = getPool();
     const normalizedPhone = phone_number.replace(/[+\-\s]/g, '');
 
-    const whereClause = full_name
-      ? `(REPLACE(REPLACE(REPLACE(ml.phone, '+', ''), '-', ''), ' ', '') = ? OR CONCAT(um.first_name, ' ', um.name) = ?)`
-      : `REPLACE(REPLACE(REPLACE(ml.phone, '+', ''), '-', ''), ' ', '') = ?`;
+    const phoneExpr = `REPLACE(REPLACE(REPLACE(ml.phone, '+', ''), '-', ''), ' ', '')`;
 
-    const params = full_name ? [normalizedPhone, full_name] : [normalizedPhone];
+    let whereClause;
+    let params;
+
+    if (full_name) {
+      whereClause = `(${phoneExpr} = ? OR CONCAT(um.first_name, ' ', um.name) = ?)`;
+      params = [normalizedPhone, full_name];
+    } else {
+      whereClause = `${phoneExpr} = ?`;
+      params = [normalizedPhone];
+    }
 
     const [rows] = await pool.query(
       `SELECT

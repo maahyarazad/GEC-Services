@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Button, CircularProgress, Switch, IconButton, Tooltip } from "@mui/material";
 import { IoMdAdd } from "react-icons/io";
 import { TiDelete } from "react-icons/ti";
@@ -20,6 +20,7 @@ const MessageModal = ({
         content,
         useContactBook,
         useGuestList,
+        useQrCode,
         useLanguage,
         useAudience,
         inputValue,
@@ -32,6 +33,23 @@ const MessageModal = ({
 
 
     const events = useAppSelector(getEvents);
+
+    // Auto-populate the qr_code_url variable so the operator doesn't have to type
+    // the placeholder — Twilio resolves {{qr_code_url}} to each guest's QR image.
+    useEffect(() => {
+        const vars = content?.variables;
+        if (
+            vars &&
+            Object.prototype.hasOwnProperty.call(vars, "qr_code_url") &&
+            inputValue.qr_code_url !== "{{qr_code_url}}"
+        ) {
+            handleMessageStateChange("inputValue", {
+                ...state.inputValue,
+                qr_code_url: "qr_code_url",
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [content]);
 
 
     const slotPropsStyle = {
@@ -241,10 +259,26 @@ const MessageModal = ({
                                         if (useContactBook && e.target.checked) {
                                             handleMessageStateChange("useContactBook", !useContactBook);
                                         }
+                                        // Use QR Code only applies to guest lists — reset it when disabling.
+                                        if (!e.target.checked) {
+                                            handleMessageStateChange("useQrCode", false);
+                                        }
                                     }}
                                     color="primary"
                                 />
                             </div>
+
+                            {useGuestList && (
+                                <div className="d-flex align-items-center justify-content-between border rounded px-3 py-2">
+                                    <label className="form-label mb-0">Use QR Code</label>
+                                    <Switch
+                                        size="small"
+                                        checked={!!useQrCode}
+                                        onChange={(e) => handleMessageStateChange("useQrCode", e.target.checked)}
+                                        color="primary"
+                                    />
+                                </div>
+                            )}
 
                             <div className="d-flex align-items-center justify-content-between border rounded px-3 py-2">
                                 <label className="form-label mb-0">Pick Language From Contact Book</label>
@@ -292,6 +326,7 @@ const MessageModal = ({
                                                     })
                                                 }
                                                 placeholder={content.variables[key]}
+                                                disabled={key === "qr_code_url"}
                                                 required
                                             />
                                         </div>

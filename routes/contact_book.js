@@ -16,6 +16,37 @@ router.get("/api/contacts/lookup", (req, res) => {
   return res.json({ status: true, data: contact ?? null });
 });
 
+// GET a single contact record by id (used by the Event Registration page)
+// NOTE: constrain :id to digits so it doesn't shadow sibling word routes like
+// /api/contacts/add-to-guest-list or /api/contacts/clear-contact-book.
+router.get("/api/contacts/:id(\\d+)", (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ status: false, message: "ID is required" });
+    }
+
+    const contact = db.prepare("SELECT * FROM contact_book WHERE id = ?").get(id);
+
+    if (!contact) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Contact not found" });
+    }
+
+    res.status(200).json({
+      status: true,
+      data: contact,
+    });
+  } catch (error) {
+    console.error("Failed to get contact:", error.message);
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to get contact" });
+  }
+});
+
 // GET latest note for a contact
 router.get("/api/contacts/:id/notes", (req, res) => {
   const note = db.prepare(
@@ -307,13 +338,12 @@ router.get("/api/contacts/add-to-guest-list", async (req, res) => {
   try {
     const { contactId, eventId } = req.query;
 
-    const duplicateQuery = ` SELECT EXISTS (
+    const duplicateQuery = `SELECT EXISTS (
     SELECT 1
     FROM event_guest_list
     WHERE contact_book_id = ?
       AND event_id = ?
 ) AS exists_flag;
-        
       `;
     const stmt = db.prepare(duplicateQuery);
     const duplicateCheck = await stmt.get(contactId, eventId);
