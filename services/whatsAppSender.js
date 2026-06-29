@@ -300,8 +300,8 @@ const messageSender = async (req) => {
       let batchSize = 10; // safe batch size below max throughput
       let delayMs = 1 * 60 * 1000; // 1 minute
       if (useAudience === "Wüstenkinder") {
-        batchSize = 100;
-        delayMs = 60 * 60 * 1000; // 1 hour
+        batchSize = 25;
+        delayMs = 15 * 60 * 1000; // 15 minutes
       }
 
       const batches = chunkArray(contactBook, batchSize);
