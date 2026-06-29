@@ -1,7 +1,7 @@
 import { guestListColumns } from './WhatsAppComponentConfig';
 import EventSearch from './EventSearch';
 import { Box, Chip } from '@mui/material';
-import { getSelectedGuestList } from '../../../features/eventSlice';
+import { getSelectedGuestList,getSelectedEvent } from '../../../features/eventSlice';
 import { useAppSelector } from '../../../store/hooks';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import NotepadModal from './NotepadModal';
@@ -12,6 +12,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
     const selectedGuestList = useAppSelector(getSelectedGuestList);
     
     const selectedGuestListCount = selectedGuestList?.filter(x => x && Number(x.complete_attendance) === 1);
+    const eventId = useAppSelector(getSelectedEvent);
 
     const [activeMemberPhones, setActiveMemberPhones] = useState(new Map());
     const [clubtimeHistory, setClubtimeHistory] = useState(new Map());
@@ -61,6 +62,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
     // Past Events Log: find each guest's prior ClubTime / Business Breakfast
     // appearances by normalized phone OR full name, keyed for fast row lookup.
     useEffect(() => {
+        
         const phones = [...new Set(selectedGuestList.map((c) => c.phone).filter(Boolean))];
         if (!phones.length) { setClubtimeHistory(new Map()); return; }
         const full_names = [...new Set(selectedGuestList.map((c) => `${c.first_name?.trimEnd() ?? ''} ${c.last_name?.trimEnd() ?? ''}`.trim()).filter(Boolean))];
@@ -68,7 +70,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ phone_numbers: phones, full_names }),
+            body: JSON.stringify({ phone_numbers: phones, full_names, eventId }),
         })
             .then((r) => r.json())
             .then((d) => {
