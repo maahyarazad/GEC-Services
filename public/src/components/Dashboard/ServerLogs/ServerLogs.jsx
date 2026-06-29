@@ -35,10 +35,20 @@ function parseTimestamp(line) {
 }
 
 function toEntry(rawLine, ts = null, forcedLevel = null) {
+    // Accept either a plain string (SSE stream) or a pre-parsed { line, ts }
+    // object (the history endpoint sends each line already parsed). Normalising
+    // here guarantees `line` is always a string, so React never receives an
+    // object as a child (Minified React error #31).
+    if (rawLine && typeof rawLine === 'object' && !Array.isArray(rawLine)) {
+        if (ts == null) ts = rawLine.ts ?? null;
+        rawLine = rawLine.line;
+    }
+    const text = typeof rawLine === 'string' ? rawLine : rawLine == null ? '' : String(rawLine);
+
     // Prefer an explicit ts (e.g. from the SSE/history payload); otherwise parse
     // the timestamp embedded in the line itself. Either way the displayed text
     // has the timestamp prefix removed.
-    const { line, ts: parsedTs } = parseTimestamp(rawLine);
+    const { line, ts: parsedTs } = parseTimestamp(text);
     return { line, level: forcedLevel ?? detectLevel(line), ts: ts ?? parsedTs };
 }
 
@@ -78,9 +88,10 @@ export default function ServerLogs() {
             if (!d.status) return;
 
             const forcedLevel = type === 'error' ? 'error' : 'info';
-            // Each history line now carries its own parsed timestamp (ts may be
-            // null when the log line has no embedded timestamp).
-            const entries = d.lines.map(({ line, ts }) => toEntry(line, ts, forcedLevel));
+            // History lines may arrive as pre-parsed { line, ts } objects or as
+            // plain strings; toEntry normalises both. (ts may be null when the
+            // log line has no embedded timestamp.)
+            const entries = (d.lines || []).map(item => toEntry(item, null, forcedLevel));
             setHasMore(d.hasMore);
             return entries;
         } catch {
