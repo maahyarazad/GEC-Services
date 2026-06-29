@@ -142,3 +142,15 @@ router.post('/api/clubtime_guest_logs/check-batch', async (req, res) => {
   }
 });
 ```
+
+
+# Part 3: Improve Copy to Clipboard
+
+## Description
+
+After clicking **Copy to Clipboard**, show a **"Copied!"** feedback message.  
+The message should automatically disappear after **3 seconds**.
+
+- Use `useRef` to store the timeout ID
+- Ensure proper cleanup of the timer to avoid memory leaks or duplicated timers
+

@@ -166,34 +166,34 @@ imapPoller.start(io);
 
 // https://crontab.guru/
 // Maahyar CM: node cron expression is different than normal expression use this site to check 
-cron.schedule("* */6 * * *", async () => {
-  try {
-    console.log(`${Date.now()} - [Cron | Every 6h] Starting: GSheet sync + phone normalization —`, new Date());
-    await GSheetService.GSheetParser();
-    await Jobs.normilizeMemberPhoneNumbers();
-    console.log(`${Date.now()} - [Cron | Every 6h] Completed —`, new Date());
-  } catch (error) {
-    console.error(`${Date.now()} - [Cron | Every 6h] Failed:`, error);
-    dbService.create("error_log", {
-      error: error.toString(),
-      origin_function: "cron_6h_gsheet_normalize",
-    });
-  }
-});
+// cron.schedule("* */6 * * *", async () => {
+//   try {
+//     console.log(`${Date.now()} - [Cron | Every 6h] Starting: GSheet sync + phone normalization —`, new Date());
+//     await GSheetService.GSheetParser();
+//     await Jobs.normilizeMemberPhoneNumbers();
+//     console.log(`${Date.now()} - [Cron | Every 6h] Completed —`, new Date());
+//   } catch (error) {
+//     console.error(`${Date.now()} - [Cron | Every 6h] Failed:`, error);
+//     dbService.create("error_log", {
+//       error: error.toString(),
+//       origin_function: "cron_6h_gsheet_normalize",
+//     });
+//   }
+// });
 
-cron.schedule("0 0 * * *", async () => {
-  try {
-    console.log(`${Date.now()} - [Cron | daily] Starting: MongoDB backup —`, new Date());
-    await MongoDbBackUpJob.run();
-    console.log(`${Date.now()} - [Cron | daily] Completed —`, new Date());
-  } catch (error) {
-    console.error(`${Date.now()} - [Cron | daily] Failed:`, error);
-    dbService.create("error_log", {
-      error: error.toString(),
-      origin_function: "cron_daily_mongo_backup",
-    });
-  }
-});
+// cron.schedule("0 0 * * *", async () => {
+//   try {
+//     console.log(`${Date.now()} - [Cron | daily] Starting: MongoDB backup —`, new Date());
+//     await MongoDbBackUpJob.run();
+//     console.log(`${Date.now()} - [Cron | daily] Completed —`, new Date());
+//   } catch (error) {
+//     console.error(`${Date.now()} - [Cron | daily] Failed:`, error);
+//     dbService.create("error_log", {
+//       error: error.toString(),
+//       origin_function: "cron_daily_mongo_backup",
+//     });
+//   }
+// });
 
 
 

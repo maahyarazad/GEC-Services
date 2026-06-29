@@ -3,24 +3,30 @@ import EventSearch from './EventSearch';
 import { Box, Chip } from '@mui/material';
 import { getSelectedGuestList } from '../../../features/eventSlice';
 import { useAppSelector } from '../../../store/hooks';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import NotepadModal from './NotepadModal';
 import CustomDataGrid from '../../CustomDataGrid';
 
+
 export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
     const selectedGuestList = useAppSelector(getSelectedGuestList);
+    
+    const selectedGuestListCount = selectedGuestList?.filter(x => x && Number(x.complete_attendance) === 1);
+
     const [activeMemberPhones, setActiveMemberPhones] = useState(new Map());
     const [clubtimeHistory, setClubtimeHistory] = useState(new Map());
     const [guestNotes, setGuestNotes] = useState(new Map());
 
     const fetchGuestNotes = useCallback(() => {
         const ids = selectedGuestList.map(c => c.id).filter(Boolean);
+        
         if (!ids.length) { setGuestNotes(new Map()); return; }
         fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts/notes/by-ids`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
             body: JSON.stringify({ ids }),
         }).then(r => r.json()).then(d => { if (d.status) setGuestNotes(new Map(d.data.map(n => [n.contact_book_id, n.note_body]))); }).catch(() => {});
     }, [selectedGuestList]);
+
     useEffect(() => { fetchGuestNotes(); }, [fetchGuestNotes]);
     const [notepadOpen, setNotepadOpen] = useState(false);
     const [notepadContactId, setNotepadContactId] = useState(null);
@@ -106,7 +112,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
                 {/* Total guest count for the selected event — top-right of the panel */}
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', mb: 0.5 }}>
                     <Chip
-                        label={`Total: ${selectedGuestList.length}`}
+                        label={`Attendance Progress: ${selectedGuestListCount.length} / ${selectedGuestList.length}`}
                         color="primary"
                         size="small"
                         sx={{ fontWeight: 600 }}
