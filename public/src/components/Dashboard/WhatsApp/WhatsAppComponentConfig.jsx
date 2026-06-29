@@ -16,8 +16,8 @@ import { VscDebugAlt } from "react-icons/vsc";
     const slotPropsStyle = {
         tooltip: {
             sx: {
-                backgroundColor: "#1e1e1e",
-                color: "#fff",
+               backgroundColor: "#7B140E",
+                color: "#FFE1B9",
                 fontSize: "12px",
                 padding: "10px 14px",
                 borderRadius: "12px",
@@ -28,10 +28,22 @@ import { VscDebugAlt } from "react-icons/vsc";
         },
         arrow: {
             sx: {
-                color: "#1e1e1e",
+                color: "#7B140E",
             },
         },
     }
+
+    const spanStyle={
+            display: "inline-block",
+            maxWidth: 120,         
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            cursor: "pointer",
+            verticalAlign: "middle",
+        };
+
+
 
 const memberTooltip = (member) => (
     <>
@@ -268,9 +280,40 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
     { field: 'title', headerName: 'Title', width: 70, filterable: true },
     { field: 'phone', headerName: 'Phone Number', width: 170, filterable: true },
     { field: 'language', headerName: 'language', width: 80, filterable: true },
-    { field: 'first_name', headerName: 'First Name', width: 160, filterable: true },
-    { field: 'last_name', headerName: 'Last Name', width: 160, filterable: true },
-    { field: 'club_partner_name', headerName: 'Club Patner Name', width: 160, filterable: true },
+    { field: 'first_name', headerName: 'First Name', width: 100, filterable: true, 
+         renderCell: (params) => {    
+            return (
+                
+                    <Tooltip title={params.row.first_name} slotProps={slotPropsStyle} arrow>
+                        <span style={spanStyle}> 
+                    {params.row.first_name}
+                        </span>
+                    </Tooltip>
+                
+            );
+        },
+     },
+    { field: 'last_name', headerName: 'Last Name', width: 100, filterable: true,  
+        renderCell: (params) => {    
+            return (
+                <Tooltip title={params.row.last_name} slotProps={slotPropsStyle} arrow>
+                     <span style={spanStyle} title={params.row.last_name}> 
+                        {params.row.last_name}
+                     </span>
+                </Tooltip>
+            );
+        }, },
+    { field: 'club_partner_name', headerName: 'Club Patner Name', width: 160, filterable: true, 
+         renderCell: (params) => {    
+            return (
+                <Tooltip title={params.row.club_partner_name} slotProps={slotPropsStyle} arrow>
+                     <span style={spanStyle}> 
+                   {params.row.club_partner_name}
+                        </span>
+                </Tooltip>
+            );
+        },
+     },
     {
         field: 'active_member', headerName: 'Active Member', width: 120, filterable: false, sortable: false,
         renderCell: (params) => {
