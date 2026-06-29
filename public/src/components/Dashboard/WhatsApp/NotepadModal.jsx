@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { useAlertDialog } from '../../Providers/AlertProvider';
 
-export default function NotepadModal({ open, onClose, contactId, contactPhone, contactName, onSaved }) {
+export default function NotepadModal({ open, onClose, contactId, contactPhone, contactName, onSaved, readOnly = false, value = '', title }) {
     const [resolvedId, setResolvedId] = useState(null);
     const [note, setNote] = useState('');
     const [noteId, setNoteId] = useState(null);
@@ -14,9 +14,15 @@ export default function NotepadModal({ open, onClose, contactId, contactPhone, c
     const { openDialog } = useAlertDialog();
     const SERVERURL = import.meta.env.VITE_SERVERURL;
 
+    // Read-only display mode: show the supplied text verbatim, no fetch / no save.
+    // Used by the Event Logs grid to display the plain `note` / `remarks` columns.
+    useEffect(() => {
+        if (open && readOnly) setNote(value ?? '');
+    }, [open, readOnly, value]);
+
     // Resolve contact id (direct or by phone lookup)
     useEffect(() => {
-        if (!open) return;
+        if (!open || readOnly) return;
         if (contactId) { setResolvedId(contactId); return; }
         if (contactPhone) {
             fetch(`${SERVERURL}/api/contacts/lookup?phone=${encodeURIComponent(contactPhone)}`, { credentials: 'include' })
@@ -24,11 +30,11 @@ export default function NotepadModal({ open, onClose, contactId, contactPhone, c
                 .then(d => setResolvedId(d.status && d.data ? d.data.id : null))
                 .catch(() => setResolvedId(null));
         }
-    }, [open, contactId, contactPhone]);
+    }, [open, contactId, contactPhone, readOnly]);
 
     // Fetch existing note once id is resolved
     useEffect(() => {
-        if (!open || !resolvedId) return;
+        if (!open || readOnly || !resolvedId) return;
         setLoading(true);
         fetch(`${SERVERURL}/api/contacts/${resolvedId}/notes`, { credentials: 'include' })
             .then(r => r.json())
@@ -38,7 +44,7 @@ export default function NotepadModal({ open, onClose, contactId, contactPhone, c
             })
             .catch(() => {})
             .finally(() => setLoading(false));
-    }, [open, resolvedId]);
+    }, [open, resolvedId, readOnly]);
 
     const reset = () => { setNote(''); setNoteId(null); setResolvedId(null); };
 
@@ -96,7 +102,7 @@ export default function NotepadModal({ open, onClose, contactId, contactPhone, c
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
             <DialogTitle sx={{ fontWeight: 600 }}>
-                Notepad{contactName ? ` – ${contactName}` : ''}
+                {title ?? `Notepad${contactName ? ` – ${contactName}` : ''}`}
             </DialogTitle>
             <DialogContent>
                 {loading ? (
@@ -110,7 +116,8 @@ export default function NotepadModal({ open, onClose, contactId, contactPhone, c
                         fullWidth
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
-                        placeholder="Write a note..."
+                        placeholder={readOnly ? 'No content.' : 'Write a note...'}
+                        InputProps={{ readOnly }}
                         sx={{
                             mt: 1,
                             '& .MuiInputBase-root': {
@@ -133,10 +140,16 @@ export default function NotepadModal({ open, onClose, contactId, contactPhone, c
                 )}
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleClose} disabled={saving} sx={{textTransform: 'none'}}>Cancel</Button>
-                <Button onClick={handleSave} variant="contained" disabled={saving || loading} sx={{textTransform: 'none'}}>
-                    {saving ? 'Saving…' : 'Save'}
-                </Button>
+                {readOnly ? (
+                    <Button onClick={handleClose} variant="contained" sx={{textTransform: 'none'}}>Close</Button>
+                ) : (
+                    <>
+                        <Button onClick={handleClose} disabled={saving} sx={{textTransform: 'none'}}>Cancel</Button>
+                        <Button onClick={handleSave} variant="contained" disabled={saving || loading} sx={{textTransform: 'none'}}>
+                            {saving ? 'Saving…' : 'Save'}
+                        </Button>
+                    </>
+                )}
             </DialogActions>
         </Dialog>
     );

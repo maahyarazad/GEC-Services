@@ -53,6 +53,29 @@ const noteTitle = (noteBody) => {
         </span>
     );
 };
+
+// Tooltip body for the Guest List "History" column — lists the matched
+// clubtime_guests records (past ClubTime / Business Breakfast appearances).
+const historyTooltip = (records) => (
+    <span style={{ whiteSpace: 'pre-line', display: 'block', maxWidth: 320, fontSize: '0.78rem', lineHeight: 1.6 }}>
+        {records.slice(0, 8).map((r, i) => (
+            <div key={i}>
+                • {r.event_title}
+                {r.name ? ` | ${r.name}` : ''}
+                {r.remarks ? ` | ${r.remarks}` : ''}
+            </div>
+        ))}
+        {records.length > 8 ? <div>…and {records.length - 8} more</div> : null}
+    </span>
+);
+
+// Copy the matched history records to the clipboard as a tab/pipe-separated block.
+const copyHistoryToClipboard = (records) => {
+    const text = records
+        .map((r) => [r.event_date, r.event_title, r.event_type, r.name, r.mobile || '', r.member_partner || '', r.remarks || '', r.note || ''].join(' | '))
+        .join('\n');
+    if (navigator?.clipboard?.writeText) navigator.clipboard.writeText(text).catch(() => {});
+};
 export const columns = ({ onViewJson }) => [
     { field: 'id', headerName: 'ID', width: 70, hide: true },
     { field: 'metadata_createdAt', headerName: 'Created At', width: 160, filterable: true },
@@ -239,7 +262,7 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
     }
 
 ];
-export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPhones, onOpenNotepad, notes }) => [
+export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, onOpenNotepad, notes }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'type', headerName: 'Type', width: 110, filterable: true },
     { field: 'title', headerName: 'Title', width: 70, filterable: true },
@@ -259,6 +282,43 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
                 <Tooltip title={memberTooltip(member)} slotProps={slotPropsStyle} arrow>
                     <BiSolidCheckCircle size={22} color="green" />
                 </Tooltip>
+            );
+        },
+    },
+    {
+        field: 'history', headerName: 'History', width: 110, filterable: false, sortable: false,
+        renderCell: (params) => {
+            const phoneKey = params.row.phone?.replace(/[+\-\s]/g, '') ?? '';
+            const nameKey = `${params.row.first_name?.trim() ?? ''} ${params.row.last_name?.trim() ?? ''}`
+                .trim().replace(/\s+/g, ' ').toLowerCase();
+
+            const byPhone = (phoneKey && clubtimeHistory?.get(phoneKey)) || [];
+            const byName = (nameKey && clubtimeHistory?.get(nameKey)) || [];
+            const seen = new Set();
+            const records = [...byPhone, ...byName].filter((r) => {
+                if (seen.has(r.id)) return false;
+                seen.add(r.id);
+                return true;
+            });
+            if (records.length === 0) return null;
+
+            // Orange warning by default; light gray if the guest is an active member.
+            const activeFullName = `${params.row.first_name?.trimEnd() ?? ''} ${params.row.last_name?.trimEnd() ?? ''}`.trim();
+            const isActiveMember = !!(activeMemberPhones?.get(phoneKey) || activeMemberPhones?.get(activeFullName));
+
+            return (
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Tooltip title={historyTooltip(records)} slotProps={slotPropsStyle} arrow>
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                            <FaHistory size={18} color={isActiveMember ? '#bdbdbd' : '#ed6c02'} />
+                        </span>
+                    </Tooltip>
+                    <Tooltip title="Copy history to clipboard">
+                        <IconButton size="small" onClick={() => copyHistoryToClipboard(records)}>
+                            <TbClipboardCheck size={18} />
+                        </IconButton>
+                    </Tooltip>
+                </div>
             );
         },
     },

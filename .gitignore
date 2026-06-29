@@ -33,6 +33,7 @@ certs/
 # test coverage
 coverage/
 tasks/
+.claude/skills/
 # system files
 .DS_Store
 Thumbs.db
@@ -46,7 +47,7 @@ node_modules/
 # production
 build/
 dist/
-
+sql_files/
 # misc
 *.env.local
 *.env.development.local
