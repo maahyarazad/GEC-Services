@@ -1,7 +1,6 @@
 const express = require('express');
 const router  = express.Router();
 const { getPool } = require('../services/mysqlService');
-const authorization_middleware = require("../middleware/auth");
 // GET /gec/members/check?phone_number=...&full_name=...
 // Matches by normalized phone OR full name (first_name + ' ' + name).
 router.get('/gec/members/check', async (req, res) => {
@@ -54,7 +53,7 @@ router.get('/gec/members/check', async (req, res) => {
 // POST /api/gec/members/check-batch
 // Body: { phone_numbers: string[], full_names?: string[] }
 // Matches active members by normalized phone OR full name (first_name + ' ' + name).
-router.post('/members/check-batch', authorization_middleware.authorize_operator ,async (req, res) => {
+router.post('/members/check-batch' ,async (req, res) => {
   const { phone_numbers, full_names } = req.body;
 
   if (!Array.isArray(phone_numbers) || phone_numbers.length === 0) {
