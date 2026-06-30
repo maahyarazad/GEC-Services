@@ -40,7 +40,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
         const controller = new AbortController();
         fetchGuestNotes(controller.signal);
         return () => controller.abort();
-    }, [fetchGuestNotes]);
+    }, [fetchGuestNotes, guestListLoading]);
 
     const [notepadOpen, setNotepadOpen] = useState(false);
     const [notepadContactId, setNotepadContactId] = useState(null);
@@ -81,7 +81,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
         const controller = new AbortController();
         fetchActiveMembers(controller.signal);
         return () => controller.abort();
-    }, [fetchActiveMembers]);
+    }, [fetchActiveMembers, guestListLoading]);
 
     // Past Events Log: find each guest's prior ClubTime / Business Breakfast
     // appearances by normalized phone OR full name, keyed for fast row lookup.
