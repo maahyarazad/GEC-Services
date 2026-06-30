@@ -14,6 +14,7 @@ const getPool = () => {
       waitForConnections: true,
       connectionLimit:    10,
       queueLimit:         0,
+      charset: 'utf8_general_ci', 
     });
   }
   return pool;
