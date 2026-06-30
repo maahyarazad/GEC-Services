@@ -780,6 +780,48 @@ router.get("/registration-data/:id", upload.none(), async (req, res) => {
 });
 
 
+router.get("/registration/contacts/check-registration", authorization_middleware.authorize_operator, async (req, res) => {
+  try {
+    const { contactId, eventId } = req.query;
+
+    if (!contactId || !eventId) {
+      return res.status(400).json({
+        status: false,
+        message: "contactId and eventId are required",
+      });
+    }
+
+    const checkRegistrationQuery = `
+        SELECT complete_attendance
+        FROM event_guest_list
+        WHERE contact_book_id = ?
+        AND event_id = ?
+    `;
+
+    const stmt = db.prepare(checkRegistrationQuery);
+    const guest = stmt.get(contactId, eventId);
+
+    if (!guest) {
+      return res.status(404).json({
+        status: false,
+        message: "No matching guest found",
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      alreadyRegistered: guest.complete_attendance === 1,
+    });
+  } catch (error) {
+    console.error("Failed to check registration:", error);
+    res.status(500).json({
+      status: false,
+      message: "Failed to check registration",
+    });
+  }
+});
+
+
 router.patch("/registration/contacts/complete-attendance", authorization_middleware.authorize_operator, async (req, res) => {
   try {
     const { contactId, eventId } = req.query;
