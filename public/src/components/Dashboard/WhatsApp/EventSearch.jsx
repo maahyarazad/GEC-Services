@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
-import { getEvents, setSelectedEvent, getShouldRefetchGuestList, clearRefetchGuestList, getSelectedEvent, setSelectedGuestList } from "../../../features/eventSlice";
+import { getEvents, setSelectedEvent, getShouldRefetchGuestList, clearRefetchGuestList, getSelectedEvent, setSelectedGuestList, setGuestListLoading } from "../../../features/eventSlice";
 import { Box } from '@mui/material'
 const EventSearch = () => {
     const [loading, setLoading] = useState(false);
@@ -11,36 +11,30 @@ const EventSearch = () => {
     const shouldRefetch = useAppSelector(getShouldRefetchGuestList);
     const eventId = useAppSelector(getSelectedEvent);
 
-
-
     const events = useAppSelector(getEvents);
-    const filteredList = events.filter(item =>
-        item.title.toLowerCase().includes(searchTerm.toLowerCase())
 
+    // Filtered list is recomputed only when the events or search term change.
+    const filteredList = useMemo(
+        () => events.filter(item => item.title.toLowerCase().includes(searchTerm.toLowerCase())),
+        [events, searchTerm]
     );
 
+    // Holds the in-flight request so we can cancel a superseded fetch or one
+    // still running when the component unmounts (prevents setState-after-unmount).
+    const abortRef = useRef(null);
 
-
-
-    const handleSearch = (selectedEvent) => {
-        if (!selectedEvent) {
-            onFilter(contactList); // reset to full list
-            return;
-        }
-
-        const filtered = contactList.filter(
-            (contact) => contact.eventId === selectedEvent.id // adjust to your data shape
-        );
-        onFilter(filtered);
-    };
-
-
-    const fetchGuestList = async (id) => {  // 👈 accept id as param
+    const fetchGuestList = useCallback(async (id) => {
+        abortRef.current?.abort();
+        const controller = new AbortController();
+        abortRef.current = controller;
         try {
             setLoading(true);
+            // Shared flag so GuestListPanel can unmount its grid and show a
+            // loading indicator while the new event's guest list is fetched.
+            dispatch(setGuestListLoading(true));
             const response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/api/contacts?guest_list=1&event_id=${id}`,
-                { credentials: "include" }
+                { credentials: "include", signal: controller.signal }
             );
 
             const responseData = await response.json();
@@ -50,26 +44,32 @@ const EventSearch = () => {
             }
 
             dispatch(setSelectedGuestList(responseData.data ?? []));
-
         } catch (error) {
-            console.error(error);
+            if (error.name !== 'AbortError') console.error(error);
         } finally {
-            setLoading(false);
-            dispatch(clearRefetchGuestList());
+            // Skip state updates if this request was aborted (unmounted/superseded).
+            if (!controller.signal.aborted) {
+                setLoading(false);
+                dispatch(setGuestListLoading(false));
+                dispatch(clearRefetchGuestList());
+            }
         }
-    };
+    }, [dispatch]);
 
-    const handleSelect = (x) => {
-        setSelectedItem(x.id);              // 👈 you were never setting this — fixes highlight
+    // Abort any pending request on unmount.
+    useEffect(() => () => abortRef.current?.abort(), []);
+
+    const handleSelect = useCallback((x) => {
+        setSelectedItem(x.id);
         dispatch(setSelectedEvent(x));
-        fetchGuestList(x.id);               // 👈 pass id directly, don't rely on selector
-    };
+        fetchGuestList(x.id);
+    }, [dispatch, fetchGuestList]);
 
     useEffect(() => {
         if (shouldRefetch && eventId?.id) {
-            fetchGuestList(eventId.id);     // 👈 use the selector value here since this is a refetch
+            fetchGuestList(eventId.id);
         }
-    }, [shouldRefetch]);
+    }, [shouldRefetch, eventId, fetchGuestList]);
 
 
 

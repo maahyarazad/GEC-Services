@@ -24,6 +24,7 @@ interface EventState {
   shouldRefetch: boolean;
   shouldRefetchGuestList: boolean;
   selectedEvent: Event | null;
+  guestListLoading: boolean;
 }
 
 const initialState: EventState = {
@@ -32,6 +33,7 @@ const initialState: EventState = {
   shouldRefetch: false,
   shouldRefetchGuestList: false,
   selectedEvent: null,
+  guestListLoading: false,
 };
 
 const eventSlice = createSlice({
@@ -80,6 +82,9 @@ const eventSlice = createSlice({
     clearSelectedGuestList(state) {                                    // 👈 new
       state.selectedGuestList = [];
     },
+    setGuestListLoading(state, action: PayloadAction<boolean>) {
+      state.guestListLoading = action.payload;
+    },
     updateGuestRow(state, action: PayloadAction<GuestRow>) {           // 👈 new - useful for marking attendance without refetch
       const index = state.selectedGuestList.findIndex((g) => g.id === action.payload.id);
       if (index !== -1) {
@@ -103,6 +108,7 @@ export const {
   clearSelectedEvent,
   setSelectedGuestList,    // 👈 new
   clearSelectedGuestList,  // 👈 new
+  setGuestListLoading,
   updateGuestRow,          // 👈 new
 } = eventSlice.actions;
 
@@ -114,5 +120,6 @@ export const getShouldRefetch = (state: RootState) => state.events.shouldRefetch
 export const getShouldRefetchGuestList = (state: RootState) => state.events.shouldRefetchGuestList;
 export const getSelectedEvent = (state: RootState) => state.events.selectedEvent;
 export const getSelectedGuestList = (state: RootState) => state.events.selectedGuestList;  // 👈 new
+export const getGuestListLoading = (state: RootState) => state.events.guestListLoading;
 
 export default eventSlice.reducer;

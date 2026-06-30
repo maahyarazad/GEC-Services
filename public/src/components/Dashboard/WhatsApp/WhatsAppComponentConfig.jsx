@@ -1,5 +1,6 @@
 
 
+import { useState, useRef, useEffect } from "react";
 import { IconButton, Switch, Tooltip } from "@mui/material";
 import 'react-json-pretty/themes/monikai.css'; // optional styling
 import { IoMdOpen } from "react-icons/io";
@@ -12,26 +13,39 @@ import ActionCell from './ActionCell';
 import { BiSolidCheckCircle } from "react-icons/bi";
 import { BsDashCircle } from "react-icons/bs";
 import { VscDebugAlt } from "react-icons/vsc";
+import { BsFillExclamationTriangleFill } from "react-icons/bs";
 
-    const slotPropsStyle = {
-        tooltip: {
-            sx: {
-                backgroundColor: "#1e1e1e",
-                color: "#fff",
-                fontSize: "12px",
-                padding: "10px 14px",
-                borderRadius: "12px",
-                maxWidth: 350,
-                lineHeight: 1.8,
-                boxShadow: 3,
-            },
+const slotPropsStyle = {
+    tooltip: {
+        sx: {
+            backgroundColor: "#7B140E",
+            color: "#FFE1B9",
+            fontSize: "12px",
+            padding: "10px 14px",
+            borderRadius: "12px",
+            maxWidth: 350,
+            lineHeight: 1.8,
+            boxShadow: 3,
         },
-        arrow: {
-            sx: {
-                color: "#1e1e1e",
-            },
+    },
+    arrow: {
+        sx: {
+            color: "#7B140E",
         },
-    }
+    },
+}
+
+const spanStyle = {
+    display: "inline-block",
+    maxWidth: 120,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    cursor: "pointer",
+    verticalAlign: "middle",
+};
+
+
 
 const memberTooltip = (member) => (
     <>
@@ -53,6 +67,82 @@ const noteTitle = (noteBody) => {
         </span>
     );
 };
+
+// Tooltip body for the Guest List "History" column — lists the matched
+// clubtime_guests records (past ClubTime / Business Breakfast appearances).
+const historyTooltip = (records) => (
+    <span style={{ whiteSpace: 'pre-line', display: 'block', maxWidth: 320, fontSize: '0.78rem', lineHeight: 1.6 }}>
+        {records.slice(0, 8).map((r, i) => (
+            <div key={i}>
+                • {r.event_title}
+                {r.name ? ` | ${r.name}` : ''}
+                {r.remarks ? ` | ${r.remarks}` : ''}
+            </div>
+        ))}
+        {records.length > 8 ? <div>…and {records.length - 8} more</div> : null}
+    </span>
+);
+
+// Copy the matched history records to the clipboard as a tab/pipe-separated block.
+const copyHistoryToClipboard = (records) => {
+    const text = records
+        .map((r) => [r.event_date, r.event_title, r.event_type, r.name, r.mobile || '', r.member_partner || '', r.remarks || '', r.note || ''].join(' | '))
+        .join('\n');
+    if (navigator?.clipboard?.writeText) navigator.clipboard.writeText(text).catch(() => { });
+};
+
+// Guest List "History" cell — warning icon + tooltip + copy-to-clipboard.
+// Shows a transient "Copied!" message that auto-clears after 3s. The timeout id
+// is held in a ref and cleared on re-copy / unmount to avoid leaks or duplicate timers.
+function HistoryCell({ records, isActiveMember, guestShouldPayForThisEvent }) {
+    const [copied, setCopied] = useState(false);
+    const timeoutRef = useRef(null);
+
+    // Clear any pending timer when the cell unmounts.
+    useEffect(() => () => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    }, []);
+
+    const handleCopy = () => {
+        copyHistoryToClipboard(records);
+        setCopied(true);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => {
+            setCopied(false);
+            timeoutRef.current = null;
+        }, 3000);
+    };
+
+    return (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Tooltip title={historyTooltip(records)} slotProps={slotPropsStyle} arrow>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                    <FaHistory size={18} color={isActiveMember ? '#bdbdbd' : '#ed6c02'} />
+
+                </span>
+            </Tooltip>
+            <Tooltip title={copied ? 'Copied!' : 'Copy history to clipboard'}>
+                <IconButton size="small" onClick={handleCopy}>
+                    <TbClipboardCheck size={18} color={copied ? '#2e7d32' : undefined} />
+                </IconButton>
+            </Tooltip>
+            {guestShouldPayForThisEvent &&
+                <Tooltip title={'Payment is required for this guest'}>
+
+                    <span style={{ paddingLeft: 2 }}>
+
+                        <BsFillExclamationTriangleFill size={18} color={'#FF000D'} />
+                    </span>
+                </Tooltip>
+            }
+            {copied && (
+                <span style={{ marginLeft: 2, color: '#2e7d32', fontSize: '0.72rem', fontWeight: 600 }}>
+                    Copied!
+                </span>
+            )}
+        </div>
+    );
+}
 export const columns = ({ onViewJson }) => [
     { field: 'id', headerName: 'ID', width: 70, hide: true },
     { field: 'metadata_createdAt', headerName: 'Created At', width: 160, filterable: true },
@@ -107,7 +197,7 @@ export const responseColumns = ({ onViewJson, onViewHistory, activeMemberPhones,
             const member = activeMemberPhones?.get(phone) || activeMemberPhones?.get(fullName);
             if (!member) return null;
             return (
-                <Tooltip title={memberTooltip(member)}  slotProps={slotPropsStyle} arrow>
+                <Tooltip title={memberTooltip(member)} slotProps={slotPropsStyle} arrow>
                     <BiSolidCheckCircle size={22} color="green" />
                 </Tooltip>
             );
@@ -206,7 +296,7 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
         field: 'active_member', headerName: 'Active Member', width: 120, filterable: false, sortable: false,
         renderCell: (params) => {
             const phone = params.row.phone?.replace(/[+\-\s]/g, '') ?? '';
-            const fullName = `${params.row.first_name?.trimEnd() ?? ''} ${params.row.last_name?.trimEnd()?? ''}`.trim();
+            const fullName = `${params.row.first_name?.trimEnd() ?? ''} ${params.row.last_name?.trimEnd() ?? ''}`.trim();
             const member = activeMemberPhones?.get(phone) || activeMemberPhones?.get(fullName);
             if (!member) return null;
             return (
@@ -239,15 +329,50 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
     }
 
 ];
-export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPhones, onOpenNotepad, notes }) => [
+export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, onOpenNotepad, notes }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'type', headerName: 'Type', width: 110, filterable: true },
     { field: 'title', headerName: 'Title', width: 70, filterable: true },
     { field: 'phone', headerName: 'Phone Number', width: 170, filterable: true },
     { field: 'language', headerName: 'language', width: 80, filterable: true },
-    { field: 'first_name', headerName: 'First Name', width: 160, filterable: true },
-    { field: 'last_name', headerName: 'Last Name', width: 160, filterable: true },
-    { field: 'club_partner_name', headerName: 'Club Patner Name', width: 160, filterable: true },
+    {
+        field: 'first_name', headerName: 'First Name', width: 100, filterable: true,
+        renderCell: (params) => {
+            return (
+
+                <Tooltip title={params.row.first_name} slotProps={slotPropsStyle} arrow>
+                    <span style={spanStyle}>
+                        {params.row.first_name}
+                    </span>
+                </Tooltip>
+
+            );
+        },
+    },
+    {
+        field: 'last_name', headerName: 'Last Name', width: 100, filterable: true,
+        renderCell: (params) => {
+            return (
+                <Tooltip title={params.row.last_name} slotProps={slotPropsStyle} arrow>
+                    <span style={spanStyle}>
+                        {params.row.last_name}
+                    </span>
+                </Tooltip>
+            );
+        },
+    },
+    {
+        field: 'club_partner_name', headerName: 'Club Patner Name', width: 160, filterable: true,
+        renderCell: (params) => {
+            return (
+                <Tooltip title={params.row.club_partner_name} slotProps={slotPropsStyle} arrow>
+                    <span style={spanStyle}>
+                        {params.row.club_partner_name}
+                    </span>
+                </Tooltip>
+            );
+        },
+    },
     {
         field: 'active_member', headerName: 'Active Member', width: 120, filterable: false, sortable: false,
         renderCell: (params) => {
@@ -260,6 +385,31 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
                     <BiSolidCheckCircle size={22} color="green" />
                 </Tooltip>
             );
+        },
+    },
+    {
+        field: 'history', headerName: 'History', width: 110, filterable: false, sortable: false,
+        renderCell: (params) => {
+            const phoneKey = params.row.phone?.replace(/[+\-\s]/g, '') ?? '';
+            const nameKey = `${params.row.first_name?.trim() ?? ''} ${params.row.last_name?.trim() ?? ''}`
+                .trim().replace(/\s+/g, ' ').toLowerCase();
+
+            const byPhone = (phoneKey && clubtimeHistory?.get(phoneKey)) || [];
+            const byName = (nameKey && clubtimeHistory?.get(nameKey)) || [];
+            const seen = new Set();
+            const records = [...byPhone, ...byName].filter((r) => {
+                if (seen.has(r.id)) return false;
+                seen.add(r.id);
+                return true;
+            });
+            if (records.length === 0) return null;
+
+            // Orange warning by default; light gray if the guest is an active member.
+            const activeFullName = `${params.row.first_name?.trimEnd() ?? ''} ${params.row.last_name?.trimEnd() ?? ''}`.trim();
+            const isActiveMember = !!(activeMemberPhones?.get(phoneKey) || activeMemberPhones?.get(activeFullName));
+            const guestShouldPayForThisEvent = ['Wüstenkinder', 'expert_guest', 'only_guest'].includes(params.row.type);
+
+            return <HistoryCell records={records} isActiveMember={isActiveMember} guestShouldPayForThisEvent={guestShouldPayForThisEvent} />;
         },
     },
     {

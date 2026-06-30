@@ -46,9 +46,10 @@ import CreateTwilioTemplate from "./CreateTwilioTemplate";
 import { SiTwilio } from "react-icons/si";
 import ActiveEventCard from "./ActiveEventCard";
 import GuestListPanel from "./GuestListPanel";
+import EventLogsPanel from "./EventLogsPanel";
 import ResponseLogsMobileList from "./ResponseLogsMobileList";
 import NotepadModal from "./NotepadModal";
-import { BsPeopleFill } from "react-icons/bs";
+import { BsPeopleFill, BsClockHistory } from "react-icons/bs";
 const WhatsappBroadcast = () => {
 
     const location = useLocation();
@@ -1273,6 +1274,14 @@ const WhatsappBroadcast = () => {
                 />
             </SlideMenu>
 
+            <SlideMenu id={'event-logs'}
+                isOpen={openPanel === 'event-logs'}
+                onClose={() => { handleSetOpenPanel(null) }}
+                headerTitle={'Event Logs'}
+            >
+                <EventLogsPanel active={openPanel === 'event-logs'} />
+            </SlideMenu>
+
             <SlideMenu id={'event-list'}
                 isOpen={openPanel === 'event-list'}
                 onClose={() => { handleSetOpenPanel(null) }}
@@ -1361,6 +1370,9 @@ const WhatsappBroadcast = () => {
                     </Button>
                     <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('guest-list')}>
                         <BsPeopleFill size={17} style={{ marginRight: 4 }} /> Guest List
+                    </Button>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('event-logs')}>
+                        <BsClockHistory size={17} style={{ marginRight: 4 }} /> Event Logs
                     </Button>
                     <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('event-list')}>
                         <BsCalendar2Event size={17} style={{ marginRight: 4 }} /> Event List

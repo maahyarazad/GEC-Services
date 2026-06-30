@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     Button, TextField, CircularProgress, Box,
 } from '@mui/material';
 import { useAlertDialog } from '../../Providers/AlertProvider';
 
-export default function NotepadModal({ open, onClose, contactId, contactPhone, contactName, onSaved }) {
+export default function NotepadModal({ open, onClose, contactId, contactPhone, contactName, onSaved, readOnly = false, value = '', title }) {
     const [resolvedId, setResolvedId] = useState(null);
     const [note, setNote] = useState('');
     const [noteId, setNoteId] = useState(null);
@@ -14,46 +14,55 @@ export default function NotepadModal({ open, onClose, contactId, contactPhone, c
     const { openDialog } = useAlertDialog();
     const SERVERURL = import.meta.env.VITE_SERVERURL;
 
+    // Read-only display mode: show the supplied text verbatim, no fetch / no save.
+    // Used by the Event Logs grid to display the plain `note` / `remarks` columns.
+    useEffect(() => {
+        if (open && readOnly) setNote(value ?? '');
+    }, [open, readOnly, value]);
+
     // Resolve contact id (direct or by phone lookup)
     useEffect(() => {
-        if (!open) return;
+        if (!open || readOnly) return;
         if (contactId) { setResolvedId(contactId); return; }
-        if (contactPhone) {
-            fetch(`${SERVERURL}/api/contacts/lookup?phone=${encodeURIComponent(contactPhone)}`, { credentials: 'include' })
-                .then(r => r.json())
-                .then(d => setResolvedId(d.status && d.data ? d.data.id : null))
-                .catch(() => setResolvedId(null));
-        }
-    }, [open, contactId, contactPhone]);
+        if (!contactPhone) return;
+        const controller = new AbortController();
+        fetch(`${SERVERURL}/api/contacts/lookup?phone=${encodeURIComponent(contactPhone)}`, { credentials: 'include', signal: controller.signal })
+            .then(r => r.json())
+            .then(d => setResolvedId(d.status && d.data ? d.data.id : null))
+            .catch((e) => { if (e.name !== 'AbortError') setResolvedId(null); });
+        return () => controller.abort();
+    }, [open, contactId, contactPhone, readOnly, SERVERURL]);
 
     // Fetch existing note once id is resolved
     useEffect(() => {
-        if (!open || !resolvedId) return;
+        if (!open || readOnly || !resolvedId) return;
+        const controller = new AbortController();
         setLoading(true);
-        fetch(`${SERVERURL}/api/contacts/${resolvedId}/notes`, { credentials: 'include' })
+        fetch(`${SERVERURL}/api/contacts/${resolvedId}/notes`, { credentials: 'include', signal: controller.signal })
             .then(r => r.json())
             .then(d => {
                 if (d.status && d.data) { setNote(d.data.note_body ?? ''); setNoteId(d.data.id); }
                 else { setNote(''); setNoteId(null); }
             })
-            .catch(() => {})
-            .finally(() => setLoading(false));
-    }, [open, resolvedId]);
+            .catch((e) => { if (e.name !== 'AbortError') console.error(e); })
+            .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+        return () => controller.abort();
+    }, [open, resolvedId, readOnly, SERVERURL]);
 
-    const reset = () => { setNote(''); setNoteId(null); setResolvedId(null); };
+    const reset = useCallback(() => { setNote(''); setNoteId(null); setResolvedId(null); }, []);
 
-    const handleClose = () => { reset(); onClose(); };
+    const handleClose = useCallback(() => { reset(); onClose(); }, [reset, onClose]);
 
-    const doDelete = async () => {
+    const doDelete = useCallback(async () => {
         if (noteId) {
             await fetch(`${SERVERURL}/api/contacts/notes/${noteId}`, { method: 'DELETE', credentials: 'include' }).catch(() => {});
         }
         reset();
         onClose();
         onSaved?.();
-    };
+    }, [noteId, SERVERURL, reset, onClose, onSaved]);
 
-    const doSave = async () => {
+    const doSave = useCallback(async () => {
         if (!resolvedId) return;
         setSaving(true);
         try {
@@ -73,9 +82,9 @@ export default function NotepadModal({ open, onClose, contactId, contactPhone, c
             onClose();
             onSaved?.();
         }
-    };
+    }, [resolvedId, note, noteId, SERVERURL, reset, onClose, onSaved]);
 
-    const handleSave = () => {
+    const handleSave = useCallback(() => {
         if (!note.trim()) {
             if (noteId) {
                 openDialog(
@@ -91,12 +100,12 @@ export default function NotepadModal({ open, onClose, contactId, contactPhone, c
             return;
         }
         doSave();
-    };
+    }, [note, noteId, openDialog, doDelete, doSave, handleClose]);
 
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
             <DialogTitle sx={{ fontWeight: 600 }}>
-                Notepad{contactName ? ` – ${contactName}` : ''}
+                {title ?? `Notepad${contactName ? ` – ${contactName}` : ''}`}
             </DialogTitle>
             <DialogContent>
                 {loading ? (
@@ -110,7 +119,8 @@ export default function NotepadModal({ open, onClose, contactId, contactPhone, c
                         fullWidth
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
-                        placeholder="Write a note..."
+                        placeholder={readOnly ? 'No content.' : 'Write a note...'}
+                        InputProps={{ readOnly }}
                         sx={{
                             mt: 1,
                             '& .MuiInputBase-root': {
@@ -133,10 +143,16 @@ export default function NotepadModal({ open, onClose, contactId, contactPhone, c
                 )}
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleClose} disabled={saving} sx={{textTransform: 'none'}}>Cancel</Button>
-                <Button onClick={handleSave} variant="contained" disabled={saving || loading} sx={{textTransform: 'none'}}>
-                    {saving ? 'Saving…' : 'Save'}
-                </Button>
+                {readOnly ? (
+                    <Button onClick={handleClose} variant="contained" sx={{textTransform: 'none'}}>Close</Button>
+                ) : (
+                    <>
+                        <Button onClick={handleClose} disabled={saving} sx={{textTransform: 'none'}}>Cancel</Button>
+                        <Button onClick={handleSave} variant="contained" disabled={saving || loading} sx={{textTransform: 'none'}}>
+                            {saving ? 'Saving…' : 'Save'}
+                        </Button>
+                    </>
+                )}
             </DialogActions>
         </Dialog>
     );
