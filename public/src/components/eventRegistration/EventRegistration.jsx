@@ -152,7 +152,7 @@ const EventRegistration = () => {
             if (contactRecord?.phone) {
                 const name = fullName(contactRecord.first_name, contactRecord.last_name);
                 const url =
-                    `${SERVER}/gec/members/check?phone_number=${encodeURIComponent(contactRecord.phone)}` +
+                    `${SERVER}/gec-member-check?phone_number=${encodeURIComponent(contactRecord.phone)}` +
                     (name ? `&full_name=${encodeURIComponent(name)}` : '');
                 const gRes = await fetch(url, { credentials: 'include' });
                 const gData = await gRes.json().catch(() => ({}));
