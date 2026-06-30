@@ -163,3 +163,76 @@ Check the **GuestListPanel.jsx** and **EventSearch.jsx** components and optimize
 # Part 5:  Memort Leak Check
 
 Check the **NotepadModal.jsx** and **CustomDataGrid.jsx**  **WhatsAppComponentConfig** components and optimize any API call using useCallBack and memoize expensive functions 
+
+# Part 6: Fix Memory Leak / Reset DataGrid on Event Change
+
+## Background
+
+Inside **GuestListPanel.jsx**, there is another component called **EventSearch.jsx**.
+
+When the user selects a different event, the reducer dispatches the following action:
+
+```javascript
+dispatch(setSelectedEvent(x));
+```
+
+However, the **CustomDataGrid** inside **GuestListPanel.jsx** continues to display the pagination and internal state from the previously selected event.
+
+```jsx
+<CustomDataGrid
+    rows={selectedGuestList}
+    columns={columns}
+    rowsPerPageOptions={[25, 50, 100]}
+    disableRowSelectionOnClick
+    showToolbar
+/>
+```
+
+As a result, the grid retains its previous pagination, sorting, filtering, and other internal state even though a different event has been selected.
+
+## Requirements
+
+### 1. No Event Selected
+
+When there is no selected event:
+
+- Do **not** render the `CustomDataGrid`.
+- Instead, display a friendly placeholder message:
+
+```
+No event selected.
+```
+
+### 2. Switching Events
+
+Whenever the user selects a different event:
+
+1. Immediately unmount the existing `CustomDataGrid` from the DOM.
+2. Clear the previous event's grid state.
+3. Display a loading indicator while the new guest list is being fetched.
+4. Wait until all required data has finished loading.
+5. Render a fresh instance of `CustomDataGrid` using the newly loaded data.
+
+### 3. Expected Behavior
+
+The newly rendered grid must behave as if it is mounted for the first time.
+
+The following state **must not** persist from the previously selected event:
+
+- Pagination
+- Current page
+- Page size
+- Sorting
+- Filters
+- Row selection
+- Column state
+- Any internal component state
+
+### 4. Acceptance Criteria
+
+- Selecting a different event completely resets the grid.
+- The previous `CustomDataGrid` instance is unmounted before new data is loaded.
+- A loading indicator is visible while fetching the new event data.
+- A brand-new `CustomDataGrid` instance is rendered after loading completes.
+- No pagination, sorting, filtering, or selection state is carried over from the previously selected event.
+- When no event is selected, only the **"No event selected."** placeholder is displayed.

@@ -1,7 +1,7 @@
 import { guestListColumns } from './WhatsAppComponentConfig';
 import EventSearch from './EventSearch';
-import { Box, Chip } from '@mui/material';
-import { getSelectedGuestList,getSelectedEvent } from '../../../features/eventSlice';
+import { Box, Chip, CircularProgress, Typography } from '@mui/material';
+import { getSelectedGuestList, getSelectedEvent, getGuestListLoading } from '../../../features/eventSlice';
 import { useAppSelector } from '../../../store/hooks';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import NotepadModal from './NotepadModal';
@@ -11,6 +11,7 @@ import CustomDataGrid from '../../CustomDataGrid';
 export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
     const selectedGuestList = useAppSelector(getSelectedGuestList);
     const eventId = useAppSelector(getSelectedEvent);
+    const guestListLoading = useAppSelector(getGuestListLoading);
 
     // Number of guests who completed attendance — memoized so the chip label
     // doesn't re-scan the whole list on every render.
@@ -146,23 +147,42 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
                 display: 'flex',
                 flexDirection: 'column',
             }}>
-                {/* Total guest count for the selected event — top-right of the panel */}
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', mb: 0.5 }}>
-                    <Chip
-                        label={`Attendance Progress: ${attendedCount} / ${selectedGuestList.length}`}
-                        color="primary"
-                        size="small"
-                        sx={{ fontWeight: 600 }}
-                    />
-                </Box>
+                {/* Total guest count for the selected event — top-right of the panel.
+                    Hidden until an event is selected and its data has loaded. */}
+                {eventId && !guestListLoading && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', mb: 0.5 }}>
+                        <Chip
+                            label={`Attendance Progress: ${attendedCount} / ${selectedGuestList.length}`}
+                            color="primary"
+                            size="small"
+                            sx={{ fontWeight: 600 }}
+                        />
+                    </Box>
+                )}
                 <Box sx={{ flex: 1, minHeight: 0 }}>
-                    <CustomDataGrid
-                        rows={selectedGuestList}
-                        columns={columns}
-                        rowsPerPageOptions={[25, 50, 100]}
-                        disableRowSelectionOnClick
-                        showToolbar
-                    />
+                    {!eventId ? (
+                        // No event selected — show a placeholder, never the grid.
+                        <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography color="text.secondary">No event selected.</Typography>
+                        </Box>
+                    ) : guestListLoading ? (
+                        // Switching events: the old grid is unmounted and a loader
+                        // is shown until the new event's guest list finishes loading.
+                        <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : (
+                        // Fresh grid per event — `key` forces a remount so no
+                        // pagination/sort/filter/selection state carries over.
+                        <CustomDataGrid
+                            key={eventId.id}
+                            rows={selectedGuestList}
+                            columns={columns}
+                            rowsPerPageOptions={[25, 50, 100]}
+                            disableRowSelectionOnClick
+                            showToolbar
+                        />
+                    )}
                 </Box>
                 <NotepadModal
                     open={notepadOpen}

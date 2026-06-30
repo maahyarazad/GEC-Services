@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
-import { getEvents, setSelectedEvent, getShouldRefetchGuestList, clearRefetchGuestList, getSelectedEvent, setSelectedGuestList } from "../../../features/eventSlice";
+import { getEvents, setSelectedEvent, getShouldRefetchGuestList, clearRefetchGuestList, getSelectedEvent, setSelectedGuestList, setGuestListLoading } from "../../../features/eventSlice";
 import { Box } from '@mui/material'
 const EventSearch = () => {
     const [loading, setLoading] = useState(false);
@@ -29,6 +29,9 @@ const EventSearch = () => {
         abortRef.current = controller;
         try {
             setLoading(true);
+            // Shared flag so GuestListPanel can unmount its grid and show a
+            // loading indicator while the new event's guest list is fetched.
+            dispatch(setGuestListLoading(true));
             const response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/api/contacts?guest_list=1&event_id=${id}`,
                 { credentials: "include", signal: controller.signal }
@@ -47,6 +50,7 @@ const EventSearch = () => {
             // Skip state updates if this request was aborted (unmounted/superseded).
             if (!controller.signal.aborted) {
                 setLoading(false);
+                dispatch(setGuestListLoading(false));
                 dispatch(clearRefetchGuestList());
             }
         }
