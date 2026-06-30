@@ -56,13 +56,16 @@ const rootRouters = [
   clubtime_guest_logs,
   external_route,
   events,
-  gec_members,
-  support,
-  gec_endpoints
 ];
 
 function registerRoutes(app) {
   rootRouters.forEach((router) => app.use("/", router));
+
+  // gec_members is the only router mounted under the /api/ prefix.
+  app.use("/api/", gec_members);
+
+  app.use("/", support);
+  app.use("/", gec_endpoints);
 }
 
 module.exports = registerRoutes;
