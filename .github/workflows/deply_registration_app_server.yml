@@ -25,7 +25,7 @@ jobs:
       - name: Upload server files
         run: |
           scp -i ~/.ssh/id_rsa -P ${{ secrets.SSH_PORT }} \
-            server.js package.json \
+            server.js routes.js package.json \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/node/services.german-emirates-club.com/
 
           scp -i ~/.ssh/id_rsa -P ${{ secrets.SSH_PORT }} -r \
