@@ -10,31 +10,48 @@ import CustomDataGrid from '../../CustomDataGrid';
 
 export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
     const selectedGuestList = useAppSelector(getSelectedGuestList);
-    
-    const selectedGuestListCount = selectedGuestList?.filter(x => x && Number(x.complete_attendance) === 1);
     const eventId = useAppSelector(getSelectedEvent);
+
+    // Number of guests who completed attendance — memoized so the chip label
+    // doesn't re-scan the whole list on every render.
+    const attendedCount = useMemo(
+        () => (selectedGuestList ?? []).filter((x) => x && Number(x.complete_attendance) === 1).length,
+        [selectedGuestList]
+    );
 
     const [activeMemberPhones, setActiveMemberPhones] = useState(new Map());
     const [clubtimeHistory, setClubtimeHistory] = useState(new Map());
     const [guestNotes, setGuestNotes] = useState(new Map());
 
-    const fetchGuestNotes = useCallback(() => {
+    const fetchGuestNotes = useCallback((signal) => {
         const ids = selectedGuestList.map(c => c.id).filter(Boolean);
-        
         if (!ids.length) { setGuestNotes(new Map()); return; }
         fetch(`${import.meta.env.VITE_SERVERURL}/api/contacts/notes/by-ids`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-            body: JSON.stringify({ ids }),
-        }).then(r => r.json()).then(d => { if (d.status) setGuestNotes(new Map(d.data.map(n => [n.contact_book_id, n.note_body]))); }).catch(() => {});
+            body: JSON.stringify({ ids }), signal,
+        })
+            .then(r => r.json())
+            .then(d => { if (d.status) setGuestNotes(new Map(d.data.map(n => [n.contact_book_id, n.note_body]))); })
+            .catch((e) => { if (e.name !== 'AbortError') console.error(e); });
     }, [selectedGuestList]);
 
-    useEffect(() => { fetchGuestNotes(); }, [fetchGuestNotes]);
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchGuestNotes(controller.signal);
+        return () => controller.abort();
+    }, [fetchGuestNotes]);
+
     const [notepadOpen, setNotepadOpen] = useState(false);
     const [notepadContactId, setNotepadContactId] = useState(null);
     const [notepadContactName, setNotepadContactName] = useState('');
-    const handleOpenNotepad = (row) => { setNotepadContactId(row.id); setNotepadContactName(`${row.first_name ?? ''} ${row.last_name ?? ''}`.trim()); setNotepadOpen(true); };
+    const handleOpenNotepad = useCallback((row) => {
+        setNotepadContactId(row.id);
+        setNotepadContactName(`${row.first_name ?? ''} ${row.last_name ?? ''}`.trim());
+        setNotepadOpen(true);
+    }, []);
 
-    useEffect(() => {
+    // Active-member lookup keyed by normalized phone and full name.
+    const fetchActiveMembers = useCallback((signal) => {
         const phones = [...new Set(selectedGuestList.map((c) => c.phone).filter(Boolean))];
         if (!phones.length) { setActiveMemberPhones(new Map()); return; }
         const full_names = [...new Set(selectedGuestList.map((c) => `${c.first_name?.trimEnd() ?? ''} ${c.last_name?.trimEnd() ?? ''}`.trim()).filter(Boolean))];
@@ -43,26 +60,31 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({ phone_numbers: phones, full_names }),
+            signal,
         })
             .then((r) => r.json())
             .then((d) => {
-                if (d.status) {
-                    const entries = [];
-                    d.data.forEach(r => {
-                        if (r.phone) entries.push([r.phone.replace(/[+\-\s]/g, ''), r]);
-                        const fullName = `${r.first_name ?? ''} ${r.name ?? ''}`.trim();
-                        if (fullName) entries.push([fullName, r]);
-                    });
-                    setActiveMemberPhones(new Map(entries));
-                }
+                if (!d.status) return;
+                const entries = [];
+                d.data.forEach((r) => {
+                    if (r.phone) entries.push([r.phone.replace(/[+\-\s]/g, ''), r]);
+                    const fullName = `${r.first_name ?? ''} ${r.name ?? ''}`.trim();
+                    if (fullName) entries.push([fullName, r]);
+                });
+                setActiveMemberPhones(new Map(entries));
             })
-            .catch(() => {});
+            .catch((e) => { if (e.name !== 'AbortError') console.error(e); });
     }, [selectedGuestList]);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchActiveMembers(controller.signal);
+        return () => controller.abort();
+    }, [fetchActiveMembers]);
 
     // Past Events Log: find each guest's prior ClubTime / Business Breakfast
     // appearances by normalized phone OR full name, keyed for fast row lookup.
-    useEffect(() => {
-        
+    const fetchClubtimeHistory = useCallback((signal) => {
         const phones = [...new Set(selectedGuestList.map((c) => c.phone).filter(Boolean))];
         if (!phones.length) { setClubtimeHistory(new Map()); return; }
         const full_names = [...new Set(selectedGuestList.map((c) => `${c.first_name?.trimEnd() ?? ''} ${c.last_name?.trimEnd() ?? ''}`.trim()).filter(Boolean))];
@@ -71,6 +93,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({ phone_numbers: phones, full_names, eventId }),
+            signal,
         })
             .then((r) => r.json())
             .then((d) => {
@@ -87,8 +110,20 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
                 });
                 setClubtimeHistory(map);
             })
-            .catch(() => {});
-    }, [selectedGuestList]);
+            .catch((e) => { if (e.name !== 'AbortError') console.error(e); });
+    }, [selectedGuestList, eventId]);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchClubtimeHistory(controller.signal);
+        return () => controller.abort();
+    }, [fetchClubtimeHistory]);
+
+    // Column definitions rebuild only when their inputs change, not every render.
+    const columns = useMemo(
+        () => guestListColumns({ onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, onOpenNotepad: handleOpenNotepad, notes: guestNotes }),
+        [onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, handleOpenNotepad, guestNotes]
+    );
 
     return (
         <Box sx={{
@@ -114,7 +149,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
                 {/* Total guest count for the selected event — top-right of the panel */}
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', mb: 0.5 }}>
                     <Chip
-                        label={`Attendance Progress: ${selectedGuestListCount.length} / ${selectedGuestList.length}`}
+                        label={`Attendance Progress: ${attendedCount} / ${selectedGuestList.length}`}
                         color="primary"
                         size="small"
                         sx={{ fontWeight: 600 }}
@@ -123,7 +158,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
                 <Box sx={{ flex: 1, minHeight: 0 }}>
                     <CustomDataGrid
                         rows={selectedGuestList}
-                        columns={guestListColumns({ onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, onOpenNotepad: handleOpenNotepad, notes: guestNotes })}
+                        columns={columns}
                         rowsPerPageOptions={[25, 50, 100]}
                         disableRowSelectionOnClick
                         showToolbar

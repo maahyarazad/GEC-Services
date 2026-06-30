@@ -154,3 +154,12 @@ The message should automatically disappear after **3 seconds**.
 - Use `useRef` to store the timeout ID
 - Ensure proper cleanup of the timer to avoid memory leaks or duplicated timers
 
+
+# Part 4:  Memort Leak Check
+
+Check the **GuestListPanel.jsx** and **EventSearch.jsx** components and optimize any API call using useCallBack and memoize expensive functions 
+
+
+# Part 5:  Memort Leak Check
+
+Check the **NotepadModal.jsx** and **CustomDataGrid.jsx**  **WhatsAppComponentConfig** components and optimize any API call using useCallBack and memoize expensive functions 

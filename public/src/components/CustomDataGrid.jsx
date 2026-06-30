@@ -767,8 +767,11 @@ const CustomDataGrid = ({
 
   const effectiveTotal = isServerPage ? (totalRows ?? 0) : processedRows.length;
 
-  // Visible columns
-  const visibleColumns = columns.filter((c) => visibleFields.has(c.field));
+  // Visible columns — recomputed only when columns or their visibility change.
+  const visibleColumns = useMemo(
+    () => columns.filter((c) => visibleFields.has(c.field)),
+    [columns, visibleFields]
+  );
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
