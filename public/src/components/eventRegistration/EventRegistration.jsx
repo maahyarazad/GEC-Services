@@ -143,7 +143,7 @@ const EventRegistration = () => {
             }
 
             // 3. Fetch the contact record.
-            const cRes = await fetch(`${SERVER}/api/contacts/${contactId}`, { credentials: 'include' });
+            const cRes = await fetch(`${SERVER}/contacts/${contactId}`, { credentials: 'include' });
             const cData = await cRes.json().catch(() => ({}));
             const contactRecord = cData.status ? cData.data : null;
             setContact(contactRecord);
@@ -152,7 +152,7 @@ const EventRegistration = () => {
             if (contactRecord?.phone) {
                 const name = fullName(contactRecord.first_name, contactRecord.last_name);
                 const url =
-                    `${SERVER}/api/gec/members/check?phone_number=${encodeURIComponent(contactRecord.phone)}` +
+                    `${SERVER}/gec/members/check?phone_number=${encodeURIComponent(contactRecord.phone)}` +
                     (name ? `&full_name=${encodeURIComponent(name)}` : '');
                 const gRes = await fetch(url, { credentials: 'include' });
                 const gData = await gRes.json().catch(() => ({}));
