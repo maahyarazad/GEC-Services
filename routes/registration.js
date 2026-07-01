@@ -28,6 +28,7 @@ const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
 const { generateApplePass } = require("../services/applePassService");
 const { generateGooglePass } = require("../services/googlePassService");
+const { getPool } = require("../services/mysqlService");
 
 dayjs.extend(utc);
 dayjs.extend(timezone);

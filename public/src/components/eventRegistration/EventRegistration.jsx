@@ -89,6 +89,7 @@ const EventRegistration = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [attendance, setAttendance] = useState(null); // { ok, message }
+    const [event, setEvent] = useState(null); // { id, title, event_date }
     const [contact, setContact] = useState(null);
     const [gecMember, setGecMember] = useState(null);
 
@@ -304,6 +305,23 @@ const EventRegistration = () => {
                 <Typography variant="h6" sx={{ textAlign: 'center', fontWeight: 800, mb: 2 }}>
                     Event Registration
                 </Typography>
+
+                {/* Event details — lets the operator verify the scanned event */}
+                {event && (
+                    <Paper
+                        elevation={2}
+                        sx={{ p: 2, borderRadius: 3, mb: 2, textAlign: 'center', bgcolor: '#eef2ff' }}
+                    >
+                        <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                            {event.title}
+                        </Typography>
+                        {event.event_date && (
+                            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                                {new Date(event.event_date).toLocaleDateString()}
+                            </Typography>
+                        )}
+                    </Paper>
+                )}
 
                 {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 3 }}>{error}</Alert>}
 
