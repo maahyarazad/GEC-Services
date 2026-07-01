@@ -135,7 +135,7 @@ imapPoller.start(io);
 //   }
 // });
 
-// cron.schedule("0 0 * * *", async () => {
+// cron.schedule("*/1 * * * *", async () => {
 //   try {
 //     console.log(`${Date.now()} - [Cron | daily] Starting: MongoDB backup —`, new Date());
 //     await MongoDbBackUpJob.run();

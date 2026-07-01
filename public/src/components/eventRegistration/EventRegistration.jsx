@@ -89,6 +89,7 @@ const EventRegistration = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [attendance, setAttendance] = useState(null); // { ok, message }
+    const [event, setEvent] = useState(null); // { id, title, event_date }
     const [contact, setContact] = useState(null);
     const [gecMember, setGecMember] = useState(null);
 
@@ -104,36 +105,69 @@ const EventRegistration = () => {
         setLoading(true);
         setError(null);
         try {
-            // 1. Mark attendance complete (operator-protected).
-            const attRes = await fetch(
-                `${SERVER}/registration/contacts/complete-attendance?contactId=${contactId}&eventId=${eventId}`,
-                { method: 'PATCH', credentials: 'include' }
+            // 1. Fetch the event details so the operator can verify the event.
+            const eRes = await fetch(
+                `${SERVER}/registration/event?eventId=${eventId}`,
+                { credentials: 'include' }
             );
 
             // Session expired / not an operator — fall back to the login form.
-            if (attRes.status === 401 || attRes.status === 403) {
+            if (eRes.status === 401 || eRes.status === 403) {
                 setOperatorUser(false);
                 return;
             }
 
-            const attData = await attRes.json().catch(() => ({}));
-            setAttendance({
-                ok: attRes.ok,
-                message: attData.message || (attRes.ok ? 'Attendance marked complete' : 'Could not mark attendance'),
-            });
-            showSnackbar(attData.message || 'Attendance updated', attRes.ok ? 'success' : '');
+            const eData = await eRes.json().catch(() => ({}));
+            setEvent(eData.status ? eData.data : null);
 
-            // 2. Fetch the contact record.
+            // 2. Check whether the contact is already registered for this event.
+            const checkRes = await fetch(
+                `${SERVER}/registration/contacts/check-registration?contactId=${contactId}&eventId=${eventId}`,
+                { credentials: 'include' }
+            );
+
+            if (checkRes.status === 401 || checkRes.status === 403) {
+                setOperatorUser(false);
+                return;
+            }
+
+            const checkData = await checkRes.json().catch(() => ({}));
+
+            if (checkData.alreadyRegistered) {
+                // 3a. Already registered — flag it and skip the attendance update.
+                setAttendance({ ok: false, alreadyRegistered: true, message: 'Already Registered' });
+                showSnackbar('Already Registered', '');
+            } else {
+                // 3b. Mark attendance complete (operator-protected).
+                const attRes = await fetch(
+                    `${SERVER}/registration/contacts/complete-attendance?contactId=${contactId}&eventId=${eventId}`,
+                    { method: 'PATCH', credentials: 'include' }
+                );
+
+                if (attRes.status === 401 || attRes.status === 403) {
+                    setOperatorUser(false);
+                    return;
+                }
+
+                const attData = await attRes.json().catch(() => ({}));
+                setAttendance({
+                    ok: attRes.ok,
+                    message: attData.message || (attRes.ok ? 'Attendance marked complete' : 'Could not mark attendance'),
+                });
+                showSnackbar(attData.message || 'Attendance updated', attRes.ok ? 'success' : '');
+            }
+
+            // 4. Fetch the contact record.
             const cRes = await fetch(`${SERVER}/api/contacts/${contactId}`, { credentials: 'include' });
             const cData = await cRes.json().catch(() => ({}));
             const contactRecord = cData.status ? cData.data : null;
             setContact(contactRecord);
 
-            // 3. Look up GEC membership using the contact's phone (+ name).
+            // 5. Look up GEC membership using the contact's phone (+ name).
             if (contactRecord?.phone) {
                 const name = fullName(contactRecord.first_name, contactRecord.last_name);
                 const url =
-                    `${SERVER}/api/gec/members/check?phone_number=${encodeURIComponent(contactRecord.phone)}` +
+                    `${SERVER}/registration/gec-member-check?phone_number=${encodeURIComponent(contactRecord.phone)}` +
                     (name ? `&full_name=${encodeURIComponent(name)}` : '');
                 const gRes = await fetch(url, { credentials: 'include' });
                 const gData = await gRes.json().catch(() => ({}));
@@ -286,6 +320,23 @@ const EventRegistration = () => {
                     Event Registration
                 </Typography>
 
+                {/* Event details — lets the operator verify the scanned event */}
+                {event && (
+                    <Paper
+                        elevation={2}
+                        sx={{ p: 2, borderRadius: 3, mb: 2, textAlign: 'center', bgcolor: '#eef2ff' }}
+                    >
+                        <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                            {event.title}
+                        </Typography>
+                        {event.event_date && (
+                            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                                {new Date(event.event_date).toLocaleDateString()}
+                            </Typography>
+                        )}
+                    </Paper>
+                )}
+
                 {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 3 }}>{error}</Alert>}
 
                 {/* Attendance status */}
@@ -297,11 +348,18 @@ const EventRegistration = () => {
                             borderRadius: 3,
                             mb: 2,
                             textAlign: 'center',
-                            bgcolor: attendance.ok ? '#e6f7e9' : '#fdecea',
+                            bgcolor: attendance.alreadyRegistered ? '#fff8e1' : attendance.ok ? '#e6f7e9' : '#fdecea',
                         }}
                     >
-                        <Box sx={{ fontSize: 44, lineHeight: 1, color: attendance.ok ? 'success.main' : 'error.main' }}>
-                            {attendance.ok ? <MdCheckCircle /> : <MdHighlightOff />}
+                        <Box
+                            sx={{
+                                fontSize: 44,
+                                lineHeight: 1,
+                                fontWeight: 800,
+                                color: attendance.alreadyRegistered ? 'warning.main' : attendance.ok ? 'success.main' : 'error.main',
+                            }}
+                        >
+                            {attendance.alreadyRegistered ? '!' : attendance.ok ? <MdCheckCircle /> : <MdHighlightOff />}
                         </Box>
                         <Typography variant="h6" sx={{ fontWeight: 700, mt: 1 }}>
                             {attendance.message}
