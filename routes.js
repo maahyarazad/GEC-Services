@@ -28,6 +28,7 @@ const clubtime_guest_logs = require("./routes/clubtime_guest_logs.js");
 const external_route = require("./routes/external_route.js");
 const events = require("./routes/events.js");
 const gec_members = require("./routes/gec_members.js");
+const gec_member_check = require("./routes/gec_member_check.js");
 const support = require("./routes/support.js");
 const gec_endpoints = require("./routes/gec_endpoints.js");
 
@@ -56,6 +57,7 @@ const rootRouters = [
   clubtime_guest_logs,
   external_route,
   events,
+  gec_member_check
 ];
 
 function registerRoutes(app) {

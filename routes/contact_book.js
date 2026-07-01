@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const dbService = require("../services/dbService");
+const authorization_middleware = require("../middleware/auth");
 const db = dbService.getDB();
 const { corruptedContactBookData } = require("../services/whatsAppSender");
 
@@ -462,6 +463,38 @@ router.get("/api/contacts/report/missing-content-sid", (_req, res) => {
   } catch (error) {
     console.error(`${Date.now()} - Failed to fetch missing content SID report:`, error);
     res.status(500).json({ status: false, message: "Failed to fetch report" });
+  }
+});
+
+
+// GET a single contact record by id (used by the Event Registration page)
+// NOTE: constrain :id to digits so it doesn't shadow sibling word routes like
+// /api/contacts/add-to-guest-list or /api/contacts/clear-contact-book.
+router.get("/contacts/:id(\\d+)", authorization_middleware.authorize_operator,(req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ status: false, message: "ID is required" });
+    }
+
+    const contact = db.prepare("SELECT * FROM contact_book WHERE id = ?").get(id);
+
+    if (!contact) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Contact not found" });
+    }
+
+    res.status(200).json({
+      status: true,
+      data: contact,
+    });
+  } catch (error) {
+    console.error("Failed to get contact:", error.message);
+    res
+      .status(500)
+      .json({ status: false, message: "Failed to get contact" });
   }
 });
 

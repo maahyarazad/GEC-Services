@@ -105,27 +105,13 @@ const EventRegistration = () => {
         setLoading(true);
         setError(null);
         try {
-            // 1. Fetch the event details so the operator can verify the event.
-            const eRes = await fetch(
-                `${SERVER}/registration/event?eventId=${eventId}`,
-                { credentials: 'include' }
-            );
-
-            // Session expired / not an operator — fall back to the login form.
-            if (eRes.status === 401 || eRes.status === 403) {
-                setOperatorUser(false);
-                return;
-            }
-
-            const eData = await eRes.json().catch(() => ({}));
-            setEvent(eData.status ? eData.data : null);
-
-            // 2. Check whether the contact is already registered for this event.
+            // 1. Check whether the contact is already registered for this event.
             const checkRes = await fetch(
                 `${SERVER}/registration/contacts/check-registration?contactId=${contactId}&eventId=${eventId}`,
                 { credentials: 'include' }
             );
 
+            // Session expired / not an operator — fall back to the login form.
             if (checkRes.status === 401 || checkRes.status === 403) {
                 setOperatorUser(false);
                 return;
@@ -134,11 +120,11 @@ const EventRegistration = () => {
             const checkData = await checkRes.json().catch(() => ({}));
 
             if (checkData.alreadyRegistered) {
-                // 3a. Already registered — flag it and skip the attendance update.
+                // 2a. Already registered — flag it and skip the attendance update.
                 setAttendance({ ok: false, alreadyRegistered: true, message: 'Already Registered' });
                 showSnackbar('Already Registered', '');
             } else {
-                // 3b. Mark attendance complete (operator-protected).
+                // 2b. Mark attendance complete (operator-protected).
                 const attRes = await fetch(
                     `${SERVER}/registration/contacts/complete-attendance?contactId=${contactId}&eventId=${eventId}`,
                     { method: 'PATCH', credentials: 'include' }
@@ -157,17 +143,17 @@ const EventRegistration = () => {
                 showSnackbar(attData.message || 'Attendance updated', attRes.ok ? 'success' : '');
             }
 
-            // 4. Fetch the contact record.
-            const cRes = await fetch(`${SERVER}/api/contacts/${contactId}`, { credentials: 'include' });
+            // 3. Fetch the contact record.
+            const cRes = await fetch(`${SERVER}/contacts/${contactId}`, { credentials: 'include' });
             const cData = await cRes.json().catch(() => ({}));
             const contactRecord = cData.status ? cData.data : null;
             setContact(contactRecord);
 
-            // 5. Look up GEC membership using the contact's phone (+ name).
+            // 4. Look up GEC membership using the contact's phone (+ name).
             if (contactRecord?.phone) {
                 const name = fullName(contactRecord.first_name, contactRecord.last_name);
                 const url =
-                    `${SERVER}/registration/gec-member-check?phone_number=${encodeURIComponent(contactRecord.phone)}` +
+                    `${SERVER}/gec-member-check?phone_number=${encodeURIComponent(contactRecord.phone)}` +
                     (name ? `&full_name=${encodeURIComponent(name)}` : '');
                 const gRes = await fetch(url, { credentials: 'include' });
                 const gData = await gRes.json().catch(() => ({}));
