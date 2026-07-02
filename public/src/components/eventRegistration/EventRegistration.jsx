@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 import '../utils/login.css';
+import GECLogo from '../../assets/background.webp';
 
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -143,13 +144,18 @@ const EventRegistration = () => {
                 showSnackbar(attData.message || 'Attendance updated', attRes.ok ? 'success' : '');
             }
 
-            // 3. Fetch the contact record.
+            // 3. Fetch the event details (used for the page title).
+            const evRes = await fetch(`${SERVER}/api/events?id=${eventId}&pageSize=1`, { credentials: 'include' });
+            const evData = await evRes.json().catch(() => ({}));
+            setEvent(evData.status && Array.isArray(evData.data) && evData.data.length ? evData.data[0] : null);
+
+            // 4. Fetch the contact record.
             const cRes = await fetch(`${SERVER}/contacts/${contactId}`, { credentials: 'include' });
             const cData = await cRes.json().catch(() => ({}));
             const contactRecord = cData.status ? cData.data : null;
             setContact(contactRecord);
 
-            // 4. Look up GEC membership using the contact's phone (+ name).
+            // 5. Look up GEC membership using the contact's phone (+ name).
             if (contactRecord?.phone) {
                 const name = fullName(contactRecord.first_name, contactRecord.last_name);
                 const url =
@@ -230,6 +236,13 @@ const EventRegistration = () => {
         return (
             <div className="login">
                 <div>
+                    <div className="d-flex align-items-center mb-3">
+                        <img alt="GEC Logo" src={GECLogo} height={50} style={{ borderRadius: 6 }} />
+                        <div className="d-flex flex-column ps-3" style={{ fontWeight: 300 }}>
+                            <div style={{ fontSize: 15, color: "#6b6347", fontWeight: 400 }}>GEC Services</div>
+                            <div style={{ fontSize: 12, color: "#6b6347", fontWeight: 300 }}>Operator Portal</div>
+                        </div>
+                    </div>
                     <h4>Operator login required to continue.</h4>
                     <Formik
                         initialValues={initialValues}
@@ -303,23 +316,18 @@ const EventRegistration = () => {
         <Box sx={{ minHeight: '100dvh', bgcolor: '#f5f5f7', py: 3, px: 1.5 }}>
             <Container maxWidth="sm" disableGutters>
                 <Typography variant="h6" sx={{ textAlign: 'center', fontWeight: 800, mb: 2 }}>
-                    Event Registration
+                    {event?.title || 'Event Registration'}
                 </Typography>
 
-                {/* Event details — lets the operator verify the scanned event */}
-                {event && (
+                {/* Event date — lets the operator verify the scanned event */}
+                {event?.event_date && (
                     <Paper
                         elevation={2}
-                        sx={{ p: 2, borderRadius: 3, mb: 2, textAlign: 'center', bgcolor: '#eef2ff' }}
+                        sx={{ p: 1.5, borderRadius: 3, mb: 2, textAlign: 'center', bgcolor: '#eef2ff' }}
                     >
-                        <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                            {event.title}
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            {new Date(event.event_date).toLocaleDateString()}
                         </Typography>
-                        {event.event_date && (
-                            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-                                {new Date(event.event_date).toLocaleDateString()}
-                            </Typography>
-                        )}
                     </Paper>
                 )}
 

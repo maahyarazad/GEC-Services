@@ -42,16 +42,32 @@
     > div {
       width: 80%;
       > form {
-      
-       
+
+
        > img {
          height: 174px;
          border-radius: 4px;
          filter: brightness(160%);
- 
+
        }
-      
+
      }
+    }
+
+    /* Google-style mobile sizing: ~48dp touch targets and 16px font
+       (16px also avoids iOS zoom-on-focus). */
+    .form-control {
+      min-height: 52px;
+      font-size: 16px;
+      padding: 14px 16px;
+      border-radius: 8px;
+    }
+
+    .MuiButton-root {
+      min-height: 52px;
+      font-size: 16px;
+      padding: 12px 16px;
+      border-radius: 8px;
     }
 
   }

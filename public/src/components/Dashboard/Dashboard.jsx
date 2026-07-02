@@ -1,6 +1,6 @@
 // React & Core
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import React from 'react';
 // Form & Validation
 import { Formik, Form, Field, ErrorMessage } from "formik";
@@ -472,9 +472,12 @@ const Admin = ({ data }) => {
             <div>
                 <div className="d-flex align-items-center mb-3">
                     <img alt="GEC Logo" src={GECLogo} height={50} style={{ borderRadius: 6 }} />
-                    <div className="d-flex flex-column ps-3" style={{ fontWeight: 300 }}>
-                        <div>GEC Services</div>
-                        <div style={{ fontSize: 10, color: "#6b6347" }}>Admin Dashboard</div>
+                    <div className="d-flex flex-column ps-3 w-100" style={{ fontWeight: 300 }}>
+                        <div style={{ fontSize: 15, color: "#6b6347", fontWeight: 400 }}>GEC Services</div>
+                        <div className="d-flex align-items-center justify-content-between gap-2" style={{ fontSize: 12, color: "#6b6347", fontWeight: 300 }}>
+                            Admin Dashboard
+                            <Link to="/" style={{ color: "#1976d2", fontWeight: 300, fontSize: 12 }}>Member Portal</Link>
+                        </div>
                     </div>
                 </div>
                 <h4>Login into Admin Dashboard</h4>

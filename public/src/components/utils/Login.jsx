@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import "./login.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import GECLogo from "../../assets/background.webp";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -187,9 +187,12 @@ const Login = ({ emailRequired, event }) => {
             <div>
                 <div className="d-flex align-items-center mb-3">
                     <img alt="GEC Logo" src={GECLogo} height={50} style={{ borderRadius: 6 }} />
-                    <div className="d-flex flex-column ps-3" style={{ fontWeight: 300 }}>
-                        <div>GEC Services</div>
-                        <div style={{ fontSize: 10, color: "#6b6347" }}>Member Portal</div>
+                    <div className="d-flex flex-column ps-3 w-100" style={{ fontWeight: 300 }}>
+                        <div style={{ fontSize: 15, color: "#6b6347", fontWeight: 400 }}>GEC Services</div>
+                        <div className="d-flex align-items-center justify-content-between gap-2" style={{ fontSize: 12, color: "#6b6347", fontWeight: 300 }}>
+                            Member Portal
+                            <Link to="/admin" style={{ color: "#1976d2", fontWeight: 300, fontSize: 12 }}>Admin Portal</Link>
+                        </div>
                     </div>
                 </div>
                 {emailRequired ? (
