@@ -25,6 +25,31 @@ In **`EventRegistration.jsx`**, improve the login section and the below part lik
 
 In **`EventRegistration.jsx`**, after the user logs in, fetch the event details from the server using the event ID. Replace the static **`Event Registration`** title with the actual event title returned by the server.
 
+complete the end point that I wrote and get the event title and replace the `  const evRes = await fetch(`${SERVER}/api/events?id=${eventId}&pageSize=1`, { credentials: 'include' });` with new end point
+```js
+router.get("/registration/get-event-title", authorization_middleware.authorize_operator, async (req, res) => {
+  try {
+    const { eventId } = req.query;
+
+    if (!eventId) {
+      return res.status(400).json({
+        status: false,
+        message: "eventId are required",
+      });
+    }
+
+   
+   
+  } catch (error) {
+    console.error("Failed to check registration:", error);
+    res.status(500).json({
+      status: false,
+      message: "Failed to check registration",
+    });
+  }
+});
+
+```
 
 
 # Feature 26.2: Improve Login 

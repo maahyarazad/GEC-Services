@@ -822,6 +822,46 @@ router.get("/registration/contacts/check-registration", authorization_middleware
   }
 });
 
+router.get("/registration/get-event-title", authorization_middleware.authorize_operator, async (req, res) => {
+  try {
+    const { eventId } = req.query;
+
+    if (!eventId) {
+      return res.status(400).json({
+        status: false,
+        message: "eventId are required",
+      });
+    }
+
+    const eventQuery = `
+        SELECT id, title, event_date
+        FROM events
+        WHERE id = ?
+    `;
+
+    const stmt = db.prepare(eventQuery);
+    const event = stmt.get(eventId);
+
+    if (!event) {
+      return res.status(404).json({
+        status: false,
+        message: "No matching event found",
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      event,
+    });
+  } catch (error) {
+    console.error("Failed to get event title:", error);
+    res.status(500).json({
+      status: false,
+      message: "Failed to get event title",
+    });
+  }
+});
+
 
 router.patch("/registration/contacts/complete-attendance", authorization_middleware.authorize_operator, async (req, res) => {
   try {

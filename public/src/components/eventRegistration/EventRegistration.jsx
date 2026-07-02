@@ -35,6 +35,15 @@ const titleCase = (val) =>
 
 const fullName = (...parts) => parts.filter(Boolean).join(' ').trim();
 
+// Format a date as dd-mmmm-yyyy, e.g. "02-July-2026".
+const formatEventDate = (value) => {
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return value;
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = d.toLocaleString('en-US', { month: 'long' });
+    return `${day}-${month}-${d.getFullYear()}`;
+};
+
 // ── Presentational helpers ─────────────────────────────────────────────────────
 
 const SectionCard = ({ title, icon, action, children }) => (
@@ -145,9 +154,9 @@ const EventRegistration = () => {
             }
 
             // 3. Fetch the event details (used for the page title).
-            const evRes = await fetch(`${SERVER}/api/events?id=${eventId}&pageSize=1`, { credentials: 'include' });
+            const evRes = await fetch(`${SERVER}/registration/get-event-title?eventId=${eventId}`, { credentials: 'include' });
             const evData = await evRes.json().catch(() => ({}));
-            setEvent(evData.status && Array.isArray(evData.data) && evData.data.length ? evData.data[0] : null);
+            setEvent(evData.status && evData.event ? evData.event : null);
 
             // 4. Fetch the contact record.
             const cRes = await fetch(`${SERVER}/contacts/${contactId}`, { credentials: 'include' });
@@ -315,19 +324,24 @@ const EventRegistration = () => {
     return (
         <Box sx={{ minHeight: '100dvh', bgcolor: '#f5f5f7', py: 3, px: 1.5 }}>
             <Container maxWidth="sm" disableGutters>
-                <Typography variant="h6" sx={{ textAlign: 'center', fontWeight: 800, mb: 2 }}>
-                    {event?.title || 'Event Registration'}
+                <Typography variant="h6" sx={{ textAlign: 'center', fontWeight: 800, mb: 2, color:'#828181' }}>
+                    GEC Event Registration
                 </Typography>
 
-                {/* Event date — lets the operator verify the scanned event */}
-                {event?.event_date && (
+                {/* Event details — lets the operator verify the scanned event */}
+                {event && (
                     <Paper
                         elevation={2}
-                        sx={{ p: 1.5, borderRadius: 3, mb: 2, textAlign: 'center', bgcolor: '#eef2ff' }}
+                        sx={{ p: 2, borderRadius: 3, mb: 2, textAlign: 'center', bgcolor: '#eef2ff' }}
                     >
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                            {new Date(event.event_date).toLocaleDateString()}
+                        <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                            {event.title}
                         </Typography>
+                        {event.event_date && (
+                            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                                {formatEventDate(event.event_date)}
+                            </Typography>
+                        )}
                     </Paper>
                 )}
 
