@@ -259,7 +259,7 @@ const Admin = ({ data }) => {
         },
         {
             icon: <GrDocumentPdf size={20} />,
-            label: "Quotation Generator",
+            label: "PDF Generator",
         },
         {
             icon: <FaWhatsapp size={20} />,
