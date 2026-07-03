@@ -5,6 +5,7 @@ const router = express.Router();
 const fs = require("fs");
 const path = require("path");
 
+const { generateInvoicePdf } = require("../services/invoicePdfService");
 
 const _path = path.join(__dirname, "..", "invoice_json_storage");
     const slugify = (text) =>
@@ -39,6 +40,32 @@ router.post('/api/invoice-save',  async (req, res) => {
         console.error(`${Date.now()} - Error in /member:`, error);
         res.status(500).json({ status: false, message: 'Server error' });
     }
+});
+
+// Render the invoice to a PDF with Puppeteer and stream it back inline.
+router.post('/api/invoice-pdf', async (req, res) => {
+  try {
+    const formData = req.body && req.body.data;
+
+    if (!formData || !formData.project) {
+      return res.status(400).json({
+        status: false,
+        message: "Missing invoice data",
+      });
+    }
+
+    const pdf = await generateInvoicePdf(formData);
+
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": 'inline; filename="invoice.pdf"',
+      "Content-Length": pdf.length,
+    });
+    return res.send(pdf);
+  } catch (error) {
+    console.error(`${Date.now()} - Error in /api/invoice-pdf:`, error);
+    return res.status(500).json({ status: false, message: "Failed to generate PDF" });
+  }
 });
 
 router.get('/api/invoice-list',  (req, res) => {

@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../WebSocketContext';
 import { TbTrashX } from "react-icons/tb";
-const MyDocument = React.lazy(() => import('./MyDocument'));
 
 import CircularProgress from "@mui/material/CircularProgress";
-import { PDFDownloadLink } from '@react-pdf/renderer';
 import { IoSave } from "react-icons/io5";
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
