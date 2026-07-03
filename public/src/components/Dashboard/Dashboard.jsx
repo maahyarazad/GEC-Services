@@ -22,8 +22,8 @@ import { FaWhatsapp } from "react-icons/fa";
 import { FcSurvey } from "react-icons/fc";
 import { GiArchiveRegister } from "react-icons/gi";
 import { GoShieldLock } from "react-icons/go";
-import { GrCatalogOption } from "react-icons/gr";
-import { MdPictureAsPdf, MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight, MdTerminal, MdLocalShipping, MdLocationOn, MdSupportAgent } from "react-icons/md";
+import { GrCatalogOption, GrDocumentPdf } from "react-icons/gr";
+import { MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight, MdTerminal, MdLocalShipping, MdLocationOn, MdSupportAgent } from "react-icons/md";
 import { PiBriefcaseDuotone } from "react-icons/pi";
 
 // Utils
@@ -258,8 +258,8 @@ const Admin = ({ data }) => {
             label: "Expert Circle",
         },
         {
-            icon: <MdPictureAsPdf size={20} />,
-            label: "Procurement PDF Generator",
+            icon: <GrDocumentPdf size={20} />,
+            label: "Quotation Generator",
         },
         {
             icon: <FaWhatsapp size={20} />,
