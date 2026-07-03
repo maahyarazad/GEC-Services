@@ -13,14 +13,24 @@ const BLUE = "#037bfc";
 const ORANGE = "#d47e11";
 const GRAY = "#A9A9A9";
 
+// Page number, rendered by Chromium in the bottom margin of every page. The
+// company footer itself lives in the body and is pinned to the last page.
+const FOOTER_TEMPLATE = `
+  <div style="width:100%;box-sizing:border-box;padding:0 0.55in;font-family:Helvetica,Arial,sans-serif;color:#000;text-align:right;font-size:9px;">
+    Page <span class="pageNumber"></span> of <span class="totalPages"></span>
+  </div>`;
+
 // ── Shared browser instance ──────────────────────────────────────────────────
 let browserPromise = null;
 
 async function getBrowser() {
   if (!browserPromise) {
     browserPromise = puppeteer.launch({
+      // Use the system Chromium via CHROME_BIN when set (e.g. on the Linux
+      // server); falls back to Puppeteer's bundled Chromium locally.
+      executablePath: process.env.CHROME_BIN,
       headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      args: ["--no-sandbox"],
     });
   }
   const browser = await browserPromise;
@@ -203,6 +213,16 @@ function buildInvoiceHtml(formData) {
     font-size: 9pt;
     color: #000;
     background: #fff;
+    /* At least one printable page tall so the footer lands at the bottom of
+       a short (single-page) invoice. display:flex + flex-direction:column
+       lets the footer be pushed down with margin-top:auto instead of being
+       absolutely positioned — this way it never forces a short invoice onto
+       a second page, but also never gets stranded/overlapping content on a
+       longer, multi-page invoice (see .footer below). */
+    display: flex;
+    flex-direction: column;
+    min-height: 10.5in;
+    box-sizing: border-box;
   }
   .header {
     display: flex;
@@ -261,9 +281,29 @@ function buildInvoiceHtml(formData) {
   .sig-line { border-bottom: 1pt solid #000; margin-bottom: 2pt; margin-right: 140pt; }
   .sig-text { font-size: 7pt; font-weight: 400; line-height: 1.2; }
 
-  .footer { margin-top: 60pt; }
+  /* Company footer — appears only once, always after all other content
+     (it's the last element in the DOM), and is pushed to the bottom of the
+     page via margin-top:auto on the flex-column body:
+       - Short invoice (fits on one page): body's min-height fills the
+         remaining space with the auto margin, so the footer sits flush at
+         the bottom of the page — same visual result as fixed/absolute
+         positioning would give.
+       - Long invoice (multiple pages): body grows taller than one page, so
+         there's no leftover space to push into — the footer simply follows
+         directly after the last content block, which places it on the last
+         page since nothing else follows it.
+     break-inside/page-break-inside avoid the footer being sliced across a
+     page boundary in either case. Font sizes are 10% larger than 10pt. */
+  .footer {
+    margin-top: auto;
+    position: fixed;
+    bootom: 10px
+    //padding-top: 30pt;
+    //break-inside: avoid;
+    //page-break-inside: avoid;
+  }
   .footer .cols { display: flex; flex-direction: row; justify-content: space-between; width: 100%; }
-  .footer-col { flex: 1; padding-right: 10pt; }
+  .footer-col { flex: 1; }
   .footer-title { font-size: 10pt; color: #404040; font-weight: 600; }
   .footer-line { font-size: 10pt; color: #adacac; font-weight: 200; }
 </style>
@@ -392,7 +432,7 @@ function buildInvoiceHtml(formData) {
     </div>
   </div>
 
-  <!-- Footer -->
+  <!-- Footer (bottom of the last page, only) -->
   <div class="footer">
     <div class="cols">
       <div class="footer-col">
@@ -428,12 +468,12 @@ async function generateInvoicePdf(formData) {
     const pdf = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: { top: "0.55in", bottom: "0.75in", left: "0.55in", right: "0.55in" },
+      // Bottom margin holds the page-number line; the company footer sits in
+      // the body just above it.
+      margin: { top: "0.55in", bottom: "0.6in", left: "0.55in", right: "0.55in" },
       displayHeaderFooter: true,
       headerTemplate: "<span></span>",
-      footerTemplate: `<div style="width:100%; font-size:9px; padding:0 0.55in; text-align:right; color:#000;">
-        Page <span class="pageNumber"></span> of <span class="totalPages"></span>
-      </div>`,
+      footerTemplate: FOOTER_TEMPLATE,
     });
     // page.pdf() returns a Uint8Array in Puppeteer v24; Express's res.send only
     // treats a Buffer as binary (a Uint8Array would be serialized as JSON), so
