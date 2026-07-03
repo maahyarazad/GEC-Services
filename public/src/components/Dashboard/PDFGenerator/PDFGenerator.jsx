@@ -123,15 +123,15 @@ const PDFGenerator = () => {
     };
 
     const tabstyle = {
-        backgroundColor: '#000000',
+        backgroundColor: '#2D2D2D',
         color: '#ffffff',
         "& .MuiAccordionSummary-expandIconWrapper": {
             color: '#ffffff',
         },
         '&.Mui-expanded': {
-            bgcolor: '#037bfc',
-            '& .MuiTypography-root': { color: '#fff' },
-            '& .MuiSvgIcon-root': { color: '#fff' },
+            bgcolor: '#FEFF9C',
+            '& .MuiTypography-root': { color: '#FF000D' },
+            '& .MuiSvgIcon-root': { color: '#FF000D' },
         },
     };
 
@@ -158,17 +158,21 @@ const PDFGenerator = () => {
                 alignItems: 'flex-start',
             }}>
                 {/* File list */}
-                <Box sx={{ width: { xs: '100%', lg: '15%', height: { lg: 'calc(100vh - 125px)' } }, flexShrink: 0 }}>
+                <Box sx={{ width: { xs: '100%', lg: '20%', height: { lg: 'calc(100vh - 125px)' } }, flexShrink: 0 }}>
                     <FileList onSelect={UpdateForm} formData={formData} initialFormData={_initial_formData} />
                 </Box>
 
                 {/* Form */}
                 <Box sx={{
-                    width: { xs: '100%', md: '35%' },
-                    height: { lg: 'calc(100vh - 125px)' },
+                    zoom: 0.8,
+                    width: { xs: '100%', md: '30%' },
+                    height: { lg: 'calc(100vh + 75px)' },
                     overflowY: { lg: 'scroll' },
                     flexShrink: 0,
-                }} className='rounded border p-1'>
+                                        border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                }}>
                     <form style={{ display: 'block' }}>
 
                         <Accordion>
@@ -248,24 +252,39 @@ const PDFGenerator = () => {
                                     if (item.deleted) return null;
                                     return (
                                         <Box key={item.id ?? index} sx={{ mb: 2, pb: 2, borderBottom: '1px solid #eee' }}>
-                                            {Object.keys(item).map((key) => {
-                                                if (key === 'deleted') return null;
-                                                if (key === 'price' && !formData.items_price) return null;
-                                                return (
-                                                    <TextField
-                                                        key={`${index}-${key}`}
-                                                        label={labelify(key)}
-                                                        name={`items.${index}.${key}`}
-                                                        value={item[key]}
-                                                        onChange={handleChange}
-                                                        size="small"
-                                                        fullWidth
-                                                        multiline={key === 'body'}
-                                                        rows={key === 'body' ? 3 : undefined}
-                                                        sx={{ mb: 1.5 }}
-                                                    />
-                                                );
-                                            })}
+                                            {/* Inline fields (title, qty, disc, vat, vat_p, amount) side by side */}
+                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+                                                {Object.keys(item).map((key) => {
+                                                    if (key === 'deleted' || key === 'body') return null;
+                                                    if (key === 'price' && !formData.items_price) return null;
+                                                    return (
+                                                        <TextField
+                                                            key={`${index}-${key}`}
+                                                            label={labelify(key)}
+                                                            name={`items.${index}.${key}`}
+                                                            value={item[key]}
+                                                            onChange={handleChange}
+                                                            size="small"
+                                                            sx={{ flex: key === 'title' ? '1 1 100%' : '1 1 60px', minWidth: 60 }}
+                                                        />
+                                                    );
+                                                })}
+                                            </Box>
+                                            {/* Body spans full width below */}
+                                            {'body' in item && (
+                                                <TextField
+                                                    key={`${index}-body`}
+                                                    label={labelify('body')}
+                                                    name={`items.${index}.body`}
+                                                    value={item.body}
+                                                    onChange={handleChange}
+                                                    size="small"
+                                                    fullWidth
+                                                    multiline
+                                                    rows={3}
+                                                    sx={{ mb: 1.5 }}
+                                                />
+                                            )}
                                             <Button
                                                 variant="contained"
                                                 size="small"

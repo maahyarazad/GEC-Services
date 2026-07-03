@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useWebSocket } from '../WebSocketContext';
 
+import Box from '@mui/material/Box';
+import Divider from '@mui/material/Divider';
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
@@ -16,7 +18,7 @@ import { VscNewFile, VscNewFolder } from 'react-icons/vsc';
 import { TbTrashX } from 'react-icons/tb';
 import { FaFolder, FaFolderOpen, FaRegFileAlt } from 'react-icons/fa';
 import { MdChevronRight, MdExpandMore } from 'react-icons/md';
-
+import { RiSave3Fill } from "react-icons/ri";
 import { useSnackbar } from '../../Providers/Snackbar';
 import { useAlertDialog } from '../../Providers/AlertProvider';
 import InvoiceDownload from './InvoiceDownload';
@@ -81,6 +83,7 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
     const [expanded, setExpanded] = useState(() => new Set());
     const [dragOver, setDragOver] = useState(null); // folder path currently hovered while dragging
     const [temp, setTemp] = useState(null);
+    const [filename, setFileName] = useState(null);
 
     // Save / New-folder dialogs
     const [saveDialog, setSaveDialog] = useState({ open: false, name: '', folder: '' });
@@ -116,6 +119,7 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
 
     // ── Selecting a file loads it into the form ──────────────────────────────
     const handleSelectFile = useCallback((node) => {
+        setFileName(node?.name || null);
         setSelectedPath(node.path);
         const parent = node.path.includes('/') ? node.path.slice(0, node.path.lastIndexOf('/')) : '';
         setActiveFolder(parent);
@@ -314,11 +318,11 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
                             </span>
                         )}
                         <span style={{
-                            fontSize: 10,
+                            fontSize: 12,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            maxWidth: 190,
+                            maxWidth: 300,
                         }}>
                             {node.name}
                         </span>
@@ -343,35 +347,46 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
 
     return (
         <div>
-            {/* Toolbar */}
-            <div className="d-flex justify-content-between align-items-center">
-                <div className="d-flex align-items-center">
-                    <IconButton title="Save" onClick={openSaveDialog}>
-                        <IoSave color=".primary" size={iconSize} />
-                    </IconButton>
-                    <IconButton title="New Folder" onClick={openFolderDialog}>
-                        <VscNewFolder color="#e0a800" size={iconSize - 2} />
-                    </IconButton>
-                    <Button
-                        color="success"
-
-                        startIcon={<VscNewFile size={iconSize} />}
-                        onClick={() => handleSelectFile({ path: '', data: initialFormData })}
-                        sx={{ textTransform: 'none', padding: 0 }}
-                    >
-                        <span style={{ fontSize: 10, wordBreak: 'keep-all' }}>
-                            New File
-                        </span>
-                    </Button>
-                </div>
-
-                <InvoiceDownload iconSize={iconSize} formData={formData} loadingFlag={loadingFlag} />
-            </div>
+            {/* Menu bar */}
 
             <div className="rounded border p-2">
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        px: 1,
+                        mb: 1,
+                        bgcolor: '#f5f5f7',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                    }}
+                >
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton title="Save" onClick={openSaveDialog}>
+                            <RiSave3Fill color="#1976D2" size={iconSize} />
+                        </IconButton>
+                        <IconButton title="New Folder" onClick={openFolderDialog}>
+                            <VscNewFolder color="orange" size={iconSize - 2} />
+                        </IconButton>
+                        <Divider orientation="vertical" flexItem sx={{ mx: 0.5, my: 1 }} />
+                        <Button
+                            startIcon={<VscNewFile size={iconSize} />}
+                            onClick={() => handleSelectFile({ path: '', data: initialFormData })}
+                            sx={{ textTransform: 'none', padding: 0, color: '#717171' }}
+                        >
+                            <span style={{ fontSize: 12, wordBreak: 'keep-all' }}>
+                                New File
+                            </span>
+                        </Button>
+                    </Box>
+
+                    <InvoiceDownload iconSize={iconSize} formData={formData} loadingFlag={loadingFlag} filename={filename} />
+                </Box>
                 <input
                     type="text"
-                    className="form-control mb-1 shadow-sm"
+                    className="form-control mb-1 shadow-sm w-100"
                     placeholder="Search files..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -382,7 +397,7 @@ const FileList = ({ onSelect, formData, initialFormData, loadingFlag }) => {
                 <div
                     style={{
                         overflow: 'auto',
-                        height: 'calc(100vh - 225px)',
+                        height: 'calc(100vh - 235px)',
                         outline: dragOver === '' ? '2px dashed #0d6efd' : 'none',
                         borderRadius: 4,
                     }}
