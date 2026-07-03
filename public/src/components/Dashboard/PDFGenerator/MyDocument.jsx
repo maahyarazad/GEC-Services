@@ -167,11 +167,7 @@ const { positiveTotalExchange, negativeTotalExchange } = formData.items.reduce(
               <Text style={styles.tableCol}>{item.vat || "-"}</Text>
 
               <Text
-                style={[
-                  styles.tableColAmount,
-                  !formData?.currency?.currency_enable &&
-                    { opacity: 0, height: 0, width: 0, overflow: "hidden" },
-                ]}
+                style={styles.tableColAmount}
               >
                 {formData?.currency?.currency_enable
                   ? `${formData.currency.currency_symbol} ${item.amount || "0"}`
