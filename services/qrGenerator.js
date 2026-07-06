@@ -3,7 +3,6 @@ const QRCode = require('qrcode');
 require("dotenv").config();
 const path = require('path');
 const fs = require('fs');
-const dbService = require('./dbService');
 
 /**
  * Generate a QR code with embedded text over it.
@@ -58,37 +57,26 @@ async function generateQR_WhatsApp(contactId, eventId) {
 }
 
 /**
- * Check whether a QR code has already been generated for a contact/event by
- * looking for a matching row in `contact_book_events`. When a `contentSid` is
- * provided the check is scoped to that exact template, otherwise it returns
- * true if the contact has any QR record for the event.
+ * Check whether a QR code PNG has actually been generated for a contact/event
+ * by looking for the file in `qr_files/`.
  *
  * @param {number} contactId - contact_book_id
  * @param {number} eventId   - event_id
- * @param {string} [contentSid] - optional WhatsApp media template contentSid
- * @returns {boolean} whether a matching record exists
+ * @returns {boolean} whether the QR image file exists
  */
-async function check_generateQR_WhatsApp(contactId, eventId, contentSid) {
+async function check_generateQR_WhatsApp(contactId, eventId) {
+
+    const tempPath = path.join(__dirname, '..', 'qr_files');
+
+    if (!fs.existsSync(tempPath)) {
+        fs.mkdirSync(tempPath, { recursive: true });
+    }
+
+    const filePath = path.join(tempPath, `${eventId}-${contactId}.png`);
     try {
-        const db = dbService.getDB();
-
-        if (contentSid) {
-            const row = db.prepare(
-                `SELECT 1 FROM contact_book_events
-                 WHERE contentSid = ? AND contact_book_id = ? AND event_id = ?
-                 LIMIT 1`
-            ).get(contentSid, contactId, eventId);
-            return !!row;
-        }
-
-        const row = db.prepare(
-            `SELECT 1 FROM contact_book_events
-             WHERE contact_book_id = ? AND event_id = ?
-             LIMIT 1`
-        ).get(contactId, eventId);
-        return !!row;
+        return fs.existsSync(filePath);
     } catch (error) {
-        console.error('Error checking QR record:', error);
+        console.error('Error checking QR file:', error);
         return false;
     }
 }

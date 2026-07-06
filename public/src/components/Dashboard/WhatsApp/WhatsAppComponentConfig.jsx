@@ -11,6 +11,7 @@ import { FaHistory } from "react-icons/fa";
 import { TbClipboardCheck } from "react-icons/tb";
 import ActionCell from './ActionCell';
 import { BiSolidCheckCircle } from "react-icons/bi";
+import { PiQrCodeBold } from "react-icons/pi";
 import { BsDashCircle } from "react-icons/bs";
 import { VscDebugAlt } from "react-icons/vsc";
 import { BsFillExclamationTriangleFill } from "react-icons/bs";
@@ -329,7 +330,7 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
     }
 
 ];
-export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, onOpenNotepad, notes, guestQrCodes }) => [
+export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, onOpenNotepad, notes, guestQrCodes, guestQrGenerated, onViewQr }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'type', headerName: 'Type', width: 110, filterable: true },
     { field: 'title', headerName: 'Title', width: 70, filterable: true },
@@ -388,14 +389,30 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
         },
     },
     {
-        field: 'qr', headerName: 'QR Code', width: 79, filterable: false, sortable: false,
+        field: 'qr', headerName: 'QR Code', width: 95, filterable: false, sortable: false,
         renderCell: (params) => {
-            const qr = guestQrCodes?.get(params.row.id);
-            if (!qr) return null;
+            const hasRecord = guestQrCodes?.get(params.row.id);
+            const generated = guestQrGenerated?.get(params.row.id);
+            if (!hasRecord && !generated) return null;
             return (
-                <Tooltip title="QR code generated" slotProps={slotPropsStyle} arrow>
-                    <BiSolidCheckCircle size={22} color="green" />
-                </Tooltip>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 2 }}>
+                    {hasRecord && (
+                        <Tooltip title="QR delivery recorded" slotProps={slotPropsStyle} arrow>
+                            <BiSolidCheckCircle size={22} color="green" />
+                        </Tooltip>
+                    )}
+                    {generated && (
+                        <Tooltip title="View QR code" slotProps={slotPropsStyle} arrow>
+                            <IconButton
+                                size="small"
+                                onClick={() => onViewQr?.(params.row)}
+                                sx={{ "&:hover": { backgroundColor: "#e8f5e9" } }}
+                            >
+                                <PiQrCodeBold size={20} />
+                            </IconButton>
+                        </Tooltip>
+                    )}
+                </span>
             );
         },
     },

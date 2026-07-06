@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const dbService = require("../services/dbService");
 const {check_generateQR_WhatsApp} = require("../services/qrGenerator");
+const fs = require("fs");
+const path = require("path");
 
 
 const db = dbService.getDB();
@@ -175,19 +177,85 @@ router.delete("/api/events/:id", (req, res) => {
 });
 
 
-router.post("/api/events/qr-code/by-ids",  async (req, res) => {
+router.post("/api/events/qr-code/by-ids", (req, res) => {
+  try {
+    const { ids, eventId, contentSids } = req.body;
+
+    if (!Array.isArray(ids) || !ids.length) return res.json({ status: true, data: [] });
+
+    const evId = eventId?.id ?? eventId;
+
+    // Batched lookup: one query with `contact_book_id IN (?, ?, ...)` instead of
+    // a check per id. When specific media templates are selected, a QR counts as
+    // "generated" if a record exists for ANY of the selected contentSids.
+    const selected = Array.isArray(contentSids) ? contentSids.filter(Boolean) : [];
+
+    if(selected.length === 0) return res.json({ status: true, data: [] }); 
+    const idPlaceholders = ids.map(() => "?").join(", ");
+    let sql = `
+      SELECT DISTINCT contact_book_id
+      FROM contact_book_events
+      WHERE event_id = ?
+        AND contact_book_id IN (${idPlaceholders})
+    `;
+    const params = [evId, ...ids];
+
+    if (selected.length) {
+      const sidPlaceholders = selected.map(() => "?").join(", ");
+      sql += ` AND contentSid IN (${sidPlaceholders})`;
+      params.push(...selected);
+    }
+
+    const rows = db.prepare(sql).all(...params);
+    const generated = new Set(rows.map((r) => Number(r.contact_book_id)));
+
+    const data = ids.map((id) => ({ contact_book_id: id, qr: generated.has(Number(id)) }));
+    return res.json({ status: true, data });
+  } catch (error) {
+    console.error(`${Date.now()} - Error in /api/events/qr-code/by-ids:`, error);
+    return res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
+// ── POST /api/events/qr-code/view  – return a single guest's QR code PNG ──────
+// Part 4: the operator clicks the green check to view the already-generated QR.
+router.post("/api/events/qr-code/view", (req, res) => {
+  try {
+    const { contactId, eventId } = req.body;
+    const evId = eventId?.id ?? eventId;
+
+    if (!contactId || !evId) {
+      return res.status(400).json({ status: false, message: "contactId and eventId are required" });
+    }
+
+    const filePath = path.join(__dirname, "..", "qr_files", `${evId}-${contactId}.png`);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ status: false, message: "QR code not found" });
+    }
+
+    const buffer = fs.readFileSync(filePath);
+    res.set({ "Content-Type": "image/png", "Content-Length": buffer.length });
+    return res.send(buffer);
+  } catch (error) {
+    console.error(`${Date.now()} - Error in /api/events/qr-code/view:`, error);
+    return res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
+
+router.post("/api/events/qr-code-generated/by-ids", async (req, res) => {
   const { ids } = req.body;
   const { eventId } = req.body;
 
+  if (!Array.isArray(ids) || !ids.length)
+    return res.json({ status: true, data: [] });
 
-  if (!Array.isArray(ids) || !ids.length) return res.json({ status: true, data: [] });
-
-const data = await Promise.all(
-            ids.map(async (id) => {
-                
-                const result = await check_generateQR_WhatsApp(id, eventId?.id);
-                return {contact_book_id: id, qr : result}
-        }));
+  const data = await Promise.all(
+    ids.map(async (id) => {
+      const result = await check_generateQR_WhatsApp(id, eventId?.id);
+      return { contact_book_id: id, qr: result };
+    })
+  );
   return res.json({ status: true, data });
 });
 

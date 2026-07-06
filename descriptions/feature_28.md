@@ -30,7 +30,20 @@ The user may either:
 - Select one or more media templates.
 - Skip this step.
 
-If the user skips this step, display the following warning:
+If the user skips this step, use SnackBar and a new warning message style just add the color
+```jsx
+const warningAlertSx = {
+    
+    fontWeight: 500,
+    borderRadius: "8px",
+       alignItems: "center",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
+    "& .MuiAlert-icon": { color: "#555" }, 
+     "& .MuiAlert-message": { padding: 0, fontSize: "0.875rem", lineHeight: 1.5 },
+};
+
+```
+
 
 > **Warning:** You have opted out of receiving QR Code delivery information.
 
