@@ -339,7 +339,7 @@ const messageSender = async (req) => {
 
     return { status: true };
   } catch (error) {
-    console.error(`${Date.now()} - WhatsApp sender error:`, error);
+    console.error(`${Date.now()} - WhatsApp sender error:`, error); 
     // You can decide whether to return false or not here.
   }
 };
@@ -470,7 +470,7 @@ async function sendMessageToPhone(
         throw new Error(`Unsupported template type: ${templateType}`);
     }
 
-    // const result = await twilioClient.messages.create(messageOptions);
+    const result = await twilioClient.messages.create(messageOptions);
     
     await Promise.resolve(
       db
