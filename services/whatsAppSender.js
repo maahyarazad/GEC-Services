@@ -251,14 +251,14 @@ const messageSender = async (req) => {
           return null;
         }
 
+        return await sendMessageToPhone(
+          el.phone,
+          template,
+          payload,
+          el,
+          eventId
+        );
         if (process.env.ENVIRONMENT === "PRODUCTION") {
-            return await sendMessageToPhone(
-              el.phone,
-              template,
-              payload,
-              el,
-              eventId
-            );
         }
       } catch (err) {
         console.error(`${Date.now()} - Error sending message to ${el.phone}:`, err);
@@ -322,8 +322,19 @@ const messageSender = async (req) => {
         }
       }
     } else {
-      const enrichedPhoneList = await enrichPhoneListWithContactData(phoneList, db);
-      await Promise.all(enrichedPhoneList.map((x) => safeSendMessage(x, eventId)));
+
+        const templateType = Object.keys(template?.types)?.[0];
+        const enrichedPhoneList = await enrichPhoneListWithContactData(phoneList, db);
+        
+        if (templateType && templateType === 'twilio/media') {
+            await Promise.all(
+                enrichedPhoneList.map(async (x) => {
+                    x.qr_code_url = await generateQR_WhatsApp(Number(x.contactId), Number(eventId));
+                })
+            );
+        }
+
+        await Promise.all(enrichedPhoneList.map((x) => safeSendMessage(x, eventId)));
     }
 
     return { status: true };
@@ -459,7 +470,7 @@ async function sendMessageToPhone(
         throw new Error(`Unsupported template type: ${templateType}`);
     }
 
-    const result = await twilioClient.messages.create(messageOptions);
+    // const result = await twilioClient.messages.create(messageOptions);
     
     await Promise.resolve(
       db
