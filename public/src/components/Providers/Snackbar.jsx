@@ -35,6 +35,19 @@ const successAlertSx = {
     },
 };
 
+const warningAlertSx = {
+    background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+    border: "1px solid rgba(217, 119, 6, 0.3)",
+    borderLeft: "4px solid #d97706",
+    color: "#7a5b00",
+    fontWeight: 500,
+    borderRadius: "8px",
+    alignItems: "center",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
+    "& .MuiAlert-icon": { color: "#d97706" },
+    "& .MuiAlert-message": { padding: 0, fontSize: "0.875rem", lineHeight: 1.5 },
+};
+
 const SnackbarContext = createContext();
 
 function SlideTransition(props) {
@@ -104,6 +117,22 @@ export const SnackbarProvider = ({ children, useGECStyle = false }) => {
         </Snackbar>
     );
 
+    // ── Warning snackbar ──────────────────────────────────────────────────
+    const warningSnackbar = (
+        <Snackbar
+            TransitionComponent={SlideTransition}
+            anchorOrigin={{ vertical: "top", horizontal: isLargeScreen ? "right" : "center" }}
+            open={open}
+            autoHideDuration={5000}
+            onClose={handleClose}
+            sx={{ zIndex: 1400, top: { xs: 16, sm: 24 } }}
+        >
+            <Alert onClose={handleClose} severity="warning" sx={warningAlertSx}>
+                {message}
+            </Alert>
+        </Snackbar>
+    );
+
     // ── GEC styled snackbar ───────────────────────────────────────────────
     const gecSnackbar = (
         <Snackbar
@@ -142,7 +171,9 @@ export const SnackbarProvider = ({ children, useGECStyle = false }) => {
                 ? gecSnackbar
                 : messageType === "success"
                     ? successSnackbar
-                    : defaultSnackbar}
+                    : messageType === "warning"
+                        ? warningSnackbar
+                        : defaultSnackbar}
         </SnackbarContext.Provider>
     );
 };

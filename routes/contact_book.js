@@ -91,6 +91,7 @@ router.post("/api/contacts/notes/by-ids", (req, res) => {
   return res.json({ status: true, data });
 });
 
+
 // Batch fetch notes by phone → [{ phone, note_body }]
 // Normalizes both input and stored phones so WaId values (no + or spaces) match contact_book entries.
 router.post("/api/contacts/notes/by-phones", (req, res) => {

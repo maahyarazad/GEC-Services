@@ -56,5 +56,30 @@ async function generateQR_WhatsApp(contactId, eventId) {
     }
 }
 
+/**
+ * Check whether a QR code PNG has actually been generated for a contact/event
+ * by looking for the file in `qr_files/`.
+ *
+ * @param {number} contactId - contact_book_id
+ * @param {number} eventId   - event_id
+ * @returns {boolean} whether the QR image file exists
+ */
+async function check_generateQR_WhatsApp(contactId, eventId) {
 
-module.exports = { generateQRWithText, generateQR_WhatsApp };
+    const tempPath = path.join(__dirname, '..', 'qr_files');
+
+    if (!fs.existsSync(tempPath)) {
+        fs.mkdirSync(tempPath, { recursive: true });
+    }
+
+    const filePath = path.join(tempPath, `${eventId}-${contactId}.png`);
+    try {
+        return fs.existsSync(filePath);
+    } catch (error) {
+        console.error('Error checking QR file:', error);
+        return false;
+    }
+}
+
+
+module.exports = { generateQRWithText, generateQR_WhatsApp, check_generateQR_WhatsApp };
