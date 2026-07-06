@@ -23,6 +23,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
     const [activeMemberPhones, setActiveMemberPhones] = useState(new Map());
     const [clubtimeHistory, setClubtimeHistory] = useState(new Map());
     const [guestNotes, setGuestNotes] = useState(new Map());
+    const [guestQrCodes, setGuestQrCodes] = useState(new Map());
 
     const fetchGuestNotes = useCallback((signal) => {
         const ids = selectedGuestList.map(c => c.id).filter(Boolean);
@@ -36,11 +37,32 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
             .catch((e) => { if (e.name !== 'AbortError') console.error(e); });
     }, [selectedGuestList]);
 
+    const fetchQrCodes = useCallback((signal) => {
+        const ids = selectedGuestList.map(c => c.id).filter(Boolean);
+        if (!ids.length) { setGuestQrCodes(new Map()); return; }
+        fetch(`${import.meta.env.VITE_SERVERURL}/api/events/qr-code/by-ids`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+            body: JSON.stringify({ ids:ids, eventId : eventId }), signal,
+        })
+            .then(r => r.json())
+            .then(d => { if (d.status) {
+                setGuestQrCodes(new Map(d.data.map(n => [n.contact_book_id, n.qr])));
+                }
+            })
+            .catch((e) => { if (e.name !== 'AbortError') console.error(e); });
+    }, [selectedGuestList, eventId]);
+
     useEffect(() => {
         const controller = new AbortController();
         fetchGuestNotes(controller.signal);
         return () => controller.abort();
     }, [fetchGuestNotes, guestListLoading]);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchQrCodes(controller.signal);
+        return () => controller.abort();
+    }, [fetchQrCodes, guestListLoading]);
 
     const [notepadOpen, setNotepadOpen] = useState(false);
     const [notepadContactId, setNotepadContactId] = useState(null);
@@ -122,8 +144,8 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest }) {
 
     // Column definitions rebuild only when their inputs change, not every render.
     const columns = useMemo(
-        () => guestListColumns({ onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, onOpenNotepad: handleOpenNotepad, notes: guestNotes }),
-        [onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, handleOpenNotepad, guestNotes]
+        () => guestListColumns({ onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, onOpenNotepad: handleOpenNotepad, notes: guestNotes, guestQrCodes: guestQrCodes}),
+        [onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, handleOpenNotepad, guestNotes, guestQrCodes]
     );
 
     return (

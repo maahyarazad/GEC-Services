@@ -329,7 +329,7 @@ export const contactBookColumn = ({ onModifyContact, onDeleteContact, onSwitchBl
     }
 
 ];
-export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, onOpenNotepad, notes }) => [
+export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, onOpenNotepad, notes, guestQrCodes }) => [
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'type', headerName: 'Type', width: 110, filterable: true },
     { field: 'title', headerName: 'Title', width: 70, filterable: true },
@@ -382,6 +382,18 @@ export const guestListColumns = ({ onGuestAttend, onRemoveGuest, activeMemberPho
             if (!member) return null;
             return (
                 <Tooltip title={memberTooltip(member)} slotProps={slotPropsStyle} arrow>
+                    <BiSolidCheckCircle size={22} color="green" />
+                </Tooltip>
+            );
+        },
+    },
+    {
+        field: 'qr', headerName: 'QR Code', width: 79, filterable: false, sortable: false,
+        renderCell: (params) => {
+            const qr = guestQrCodes?.get(params.row.id);
+            if (!qr) return null;
+            return (
+                <Tooltip title="QR code generated" slotProps={slotPropsStyle} arrow>
                     <BiSolidCheckCircle size={22} color="green" />
                 </Tooltip>
             );

@@ -1,5 +1,5 @@
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { FaWhatsapp } from "react-icons/fa";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -663,6 +663,20 @@ const WhatsappBroadcast = () => {
 
     }, [data]);
 
+    // Memoized checklist dataset of WhatsApp media templates, built from the
+    // /api/whatsapp/list response. Only templates whose type is "twilio/media"
+    // are included, exposed as { label: <template name>, value: <contentSid> }.
+    const mediaTemplates = useMemo(() => {
+        if (!Array.isArray(data)) return [];
+        return data.reduce((acc, template) => {
+            const templateType = template?.types ? Object.keys(template.types)[0] : null;
+            if (templateType && templateType === "twilio/media") {
+                acc.push({ label: template.friendlyName, value: template.sid });
+            }
+            return acc;
+        }, []);
+    }, [data]);
+
 
 
     const handleSubmit = (e) => {
@@ -1271,6 +1285,7 @@ const WhatsappBroadcast = () => {
                 <GuestListPanel
                     onGuestAttend={onGuestAttend}
                     onRemoveGuest={onRemoveGuestRequest}
+                    mediaTemplates={mediaTemplates}
                 />
             </SlideMenu>
 

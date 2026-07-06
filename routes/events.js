@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const dbService = require("../services/dbService");
+const {check_generateQR_WhatsApp} = require("../services/qrGenerator");
+
+
 const db = dbService.getDB();
 // ── PUT /api/events  – update an existing event by id ──────────────────────
 router.put("/api/events", (req, res) => {
@@ -169,6 +172,23 @@ router.delete("/api/events/:id", (req, res) => {
     console.error(`${Date.now()} - Error in DELETE /api/events:`, error);
     return res.status(500).json({ status: false, message: error.message });
   }
+});
+
+
+router.post("/api/events/qr-code/by-ids",  async (req, res) => {
+  const { ids } = req.body;
+  const { eventId } = req.body;
+
+
+  if (!Array.isArray(ids) || !ids.length) return res.json({ status: true, data: [] });
+
+const data = await Promise.all(
+            ids.map(async (id) => {
+                
+                const result = await check_generateQR_WhatsApp(id, eventId?.id);
+                return {contact_book_id: id, qr : result}
+        }));
+  return res.json({ status: true, data });
 });
 
 module.exports = router;
