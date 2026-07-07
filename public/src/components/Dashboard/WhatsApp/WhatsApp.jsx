@@ -36,7 +36,7 @@ import ContactBookDataGrid from './ContactBookDataGrid';
 import ViewModeButtonGroup from "./ViewModeButtonGroup";
 import EventSection from '../../Sections/EventSection';
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
-import { setEvents, getShouldRefetch, clearRefetch, getSelectedEvent, triggerRefetchGuestList } from "../../../features/eventSlice";
+import { setEvents, getShouldRefetch, clearRefetch, getSelectedEvent } from "../../../features/eventSlice";
 import { SiGooglemaps } from "react-icons/si";
 import UpdateMapUrl from './UpdateMapUrl';
 import TwilioCreditWarning from './TwilioCreditWarning';
@@ -494,7 +494,8 @@ const WhatsappBroadcast = () => {
             if (!response.ok) {
                 showSnackbar(responseData.message, 'error');
             } else {
-                dispatch(triggerRefetchGuestList());
+                // Guest list refreshes via the server's real-time `guestList:refetch`
+                // broadcast (see WebSocketProvider) — no local dispatch needed.
                 showSnackbar(responseData.message || 'Attendance marked complete', 'success');
             }
 
@@ -562,7 +563,8 @@ const WhatsappBroadcast = () => {
             if (!response.ok) {
                 showSnackbar(responseData.message || 'Failed to remove guest', 'error');
             } else {
-                dispatch(triggerRefetchGuestList());
+                // Guest list refreshes via the server's real-time `guestList:refetch`
+                // broadcast (see WebSocketProvider) — no local dispatch needed.
                 showSnackbar(responseData.message || 'Guest removed successfully', 'success');
             }
 

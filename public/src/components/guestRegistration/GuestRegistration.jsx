@@ -22,9 +22,6 @@ import Container from '@mui/material/Container';
 
 import { useSnackbar } from '../Providers/Snackbar';
 
-import { useAppDispatch } from '../../store/hooks';
-import { triggerRefetchGuestList } from '../../features/eventSlice';
-
 
 
 const validationSchema = Yup.object({
@@ -38,7 +35,6 @@ const validationSchema = Yup.object({
 const guestCode = new URLSearchParams(location.search).get("guest-code");
     console.log(guestCode);
     const {showSnackbar} = useSnackbar();
-    const dispatch = useAppDispatch();
 
     const passkey = 1234;
     const initialValues = {
@@ -128,9 +124,9 @@ const guestCode = new URLSearchParams(location.search).get("guest-code");
             
             if (response.status === 200) {
 
-                // Registration succeeded — signal the dashboard's guest list to
-                // refetch so GuestListPanel reflects the updated attendance progress.
-                dispatch(triggerRefetchGuestList());
+                // Registration succeeded. The server broadcasts `guestList:refetch`
+                // over WebSocket, so operators' dashboards refresh in real time
+                // (this guest page is outside the dashboard's socket scope).
                 showSnackbar(response_data.message, 'success');
                 return;
             }
@@ -145,7 +141,7 @@ const guestCode = new URLSearchParams(location.search).get("guest-code");
         } finally {
             setLoading(false);
         }
-    }, [query, guestUser, dispatch]);
+    }, [query, guestUser]);
 
 
     // ✅ 2. useEffect calls the memoized function

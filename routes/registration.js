@@ -450,6 +450,8 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
 
       record.metadata_modifiedAt = formatDateToMySQL(new Date(Date.now()));
       dbService.update(table_name, record.id, record);
+      // A guest completing registration should refresh operators' guest lists.
+      req.app.get("io")?.emit("guestList:refetch", {});
       return res.status(200).json({
         status: true,
         message:
@@ -516,6 +518,8 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
           email: member.email,
           event: registration_config.page,
         });
+        // A guest completing registration should refresh operators' guest lists.
+        req.app.get("io")?.emit("guestList:refetch", {});
         return res.json({
           status: true,
           message:

@@ -361,6 +361,9 @@ router.get("/api/contacts/add-to-guest-list", async (req, res) => {
       event_id: Number(eventId),
     });
 
+    // Broadcast so every connected dashboard refreshes its guest list in real time.
+    req.app.get("io")?.emit("guestList:refetch", { eventId: Number(eventId) });
+
     res.status(200).json({
       status: true,
       data: result,
@@ -402,6 +405,9 @@ router.patch("/api/contacts/complete-attendance", async (req, res) => {
       });
     }
 
+    // Broadcast so every connected dashboard refreshes its guest list in real time.
+    req.app.get("io")?.emit("guestList:refetch", { eventId: Number(eventId) });
+
     res.status(200).json({
       status: true,
       message: "Attendance marked complete",
@@ -440,6 +446,9 @@ router.delete("/api/contacts/remove-guest", (req, res) => {
         .status(404)
         .json({ status: false, message: "Guest not found" });
     }
+
+    // Broadcast so every connected dashboard refreshes its guest list in real time.
+    req.app.get("io")?.emit("guestList:refetch", { eventId: Number(eventId) });
 
     res.status(200).json({
       status: true,

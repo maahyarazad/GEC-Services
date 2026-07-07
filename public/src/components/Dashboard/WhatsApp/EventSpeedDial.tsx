@@ -7,8 +7,6 @@ import Typography from '@mui/material/Typography';
 import { TbClipboardCheck } from "react-icons/tb";
 import { FaCheckCircle } from "react-icons/fa";
 import { FaExclamationCircle } from "react-icons/fa";
-import { useAppDispatch } from '../../../store/hooks';
-import { triggerRefetchGuestList } from '../../../features/eventSlice';
 export interface Event {
     id: string | number;
     title: string;
@@ -27,10 +25,10 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
     const [failedEventId, setFailedEventId] = React.useState<Number>();
     const successTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const failTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-    const dispatch = useAppDispatch();
 
-    // Stable identity (deps only on the stable `dispatch`) so the memoized event
-    // list below isn't rebuilt on every render.
+    // Stable identity so the memoized event list below isn't rebuilt on every
+    // render. On success the guest list refreshes via the server's real-time
+    // `guestList:refetch` broadcast (see WebSocketProvider) — no local dispatch.
     const handleAddToGuestList = useCallback(async (contactId: any, eventId: any) => {
         try {
             const response = await fetch(
@@ -38,9 +36,6 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
                 { credentials: "include" }
             );
             if (response.status === 200) {
-                // Guest added — refresh the dashboard's guest list so the panel
-                // reflects the new attendance progress.
-                dispatch(triggerRefetchGuestList());
                 setSuccessEventId(eventId);
                 if (successTimer.current) clearTimeout(successTimer.current); // clear any existing
                 successTimer.current = setTimeout(() => setSuccessEventId(undefined), 3000);
@@ -52,7 +47,7 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
         } catch (err) {
             console.error('Failed to fetch:', err);
         }
-    }, [dispatch]);
+    }, []);
 
     useEffect(() => {
         return () => {

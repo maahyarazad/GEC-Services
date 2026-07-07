@@ -107,3 +107,13 @@ Also review the use of `useMemo` and `useCallback` where stable references are n
 ```
 
 2. Optomize the `EventSpeedDial.tsx` component using useCallback and useMemo where provides a measurable benefit
+
+
+
+
+## 3. Enhance – eventSlice.ts
+
+### Description
+
+1. Review `eventSlice.ts`, including slices and selectors, and refactor the store to use WebSocket-based updates. Update all related components that use these selectors and slices.
+
