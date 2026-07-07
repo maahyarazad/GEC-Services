@@ -87,7 +87,7 @@ export default function PWAInstallPrompt() {
             sx={{
                 position: 'fixed',
                 bottom: 16,
-                right: 16,
+                left: 16,
                 zIndex: 2000,
                 textTransform: 'none',
                 borderRadius: 8,
