@@ -362,13 +362,15 @@ const WhatsappBroadcast = () => {
     const [notepadContactPhone, setNotepadContactPhone] = useState(null);
     const [notepadContactName, setNotepadContactName] = useState('');
     const handleOpenNotepad = (row) => { setNotepadContactId(row.id); setNotepadContactPhone(null); setNotepadContactName(`${row.first_name ?? ''} ${row.last_name ?? ''}`.trim()); setNotepadOpen(true); };
-    const handleOpenNotepadByPhone = (phone, name) => { setNotepadContactId(null); setNotepadContactPhone(phone); setNotepadContactName(name ?? ''); setNotepadOpen(true); };
+    // Stable across renders (only calls setState) so the memoized ResponseItem
+    // rows aren't invalidated every time WhatsApp re-renders (e.g. polling).
+    const handleOpenNotepadByPhone = useCallback((phone, name) => { setNotepadContactId(null); setNotepadContactPhone(phone); setNotepadContactName(name ?? ''); setNotepadOpen(true); }, []);
 
-    const onViewJson = (value, type, full_name) => {
+    const onViewJson = useCallback((value, type, full_name) => {
 
         setViewJsonModal(true);
         setJSON_Value_Response_Log({ value, type, full_name });
-    }
+    }, []);
 
     const onViewHistory = (value, type) => {
 

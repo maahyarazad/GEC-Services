@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { memo, useRef, useState, useEffect } from 'react';
 import { Box, Typography, CircularProgress, TablePagination, InputBase } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { BiSolidCheckCircle } from 'react-icons/bi';
@@ -30,7 +30,10 @@ function formatTime(dateStr) {
     return date.toLocaleDateString([], { day: '2-digit', month: 'short' });
 }
 
-function ResponseItem({ row, activeMemberPhones, notes, onViewJson, onOpenNotepad }) {
+// Memoized list row: typing in the search box re-renders the parent list on
+// every keystroke, but each row's props (row / maps / stable callbacks) are
+// unchanged — memo keeps all other rows from re-rendering during the search.
+const ResponseItem = memo(function ResponseItem({ row, activeMemberPhones, notes, onViewJson, onOpenNotepad }) {
     const longPressTimer = useRef(null);
     const didLongPress = useRef(false);
 
@@ -145,7 +148,7 @@ function ResponseItem({ row, activeMemberPhones, notes, onViewJson, onOpenNotepa
             </Box>
         </Box>
     );
-}
+});
 
 const SEARCH_DEBOUNCE_MS = 800;
 const MOBILE_SEARCH_FILTER_ID = 'mobile-name-search';

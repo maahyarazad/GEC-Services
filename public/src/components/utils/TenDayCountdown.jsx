@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Animate each digit independently
-const AnimatedDigit = ({ digit }) => {
+// Animate each digit independently.
+// Memoized: the countdown re-renders every second, but a given digit only
+// changes occasionally — memo skips the re-render/animation for unchanged digits.
+const AnimatedDigit = memo(function AnimatedDigit({ digit }) {
   const [prevDigit, setPrevDigit] = useState(digit);
   const [animKey, setAnimKey] = useState(0);
 
@@ -35,10 +37,12 @@ const AnimatedDigit = ({ digit }) => {
       </motion.div>
     </AnimatePresence>
   );
-};
+});
 
-// Display each time unit (e.g., hours) as two animated digits
-const TimeUnit = ({ label, value, separator }) => {
+// Display each time unit (e.g., hours) as two animated digits.
+// Memoized: on each 1s tick only the units whose value actually changed
+// (always seconds, rarely minutes/hours/days) need to re-render.
+const TimeUnit = memo(function TimeUnit({ label, value, separator }) {
   const digits = value.toString().padStart(2, "0").split("");
 
   return (
@@ -62,7 +66,7 @@ const TimeUnit = ({ label, value, separator }) => {
       </div>
     </>
   );
-};
+});
 
 // Main countdown component
 const CountDownComponent = ({ props }) => {
