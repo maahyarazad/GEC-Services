@@ -117,3 +117,10 @@ Also review the use of `useMemo` and `useCallback` where stable references are n
 
 1. Review `eventSlice.ts`, including slices and selectors, and refactor the store to use WebSocket-based updates. Update all related components that use these selectors and slices.
 
+
+## 3. Enhance – eventSlice.ts
+
+### Description
+
+1. Review `eventSlice.ts`, including slices and selectors, and refactor the store to use WebSocket-based updates. Update all related components that use these selectors and slices.
+

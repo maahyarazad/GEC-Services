@@ -895,6 +895,9 @@ router.patch("/registration/contacts/complete-attendance", authorization_middlew
       });
     }
 
+    // Broadcast so every connected dashboard refreshes its guest list in real time.
+    req.app.get("io")?.emit("guestList:refetch", { eventId: Number(eventId) });
+
     res.status(200).json({
       status: true,
       message: "Attendance marked complete",
