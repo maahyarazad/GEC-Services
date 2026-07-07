@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
@@ -7,6 +7,8 @@ import Typography from '@mui/material/Typography';
 import { TbClipboardCheck } from "react-icons/tb";
 import { FaCheckCircle } from "react-icons/fa";
 import { FaExclamationCircle } from "react-icons/fa";
+import { useAppDispatch } from '../../../store/hooks';
+import { triggerRefetchGuestList } from '../../../features/eventSlice';
 export interface Event {
     id: string | number;
     title: string;
@@ -25,14 +27,20 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
     const [failedEventId, setFailedEventId] = React.useState<Number>();
     const successTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const failTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const dispatch = useAppDispatch();
 
-    const handleAddToGuestList = async (contactId: any, eventId: any) => {
+    // Stable identity (deps only on the stable `dispatch`) so the memoized event
+    // list below isn't rebuilt on every render.
+    const handleAddToGuestList = useCallback(async (contactId: any, eventId: any) => {
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/api/contacts/add-to-guest-list?contactId=${contactId}&eventId=${eventId}`,
                 { credentials: "include" }
             );
             if (response.status === 200) {
+                // Guest added — refresh the dashboard's guest list so the panel
+                // reflects the new attendance progress.
+                dispatch(triggerRefetchGuestList());
                 setSuccessEventId(eventId);
                 if (successTimer.current) clearTimeout(successTimer.current); // clear any existing
                 successTimer.current = setTimeout(() => setSuccessEventId(undefined), 3000);
@@ -44,7 +52,7 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
         } catch (err) {
             console.error('Failed to fetch:', err);
         }
-    };
+    }, [dispatch]);
 
     useEffect(() => {
         return () => {
@@ -55,26 +63,67 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
     }, []);
 
     // /api/contacts/add-to-guest-list
-    const cancelClose = () => {
+    const cancelClose = useCallback(() => {
         if (closeTimer.current) {
             clearTimeout(closeTimer.current);
             closeTimer.current = null;
         }
-    };
+    }, []);
 
-    const scheduleClose = () => {
+    const scheduleClose = useCallback(() => {
         cancelClose();
         closeTimer.current = setTimeout(() => setOpen(false), 100);
-    };
+    }, [cancelClose]);
 
-    const handleTriggerEnter = () => {
+    const handleTriggerEnter = useCallback(() => {
         cancelClose();
         if (anchorRef.current) {
             const rect = anchorRef.current.getBoundingClientRect();
             setPos({ top: rect.top - 100, left: rect.left });
         }
         setOpen(true);
-    };
+    }, [cancelClose]);
+
+    // Memoized so the popover's event rows are only rebuilt when their actual
+    // inputs change — not on every hover-driven `setPos` / open-close re-render.
+    const renderedEvents = useMemo(() => (
+        _events?.length > 0 && _events.map((event) => (
+            <div key={event.id}>
+                <Box onClick={() => handleAddToGuestList(params.row.id, event.id)}
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        px: 1.5,
+                        py: 0.75,
+                        backgroundColor: '#888c8f',
+                        border: '0.5px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1.5,
+                        cursor: 'pointer',
+                        minWidth: 160,
+                        transition: 'background 0.15s',
+                        '&:hover': {
+                            color: '#585E62',
+
+                        },
+                    }}
+                >
+                    {successEventId === event.id
+                        ? <FaCheckCircle size={15} color="green" />
+                        : <></>
+                    }
+                    {failedEventId === event.id
+                        ? <FaExclamationCircle size={15} color="red" />
+                        : <></>
+                    }
+                    <Typography sx={{ fontSize: 13, fontWeight: 500, color: 'white' }} >
+                        {`Add ${params.row.first_name} to ${event.title}’s guest list`}
+                    </Typography>
+                </Box>
+            </div>
+        ))
+    ), [_events, params, successEventId, failedEventId, handleAddToGuestList]);
 
     return (
         <>
@@ -111,42 +160,7 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
                         onMouseEnter={cancelClose}
                         onMouseLeave={scheduleClose}
                     >
-                        {_events?.length > 0 && _events.map((event) => (
-                            <div key={event.id}>
-                                <Box onClick={() => handleAddToGuestList(params.row.id, event.id)}
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 1,
-                                        px: 1.5,
-                                        py: 0.75,
-                                        backgroundColor: '#888c8f',
-                                        border: '0.5px solid',
-                                        borderColor: 'divider',
-                                        borderRadius: 1.5,
-                                        cursor: 'pointer',
-                                        minWidth: 160,
-                                        transition: 'background 0.15s',
-                                        '&:hover': {
-                                            color: '#585E62',
-
-                                        },
-                                    }}
-                                >
-                                    {successEventId === event.id
-                                        ? <FaCheckCircle size={15} color="green" />
-                                        : <></>
-                                    }
-                                    {failedEventId === event.id
-                                        ? <FaExclamationCircle size={15} color="red" />
-                                        : <></>
-                                    }
-                                    <Typography sx={{ fontSize: 13, fontWeight: 500, color: 'white' }} >
-                                        {`Add ${params.row.first_name} to ${event.title}’s guest list`}
-                                    </Typography>
-                                </Box>
-                            </div>
-                        ))}
+                        {renderedEvents}
                     </Box>,
                     document.body
                 )}
