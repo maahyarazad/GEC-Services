@@ -1,6 +1,9 @@
 {
+  "id": "/",
   "name": "German Emirates Club Services",
   "short_name": "GEC Services",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png?v=1.0.0",
@@ -17,5 +20,12 @@
   ],
   "theme_color": "#ffffff",
   "background_color": "#ffffff",
-  "display": "standalone"
+  "display": "standalone",
+  "prefer_related_applications": false,
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://services.german-emirates-club.com/site.webmanifest"
+    }
+  ]
 }
