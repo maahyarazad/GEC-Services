@@ -3,7 +3,7 @@ import EventSearch from './EventSearch';
 import {
     Box, Chip, CircularProgress, Typography,
     Dialog, DialogTitle, DialogContent, DialogActions,
-    Button, Checkbox, FormGroup, FormControlLabel,
+    Button,
 } from '@mui/material';
 import { getSelectedGuestList, getSelectedEvent, getGuestListLoading } from '../../../features/eventSlice';
 import { useAppSelector } from '../../../store/hooks';
@@ -24,14 +24,13 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, mediaTemp
     // depends on this rather than the (possibly re-created) object reference.
     const eid = eventId?.id;
 
-    // ── WhatsApp media-template selection (opens when an event is clicked) ────
-    const [templateModalOpen, setTemplateModalOpen] = useState(false);
-    const [checkedSids, setCheckedSids] = useState(() => new Set());
-    const [selectedContentSids, setSelectedContentSids] = useState([]);
-    // Gate: hold every guest-list resource request until the operator resolves
-    // the template modal (either Skips or Confirms a selection).
-    const [choiceMade, setChoiceMade] = useState(false);
-    const lastPromptedEventRef = useRef(null);
+    // ── WhatsApp media-template selection ────────────────────────────────────
+    // Every available `twilio/media` template is always sent for QR Code
+    // delivery — the operator is no longer prompted to pick a subset.
+    const selectedContentSids = useMemo(
+        () => mediaTemplates.map((t) => t.value),
+        [mediaTemplates]
+    );
 
     // ── QR view modal ────────────────────────────────────────────────────────
     const [qrViewOpen, setQrViewOpen] = useState(false);
@@ -60,19 +59,14 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, mediaTemp
     const [notepadContactName, setNotepadContactName] = useState('');
 
     // Wipe EVERYTHING tied to an event the moment the selected event changes
-    // (or is cleared), so no stale data, selection, or open modal from the
-    // previous event can ever be shown against the new one. Requests are
-    // re-gated (choiceMade → false) until the template modal is resolved again.
+    // (or is cleared), so no stale data or open modal from the previous event
+    // can ever be shown against the new one.
     useEffect(() => {
         setActiveMemberPhones(new Map());
         setClubtimeHistory(new Map());
         setGuestNotes(new Map());
         setGuestQrCodes(new Map());
         setGuestQrGenerated(new Map());
-
-        setCheckedSids(new Set());
-        setSelectedContentSids([]);
-        setChoiceMade(false);
 
         setNotepadOpen(false);
         setNotepadContactId(null);
@@ -83,44 +77,6 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, mediaTemp
         revokeQrUrl();
         setQrViewUrl(null);
     }, [eid, revokeQrUrl]);
-
-    // Prompt the template checklist once per event, once its list has loaded.
-    // (State was already cleared by the reset effect above.) With no templates
-    // there is nothing to choose, so requests are released immediately.
-    useEffect(() => {
-        if (!eid || guestListLoading) return;
-        if (lastPromptedEventRef.current === eid) return;
-        lastPromptedEventRef.current = eid;
-        if (mediaTemplates.length) {
-            setTemplateModalOpen(true); // choiceMade stays false until resolved
-        } else {
-            setChoiceMade(true);        // nothing to pick — release the gate
-        }
-    }, [eid, guestListLoading, mediaTemplates.length]);
-
-    const toggleSid = useCallback((sid) => {
-        setCheckedSids((prev) => {
-            const next = new Set(prev);
-            next.has(sid) ? next.delete(sid) : next.add(sid);
-            return next;
-        });
-    }, []);
-
-    const handleConfirmTemplates = useCallback(() => {
-        const sids = [...checkedSids];
-        setSelectedContentSids(sids);
-        setTemplateModalOpen(false);
-        setChoiceMade(true); // release the held resource requests
-        showSnackbar(`${sids.length} media template${sids.length === 1 ? '' : 's'} selected for QR Code delivery.`, 'success');
-    }, [checkedSids, showSnackbar]);
-
-    const handleSkipTemplates = useCallback(() => {
-        setCheckedSids(new Set());
-        setSelectedContentSids([]);
-        setTemplateModalOpen(false);
-        setChoiceMade(true); // release the held resource requests
-        showSnackbar('Warning: You have opted out of receiving QR Code delivery information.', 'warning');
-    }, [showSnackbar]);
 
     // Number of guests who completed attendance — memoized so the chip label
     // doesn't re-scan the whole list on every render.
@@ -229,13 +185,11 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, mediaTemp
             .catch((e) => { if (e.name !== 'AbortError') console.error(e); });
     }, [guestPhones, guestFullNames, eventId]);
 
-    // All per-event resources are fetched together under a single AbortController
-    // once the template gate is open. They re-run when their inputs (the derived
-    // guest lookups / event / selected templates) change, and any in-flight
-    // request is aborted on cleanup — including when the gate closes on an
+    // All per-event resources are fetched together under a single AbortController.
+    // They re-run when their inputs (the derived guest lookups / event / templates)
+    // change, and any in-flight request is aborted on cleanup — including on an
     // event switch, so a premature fetch can never land against the new event.
     useEffect(() => {
-        if (!choiceMade) return;
         const controller = new AbortController();
         const { signal } = controller;
         fetchGuestNotes(signal);
@@ -244,7 +198,7 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, mediaTemp
         fetchActiveMembers(signal);
         fetchClubtimeHistory(signal);
         return () => controller.abort();
-    }, [choiceMade, fetchGuestNotes, fetchQrCodes, fetchQrGenerated, fetchActiveMembers, fetchClubtimeHistory]);
+    }, [fetchGuestNotes, fetchQrCodes, fetchQrGenerated, fetchActiveMembers, fetchClubtimeHistory]);
 
     // Revoke any leftover QR object URL if the component unmounts while open.
     useEffect(() => revokeQrUrl, [revokeQrUrl]);
@@ -359,50 +313,6 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, mediaTemp
                     onSaved={fetchGuestNotes}
                 />
             </Box>
-
-            {/* WhatsApp media-template checklist — shown when an event is opened */}
-            <Dialog open={templateModalOpen} onClose={handleSkipTemplates} fullWidth maxWidth="xs">
-                <DialogTitle>QR Code Delivery Templates</DialogTitle>
-                <DialogContent dividers>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                        Select one or more WhatsApp media templates to get QR codes delivery, or skip.
-                    </Typography>
-                    {mediaTemplates.length === 0 ? (
-                        <Typography variant="body2" color="text.secondary">
-                            No media templates available.
-                        </Typography>
-                    ) : (
-                        <FormGroup>
-                            {mediaTemplates.map((t) => (
-                                <FormControlLabel
-                                    key={t.value}
-                                    control={
-                                        <Checkbox
-                                            size="small"
-                                            checked={checkedSids.has(t.value)}
-                                            onChange={() => toggleSid(t.value)}
-                                        />
-                                    }
-                                    label={t.label}
-                                />
-                            ))}
-                        </FormGroup>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleSkipTemplates} color="inherit" sx={{ textTransform: 'none' }}>
-                        Skip
-                    </Button>
-                    <Button
-                        onClick={handleConfirmTemplates}
-                        variant="contained"
-                        disabled={checkedSids.size === 0}
-                        sx={{ textTransform: 'none' }}
-                    >
-                        Confirm
-                    </Button>
-                </DialogActions>
-            </Dialog>
 
             {/* QR code viewer */}
             <Dialog open={qrViewOpen} onClose={closeQrView} maxWidth="xs">
