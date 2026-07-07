@@ -107,7 +107,12 @@ app.use("/uploads", express.static(path.join(__dirname, "file_storage")));
 app.use("/apple_pass", express.static(path.join(__dirname, "pass_storage")));
 app.use("/qr_codes", express.static(path.join(__dirname, "qr_files")));
 app.use("/maps", express.static(path.join(__dirname, "maps")));
-app.use("/", express.static(path.join(__dirname, "public")));
+// `index: false` is required here: without it, express.static auto-serves
+// public/index.html for GET / before this request ever reaches
+// registerRoutes() or the app.get("*", serveWithOgTags) catch-all below,
+// so the root path would always miss the injected OG tags while every
+// other route (which has no matching static file) worked fine.
+app.use("/", express.static(path.join(__dirname, "public"), { index: false }));
 
 // Mount all application routers (see routes.js).
 registerRoutes(app);

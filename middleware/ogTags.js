@@ -1,9 +1,8 @@
 const path = require("path");
 const fs = require("fs").promises;
 
-const DEFAULT_OG_IMAGE = "https://services.german-emirates-club.com/uploads/og_image.png";
-
 const BASE_URL = "https://services.german-emirates-club.com";
+const DEFAULT_OG_IMAGE = `${BASE_URL}/uploads/og_image.png`;
 
 const DEFAULT_OG = {
   title: "Services - German Emirates Club",
@@ -11,6 +10,9 @@ const DEFAULT_OG = {
   image: DEFAULT_OG_IMAGE,
 };
 
+// Per-route OG overrides. Keys are matched against the normalized request
+// path (see normalizePath below), so "/membership" and "/membership/" both
+// resolve to the same entry.
 const OG_ROUTES = {
   "/": {
     title: "Services - German Emirates Club",
@@ -40,42 +42,70 @@ const OG_ROUTES = {
   },
 };
 
+/**
+ * Strip a single trailing slash so "/membership/" and "/membership" resolve
+ * to the same OG_ROUTES entry. The root path "/" is left untouched.
+ */
+function normalizePath(requestPath) {
+  if (requestPath.length > 1 && requestPath.endsWith("/")) {
+    return requestPath.replace(/\/+$/, "");
+  }
+  return requestPath;
+}
+
+function escapeHtml(value) {
+  // Order matters: "&" must be escaped first, or the entities added below
+  // would themselves get re-escaped.
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function buildOgTags({ title, description, url, image }) {
-  const escape = (s) => s.replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   return [
-    `<meta property="og:title" content="${escape(title)}" />`,
-    `<meta property="og:description" content="${escape(description)}" />`,
-    `<meta property="og:image" content="${escape(image)}" />`,
+    `<meta property="og:title" content="${escapeHtml(title)}" />`,
+    `<meta property="og:description" content="${escapeHtml(description)}" />`,
+    `<meta property="og:image" content="${escapeHtml(image)}" />`,
     `<meta property="og:image:width" content="1200" />`,
     `<meta property="og:image:height" content="630" />`,
-    `<meta property="og:url" content="${escape(url)}" />`,
+    `<meta property="og:url" content="${escapeHtml(url)}" />`,
     `<meta property="og:type" content="website" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
-    `<meta name="twitter:image" content="${escape(image)}" />`,
+    `<meta name="twitter:image" content="${escapeHtml(image)}" />`,
   ].join("\n    ");
+}
+
+// The built index.html doesn't change without a deploy (which restarts the
+// process), so read it from disk once and reuse it. If you ever hot-swap
+// the build without restarting the server, this cache would go stale -
+// in that case, remove the caching and just `await fs.readFile(...)` per request.
+let templatePromise = null;
+function loadTemplate(indexPath) {
+  if (!templatePromise) {
+    templatePromise = fs.readFile(indexPath, "utf8");
+  }
+  return templatePromise;
 }
 
 async function serveWithOgTags(req, res) {
   const indexPath = path.join(__dirname, "../public", "index.html");
-  
-//   console.error('======req.path======')
-  console.error(req.path)
-//   console.error('======req.path======')
-//   console.error('======OG_ROUTES[req.path]======')
-  console.error(OG_ROUTES[req.path])
-//   console.error('======rOG_ROUTES[req.path]======')
-  const ogMeta = OG_ROUTES[req.path] ?? {
+  const routeKey = normalizePath(req.path);
+  const ogMeta = OG_ROUTES[routeKey] ?? {
     ...DEFAULT_OG,
     url: `${BASE_URL}${req.path}`,
   };
+
   try {
-    let html = await fs.readFile(indexPath, "utf8");
-    html = html.replace("</head>", `    ${buildOgTags(ogMeta)}\n  </head>`);
+    const template = await loadTemplate(indexPath);
+    const html = template.replace("</head>", `    ${buildOgTags(ogMeta)}\n  </head>`);
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.send(html);
-  } catch {
+  } catch (err) {
+    console.error(`serveWithOgTags: failed to build OG tags for ${req.path}`, err);
     res.sendFile(indexPath);
   }
 }
 
-module.exports = { serveWithOgTags };
+module.exports = { serveWithOgTags, normalizePath, buildOgTags };
