@@ -123,7 +123,10 @@ const guestCode = new URLSearchParams(location.search).get("guest-code");
 
             
             if (response.status === 200) {
-                
+
+                // Registration succeeded. The server broadcasts `guestList:refetch`
+                // over WebSocket, so operators' dashboards refresh in real time
+                // (this guest page is outside the dashboard's socket scope).
                 showSnackbar(response_data.message, 'success');
                 return;
             }

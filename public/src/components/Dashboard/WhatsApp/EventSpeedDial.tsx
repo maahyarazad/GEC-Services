@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
@@ -26,7 +26,10 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
     const successTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const failTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const handleAddToGuestList = async (contactId: any, eventId: any) => {
+    // Stable identity so the memoized event list below isn't rebuilt on every
+    // render. On success the guest list refreshes via the server's real-time
+    // `guestList:refetch` broadcast (see WebSocketProvider) — no local dispatch.
+    const handleAddToGuestList = useCallback(async (contactId: any, eventId: any) => {
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_SERVERURL}/api/contacts/add-to-guest-list?contactId=${contactId}&eventId=${eventId}`,
@@ -44,7 +47,7 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
         } catch (err) {
             console.error('Failed to fetch:', err);
         }
-    };
+    }, []);
 
     useEffect(() => {
         return () => {
@@ -55,26 +58,67 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
     }, []);
 
     // /api/contacts/add-to-guest-list
-    const cancelClose = () => {
+    const cancelClose = useCallback(() => {
         if (closeTimer.current) {
             clearTimeout(closeTimer.current);
             closeTimer.current = null;
         }
-    };
+    }, []);
 
-    const scheduleClose = () => {
+    const scheduleClose = useCallback(() => {
         cancelClose();
         closeTimer.current = setTimeout(() => setOpen(false), 100);
-    };
+    }, [cancelClose]);
 
-    const handleTriggerEnter = () => {
+    const handleTriggerEnter = useCallback(() => {
         cancelClose();
         if (anchorRef.current) {
             const rect = anchorRef.current.getBoundingClientRect();
             setPos({ top: rect.top - 100, left: rect.left });
         }
         setOpen(true);
-    };
+    }, [cancelClose]);
+
+    // Memoized so the popover's event rows are only rebuilt when their actual
+    // inputs change — not on every hover-driven `setPos` / open-close re-render.
+    const renderedEvents = useMemo(() => (
+        _events?.length > 0 && _events.map((event) => (
+            <div key={event.id}>
+                <Box onClick={() => handleAddToGuestList(params.row.id, event.id)}
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        px: 1.5,
+                        py: 0.75,
+                        backgroundColor: '#888c8f',
+                        border: '0.5px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1.5,
+                        cursor: 'pointer',
+                        minWidth: 160,
+                        transition: 'background 0.15s',
+                        '&:hover': {
+                            color: '#585E62',
+
+                        },
+                    }}
+                >
+                    {successEventId === event.id
+                        ? <FaCheckCircle size={15} color="green" />
+                        : <></>
+                    }
+                    {failedEventId === event.id
+                        ? <FaExclamationCircle size={15} color="red" />
+                        : <></>
+                    }
+                    <Typography sx={{ fontSize: 13, fontWeight: 500, color: 'white' }} >
+                        {`Add ${params.row.first_name} to ${event.title}’s guest list`}
+                    </Typography>
+                </Box>
+            </div>
+        ))
+    ), [_events, params, successEventId, failedEventId, handleAddToGuestList]);
 
     return (
         <>
@@ -111,42 +155,7 @@ export default function EventSpeedDial({ _events, params }: EventSpeedDialProps)
                         onMouseEnter={cancelClose}
                         onMouseLeave={scheduleClose}
                     >
-                        {_events?.length > 0 && _events.map((event) => (
-                            <div key={event.id}>
-                                <Box onClick={() => handleAddToGuestList(params.row.id, event.id)}
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 1,
-                                        px: 1.5,
-                                        py: 0.75,
-                                        backgroundColor: '#888c8f',
-                                        border: '0.5px solid',
-                                        borderColor: 'divider',
-                                        borderRadius: 1.5,
-                                        cursor: 'pointer',
-                                        minWidth: 160,
-                                        transition: 'background 0.15s',
-                                        '&:hover': {
-                                            color: '#585E62',
-
-                                        },
-                                    }}
-                                >
-                                    {successEventId === event.id
-                                        ? <FaCheckCircle size={15} color="green" />
-                                        : <></>
-                                    }
-                                    {failedEventId === event.id
-                                        ? <FaExclamationCircle size={15} color="red" />
-                                        : <></>
-                                    }
-                                    <Typography sx={{ fontSize: 13, fontWeight: 500, color: 'white' }} >
-                                        {`Add ${params.row.first_name} to ${event.title}’s guest list`}
-                                    </Typography>
-                                </Box>
-                            </div>
-                        ))}
+                        {renderedEvents}
                     </Box>,
                     document.body
                 )}

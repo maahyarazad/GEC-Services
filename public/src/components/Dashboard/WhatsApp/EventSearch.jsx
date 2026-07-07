@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
-import { getEvents, setSelectedEvent, getShouldRefetchGuestList, clearRefetchGuestList, getSelectedEvent, setSelectedGuestList, setGuestListLoading } from "../../../features/eventSlice";
+import { getEvents, setSelectedEvent, getGuestListRefetchNonce, getSelectedEvent, setSelectedGuestList, setGuestListLoading } from "../../../features/eventSlice";
 import { Box } from '@mui/material'
 const EventSearch = () => {
     const [loading, setLoading] = useState(false);
@@ -8,8 +8,14 @@ const EventSearch = () => {
     const [selectedItem, setSelectedItem] = useState('');
     const dispatch = useAppDispatch();
 
-    const shouldRefetch = useAppSelector(getShouldRefetchGuestList);
+    const refetchNonce = useAppSelector(getGuestListRefetchNonce);
     const eventId = useAppSelector(getSelectedEvent);
+
+    // Always hold the latest selected event so the nonce-driven refetch below
+    // targets the current event without having to list `eventId` as a dependency
+    // (which would cause an extra refetch on every event switch).
+    const eventIdRef = useRef(eventId);
+    useEffect(() => { eventIdRef.current = eventId; }, [eventId]);
 
     const events = useAppSelector(getEvents);
 
@@ -51,7 +57,6 @@ const EventSearch = () => {
             if (!controller.signal.aborted) {
                 setLoading(false);
                 dispatch(setGuestListLoading(false));
-                dispatch(clearRefetchGuestList());
             }
         }
     }, [dispatch]);
@@ -65,11 +70,15 @@ const EventSearch = () => {
         fetchGuestList(x.id);
     }, [dispatch, fetchGuestList]);
 
+    // Re-fetch the guest list whenever a refetch is requested. The nonce changes
+    // on every `triggerRefetchGuestList()` dispatch — including back-to-back
+    // requests — so refreshes are never coalesced or dropped. (nonce starts at 0,
+    // so no fetch fires on the initial mount.)
     useEffect(() => {
-        if (shouldRefetch && eventId?.id) {
-            fetchGuestList(eventId.id);
+        if (refetchNonce > 0 && eventIdRef.current?.id) {
+            fetchGuestList(eventIdRef.current.id);
         }
-    }, [shouldRefetch, eventId, fetchGuestList]);
+    }, [refetchNonce, fetchGuestList]);
 
 
 

@@ -22,7 +22,11 @@ interface EventState {
   events: Array<Event>;
   selectedGuestList: Array<GuestRow>;
   shouldRefetch: boolean;
-  shouldRefetchGuestList: boolean;
+  // Monotonic counter — bumped on every guest-list refetch request. A counter
+  // (rather than a sticky boolean) guarantees each request is a distinct value,
+  // so back-to-back requests are never coalesced/dropped and the consumer
+  // effect re-runs reliably every time.
+  guestListRefetchNonce: number;
   selectedEvent: Event | null;
   guestListLoading: boolean;
 }
@@ -31,7 +35,7 @@ const initialState: EventState = {
   events: [],
   selectedGuestList: [],
   shouldRefetch: false,
-  shouldRefetchGuestList: false,
+  guestListRefetchNonce: 0,
   selectedEvent: null,
   guestListLoading: false,
 };
@@ -62,13 +66,10 @@ const eventSlice = createSlice({
       state.shouldRefetch = true;
     },
     triggerRefetchGuestList(state) {
-      state.shouldRefetchGuestList = true;
+      state.guestListRefetchNonce += 1;
     },
     clearRefetch(state) {
       state.shouldRefetch = false;
-    },
-    clearRefetchGuestList(state) {
-      state.shouldRefetchGuestList = false;
     },
     setSelectedEvent(state, action: PayloadAction<Event>) {
       state.selectedEvent = action.payload;
@@ -103,7 +104,6 @@ export const {
   triggerRefetch,
   triggerRefetchGuestList,
   clearRefetch,
-  clearRefetchGuestList,
   setSelectedEvent,
   clearSelectedEvent,
   setSelectedGuestList,    // 👈 new
@@ -117,7 +117,7 @@ export const getEvents = (state: RootState) => state.events.events;
 export const getEventById = (id: string | number) => (state: RootState) =>
   state.events.events.find((e) => e.id === id);
 export const getShouldRefetch = (state: RootState) => state.events.shouldRefetch;
-export const getShouldRefetchGuestList = (state: RootState) => state.events.shouldRefetchGuestList;
+export const getGuestListRefetchNonce = (state: RootState) => state.events.guestListRefetchNonce;
 export const getSelectedEvent = (state: RootState) => state.events.selectedEvent;
 export const getSelectedGuestList = (state: RootState) => state.events.selectedGuestList;  // 👈 new
 export const getGuestListLoading = (state: RootState) => state.events.guestListLoading;

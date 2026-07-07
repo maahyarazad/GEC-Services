@@ -116,6 +116,9 @@ app.get("*", serveWithOgTags);
 
 // Attach websocket to same server
 const io = createWebSocketServer(server, allowedOrigins);
+// Expose the Socket.IO instance to route handlers via `req.app.get("io")`,
+// so REST mutations can broadcast real-time refresh events (e.g. guest list).
+app.set("io", io);
 imapPoller.start(io);
 
 // https://crontab.guru/

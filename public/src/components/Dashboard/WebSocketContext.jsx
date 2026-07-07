@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
+import { useAppDispatch } from "../../store/hooks";
+import { triggerRefetchGuestList } from "../../features/eventSlice";
 
 const WebSocketContext = createContext(null);
 
@@ -7,6 +9,7 @@ export const WebSocketProvider = ({ children }) => {
   const [data, setData] = useState(null);
   const [update, setUpdate] = useState(null);
   const socketRef = useRef(null);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     // ✅ Create Socket.IO client
@@ -23,10 +26,17 @@ export const WebSocketProvider = ({ children }) => {
     });
 
     socket.on("auth", (data) => {
-      
+
       setData(data);
     });
-    
+
+    // Real-time store update: the server broadcasts this whenever a guest-list
+    // mutation happens (add / attendance / remove / registration), so every
+    // connected dashboard refreshes without a manual, per-action local dispatch.
+    socket.on("guestList:refetch", () => {
+      dispatch(triggerRefetchGuestList());
+    });
+
   socket.on("invoice", (data) => {
       console.log("Received invoice:", data);
       
@@ -46,7 +56,7 @@ export const WebSocketProvider = ({ children }) => {
       console.log("🛑 Closing Socket.IO connection");
       socket.disconnect();
     };
-  }, []);
+  }, [dispatch]);
 
 
   const sendRequest = (event, payload, callback) => {
