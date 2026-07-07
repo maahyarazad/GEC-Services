@@ -3,7 +3,7 @@ import EventSearch from './EventSearch';
 import {
     Box, Chip, CircularProgress, Typography,
     Dialog, DialogTitle, DialogContent, DialogActions,
-    Button, useTheme, useMediaQuery,
+    Button,
 } from '@mui/material';
 import { getSelectedGuestList, getSelectedEvent, getGuestListLoading } from '../../../features/eventSlice';
 import { useAppSelector } from '../../../store/hooks';
@@ -19,11 +19,6 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, mediaTemp
     const eventId = useAppSelector(getSelectedEvent);
     const guestListLoading = useAppSelector(getGuestListLoading);
     const { showSnackbar } = useSnackbar();
-
-    // On mobile the grid is trimmed to a small, high-value subset of columns
-    // so the essential guest info stays legible without horizontal scrolling.
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     // Primitive event key — everything that only cares about "which event"
     // depends on this rather than the (possibly re-created) object reference.
@@ -247,16 +242,9 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, mediaTemp
     }, []);
 
     // Column definitions rebuild only when their inputs change, not every render.
-    // On mobile only the essential columns are kept (Type, First/Last Name,
-    // Active Member, QR Code, Actions) to avoid horizontal scrolling.
     const columns = useMemo(
-        () => {
-            const allColumns = guestListColumns({ onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, onOpenNotepad: handleOpenNotepad, notes: guestNotes, guestQrCodes, guestQrGenerated, onViewQr: handleViewQr });
-            if (!isMobile) return allColumns;
-            const mobileFields = new Set(['type', 'first_name', 'last_name', 'active_member', 'qr', '_']);
-            return allColumns.filter((col) => mobileFields.has(col.field));
-        },
-        [onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, handleOpenNotepad, guestNotes, guestQrCodes, guestQrGenerated, handleViewQr, isMobile]
+        () => guestListColumns({ onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, onOpenNotepad: handleOpenNotepad, notes: guestNotes, guestQrCodes, guestQrGenerated, onViewQr: handleViewQr }),
+        [onGuestAttend, onRemoveGuest, activeMemberPhones, clubtimeHistory, handleOpenNotepad, guestNotes, guestQrCodes, guestQrGenerated, handleViewQr]
     );
 
     return (
