@@ -19,6 +19,7 @@ import NProgress from 'nprogress';
 
 import NotFound from "./components/pages/NotFound";
 import Footer from "./components/utils/Footer";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import { WebSocketProvider } from "./components/Dashboard/WebSocketContext";
 import { Buffer } from 'buffer';
 window.Buffer = Buffer;
@@ -121,14 +122,6 @@ function App() {
         };
     }, []);
 
-    useEffect(() => {
-        const handler = (e) => {
-            e.preventDefault();
-            e.prompt();
-        };
-        window.addEventListener('beforeinstallprompt', handler);
-        return () => window.removeEventListener('beforeinstallprompt', handler);
-    }, []);
     return (
         <BrowserRouter>
             <SnackbarProvider>
@@ -137,6 +130,8 @@ function App() {
                         <Provider store={store}>
 
                             <AppRoutes />
+                            {/* Available on every route — offers PWA install when eligible. */}
+                            <PWAInstallPrompt />
                         </Provider>
                     </SlideModalProvider>
                 </AlertDialogProvider>
