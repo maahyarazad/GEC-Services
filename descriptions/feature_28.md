@@ -124,3 +124,13 @@ router.post("/api/events/qr-code/by-ids", async (req, res) => {
   return res.json({ status: true, data });
 });
 ```
+
+
+
+
+## Description
+
+In `GuestListPanel.jsx`, there is a section where the user is asked to select template IDs.
+
+Remove the entire part, and always send the template IDs so this is a part of the UI all the time now
+
