@@ -34,6 +34,23 @@ self.addEventListener("fetch", (event) => {
   if (event.request.mode !== "navigate") return;
 
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(SHELL_URL))
+    (async () => {
+      try {
+        const response = await fetch(event.request);
+        // Refresh the cached shell on every successful navigation. Without this
+        // the copy stored at install time is never updated, so after a deploy
+        // the offline fallback would serve HTML referencing content-hashed
+        // assets that no longer exist — a blank page instead of a usable app.
+        if (response.ok) {
+          const cache = await caches.open(CACHE);
+          cache.put(SHELL_URL, response.clone());
+        }
+        return response;
+      } catch {
+        const cachedShell = await caches.match(SHELL_URL);
+        // Nothing cached and no network: let the browser show its offline page.
+        return cachedShell ?? Response.error();
+      }
+    })()
   );
 });

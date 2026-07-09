@@ -77,20 +77,40 @@ function buildOgTags({ title, description, url, image }) {
   ].join("\n    ");
 }
 
-// The built index.html doesn't change without a deploy (which restarts the
-// process), so read it from disk once and reuse it. If you ever hot-swap
-// the build without restarting the server, this cache would go stale -
-// in that case, remove the caching and just `await fs.readFile(...)` per request.
-let templatePromise = null;
-function loadTemplate(indexPath) {
-  if (!templatePromise) {
-    templatePromise = fs.readFile(indexPath, "utf8");
+// Static assets are content-hashed, so a request for one that no longer exists
+// means the client is holding a stale index.html. Answering those with the SPA
+// shell makes the browser reject an HTML body where it expected a JS module,
+// which surfaces as a blank page with no useful error. Fail them honestly
+// instead, so a bad deploy shows up as a 404 rather than a white screen.
+const ASSET_EXTENSIONS = new Set([
+  ".js", ".mjs", ".css", ".map", ".json", ".webmanifest",
+  ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".webp",
+  ".woff", ".woff2", ".ttf", ".eot",
+]);
+
+function isAssetRequest(requestPath) {
+  return ASSET_EXTENSIONS.has(path.extname(requestPath).toLowerCase());
+}
+
+// Cache the built index.html, but key the cache on the file's mtime so a deploy
+// that swaps the build without restarting the process picks up the new HTML on
+// the next request instead of serving the old asset hashes forever.
+let cached = { mtimeMs: null, html: null };
+async function loadTemplate(indexPath) {
+  const { mtimeMs } = await fs.stat(indexPath);
+  if (cached.mtimeMs !== mtimeMs) {
+    cached = { mtimeMs, html: await fs.readFile(indexPath, "utf8") };
   }
-  return templatePromise;
+  return cached.html;
 }
 
 async function serveWithOgTags(req, res) {
   const indexPath = path.join(__dirname, "../public", "index.html");
+
+  if (isAssetRequest(req.path)) {
+    return res.status(404).type("text/plain").send("Not found");
+  }
+
   const routeKey = normalizePath(req.path);
   const ogMeta = OG_ROUTES[routeKey] ?? {
     ...DEFAULT_OG,
