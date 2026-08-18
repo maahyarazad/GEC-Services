@@ -539,28 +539,58 @@ router.post("/complete-registration", upload.none(), async (req, res) => {
   }
 });
 
+/**
+ * Constant-time string comparison.
+ *
+ * A plain `===` on secrets leaks their length and, in principle, their prefix
+ * through response timing. Hashing both sides first means timingSafeEqual always
+ * gets equal-length buffers, so it cannot throw on a length mismatch and the
+ * comparison time is independent of the input.
+ */
+const safeEqual = (a, b) => {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+
+  const hashA = crypto.createHash("sha256").update(a, "utf8").digest();
+  const hashB = crypto.createHash("sha256").update(b, "utf8").digest();
+
+  return crypto.timingSafeEqual(hashA, hashB);
+};
+
 router.post("/admin/login", upload.none(), loginLimiter, (req, res) => {
   const { password } = req.body;
 
-  if (!password === process.env.VITE_ADMIN_PASSWORD) return res.status(401).json({ error: "Invalid password" });
-    const oneWeekInSeconds = 7 * 24 * 60 * 60;
-    const oneWeekInMilliseconds = oneWeekInSeconds * 1000;
+  const adminPassword = process.env.VITE_ADMIN_PASSWORD;
 
-    const token = jwt.sign(
-      { role: "admin", mapboxToken: process.env.VITE_APP_MAPBOX_TOKEN },
-      process.env.JWT_SECRET,
-      { expiresIn: `${oneWeekInSeconds}s` }
+  // Fail closed: without a configured secret there is nothing to authenticate
+  // against, so no request may be treated as an admin.
+  if (!adminPassword) {
+    console.error(
+      `${Date.now()} - VITE_ADMIN_PASSWORD is not configured; refusing admin login.`
     );
+    return res.status(500).json({ error: "Server misconfiguration" });
+  }
 
-    res.cookie("a-usr", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: oneWeekInMilliseconds,
-    });
+  if (!safeEqual(password, adminPassword)) {
+    return res.status(401).json({ error: "Invalid password" });
+  }
 
-    return res.json({ success: true });
-  
+  const oneWeekInSeconds = 7 * 24 * 60 * 60;
+  const oneWeekInMilliseconds = oneWeekInSeconds * 1000;
+
+  const token = jwt.sign(
+    { role: "admin", mapboxToken: process.env.VITE_APP_MAPBOX_TOKEN },
+    process.env.JWT_SECRET,
+    { expiresIn: `${oneWeekInSeconds}s` }
+  );
+
+  res.cookie("a-usr", token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: oneWeekInMilliseconds,
+  });
+
+  return res.json({ success: true });
 });
 
 // Auto login an admin user via an HMAC token generated server-side with GEC_SECRET.

@@ -426,3 +426,28 @@ CREATE TABLE clubtime_guests (
 -- CREATE INDEX idx_event_title ON clubtime_guests (event_title);
 -- CREATE INDEX idx_mobile      ON clubtime_guests (mobile);
 -- CREATE INDEX idx_name        ON clubtime_guests (name);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Knowledge Base (feature 001-admin-knowledge-base)
+--
+-- Records which admin tutorial topics get opened and watched, so we can tell
+-- which procedures administrators struggle with and which tutorials still need
+-- recording (FR-015).
+--
+-- topic_id is a catalogue id, not a foreign key: the catalogue is fixed in the
+-- application source, not stored in the database (FR-017).
+--
+-- Created idempotently at startup by routes/knowledge_base.js; repeated here so
+-- the schema is documented in one place with the rest.
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS knowledge_base_view_log (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  topic_id    TEXT    NOT NULL,                     -- catalogue id, e.g. 'whatsapp-guest-list'
+  event_type  TEXT    NOT NULL                      -- 'topic_opened' | 'video_played'
+              CHECK (event_type IN ('topic_opened', 'video_played')),
+  admin_user  TEXT,                                 -- from the verified JWT, never the request body
+  created_at  INTEGER NOT NULL                      -- epoch ms, matching this project's log convention
+);
+
+CREATE INDEX IF NOT EXISTS idx_kb_view_log_topic   ON knowledge_base_view_log (topic_id);
+CREATE INDEX IF NOT EXISTS idx_kb_view_log_created ON knowledge_base_view_log (created_at);

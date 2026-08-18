@@ -1,0 +1,122 @@
+.kb {
+  padding: 16px;
+  height: calc(100vh - 125px);
+  overflow: scroll;
+}
+.kb__header {
+  margin-bottom: 16px;
+}
+.kb__title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+.kb__subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+.kb__search {
+  margin: 12px 0 20px;
+  max-width: 420px;
+}
+.kb__group {
+  margin-bottom: 24px;
+}
+.kb__group-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b7280;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 8px;
+}
+.kb__empty {
+  padding: 32px 8px;
+  text-align: center;
+  color: #6b7280;
+}
+.kb__parent-context {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 8px 0 2px 12px;
+}
+
+.kb-topic {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+.kb-topic:hover {
+  background: #f9fafb;
+}
+.kb-topic--sub {
+  padding-left: 28px;
+}
+.kb-topic__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.kb-topic__title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 2px;
+}
+.kb-topic__summary {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+.kb-topic__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+.kb-topic__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.kb-video__frame {
+  width: 100%;
+  max-height: 70vh;
+  background: #000;
+  display: block;
+}
+.kb-video__error {
+  padding: 32px 16px;
+  text-align: center;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .kb {
+    padding: 12px 8px;
+    height: auto;
+  }
+  .kb__search {
+    max-width: 100%;
+  }
+  .kb-topic {
+    flex-wrap: wrap;
+  }
+  .kb-topic--sub {
+    padding-left: 16px;
+  }
+  .kb-topic__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .kb-video__frame {
+    max-height: 50vh;
+  }
+}/*# sourceMappingURL=KnowledgeBase.css.map */

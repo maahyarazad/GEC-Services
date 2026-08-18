@@ -103,6 +103,20 @@ app.use((req, res, next) => {
 
 // Auth + static assets must be registered before the application routes.
 app.use("/api/", authorize.authorize_admin);
+
+// Knowledge Base tutorial recordings live in file_storage/knowledge_base/, which
+// the /uploads static mount below would otherwise serve to anyone who knows a
+// filename — no session required. Those recordings walk through Twilio template
+// setup, guest-list handling and registration procedures, so they must not be
+// public (FR-020). They are served only by the authenticated route
+// GET /api/knowledge-base/videos/:videoId in routes/knowledge_base.js.
+//
+// This guard MUST stay above the express.static line: Express matches middleware
+// in registration order, so below it the static handler answers first and this
+// becomes dead code. 404 rather than 403 so the path does not confirm that a
+// knowledge-base directory exists.
+app.use("/uploads/knowledge_base", (_req, res) => res.sendStatus(404));
+
 app.use("/uploads", express.static(path.join(__dirname, "file_storage")));
 app.use("/apple_pass", express.static(path.join(__dirname, "pass_storage")));
 app.use("/qr_codes", express.static(path.join(__dirname, "qr_files")));

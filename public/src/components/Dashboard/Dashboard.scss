@@ -81,3 +81,58 @@
     padding: 0 !important;
   }
 }
+// ─────────────────────────────────────────────────────────────────────────────
+// "Back to Knowledge Base" — shown only when a section was reached via the
+// Knowledge Base jump control (?from=knowledge-base).
+//
+// It is absolutely positioned, and it lives INSIDE the content wrapper rather
+// than beside it. `.admin` sizes its children with >div:nth-of-type(1|2); a
+// third child inherits height:99% with no width rule, wraps onto a new flex
+// line and doubles the page height. Taking it out of flow is only half the
+// fix — nth-of-type still counts an absolutely-positioned sibling.
+//
+// z-index sits above SlideMenu (1000) on purpose: a jump to a panel
+// destination — ?view=guest-list, ?view=create-template — opens that panel
+// immediately, so a lower value would hide this control in exactly the case it
+// exists for. It stays below MUI's Dialog layer (1300) so real modals still
+// cover it.
+// ─────────────────────────────────────────────────────────────────────────────
+.kb-back-link.kb-back-link {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  z-index: 1200;
+
+  text-transform: none;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+  border-radius: 999px;
+  padding: 4px 14px;
+  min-width: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+
+  @media screen and (max-width: 768px) {
+    // Collapse to a circular icon. Section toolbars and the SlideMenu header
+    // both compete for the top edge on a phone, and a full-width pill there
+    // covers controls the admin still needs. Respect the notch inset so the
+    // button never lands under a rounded corner or status bar.
+    top: calc(6px + env(safe-area-inset-top, 0px));
+    right: calc(8px + env(safe-area-inset-right, 0px));
+
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
+
+    .kb-back-link__label {
+      // Hidden visually, still read out by screen readers via aria-label on
+      // the button itself.
+      display: none;
+    }
+
+    .MuiButton-startIcon {
+      margin: 0;
+    }
+  }
+}

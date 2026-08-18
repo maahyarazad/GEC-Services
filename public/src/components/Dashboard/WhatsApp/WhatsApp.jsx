@@ -7,12 +7,10 @@ import { Divider, useTheme, useMediaQuery } from "@mui/material";
 import { Button } from '@mui/material'
 import Modal from '../../Modal';
 import SlideMenu from '../../SlideMenu/SlideMenu';
-import { DataGrid } from '@mui/x-data-grid';
 import CustomDataGrid from '../../CustomDataGrid';
 import JSONPretty from 'react-json-pretty';
 import 'react-json-pretty/themes/monikai.css'; // optional styling
 import { useSnackbar } from '../../Providers/Snackbar';
-import { AiOutlineClear } from "react-icons/ai";
 import { RiContactsBook2Fill } from "react-icons/ri";
 import { RiUserReceivedFill } from "react-icons/ri";
 import { RiCheckDoubleFill } from "react-icons/ri";
@@ -29,8 +27,7 @@ import WhastAppTypeReport from '../Dashboard/WhastAppTypeReport';
 import WhastAppAttendanceTypeReport from '../Dashboard/WhastAppAttendanceTypeReport';
 import ContactBookMissingContentSidReport from '../Dashboard/ContactBookMissingContentSidReport';
 import { useNavigate, useLocation } from "react-router-dom";
-import FilterParams from '../FilterParams';
-import { MdInsights, MdPersonSearch } from "react-icons/md";
+import { MdInsights, MdPersonSearch, MdVpnKey } from "react-icons/md";
 import { PiUserCircleCheckDuotone } from "react-icons/pi";
 import ContactBookDataGrid from './ContactBookDataGrid';
 import ViewModeButtonGroup from "./ViewModeButtonGroup";
@@ -44,9 +41,9 @@ import { blueGrey } from '@mui/material/colors';
 import TwilioTemplateDataGrid from "./TwilioTemplateDataGrid";
 import CreateTwilioTemplate from "./CreateTwilioTemplate";
 import { SiTwilio } from "react-icons/si";
-import ActiveEventCard from "./ActiveEventCard";
 import GuestListPanel from "./GuestListPanel";
 import EventLogsPanel from "./EventLogsPanel";
+import RevealTwilioCredentials from "./RevealTwilioCredentials";
 import ResponseLogsMobileList from "./ResponseLogsMobileList";
 import NotepadModal from "./NotepadModal";
 import { BsPeopleFill, BsClockHistory } from "react-icons/bs";
@@ -71,22 +68,6 @@ const WhatsappBroadcast = () => {
 
     const dispatch = useAppDispatch();
     const shouldRefetch = useAppSelector(getShouldRefetch);
-
-    const [activeEvent, setActiveEvent] = useState(null);
-    const [activeEventLoading, setActiveEventLoading] = useState(true);
-
-    const fetchActiveEvent = useCallback(async () => {
-        try {
-            setActiveEventLoading(true);
-            const res = await fetch(`${import.meta.env.VITE_SERVERURL}/api/events/active`, { credentials: 'include' });
-            const json = await res.json();
-            setActiveEvent(json.event ?? null);
-        } catch (e) {
-            console.error('Failed to fetch active event:', e);
-        } finally {
-            setActiveEventLoading(false);
-        }
-    }, []);
 
     const fetchEvents = useCallback(async () => {
         try {
@@ -123,9 +104,8 @@ const WhatsappBroadcast = () => {
     useEffect(() => {
         if (shouldRefetch) {
             fetchEvents();
-            fetchActiveEvent();
         }
-    }, [shouldRefetch, fetchEvents, fetchActiveEvent]);
+    }, [shouldRefetch, fetchEvents]);
 
 
     const [contactList, setContactList] = useState([]);
@@ -164,6 +144,7 @@ const WhatsappBroadcast = () => {
 
 
     const { showSnackbar } = useSnackbar();
+    const [revealTwilioOpen, setRevealTwilioOpen] = useState(false);
     const [twilioCreditLow, setTwilioCreditLow] = useState(false);
     const [twilioCreditLowMessage, setTwilioCreditLowMessage] = useState(null);
     const fetchData = useCallback(async () => {
@@ -196,7 +177,6 @@ const WhatsappBroadcast = () => {
     useEffect(() => {
         fetchData();
         fetchEvents();
-        fetchActiveEvent();
     }, []);
 
     const buildContactFilterParams = (filterItems = []) => {
@@ -438,34 +418,6 @@ const WhatsappBroadcast = () => {
     };
 
 
-    const callClearContactBook = async () => {
-        try {
-            setloading_logs(true);
-
-            const response = await fetch(
-                `${import.meta.env.VITE_SERVERURL}/api/contacts/clear-contact-book`,
-                {
-                    method: 'GET',
-                    credentials: 'include',
-                }
-            );
-
-            const responseData = await response.json();
-
-            if (!response.ok) {
-                showSnackbar(responseData.message, 'error');
-            } else {
-                showSnackbar(responseData.message || 'Contact book cleared', 'success');
-
-            }
-
-        } catch (err) {
-            console.error('Failed to clear contact book:', err);
-            showSnackbar(err.message, 'error');
-        } finally {
-            setloading_logs(false);
-        }
-    };
 
     const eventId = useAppSelector(getSelectedEvent);
 
@@ -577,30 +529,6 @@ const WhatsappBroadcast = () => {
     };
 
 
-    const clearContactBook = () => {
-        openDialog(
-            <>
-                <>
-                    <strong>⚠️ Warning:</strong>
-                    <br></br>
-                    This operation is irreversible. Once cleared, all contact delivery flag information will be permanently deleted.
-                    <br></br>
-                    <strong>When to use:</strong>
-                    <br></br>
-
-                    Click this button <strong>after your ClubTime invitation process is complete </strong>and you no longer need the current message records.
-
-                </>
-            </>,
-            'Clear Contact Book & Reset Flags',
-            {
-                text: 'Clear',
-                color: 'error',
-            },
-            () => { callClearContactBook() },
-            () => { }
-        );
-    };
 
 
     const onSwitchBlacklist = (row, val) => {
@@ -758,7 +686,10 @@ const WhatsappBroadcast = () => {
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
 
-    const buildResponsesFilterParams = (filterItems = []) => {
+    // Serialises CustomDataGrid filterItems into the filterField[]/filterOperator[]/
+    // filterValue[] triplets the server's _QuerySqlConverter expects.
+    // Shared by the response-logs and delivery-logs grids.
+    const buildGridFilterParams = (filterItems = []) => {
         const active = filterItems.filter(
             (f) => f.value !== '' || ['isEmpty', 'isNotEmpty'].includes(f.operator)
         );
@@ -775,7 +706,7 @@ const WhatsappBroadcast = () => {
             setloading_logs(true);
             try {
                 const { field: sortField = '', sort: sortOrder = '' } = (sort ?? [])[0] ?? {};
-                const filterParams = buildResponsesFilterParams(filters ?? []);
+                const filterParams = buildGridFilterParams(filters ?? []);
 
                 const queryParams = [
                     `page=${(pagination?.page ?? 0) + 1}`,
@@ -810,10 +741,8 @@ const WhatsappBroadcast = () => {
     const [rowCount, setRowCount] = useState(0);
     const [loading_logs, setloading_logs] = useState(false);
     const [sortModel, setSortModel] = useState(defaultSortModel);
-    const [filterModel, setFilterModel] = useState({
-        items: [],
-    });
-    const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
+    const [filterItems, setFilterItems] = useState([]);
+    const [debouncedFilterItems, setDebouncedFilterItems] = useState([]);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
     const [logs, setLogs] = useState([]);
     const [responses, setResponses] = useState([]);
@@ -830,6 +759,21 @@ const WhatsappBroadcast = () => {
         date.toISOString().slice(0, 10);
     const [startDate, setStartDate] = useState(formatDateForInput(defaultStart));
     const [endDate, setEndDate] = useState(formatDateForInput(now));
+
+    // Changing the range changes the result set, so go back to page 1. Keep the
+    // range coherent as well: a start after the end (or an end before the start)
+    // would query an empty window.
+    const handleStartDateChange = (value) => {
+        setStartDate(value);
+        if (value && endDate && value > endDate) setEndDate(value);
+        setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    };
+
+    const handleEndDateChange = (value) => {
+        setEndDate(value);
+        if (value && startDate && value < startDate) setStartDate(value);
+        setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    };
 
         // Batch-fetch notes for response logs (by phone/WaId)
     const [responseNotes, setResponseNotes] = useState(new Map());
@@ -871,36 +815,30 @@ const WhatsappBroadcast = () => {
     }, [responses]);
     
     const fetchLogs = useCallback(
-
-        async (paginationModel, sortModel = [], filterModel = {}, start, end) => {
-
+        async (pagination, sort = [], filters = [], start, end) => {
             setloading_logs(true);
             try {
-
-
-                const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
-                const sortField = sort.field || '';
-                const sortOrder = sort.sort || '';
-
-                // Parse filters from filterModel.items
-                const filterParams = FilterParams(filterModel);
-
+                const { field: sortField = '', sort: sortOrder = '' } = (sort ?? [])[0] ?? {};
+                const filterParams = buildGridFilterParams(filters ?? []);
 
                 const queryParams = [
-                    `page=${paginationModel.page + 1}`,
-                    `pageSize=${paginationModel.pageSize}`,
+                    `page=${(pagination?.page ?? 0) + 1}`,
+                    `pageSize=${pagination?.pageSize ?? 25}`,
                     sortField ? `sortField=${sortField}` : '',
                     sortOrder ? `sortOrder=${sortOrder}` : '',
-                    filterParams
+                    filterParams,
+                    start ? `startDate=${encodeURIComponent(start)}` : '',
+                    end ? `endDate=${encodeURIComponent(end)}` : '',
                 ].filter(Boolean).join('&');
 
-                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-delivery-logs?${queryParams}&startDate=${start}&endDate=${end}`, { credentials: "include" });
+                const response = await fetch(
+                    `${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-delivery-logs?${queryParams}`,
+                    { credentials: 'include' }
+                );
                 const data = await response.json();
 
-
-
                 setLogs(data.result || []);
-                setRowCount(data.pagination.totalCount || 0);
+                setRowCount(data.pagination?.totalCount || 0);
             } catch (err) {
                 console.error('Failed to fetch:', err);
             } finally {
@@ -911,26 +849,19 @@ const WhatsappBroadcast = () => {
     );
 
     useEffect(() => {
-        if (openPanel === 'delivery-logs') fetchLogs(paginationModel, sortModel, applyFilterTrigger, startDate, endDate);
+        if (openPanel === 'delivery-logs') fetchLogs(paginationModel, sortModel, debouncedFilterItems, startDate, endDate);
         if (openPanel === 'response-logs') fetchResponses(responsesPaginationModel, responsesSortModel, debouncedResponsesFilterItems);
 
-    }, [openPanel, paginationModel, sortModel, applyFilterTrigger, startDate, endDate, responsesPaginationModel, responsesSortModel, debouncedResponsesFilterItems]);
+    }, [openPanel, paginationModel, sortModel, debouncedFilterItems, startDate, endDate, responsesPaginationModel, responsesSortModel, debouncedResponsesFilterItems]);
 
 
     // Smart debounce for response-logs filters — same pattern as contact-book
     const responsesFilterSentRef = useRef([]);
 
-    const getResponsesEffectiveFilterKey = (items) =>
-        items
-            .filter((f) => f.value !== '' || ['isEmpty', 'isNotEmpty'].includes(f.operator))
-            .map(({ field, operator, value }) => `${field}:${operator}:${value ?? ''}`)
-            .sort()
-            .join('|');
-
     useEffect(() => {
         const timer = setTimeout(() => {
-            const currentKey = getResponsesEffectiveFilterKey(responsesFilterItems);
-            const sentKey    = getResponsesEffectiveFilterKey(responsesFilterSentRef.current);
+            const currentKey = getEffectiveFilterKey(responsesFilterItems);
+            const sentKey    = getEffectiveFilterKey(responsesFilterSentRef.current);
             if (currentKey === sentKey) return;
             responsesFilterSentRef.current = responsesFilterItems;
             setDebouncedResponsesFilterItems(responsesFilterItems);
@@ -938,6 +869,23 @@ const WhatsappBroadcast = () => {
         }, 400);
         return () => clearTimeout(timer);
     }, [responsesFilterItems]);
+
+    // Same debounce for the delivery-logs filters. Both the filter change and a
+    // new date range send the grid back to page 1 — otherwise a narrower result
+    // set would be requested at a page that no longer exists.
+    const deliveryFilterSentRef = useRef([]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const currentKey = getEffectiveFilterKey(filterItems);
+            const sentKey    = getEffectiveFilterKey(deliveryFilterSentRef.current);
+            if (currentKey === sentKey) return;
+            deliveryFilterSentRef.current = filterItems;
+            setDebouncedFilterItems(filterItems);
+            setPaginationModel((prev) => ({ ...prev, page: 0 }));
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [filterItems]);
 
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
@@ -967,6 +915,11 @@ const WhatsappBroadcast = () => {
             "update-map-url": "update-map-url",
             "report-missing-sid": "report-missing-sid",
             "guest-list": "guest-list",
+            // Both panels below are rendered further down this file but were
+            // absent from this map, so their ?view= URLs were inert. The
+            // Knowledge Base jump control needs them addressable.
+            "create-template": "create-template",
+            "event-logs": "event-logs",
         };
 
         setOpenPanel(panelMap[modalView] ?? null);
@@ -1124,7 +1077,8 @@ const WhatsappBroadcast = () => {
                                         <input className=""
                                             type="date"
                                             value={startDate}
-                                            onChange={(e) => setStartDate(e.target.value)}
+                                            max={endDate || undefined}
+                                            onChange={(e) => handleStartDateChange(e.target.value)}
                                         />
                                     </label>{" "}
                                 </div>
@@ -1136,50 +1090,36 @@ const WhatsappBroadcast = () => {
                                             type="date"
                                             className=""
                                             value={endDate}
-                                            onChange={(e) => setEndDate(e.target.value)}
+                                            min={startDate || undefined}
+                                            onChange={(e) => handleEndDateChange(e.target.value)}
                                         />
                                     </label>
                                 </div>
                             </div>
 
 
-                            <DataGrid
+                            <CustomDataGrid
                                 rows={logs}
                                 columns={columns({ onViewJson })}
                                 loading={loading_logs}
-                                getRowHeight={(params) => {
-                                    const companyData = params?.row?.company_data;
+                                showToolbar
 
-                                    if (companyData) {
-                                        return 200;
-                                    }
-                                    return 52;
-                                }}
-                                // getRowClassName={(params) =>
-                                //     params.row.company_data ? "companyRow" : ""
-                                // }
-                                rowsPerPageOptions={[25, 50, 100]}
-                                paginationMode="server"
-                                sortingMode="server"
                                 filterMode="server"
+                                sortingMode="server"
+                                paginationMode="server"
+
                                 rowCount={rowCount}
                                 paginationModel={paginationModel}
-                                onPaginationModelChange={(newModel) => {
-                                    setPaginationModel(newModel);
-                                }}
-                                onSortModelChange={(newModel) => {
+                                onPaginationModelChange={setPaginationModel}
+                                rowsPerPageOptions={[25, 50, 100]}
 
-                                    setSortModel(newModel)
-                                }}
-                                filterModel={filterModel}
-                                onFilterModelChange={(newModel) => {
-                                    setFilterModel(newModel); // use the raw model now
-                                }}
                                 sortModel={sortModel}
+                                onSortModelChange={setSortModel}
+
+                                filterItems={filterItems}
+                                onFilterItemsChange={setFilterItems}
+
                                 disableRowSelectionOnClick
-                                disableSelectionOnClick
-                                showToolbar
-                                pagination
                             />
                         </div>
                     )}
@@ -1293,6 +1233,11 @@ const WhatsappBroadcast = () => {
                 />
             </SlideMenu>
 
+            <RevealTwilioCredentials
+                open={revealTwilioOpen}
+                onClose={() => setRevealTwilioOpen(false)}
+            />
+
             <SlideMenu id={'event-logs'}
                 isOpen={openPanel === 'event-logs'}
                 onClose={() => { handleSetOpenPanel(null) }}
@@ -1366,9 +1311,6 @@ const WhatsappBroadcast = () => {
                         },
                     }}
                 >
-                    {/* TOP — active event card */}
-                    <ActiveEventCard event={activeEvent} loading={activeEventLoading} />
-
                     {/* Send Message */}
                     <Button
                         variant="contained"
@@ -1407,10 +1349,10 @@ const WhatsappBroadcast = () => {
                     <Divider sx={{ my: 1 }} component="div"/>
                      <Button
                         variant="outlined"
-                        color="error"
+                        color="primary"
                         size="small"
-                        sx={{ textTransform: 'none', justifyContent: 'flex-start' }} title='Clear Delivery Flag from Contact Book' onClick={clearContactBook}>
-                        <AiOutlineClear /> Clear Delivery Flag
+                        sx={{ textTransform: 'none', justifyContent: 'flex-start' }} title='Reveal Twilio Account SID and Auth Token' onClick={() => setRevealTwilioOpen(true)}>
+                        <MdVpnKey style={{ marginRight: 4 }} /> Twilio Credentials
                     </Button>
                     <Divider sx={{ my: 1 }} component="div"/>
                     {/* <Button

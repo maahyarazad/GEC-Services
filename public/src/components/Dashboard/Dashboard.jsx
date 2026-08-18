@@ -23,7 +23,7 @@ import { FcSurvey } from "react-icons/fc";
 import { GiArchiveRegister } from "react-icons/gi";
 import { GoShieldLock } from "react-icons/go";
 import { GrCatalogOption, GrDocumentPdf } from "react-icons/gr";
-import { MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight, MdTerminal, MdLocalShipping, MdLocationOn, MdSupportAgent } from "react-icons/md";
+import { MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight, MdTerminal, MdLocalShipping, MdLocationOn, MdSupportAgent, MdMenuBook, MdArrowBack } from "react-icons/md";
 import { PiBriefcaseDuotone } from "react-icons/pi";
 
 // Utils
@@ -45,6 +45,7 @@ const ServerLogs = React.lazy(() => import("./ServerLogs/ServerLogs"));
 const DeliveryTrackingSection = React.lazy(() => import("../Sections/DeliveryTrackingSection"));
 const PlaceIdFinder = React.lazy(() => import("./PlaceIdFinder/PlaceIdFinder"));
 const SupportSection = React.lazy(() => import("./Support/SupportSection"));
+const KnowledgeBase = React.lazy(() => import("./KnowledgeBase/KnowledgeBase"));
 
 // import RegistrationList from "./Registration/RegistrationList";
 // import RegistrationDataGrid from "../gallery/RegistrationDataGrid";
@@ -189,6 +190,11 @@ const Admin = ({ data }) => {
                 return setStatus(errorData.error || "Unauthorized, please try again later.");
             }
 
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                return setStatus(errorData.error || "Login is unavailable, please try again later.");
+            }
+
             if (res.ok) {
                 const data = await res.json();
 
@@ -281,6 +287,10 @@ const Admin = ({ data }) => {
             icon: <MdSupportAgent size={20} />,
             label: "Support Center",
         },
+        {
+            icon: <MdMenuBook size={20} />,
+            label: "Knowledge Base",
+        },
     ];
 
     const [tabValue, setTabValue] = useState(0);
@@ -356,6 +366,32 @@ const Admin = ({ data }) => {
         return () => window.removeEventListener("popstate", onPopState);
     }, []);
 
+    // Keep the active section in step with the URL.
+    //
+    // The mount effect above runs once and the popstate listener only covers
+    // Back/Forward, so a programmatic navigate() — the Knowledge Base jump
+    // control — would change the URL without changing the section on screen.
+    useEffect(() => {
+        const tab = new URLSearchParams(location.search).get("tab");
+        if (!tab) return;
+
+        const index = tabConfig.findIndex(tabItem => slugify(tabItem.label) === tab);
+        if (index >= 0) setTabValue(index);
+    }, [location.search]);
+
+    // The Knowledge Base jump control tags its destination with
+    // from=knowledge-base so the target section can offer an explicit way back.
+    // Browser Back works too, but is less discoverable on mobile and gets buried
+    // once the admin opens a panel or two inside the target section.
+    const cameFromKnowledgeBase =
+        new URLSearchParams(location.search).get("from") === "knowledge-base";
+
+    const backToKnowledgeBase = () => {
+        const index = tabConfig.findIndex(tabItem => slugify(tabItem.label) === "knowledge-base");
+        navigate("/admin?tab=knowledge-base", { state: { tab: "knowledge-base" } });
+        if (index >= 0) setTabValue(index);
+    };
+
     useEffect(() => {
         if (_data && !_data.Auth) {
             setAdminUser(null);
@@ -400,6 +436,9 @@ const Admin = ({ data }) => {
             break;
         case 11:
             content = <SupportSection />;
+            break;
+        case 12:
+            content = <KnowledgeBase />;
             break;
     }
 
@@ -462,9 +501,24 @@ const Admin = ({ data }) => {
                         </Tabs>
                     </Box>
                 </div>
-                <React.Suspense fallback={<FallBackLoader />}>
-                    <div>{content}</div>
-                </React.Suspense>
+                <div>
+                    {cameFromKnowledgeBase && tabValue !== 12 && (
+                        <Button
+                            className="kb-back-link"
+                            size="small"
+                            variant="contained"
+                            disableElevation
+                            startIcon={<MdArrowBack />}
+                            onClick={backToKnowledgeBase}
+                            aria-label="Back to Knowledge Base"
+                        >
+                            <span className="kb-back-link__label">Back to Knowledge Base</span>
+                        </Button>
+                    )}
+                    <React.Suspense fallback={<FallBackLoader />}>
+                        {content}
+                    </React.Suspense>
+                </div>
             </div>
         </>
     ) : (

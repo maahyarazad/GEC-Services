@@ -67,4 +67,41 @@
     width: 100dvw !important;
     padding: 0 !important;
   }
-}/*# sourceMappingURL=Dashboard.css.map */
+}
+/* "Back to Knowledge Base" — see Dashboard.scss for the full rationale.
+   Absolutely positioned INSIDE the content wrapper: .admin sizes its children
+   with >div:nth-of-type(1|2), so a third child wraps onto a new flex line and
+   doubles the page height. z-index sits above SlideMenu (1000) so the control
+   survives a jump that opens a panel, and below MUI Dialog (1300). */
+.kb-back-link.kb-back-link {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  z-index: 1200;
+  text-transform: none;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+  border-radius: 999px;
+  padding: 4px 14px;
+  min-width: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+@media screen and (max-width: 768px) {
+  .kb-back-link.kb-back-link {
+    top: calc(6px + env(safe-area-inset-top, 0px));
+    right: calc(8px + env(safe-area-inset-right, 0px));
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
+  }
+  .kb-back-link.kb-back-link .kb-back-link__label {
+    display: none;
+  }
+  .kb-back-link.kb-back-link .MuiButton-startIcon {
+    margin: 0;
+  }
+}
+/*# sourceMappingURL=Dashboard.css.map */
