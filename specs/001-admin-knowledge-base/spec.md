@@ -127,3 +127,9 @@ An administrator who already knows roughly what they are looking for types a few
 - The catalogue launches with exactly the six topics and four sub-topics listed here. Because it is fixed in the application (FR-017), growth means a release — but ordering and grouping must still not assume a fixed count.
 - The two external registration sources named — German Medical Society and German Industry Club — are covered by a single topic that addresses both, since they follow the same administrative procedure.
 - Offline viewing and video download are out of scope for the initial release.
+- **US2 acceptance scenario 4 is currently vacuous.** It describes the jump control being unavailable
+  for a section the administrator may not use, but no per-admin permission model exists: the
+  dashboard's section list is not filtered by role, and admin authorisation is all-or-nothing — any
+  authenticated administrator can reach every section. The scenario is retained because it is the
+  correct behaviour once per-administrator assignment exists; until then there is nothing to gate on,
+  and no permission model was invented inside this feature to satisfy it.

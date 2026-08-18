@@ -967,6 +967,11 @@ const WhatsappBroadcast = () => {
             "update-map-url": "update-map-url",
             "report-missing-sid": "report-missing-sid",
             "guest-list": "guest-list",
+            // Both panels below are rendered further down this file but were
+            // absent from this map, so their ?view= URLs were inert. The
+            // Knowledge Base jump control needs them addressable.
+            "create-template": "create-template",
+            "event-logs": "event-logs",
         };
 
         setOpenPanel(panelMap[modalView] ?? null);
