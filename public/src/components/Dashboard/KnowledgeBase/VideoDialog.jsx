@@ -3,6 +3,10 @@ import PropTypes from "prop-types";
 import { Dialog, DialogTitle, DialogContent, IconButton } from "@mui/material";
 import { MdClose } from "react-icons/md";
 
+// See knowledgeBase.telemetry.js — the API lives on a different origin in
+// development, so video URLs need the same prefix as every other call.
+const SERVER_URL = import.meta.env.VITE_SERVERURL;
+
 /**
  * Plays one tutorial recording.
  *
@@ -23,6 +27,14 @@ const VideoDialog = ({ topic, open, onClose, onPlay }) => {
     }, [open, topic?.id]);
 
     if (!topic?.video) return null;
+
+    const src = `${SERVER_URL}/api/knowledge-base/videos/${topic.video.videoId}`;
+
+    // A media element only sends cookies cross-origin when it opts in, and only
+    // then if the server echoes the origin back with credentials allowed — which
+    // it does for CLIENT_ORIGIN. Same-origin (production) needs no attribute, and
+    // setting one there would demand CORS headers the server has no reason to send.
+    const isCrossOrigin = Boolean(SERVER_URL) && !src.startsWith(window.location.origin);
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -49,7 +61,8 @@ const VideoDialog = ({ topic, open, onClose, onPlay }) => {
                 ) : (
                     <video
                         className="kb-video__frame"
-                        src={`/api/knowledge-base/videos/${topic.video.videoId}`}
+                        src={src}
+                        {...(isCrossOrigin ? { crossOrigin: "use-credentials" } : {})}
                         controls
                         preload="metadata"
                         onPlay={onPlay}
