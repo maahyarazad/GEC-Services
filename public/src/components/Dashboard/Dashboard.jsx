@@ -190,6 +190,11 @@ const Admin = ({ data }) => {
                 return setStatus(errorData.error || "Unauthorized, please try again later.");
             }
 
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                return setStatus(errorData.error || "Login is unavailable, please try again later.");
+            }
+
             if (res.ok) {
                 const data = await res.json();
 
