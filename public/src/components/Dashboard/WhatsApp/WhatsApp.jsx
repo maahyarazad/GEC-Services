@@ -7,7 +7,6 @@ import { Divider, useTheme, useMediaQuery } from "@mui/material";
 import { Button } from '@mui/material'
 import Modal from '../../Modal';
 import SlideMenu from '../../SlideMenu/SlideMenu';
-import { DataGrid } from '@mui/x-data-grid';
 import CustomDataGrid from '../../CustomDataGrid';
 import JSONPretty from 'react-json-pretty';
 import 'react-json-pretty/themes/monikai.css'; // optional styling
@@ -28,7 +27,6 @@ import WhastAppTypeReport from '../Dashboard/WhastAppTypeReport';
 import WhastAppAttendanceTypeReport from '../Dashboard/WhastAppAttendanceTypeReport';
 import ContactBookMissingContentSidReport from '../Dashboard/ContactBookMissingContentSidReport';
 import { useNavigate, useLocation } from "react-router-dom";
-import FilterParams from '../FilterParams';
 import { MdInsights, MdPersonSearch, MdVpnKey } from "react-icons/md";
 import { PiUserCircleCheckDuotone } from "react-icons/pi";
 import ContactBookDataGrid from './ContactBookDataGrid';
@@ -688,7 +686,10 @@ const WhatsappBroadcast = () => {
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
 
-    const buildResponsesFilterParams = (filterItems = []) => {
+    // Serialises CustomDataGrid filterItems into the filterField[]/filterOperator[]/
+    // filterValue[] triplets the server's _QuerySqlConverter expects.
+    // Shared by the response-logs and delivery-logs grids.
+    const buildGridFilterParams = (filterItems = []) => {
         const active = filterItems.filter(
             (f) => f.value !== '' || ['isEmpty', 'isNotEmpty'].includes(f.operator)
         );
@@ -705,7 +706,7 @@ const WhatsappBroadcast = () => {
             setloading_logs(true);
             try {
                 const { field: sortField = '', sort: sortOrder = '' } = (sort ?? [])[0] ?? {};
-                const filterParams = buildResponsesFilterParams(filters ?? []);
+                const filterParams = buildGridFilterParams(filters ?? []);
 
                 const queryParams = [
                     `page=${(pagination?.page ?? 0) + 1}`,
@@ -740,10 +741,8 @@ const WhatsappBroadcast = () => {
     const [rowCount, setRowCount] = useState(0);
     const [loading_logs, setloading_logs] = useState(false);
     const [sortModel, setSortModel] = useState(defaultSortModel);
-    const [filterModel, setFilterModel] = useState({
-        items: [],
-    });
-    const [applyFilterTrigger, setApplyFilterTrigger] = useState(0);
+    const [filterItems, setFilterItems] = useState([]);
+    const [debouncedFilterItems, setDebouncedFilterItems] = useState([]);
     const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 25 });
     const [logs, setLogs] = useState([]);
     const [responses, setResponses] = useState([]);
@@ -760,6 +759,21 @@ const WhatsappBroadcast = () => {
         date.toISOString().slice(0, 10);
     const [startDate, setStartDate] = useState(formatDateForInput(defaultStart));
     const [endDate, setEndDate] = useState(formatDateForInput(now));
+
+    // Changing the range changes the result set, so go back to page 1. Keep the
+    // range coherent as well: a start after the end (or an end before the start)
+    // would query an empty window.
+    const handleStartDateChange = (value) => {
+        setStartDate(value);
+        if (value && endDate && value > endDate) setEndDate(value);
+        setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    };
+
+    const handleEndDateChange = (value) => {
+        setEndDate(value);
+        if (value && startDate && value < startDate) setStartDate(value);
+        setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    };
 
         // Batch-fetch notes for response logs (by phone/WaId)
     const [responseNotes, setResponseNotes] = useState(new Map());
@@ -801,36 +815,30 @@ const WhatsappBroadcast = () => {
     }, [responses]);
     
     const fetchLogs = useCallback(
-
-        async (paginationModel, sortModel = [], filterModel = {}, start, end) => {
-
+        async (pagination, sort = [], filters = [], start, end) => {
             setloading_logs(true);
             try {
-
-
-                const sort = Array.isArray(sortModel) && sortModel.length > 0 ? sortModel[0] : {};
-                const sortField = sort.field || '';
-                const sortOrder = sort.sort || '';
-
-                // Parse filters from filterModel.items
-                const filterParams = FilterParams(filterModel);
-
+                const { field: sortField = '', sort: sortOrder = '' } = (sort ?? [])[0] ?? {};
+                const filterParams = buildGridFilterParams(filters ?? []);
 
                 const queryParams = [
-                    `page=${paginationModel.page + 1}`,
-                    `pageSize=${paginationModel.pageSize}`,
+                    `page=${(pagination?.page ?? 0) + 1}`,
+                    `pageSize=${pagination?.pageSize ?? 25}`,
                     sortField ? `sortField=${sortField}` : '',
                     sortOrder ? `sortOrder=${sortOrder}` : '',
-                    filterParams
+                    filterParams,
+                    start ? `startDate=${encodeURIComponent(start)}` : '',
+                    end ? `endDate=${encodeURIComponent(end)}` : '',
                 ].filter(Boolean).join('&');
 
-                const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-delivery-logs?${queryParams}&startDate=${start}&endDate=${end}`, { credentials: "include" });
+                const response = await fetch(
+                    `${import.meta.env.VITE_SERVERURL}/api/whatsapp/twilio-delivery-logs?${queryParams}`,
+                    { credentials: 'include' }
+                );
                 const data = await response.json();
 
-
-
                 setLogs(data.result || []);
-                setRowCount(data.pagination.totalCount || 0);
+                setRowCount(data.pagination?.totalCount || 0);
             } catch (err) {
                 console.error('Failed to fetch:', err);
             } finally {
@@ -841,26 +849,19 @@ const WhatsappBroadcast = () => {
     );
 
     useEffect(() => {
-        if (openPanel === 'delivery-logs') fetchLogs(paginationModel, sortModel, applyFilterTrigger, startDate, endDate);
+        if (openPanel === 'delivery-logs') fetchLogs(paginationModel, sortModel, debouncedFilterItems, startDate, endDate);
         if (openPanel === 'response-logs') fetchResponses(responsesPaginationModel, responsesSortModel, debouncedResponsesFilterItems);
 
-    }, [openPanel, paginationModel, sortModel, applyFilterTrigger, startDate, endDate, responsesPaginationModel, responsesSortModel, debouncedResponsesFilterItems]);
+    }, [openPanel, paginationModel, sortModel, debouncedFilterItems, startDate, endDate, responsesPaginationModel, responsesSortModel, debouncedResponsesFilterItems]);
 
 
     // Smart debounce for response-logs filters — same pattern as contact-book
     const responsesFilterSentRef = useRef([]);
 
-    const getResponsesEffectiveFilterKey = (items) =>
-        items
-            .filter((f) => f.value !== '' || ['isEmpty', 'isNotEmpty'].includes(f.operator))
-            .map(({ field, operator, value }) => `${field}:${operator}:${value ?? ''}`)
-            .sort()
-            .join('|');
-
     useEffect(() => {
         const timer = setTimeout(() => {
-            const currentKey = getResponsesEffectiveFilterKey(responsesFilterItems);
-            const sentKey    = getResponsesEffectiveFilterKey(responsesFilterSentRef.current);
+            const currentKey = getEffectiveFilterKey(responsesFilterItems);
+            const sentKey    = getEffectiveFilterKey(responsesFilterSentRef.current);
             if (currentKey === sentKey) return;
             responsesFilterSentRef.current = responsesFilterItems;
             setDebouncedResponsesFilterItems(responsesFilterItems);
@@ -868,6 +869,23 @@ const WhatsappBroadcast = () => {
         }, 400);
         return () => clearTimeout(timer);
     }, [responsesFilterItems]);
+
+    // Same debounce for the delivery-logs filters. Both the filter change and a
+    // new date range send the grid back to page 1 — otherwise a narrower result
+    // set would be requested at a page that no longer exists.
+    const deliveryFilterSentRef = useRef([]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const currentKey = getEffectiveFilterKey(filterItems);
+            const sentKey    = getEffectiveFilterKey(deliveryFilterSentRef.current);
+            if (currentKey === sentKey) return;
+            deliveryFilterSentRef.current = filterItems;
+            setDebouncedFilterItems(filterItems);
+            setPaginationModel((prev) => ({ ...prev, page: 0 }));
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [filterItems]);
 
     ////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
@@ -1059,7 +1077,8 @@ const WhatsappBroadcast = () => {
                                         <input className=""
                                             type="date"
                                             value={startDate}
-                                            onChange={(e) => setStartDate(e.target.value)}
+                                            max={endDate || undefined}
+                                            onChange={(e) => handleStartDateChange(e.target.value)}
                                         />
                                     </label>{" "}
                                 </div>
@@ -1071,50 +1090,36 @@ const WhatsappBroadcast = () => {
                                             type="date"
                                             className=""
                                             value={endDate}
-                                            onChange={(e) => setEndDate(e.target.value)}
+                                            min={startDate || undefined}
+                                            onChange={(e) => handleEndDateChange(e.target.value)}
                                         />
                                     </label>
                                 </div>
                             </div>
 
 
-                            <DataGrid
+                            <CustomDataGrid
                                 rows={logs}
                                 columns={columns({ onViewJson })}
                                 loading={loading_logs}
-                                getRowHeight={(params) => {
-                                    const companyData = params?.row?.company_data;
+                                showToolbar
 
-                                    if (companyData) {
-                                        return 200;
-                                    }
-                                    return 52;
-                                }}
-                                // getRowClassName={(params) =>
-                                //     params.row.company_data ? "companyRow" : ""
-                                // }
-                                rowsPerPageOptions={[25, 50, 100]}
-                                paginationMode="server"
-                                sortingMode="server"
                                 filterMode="server"
+                                sortingMode="server"
+                                paginationMode="server"
+
                                 rowCount={rowCount}
                                 paginationModel={paginationModel}
-                                onPaginationModelChange={(newModel) => {
-                                    setPaginationModel(newModel);
-                                }}
-                                onSortModelChange={(newModel) => {
+                                onPaginationModelChange={setPaginationModel}
+                                rowsPerPageOptions={[25, 50, 100]}
 
-                                    setSortModel(newModel)
-                                }}
-                                filterModel={filterModel}
-                                onFilterModelChange={(newModel) => {
-                                    setFilterModel(newModel); // use the raw model now
-                                }}
                                 sortModel={sortModel}
+                                onSortModelChange={setSortModel}
+
+                                filterItems={filterItems}
+                                onFilterItemsChange={setFilterItems}
+
                                 disableRowSelectionOnClick
-                                disableSelectionOnClick
-                                showToolbar
-                                pagination
                             />
                         </div>
                     )}

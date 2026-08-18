@@ -344,24 +344,95 @@ router.post("/whatsapp/twilio-callback", async (req, res) => {
   }
 });
 
+// Columns exposed by the delivery-logs grid that can be filtered / sorted in SQL.
+// `templateFriendlyName` is resolved from the Twilio template list in JS, so it
+// is handled separately (translated into a contentSid predicate) further down.
+const DELIVERY_LOG_SQL_FIELDS = [
+  "id",
+  "metadata_createdAt",
+  "SmsStatus",
+  "contentSid",
+  "messageSid",
+  "full_name",
+  "phone",
+];
+
+const toArray = (v) => [].concat(v ?? []);
+
+// Match a template friendly name against one grid filter operator.
+const matchesTextOperator = (name, operator, value) => {
+  const target = String(name ?? "").toLowerCase();
+  const needle = String(value ?? "").toLowerCase();
+  switch (operator) {
+    case "contains":   return target.includes(needle);
+    case "equals":     return target === needle;
+    case "startsWith": return target.startsWith(needle);
+    case "endsWith":   return target.endsWith(needle);
+    default:           return false;
+  }
+};
+
 router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
   try {
-    const page = Math.max(parseInt(req.query.page, 25) || 1, 1);
-    const limit = Math.min(
-      Math.max(parseInt(req.query.limit, 25) || 25, 1),
-      100
-    );
-    const offset = (page - 1) * limit;
+    // Keep the date range out of the generic converter — otherwise startDate /
+    // endDate would be picked up as legacy column filters.
+    const { startDate: rawStart, endDate: rawEnd, ...gridQuery } = req.query;
 
+    const templates = await fetchContentTemplates();
+    const templateMap = new Map();
+    templates.result.forEach((t) => {
+      templateMap.set(t.sid, t.friendlyName);
+    });
+
+    // ── Split grid filters: SQL columns vs. the JS-resolved template name ────
+    const filterFields    = toArray(gridQuery.filterField);
+    const filterOperators = toArray(gridQuery.filterOperator);
+    const filterValues    = toArray(gridQuery.filterValue);
+
+    const sqlFilters = { field: [], operator: [], value: [] };
+    const templateFilters = [];
+
+    filterFields.forEach((field, i) => {
+      const operator = filterOperators[i];
+      const value    = filterValues[i];
+      if (!field || !operator) return;
+
+      if (field === "templateFriendlyName") {
+        templateFilters.push({ operator, value });
+        return;
+      }
+      if (!DELIVERY_LOG_SQL_FIELDS.includes(field)) return; // allowlist guard
+
+      sqlFilters.field.push(field);
+      sqlFilters.operator.push(operator);
+      sqlFilters.value.push(value ?? "");
+    });
+
+    const { pageNumber, limit: rawLimit, sortField, sortOrder, advancedClauses } =
+      dbService._QuerySqlConverter(
+        {
+          ...gridQuery,
+          filterField:    sqlFilters.field,
+          filterOperator: sqlFilters.operator,
+          filterValue:    sqlFilters.value,
+        },
+        "twilio_delivery"
+      );
+
+    const limit = Math.min(Math.max(parseInt(rawLimit, 10) || 25, 1), 100);
+    const offset = pageNumber * limit;
+
+    // ── Date range ──────────────────────────────────────────────────────────
+    // twilio_delivery.metadata_createdAt is stored as a naive 'YYYY-MM-DD HH:MM:SS'
+    // string, so the bounds have to be built in that same format. Comparing it
+    // against an ISO timestamp is a plain string comparison in SQLite, and since
+    // ' ' sorts before 'T' every row stamped on the start date would be excluded.
     const now = new Date();
     const defaultStart = new Date();
     defaultStart.setDate(now.getDate() - 2);
 
-    const startDate = req.query.startDate
-      ? new Date(req.query.startDate)
-      : defaultStart;
-
-    const endDate = req.query.endDate ? new Date(req.query.endDate) : now;
+    const startDate = rawStart ? new Date(rawStart) : defaultStart;
+    const endDate = rawEnd ? new Date(rawEnd) : now;
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return res.status(400).json({
@@ -370,18 +441,70 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
       });
     }
 
-    const endDateInclusive = new Date(endDate);
-    endDateInclusive.setHours(23, 59, 59, 999);
+    // A 'YYYY-MM-DD' input parses as UTC midnight, so read the day back in UTC
+    // to avoid shifting it by the server's offset.
+    const toDayString = (value, raw) =>
+      /^\d{4}-\d{2}-\d{2}$/.test(String(raw ?? ""))
+        ? String(raw)
+        : value.toISOString().slice(0, 10);
 
-    const templates = await fetchContentTemplates();
-    const templateMap = new Map();
+    const startDay = toDayString(startDate, rawStart);
+    const endDay = toDayString(endDate, rawEnd);
 
-    templates.result.forEach((t) => {
-      templateMap.set(t.sid, t.friendlyName);
+    // Both ends are inclusive: the whole start day and the whole end day.
+    const start = `${startDay} 00:00:00`;
+    const end = `${endDay} 23:59:59`;
+
+    // ── WHERE clause: grid filters ──────────────────────────────────────────
+    // The date range is pushed down into the CTE instead (see below) — it is a
+    // plain column on twilio_delivery, and filtering there keeps the window
+    // function from ranking the whole table on every request.
+    const whereParts = [];
+    const whereParams = [];
+
+    advancedClauses.forEach(({ clause, value }) => {
+      whereParts.push(clause);
+      if (value !== null) whereParams.push(value);
     });
 
-    const start = startDate.toISOString();
-    const end = endDateInclusive.toISOString();
+    // Translate template-name filters into a contentSid predicate.
+    const allSids = [...templateMap.keys()];
+    templateFilters.forEach(({ operator, value }) => {
+      if (operator === "isEmpty") {
+        whereParts.push(
+          allSids.length
+            ? `(contentSid IS NULL OR contentSid NOT IN (${allSids.map(() => "?").join(",")}))`
+            : `contentSid IS NULL`
+        );
+        whereParams.push(...allSids);
+        return;
+      }
+      if (operator === "isNotEmpty") {
+        if (!allSids.length) { whereParts.push("1 = 0"); return; }
+        whereParts.push(`contentSid IN (${allSids.map(() => "?").join(",")})`);
+        whereParams.push(...allSids);
+        return;
+      }
+      if (value == null || value === "") return;
+
+      const matched = allSids.filter((sid) =>
+        matchesTextOperator(templateMap.get(sid), operator, value)
+      );
+      if (!matched.length) { whereParts.push("1 = 0"); return; }
+      whereParts.push(`contentSid IN (${matched.map(() => "?").join(",")})`);
+      whereParams.push(...matched);
+    });
+
+    const whereClause = whereParts.length ? `WHERE ${whereParts.join(" AND ")}` : "";
+
+    // ── Sorting (allowlisted to avoid injection) ────────────────────────────
+    // The template name has no SQL column; sorting by it orders by its sid.
+    const requestedSort =
+      sortField === "templateFriendlyName" ? "contentSid" : sortField;
+    const safeSortField = DELIVERY_LOG_SQL_FIELDS.includes(requestedSort)
+      ? requestedSort
+      : "metadata_createdAt";
+    const safeSortOrder = String(sortOrder).toUpperCase() === "ASC" ? "ASC" : "DESC";
 
     const baseCte = `
       WITH ranked AS (
@@ -405,38 +528,32 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
         WHERE ttm.messageSid IS NOT NULL
           AND td.metadata_createdAt >= ?
           AND td.metadata_createdAt <= ?
+      ),
+      base AS (
+        SELECT id, metadata_createdAt, contentSid, SmsStatus, messageSid, full_name, phone
+        FROM ranked WHERE rn = 1
       )
     `;
 
-    const dataQuery = `
-      ${baseCte}
-      SELECT *
-      FROM ranked
-      WHERE rn = 1
-      ORDER BY metadata_createdAt DESC
-      LIMIT ? OFFSET ?;
-    `;
+    const rows = db
+      .prepare(
+        `${baseCte}
+         SELECT * FROM base
+         ${whereClause}
+         ORDER BY ${safeSortField} ${safeSortOrder}
+         LIMIT ? OFFSET ?`
+      )
+      .all(start, end, ...whereParams, limit, offset);
 
-    const countQuery = `
-      ${baseCte}
-      SELECT COUNT(*) AS totalCount
-      FROM ranked
-      WHERE rn = 1;
-    `;
+    // The count is cached per date range *and* filter signature — a cache key
+    // built from the dates alone would serve a filtered count to everyone.
+    const cacheKey = `${getCountCacheKey(start, end)}__${whereClause}__${JSON.stringify(whereParams)}`;
 
-    const dataStmt = db.prepare(dataQuery);
-    const rows = dataStmt.all(start, end, limit, offset);
-
-    const cacheKey = getCountCacheKey(start, end);
-
-    let totalCount;
-    const cachedCount = countCache.get(cacheKey);
-
-    if (cachedCount !== undefined) {
-      totalCount = cachedCount;
-    } else {
-      const countStmt = db.prepare(countQuery);
-      const countRow = countStmt.get(start, end);
+    let totalCount = countCache.get(cacheKey);
+    if (totalCount === undefined) {
+      const countRow = db
+        .prepare(`${baseCte} SELECT COUNT(*) AS totalCount FROM base ${whereClause}`)
+        .get(start, end, ...whereParams);
       totalCount = countRow?.totalCount || 0;
       countCache.set(cacheKey, totalCount);
     }
@@ -447,6 +564,7 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
     }));
 
     const totalPages = Math.ceil(totalCount / limit);
+    const page = pageNumber + 1;
 
     return res.json({
       status: true,
