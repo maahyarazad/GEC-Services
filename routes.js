@@ -32,6 +32,7 @@ const gec_member_check = require("./routes/gec_member_check.js");
 const support = require("./routes/support.js");
 const gec_endpoints = require("./routes/gec_endpoints.js");
 const knowledge_base = require("./routes/knowledge_base.js");
+const twilio_credentials = require("./routes/twilio_credentials.js");
 
 // Routers mounted at the app root ("/").
 const rootRouters = [
@@ -59,7 +60,8 @@ const rootRouters = [
   external_route,
   events,
   gec_member_check,
-  knowledge_base
+  knowledge_base,
+  twilio_credentials
 ];
 
 function registerRoutes(app) {

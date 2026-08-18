@@ -12,7 +12,6 @@ import CustomDataGrid from '../../CustomDataGrid';
 import JSONPretty from 'react-json-pretty';
 import 'react-json-pretty/themes/monikai.css'; // optional styling
 import { useSnackbar } from '../../Providers/Snackbar';
-import { AiOutlineClear } from "react-icons/ai";
 import { RiContactsBook2Fill } from "react-icons/ri";
 import { RiUserReceivedFill } from "react-icons/ri";
 import { RiCheckDoubleFill } from "react-icons/ri";
@@ -30,7 +29,7 @@ import WhastAppAttendanceTypeReport from '../Dashboard/WhastAppAttendanceTypeRep
 import ContactBookMissingContentSidReport from '../Dashboard/ContactBookMissingContentSidReport';
 import { useNavigate, useLocation } from "react-router-dom";
 import FilterParams from '../FilterParams';
-import { MdInsights, MdPersonSearch } from "react-icons/md";
+import { MdInsights, MdPersonSearch, MdVpnKey } from "react-icons/md";
 import { PiUserCircleCheckDuotone } from "react-icons/pi";
 import ContactBookDataGrid from './ContactBookDataGrid';
 import ViewModeButtonGroup from "./ViewModeButtonGroup";
@@ -47,6 +46,7 @@ import { SiTwilio } from "react-icons/si";
 import ActiveEventCard from "./ActiveEventCard";
 import GuestListPanel from "./GuestListPanel";
 import EventLogsPanel from "./EventLogsPanel";
+import RevealTwilioCredentials from "./RevealTwilioCredentials";
 import ResponseLogsMobileList from "./ResponseLogsMobileList";
 import NotepadModal from "./NotepadModal";
 import { BsPeopleFill, BsClockHistory } from "react-icons/bs";
@@ -164,6 +164,7 @@ const WhatsappBroadcast = () => {
 
 
     const { showSnackbar } = useSnackbar();
+    const [revealTwilioOpen, setRevealTwilioOpen] = useState(false);
     const [twilioCreditLow, setTwilioCreditLow] = useState(false);
     const [twilioCreditLowMessage, setTwilioCreditLowMessage] = useState(null);
     const fetchData = useCallback(async () => {
@@ -438,34 +439,6 @@ const WhatsappBroadcast = () => {
     };
 
 
-    const callClearContactBook = async () => {
-        try {
-            setloading_logs(true);
-
-            const response = await fetch(
-                `${import.meta.env.VITE_SERVERURL}/api/contacts/clear-contact-book`,
-                {
-                    method: 'GET',
-                    credentials: 'include',
-                }
-            );
-
-            const responseData = await response.json();
-
-            if (!response.ok) {
-                showSnackbar(responseData.message, 'error');
-            } else {
-                showSnackbar(responseData.message || 'Contact book cleared', 'success');
-
-            }
-
-        } catch (err) {
-            console.error('Failed to clear contact book:', err);
-            showSnackbar(err.message, 'error');
-        } finally {
-            setloading_logs(false);
-        }
-    };
 
     const eventId = useAppSelector(getSelectedEvent);
 
@@ -577,30 +550,6 @@ const WhatsappBroadcast = () => {
     };
 
 
-    const clearContactBook = () => {
-        openDialog(
-            <>
-                <>
-                    <strong>⚠️ Warning:</strong>
-                    <br></br>
-                    This operation is irreversible. Once cleared, all contact delivery flag information will be permanently deleted.
-                    <br></br>
-                    <strong>When to use:</strong>
-                    <br></br>
-
-                    Click this button <strong>after your ClubTime invitation process is complete </strong>and you no longer need the current message records.
-
-                </>
-            </>,
-            'Clear Contact Book & Reset Flags',
-            {
-                text: 'Clear',
-                color: 'error',
-            },
-            () => { callClearContactBook() },
-            () => { }
-        );
-    };
 
 
     const onSwitchBlacklist = (row, val) => {
@@ -1298,6 +1247,11 @@ const WhatsappBroadcast = () => {
                 />
             </SlideMenu>
 
+            <RevealTwilioCredentials
+                open={revealTwilioOpen}
+                onClose={() => setRevealTwilioOpen(false)}
+            />
+
             <SlideMenu id={'event-logs'}
                 isOpen={openPanel === 'event-logs'}
                 onClose={() => { handleSetOpenPanel(null) }}
@@ -1412,10 +1366,10 @@ const WhatsappBroadcast = () => {
                     <Divider sx={{ my: 1 }} component="div"/>
                      <Button
                         variant="outlined"
-                        color="error"
+                        color="primary"
                         size="small"
-                        sx={{ textTransform: 'none', justifyContent: 'flex-start' }} title='Clear Delivery Flag from Contact Book' onClick={clearContactBook}>
-                        <AiOutlineClear /> Clear Delivery Flag
+                        sx={{ textTransform: 'none', justifyContent: 'flex-start' }} title='Reveal Twilio Account SID and Auth Token' onClick={() => setRevealTwilioOpen(true)}>
+                        <MdVpnKey style={{ marginRight: 4 }} /> Twilio Credentials
                     </Button>
                     <Divider sx={{ my: 1 }} component="div"/>
                     {/* <Button
