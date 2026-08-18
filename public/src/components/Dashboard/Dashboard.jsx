@@ -496,21 +496,24 @@ const Admin = ({ data }) => {
                         </Tabs>
                     </Box>
                 </div>
-                {cameFromKnowledgeBase && tabValue !== 12 && (
-                    <div style={{ padding: "8px 16px 0" }}>
+                <div>
+                    {cameFromKnowledgeBase && tabValue !== 12 && (
                         <Button
+                            className="kb-back-link"
                             size="small"
+                            variant="contained"
+                            disableElevation
                             startIcon={<MdArrowBack />}
                             onClick={backToKnowledgeBase}
-                            sx={{ textTransform: "none" }}
+                            aria-label="Back to Knowledge Base"
                         >
-                            Back to Knowledge Base
+                            <span className="kb-back-link__label">Back to Knowledge Base</span>
                         </Button>
-                    </div>
-                )}
-                <React.Suspense fallback={<FallBackLoader />}>
-                    <div>{content}</div>
-                </React.Suspense>
+                    )}
+                    <React.Suspense fallback={<FallBackLoader />}>
+                        {content}
+                    </React.Suspense>
+                </div>
             </div>
         </>
     ) : (
