@@ -1,6 +1,6 @@
 import "./header.css";
 import PropTypes from "prop-types";
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import CHookDateTime from "./CHookDateTime";
 
 import { RiLogoutBoxRLine } from "react-icons/ri";
@@ -8,7 +8,7 @@ import Tooltip from "@mui/material/Tooltip";
 import { useNavigate } from "react-router";
 import { config } from '../../ui_config';
 import GECLogo from '../../assets/background.webp'
-export const Header = React.memo({ adminUser, adminEmail, setAdminUser, showMenu, burgerActive, setBurgerActive }) => {
+export const Header = memo(function Header({ adminUser, adminEmail, setAdminUser, showMenu, burgerActive, setBurgerActive }) {
 
 
     const handleBurgerMenu = () => {
@@ -94,7 +94,7 @@ export const Header = React.memo({ adminUser, adminEmail, setAdminUser, showMenu
             </header>
         </>
     );
-};
+});
 
 Header.propTypes = {
     xTasks: PropTypes.array,
