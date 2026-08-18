@@ -143,19 +143,19 @@ imapPoller.start(io);
 //   }
 // });
 
-// cron.schedule("*/1 * * * *", async () => {
-//   try {
-//     console.log(`${Date.now()} - [Cron | daily] Starting: MongoDB backup —`, new Date());
-//     await MongoDbBackUpJob.run();
-//     console.log(`${Date.now()} - [Cron | daily] Completed —`, new Date());
-//   } catch (error) {
-//     console.error(`${Date.now()} - [Cron | daily] Failed:`, error);
-//     dbService.create("error_log", {
-//       error: error.toString(),
-//       origin_function: "cron_daily_mongo_backup",
-//     });
-//   }
-// });
+cron.schedule("* * */1 * *", async () => {
+  try {
+    console.log(`${Date.now()} - [Cron | daily] Starting: MongoDB backup —`, new Date());
+    await MongoDbBackUpJob.run();
+    console.log(`${Date.now()} - [Cron | daily] Completed —`, new Date());
+  } catch (error) {
+    console.error(`${Date.now()} - [Cron | daily] Failed:`, error);
+    dbService.create("error_log", {
+      error: error.toString(),
+      origin_function: "cron_daily_mongo_backup",
+    });
+  }
+});
 
 server.listen(PORT, () => {
   console.log(`${Date.now()} - 🚀 Server + WS listening on http://localhost:${PORT}`);

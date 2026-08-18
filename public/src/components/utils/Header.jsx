@@ -8,7 +8,7 @@ import Tooltip from "@mui/material/Tooltip";
 import { useNavigate } from "react-router";
 import { config } from '../../ui_config';
 import GECLogo from '../../assets/background.webp'
-export const Header = ({ adminUser, adminEmail, setAdminUser, showMenu, burgerActive, setBurgerActive }) => {
+export const Header = React.memo({ adminUser, adminEmail, setAdminUser, showMenu, burgerActive, setBurgerActive }) => {
 
 
     const handleBurgerMenu = () => {
