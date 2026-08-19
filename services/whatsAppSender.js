@@ -570,26 +570,29 @@ const fetchContentTemplates = async () => {
   }
 };
 
-const deleteContent = async (req, res) => {
+/**
+ * Deletes a content template from the Twilio content library.
+ *
+ * Transport-agnostic on purpose: it takes a SID and returns the same
+ * { status, result } shape as fetchContentTemplates, so routes own req/res.
+ *
+ * It performs NO authorisation and NO usage checking. The caller is
+ * responsible for both — see the delete route in routes/whatsapp_sender.js,
+ * which is the authoritative gate.
+ *
+ * Never throws; failures come back as { status: false, result: error } so the
+ * caller can map them onto a status code.
+ *
+ * @param {string} contentSid
+ * @returns {Promise<{status: boolean, result: unknown}>}
+ */
+const deleteContentTemplate = async (contentSid) => {
   try {
-    const templates = await twilioClient.content.v1.contents.list({
-      limit: 100,
-    });
+    await twilioClient.content.v1.contents(contentSid).remove();
 
-    // const filtered =
-    //   templates
-    //     .filter(obj =>
-    //      Object.prototype.hasOwnProperty.call(obj.translations, "en")
-    //     );
-
-    // const filtered = templates.filter(item =>
-    //     item.friendlyName.includes("verify_auto_created") && item.language !== "en"
-    // );
-    // filtered.forEach(async element => {
-    //     await twilioClient.content.v1.contents(element.sid).remove();
-    // });
+    return { status: true, result: true };
   } catch (error) {
-    console.error(`${Date.now()} - WhatsApp sendser error:`, error);
+    console.error(`${Date.now()} - Twilio template delete error:`, error);
 
     return { status: false, result: error };
   }
@@ -861,6 +864,7 @@ module.exports = {
   otpSender,
   messageSender,
   fetchContentTemplates,
+  deleteContentTemplate,
   handleAutoResponse,
   flattenObject,
   normalizeRow,

@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   messageSender,
   fetchContentTemplates,
+  deleteContentTemplate,
   handleAutoResponse,
   fetchHistory,
 } = require("../services/whatsAppSender");
@@ -33,6 +34,49 @@ const toUAE = (dateStr) => {
 
   return dayjs.utc(dateStr).tz(UAE_TZ).format("YYYY-MM-DD HH:mm:ss");;
 };
+
+// ─── Twilio template deletion helpers ────────────────────────────────────────
+
+// Twilio content SIDs are "HX" followed by 32 hex characters. Anything else is
+// rejected before it reaches a query or the Twilio API.
+const isValidContentSid = (value) =>
+  typeof value === "string" && /^HX[0-9a-fA-F]{32}$/.test(value);
+
+/**
+ * Number of messages ever sent from a template.
+ *
+ * This is THE gate for deletion. twilio_template_message is joined by the
+ * delivery logs, response logs and insight endpoints to resolve a template's
+ * friendly name; deleting a template that has rows here would leave every one
+ * of those historical rows with an unresolvable name, permanently.
+ *
+ * Errors are deliberately NOT caught. A caller that swallowed the failure
+ * would read it as "no sends" and delete a template it should not have — the
+ * gate has to fail closed, so the throw must reach the handler.
+ */
+const countTemplateSends = (contentSid) =>
+  db
+    .prepare("SELECT COUNT(*) AS c FROM twilio_template_message WHERE contentSid = ?")
+    .get(contentSid).c;
+
+// Advisory only. contact_book and contact_book_events also carry a contentSid,
+// but they track the auto-response/attendance flow rather than broadcast
+// history, and the spec scopes the gate to twilio_template_message alone.
+// Reported so the UI can warn and so the gate can be widened later without an
+// API change. See research.md R3.
+const countRelatedReferences = (contentSid) => ({
+  contactBook: db
+    .prepare("SELECT COUNT(*) AS c FROM contact_book WHERE contentSid = ?")
+    .get(contentSid).c,
+  contactBookEvents: db
+    .prepare("SELECT COUNT(*) AS c FROM contact_book_events WHERE contentSid = ?")
+    .get(contentSid).c,
+});
+
+// Matches the identity resolution used by routes/twilio_credentials.js so the
+// audit lines read consistently in the dashboard's Server Logs section.
+const adminIdentity = (req) =>
+  req.user?.username || req.user?.email || req.user?.role || "unknown-admin";
 
 
 router.post("/api/whatsapp/send", (req, res) => {
@@ -271,6 +315,136 @@ router.get("/api/twilio/approvals", async (req, res) => {
     console.error(`${Date.now()} - Error in /api/twilio/approvals:`, error);
     res.status(500).json({ status: false, message: "Server error" });
   }
+});
+
+/**
+ * GET /api/twilio/template-usage/:contentSid
+ *
+ * Reports how many records reference a template, so the UI can tell the
+ * administrator what they are about to do before they commit.
+ *
+ * ADVISORY ONLY. This is not the gate — the DELETE handler below re-runs the
+ * same count and is the thing that actually decides. See the comment there.
+ *
+ * Auth: server.js mounts authorize_admin on /api/, so an admin session is
+ * required before this handler runs.
+ */
+router.get("/api/twilio/template-usage/:contentSid", (req, res) => {
+  const { contentSid } = req.params;
+
+  if (!isValidContentSid(contentSid)) {
+    return res
+      .status(400)
+      .json({ status: false, message: "A valid contentSid is required" });
+  }
+
+  try {
+    const sendCount = countTemplateSends(contentSid);
+
+    return res.json({
+      status: true,
+      contentSid,
+      sendCount,
+      // Only the send count gates deletion. The related counts are context.
+      canDelete: sendCount === 0,
+      related: countRelatedReferences(contentSid),
+    });
+  } catch (error) {
+    console.error(
+      `${Date.now()} - [TemplateDelete] usage check failed. sid=${contentSid}`,
+      error
+    );
+
+    return res
+      .status(500)
+      .json({ status: false, message: "Failed to check template usage" });
+  }
+});
+
+/**
+ * DELETE /api/twilio/template/:contentSid
+ *
+ * Permanently removes a template from the Twilio content library.
+ *
+ * THIS IS THE AUTHORITATIVE GATE. The usage count is re-run here even though
+ * the browser already checked it, and that duplication is deliberate — do not
+ * "simplify" it away. messageSender inserts a twilio_template_message row on
+ * every send, so a broadcast landing between the browser's pre-flight and the
+ * administrator's confirm click would otherwise let a now-referenced template
+ * be deleted, silently orphaning the delivery and response logs.
+ *
+ * Fails closed at every step: a malformed SID, a failed count query, or any
+ * non-zero count all stop before Twilio is contacted. There is no path where
+ * an unknown usage state ends in a deletion.
+ *
+ * No local writes occur, so there is no partial state to unwind: by definition
+ * nothing references the SID when the delete proceeds.
+ */
+router.delete("/api/twilio/template/:contentSid", async (req, res) => {
+  const { contentSid } = req.params;
+  const who = adminIdentity(req);
+
+  if (!isValidContentSid(contentSid)) {
+    return res
+      .status(400)
+      .json({ status: false, message: "A valid contentSid is required" });
+  }
+
+  let sendCount;
+  try {
+    sendCount = countTemplateSends(contentSid);
+  } catch (error) {
+    console.error(
+      `${Date.now()} - [TemplateDelete] ERROR — usage check failed. sid=${contentSid} admin=${who} ip=${req.ip}`,
+      error
+    );
+
+    return res
+      .status(500)
+      .json({ status: false, message: "Failed to verify template usage" });
+  }
+
+  if (sendCount > 0) {
+    console.warn(
+      `${Date.now()} - [TemplateDelete] DENIED — in use. sid=${contentSid} count=${sendCount} admin=${who} ip=${req.ip}`
+    );
+
+    return res.status(409).json({
+      status: false,
+      sendCount,
+      message: `This template has ${sendCount} recorded send${
+        sendCount === 1 ? "" : "s"
+      } and cannot be deleted.`,
+    });
+  }
+
+  const result = await deleteContentTemplate(contentSid);
+
+  if (!result.status) {
+    const notFound = result.result?.status === 404;
+
+    console.error(
+      `${Date.now()} - [TemplateDelete] ERROR — Twilio remove failed. sid=${contentSid} admin=${who} ip=${req.ip}`,
+      result.result
+    );
+
+    return res.status(notFound ? 404 : 502).json({
+      status: false,
+      message: notFound
+        ? "Template not found at Twilio"
+        : "Twilio rejected the delete request",
+    });
+  }
+
+  console.log(
+    `${Date.now()} - [TemplateDelete] GRANTED — deleted. sid=${contentSid} admin=${who} ip=${req.ip}`
+  );
+
+  return res.json({
+    status: true,
+    contentSid,
+    message: "Template deleted",
+  });
 });
 
 router.get("/api/whatsapp/history/:phone", async (req, res) => {

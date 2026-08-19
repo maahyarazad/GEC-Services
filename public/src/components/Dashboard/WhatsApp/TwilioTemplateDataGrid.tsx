@@ -1,6 +1,11 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Box, Typography, Paper, Button, IconButton, Tooltip, Chip, CircularProgress } from "@mui/material";
+import {
+    Box, Typography, Paper, Button, IconButton, Tooltip, Chip, CircularProgress,
+    Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Alert,
+} from "@mui/material";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import { useSnackbar } from "../../Providers/Snackbar";
 import _CustomDataGrid from '../../CustomDataGrid';
 const CustomDataGrid = _CustomDataGrid as React.ComponentType<Record<string, any>>;
 import { SiQuicklook } from "react-icons/si";
@@ -47,6 +52,16 @@ interface TwilioTemplateDataGridProps {
     groupedByTypeKey: GroupedByTypeKey;
     messageState: MessageState;
     handleMessageStateChange: (key: keyof MessageState, value: unknown) => void;
+    // Re-fetches the template list. Optional so the grid still works if a caller
+    // has not wired it up — Refresh is simply unavailable in that case.
+    onRefresh?: () => void | Promise<void>;
+}
+
+// What the usage pre-flight tells us about a template the admin wants to delete.
+interface PendingDelete {
+    row: FlatRow;
+    sendCount: number;
+    related: { contactBook: number; contactBookEvents: number };
 }
 
 // ─── Preview Renderer ─────────────────────────────────────────────────────────
@@ -279,8 +294,10 @@ export default function TwilioTemplateDataGrid({
     groupedByTypeKey,
     messageState,
     handleMessageStateChange,
+    onRefresh,
 }: TwilioTemplateDataGridProps) {
 
+    const { showSnackbar } = useSnackbar();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const rows: FlatRow[] = Object.entries(groupedByTypeKey).flatMap(([group, items]) =>
@@ -345,7 +362,138 @@ export default function TwilioTemplateDataGrid({
 
     const [viewTemplate, setViewTemplate] = useState<boolean>(false);
 
-    const onDelete = (row: FlatRow) => { console.log(row) }
+    const [selectedRow, setSelectedRow] = useState<FlatRow | null>(null);
+
+    // ─── Refresh ──────────────────────────────────────────────────────────────
+
+    const [refreshing, setRefreshing] = useState(false);
+
+    // Refreshes both halves of what this grid shows: the template list (owned by
+    // the parent) and the approval statuses (owned here). Guarded so a double
+    // click cannot fire two rounds of requests.
+    const handleRefresh = useCallback(async () => {
+        if (refreshing) return;
+        setRefreshing(true);
+        try {
+            await Promise.all([onRefresh?.(), fetchApprovals()]);
+        } catch (e) {
+            console.error("Failed to refresh templates", e);
+            // The already-loaded rows stay on screen; a failed refresh must not
+            // blank the grid out.
+            showSnackbar("Could not refresh templates. Showing the last loaded list.", "error");
+        } finally {
+            setRefreshing(false);
+        }
+    }, [refreshing, onRefresh, fetchApprovals, showSnackbar]);
+
+    // ─── Delete ───────────────────────────────────────────────────────────────
+
+    const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+    const [checkingUsage, setCheckingUsage] = useState<string | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    /**
+     * Pre-flight before offering deletion.
+     *
+     * This check is an affordance, not the gate — it exists so the confirmation
+     * dialog can state what is about to happen. The server re-runs it on the
+     * DELETE and has the final say. Anything other than a clean "no sends"
+     * blocks here: a non-200, a network failure, or a positive count all stop
+     * the flow rather than opening the dialog.
+     */
+    const onDelete = useCallback(async (row: FlatRow) => {
+        setCheckingUsage(row.sid);
+        try {
+            const res = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/twilio/template-usage/${row.sid}`,
+                { credentials: "include" }
+            );
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok || !data.status) {
+                showSnackbar(
+                    data.message || "Could not verify whether this template has been used.",
+                    "error"
+                );
+                return;
+            }
+
+            if (!data.canDelete) {
+                showSnackbar(
+                    `"${row.friendlyName}" has ${data.sendCount} recorded send${data.sendCount === 1 ? "" : "s"} and cannot be deleted.`,
+                    "warning"
+                );
+                return;
+            }
+
+            setPendingDelete({
+                row,
+                sendCount: data.sendCount,
+                related: data.related ?? { contactBook: 0, contactBookEvents: 0 },
+            });
+        } catch (e) {
+            console.error("Template usage check failed", e);
+            showSnackbar("Could not verify whether this template has been used.", "error");
+        } finally {
+            setCheckingUsage(null);
+        }
+    }, [showSnackbar]);
+
+    const confirmDelete = useCallback(async () => {
+        if (!pendingDelete) return;
+        const { row } = pendingDelete;
+
+        setDeleting(true);
+        try {
+            const res = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/twilio/template/${row.sid}`,
+                { method: "DELETE", credentials: "include" }
+            );
+            const data = await res.json().catch(() => ({}));
+
+            if (res.status === 409) {
+                // A broadcast landed between the pre-flight and this click. The
+                // server refused, which is exactly what it is there for.
+                setPendingDelete(null);
+                showSnackbar(
+                    data.message || "This template is now in use and cannot be deleted.",
+                    "warning"
+                );
+                await handleRefresh();
+                return;
+            }
+
+            if (!res.ok || !data.status) {
+                showSnackbar(data.message || "Failed to delete the template.", "error");
+                return;
+            }
+
+            setPendingDelete(null);
+            showSnackbar(`"${row.friendlyName}" was deleted.`, "success");
+
+            // Drop the stale approval entry, and clear the selection/preview if
+            // they were pointing at the template that just went away.
+            setApprovals((prev) => {
+                const next = { ...prev };
+                delete next[row.sid];
+                return next;
+            });
+            setSelectedRow((prev) => (prev?.id === row.id ? null : prev));
+            if (messageState.content?.sid === row.sid) {
+                setViewTemplate(false);
+                handleMessageStateChange("content", null);
+                handleMessageStateChange("inputValue", {});
+            }
+
+            await handleRefresh();
+        } catch (e) {
+            console.error("Template delete failed", e);
+            showSnackbar("Failed to delete the template.", "error");
+        } finally {
+            setDeleting(false);
+        }
+    }, [pendingDelete, showSnackbar, handleRefresh, messageState.content, handleMessageStateChange]);
+
     const triggerRef = useRef<HTMLButtonElement>(null);
     const [triggerPos, setTriggerPos] = useState({ top: 0, right: 0 });
 
@@ -460,12 +608,22 @@ export default function TwilioTemplateDataGrid({
                     </Tooltip>
 
                     <Tooltip title="Delete Template">
-                        <IconButton size="small" color="error" onClick={() => onDelete(row)} sx={{
-                            color: "#d32f2f",
-                            "&:hover": { backgroundColor: "#ffebee" },
-                        }}>
-                            <TbTrashX size={22} />
-                        </IconButton>
+                        <span>
+                            <IconButton
+                                size="small"
+                                color="error"
+                                disabled={checkingUsage === row.sid}
+                                onClick={() => onDelete(row)}
+                                sx={{
+                                    color: "#d32f2f",
+                                    "&:hover": { backgroundColor: "#ffebee" },
+                                }}
+                            >
+                                {checkingUsage === row.sid
+                                    ? <CircularProgress size={18} color="error" />
+                                    : <TbTrashX size={22} />}
+                            </IconButton>
+                        </span>
                     </Tooltip>
                 </div>
             ),
@@ -473,8 +631,6 @@ export default function TwilioTemplateDataGrid({
     ];
 
 
-
-    const [selectedRow, setSelectedRow] = useState<FlatRow | null>(null);
 
     const handleRowClick = (row: FlatRow) => {
         setSelectedRow(row);
@@ -512,7 +668,20 @@ export default function TwilioTemplateDataGrid({
 
 
     return (
-        <div style={{ height: "calc(100vh - 150px)", overflow: "hidden", position: "relative" }}>
+        <div style={{ height: "calc(100vh - 150px)", overflow: "hidden", position: "relative", display: "flex", flexDirection: "column" }}>
+                    {/* Header bar — mirrors the Support Centre's Refresh control. */}
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", px: 1, pb: 0.5, flexShrink: 0 }}>
+                        <Button
+                            size="small"
+                            startIcon={refreshing ? <CircularProgress size={16} /> : <RefreshIcon />}
+                            onClick={handleRefresh}
+                            disabled={refreshing}
+                            sx={{ textTransform: "none" }}
+                        >
+                            Refresh
+                        </Button>
+                    </Box>
+                    <Box sx={{ flex: 1, minHeight: 0 }}>
                     <CustomDataGrid
                         rows={rows}
                         columns={columns}
@@ -521,6 +690,53 @@ export default function TwilioTemplateDataGrid({
                         onRowClick={handleRowClick}
                         selectedRowId={selectedRow?.id}
                     />
+                    </Box>
+
+                    {/* Confirmation. A MUI dialog rather than window.confirm: it has to
+                        show the usage context, and a native modal would block the page. */}
+                    <Dialog
+                        open={Boolean(pendingDelete)}
+                        onClose={() => { if (!deleting) setPendingDelete(null); }}
+                        maxWidth="xs"
+                        fullWidth
+                    >
+                        <DialogTitle>Delete this template?</DialogTitle>
+                        <DialogContent>
+                            <DialogContentText component="div">
+                                <strong>{pendingDelete?.row.friendlyName}</strong> will be permanently
+                                removed from the Twilio content library. This cannot be undone.
+                            </DialogContentText>
+                            <Alert severity="info" sx={{ mt: 2 }}>
+                                No messages have been sent from this template.
+                            </Alert>
+                            {Boolean(
+                                (pendingDelete?.related.contactBook ?? 0) +
+                                (pendingDelete?.related.contactBookEvents ?? 0)
+                            ) && (
+                                <Alert severity="warning" sx={{ mt: 2 }}>
+                                    It is still referenced by {pendingDelete?.related.contactBook} contact
+                                    record(s) and {pendingDelete?.related.contactBookEvents} contact/event
+                                    record(s). Those references will be left dangling.
+                                </Alert>
+                            )}
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={() => setPendingDelete(null)} disabled={deleting} sx={{ textTransform: "none" }}>
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={confirmDelete}
+                                color="error"
+                                variant="contained"
+                                disabled={deleting}
+                                startIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
+                                sx={{ textTransform: "none" }}
+                            >
+                                {deleting ? "Deleting…" : "Delete"}
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+
                 {/* Right: Preview Panel */}
                 <div
                     style={{
