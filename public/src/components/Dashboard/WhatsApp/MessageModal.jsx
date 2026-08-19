@@ -169,6 +169,7 @@ const MessageModal = ({
                                     required
                                     className="form-select"
                                 >
+                                    <option value={2000}>2000</option>
                                     <option value={1000}>1000</option>
                                     <option value={500}>500</option>
                                     <option value={200}>200</option>

@@ -4,7 +4,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import { Divider, useTheme, useMediaQuery } from "@mui/material";
-import { Button } from '@mui/material'
+import { Button, Typography } from '@mui/material'
 import Modal from '../../Modal';
 import SlideMenu from '../../SlideMenu/SlideMenu';
 import CustomDataGrid from '../../CustomDataGrid';
@@ -1324,6 +1324,7 @@ const WhatsappBroadcast = () => {
                     </Button>
 
                     <Divider sx={{ my: 1 }} component="div"/>
+                    <Typography  sx={{fontSize: 12, fontWeight: 600}}>Manage Data</Typography>
 
                     {/* MIDDLE — navigation & utility buttons */}
                     <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('contact-book')}>
@@ -1332,36 +1333,24 @@ const WhatsappBroadcast = () => {
                     <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('guest-list')}>
                         <BsPeopleFill size={17} style={{ marginRight: 4 }} /> Guest List
                     </Button>
-                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('event-logs')}>
-                        <BsClockHistory size={17} style={{ marginRight: 4 }} /> Event Logs
-                    </Button>
                     <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('event-list')}>
                         <BsCalendar2Event size={17} style={{ marginRight: 4 }} /> Event List
                     </Button>
+
                     <Divider sx={{ my: 1 }} component="div"/>
-                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('response-logs')}>
+                    <Typography  sx={{fontSize: 12, fontWeight: 600}}>Logs</Typography>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('response-logs')} title="Open Interactive Messaging to view and interact with messages sent to the sender">
                         <RiUserReceivedFill style={{ marginRight: 4 }} /> Response Logs
                     </Button>
-                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('delivery-logs')}>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('delivery-logs')} title="Delivery logs for all batches or individual messages sent to Twilio (queued, sent, delivered, read)">
                         <RiCheckDoubleFill style={{ marginRight: 4 }} /> Delivery Logs
+                    </Button>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('event-logs')} title="Attendance logs for all previous events">
+                        <BsClockHistory size={17} style={{ marginRight: 4 }} /> Event Logs
                     </Button>
 
                     <Divider sx={{ my: 1 }} component="div"/>
-                     <Button
-                        variant="outlined"
-                        color="primary"
-                        size="small"
-                        sx={{ textTransform: 'none', justifyContent: 'flex-start' }} title='Reveal Twilio Account SID and Auth Token' onClick={() => setRevealTwilioOpen(true)}>
-                        <MdVpnKey style={{ marginRight: 4 }} /> Twilio Credentials
-                    </Button>
-                    <Divider sx={{ my: 1 }} component="div"/>
-                    {/* <Button
-                        variant="outlined"
-                        color="primary"
-                        size="small"
-                        sx={{ textTransform: 'none', justifyContent: 'flex-start' }} title='Update Google Map URL' onClick={() => handleSetOpenPanel('update-map-url')}>
-                        <SiGooglemaps size={17} style={{ marginRight: 4 }} /> Update Google Map
-                    </Button> */}
+                    <Typography  sx={{fontSize: 12, fontWeight: 600}}>Twilio Actions</Typography>
                     <Button
                         variant="outlined"
                         color="secondary"
@@ -1372,12 +1361,28 @@ const WhatsappBroadcast = () => {
                     >
                         <SiTwilio size={17} style={{ marginRight: 4 }} /> Create Template
                     </Button>
+                     <Button
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        sx={{ textTransform: 'none', justifyContent: 'flex-start' }} title='Reveal Twilio Account SID and Auth Token' onClick={() => setRevealTwilioOpen(true)}>
+                        <MdVpnKey style={{ marginRight: 4 }} /> Twilio Credentials
+                    </Button>
+                    
+                    {/* <Button
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        sx={{ textTransform: 'none', justifyContent: 'flex-start' }} title='Update Google Map URL' onClick={() => handleSetOpenPanel('update-map-url')}>
+                        <SiGooglemaps size={17} style={{ marginRight: 4 }} /> Update Google Map
+                    </Button> */}
 
                     {/* SPACER — pushes report icons to bottom */}
                     
 
                     <Divider sx={{ my: 1 }} component="div"/>
 
+                    <Typography  sx={{fontSize: 12, fontWeight: 600}}>Reports</Typography>
                     {/* BOTTOM — report icon buttons */}
                     <Button
                         variant="outlined"
