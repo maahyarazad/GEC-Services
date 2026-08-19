@@ -1323,7 +1323,7 @@ const WhatsappBroadcast = () => {
                         <FaWhatsapp size={17} style={{ marginRight: 4 }} /> Send Message
                     </Button>
 
-                    <Divider sx={{ my: 1 }} component="div"/>
+                    <Divider component="div"/>
                     <Typography  sx={{fontSize: 12, fontWeight: 600}}>Manage Data</Typography>
 
                     {/* MIDDLE — navigation & utility buttons */}
@@ -1337,7 +1337,7 @@ const WhatsappBroadcast = () => {
                         <BsCalendar2Event size={17} style={{ marginRight: 4 }} /> Event List
                     </Button>
 
-                    <Divider sx={{ my: 1 }} component="div"/>
+                    <Divider component="div"/>
                     <Typography  sx={{fontSize: 12, fontWeight: 600}}>Logs</Typography>
                     <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('response-logs')} title="Open Interactive Messaging to view and interact with messages sent to the sender">
                         <RiUserReceivedFill style={{ marginRight: 4 }} /> Response Logs
@@ -1349,7 +1349,7 @@ const WhatsappBroadcast = () => {
                         <BsClockHistory size={17} style={{ marginRight: 4 }} /> Event Logs
                     </Button>
 
-                    <Divider sx={{ my: 1 }} component="div"/>
+                    <Divider component="div"/>
                     <Typography  sx={{fontSize: 12, fontWeight: 600}}>Twilio Actions</Typography>
                     <Button
                         variant="outlined"
@@ -1380,7 +1380,7 @@ const WhatsappBroadcast = () => {
                     {/* SPACER — pushes report icons to bottom */}
                     
 
-                    <Divider sx={{ my: 1 }} component="div"/>
+                    <Divider component="div"/>
 
                     <Typography  sx={{fontSize: 12, fontWeight: 600}}>Reports</Typography>
                     {/* BOTTOM — report icon buttons */}
