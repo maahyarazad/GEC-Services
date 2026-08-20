@@ -49,7 +49,7 @@ Defined in `public/src/components/Dashboard/KnowledgeBase/knowledgeBase.catalog.
 | ├ `whatsapp-twilio-templates` | `whatsapp-broadcast` | `view=create-template` |
 | ├ `whatsapp-auto-response` | `whatsapp-broadcast` | `view=event-list` |
 | ├ `whatsapp-guest-list` | `whatsapp-broadcast` | `view=guest-list` |
-| └ `whatsapp-contact-to-guest` | `whatsapp-broadcast` | `view=contact-book` |
+| └ `whatsapp-sender` | `whatsapp-broadcast` | section root (Sender opens from the template list) |
 | `whatsapp-reporting` | `whatsapp-broadcast` | `view=report` |
 | `place-id-finder` | `place-id-finder` | section root |
 | `pdf-generator` | `pdf-generator` | section root |

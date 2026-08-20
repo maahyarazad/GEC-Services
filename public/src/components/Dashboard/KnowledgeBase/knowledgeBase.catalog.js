@@ -78,13 +78,13 @@ export const KNOWLEDGE_BASE_TOPICS = Object.freeze([
                 order: 3,
             },
             {
-                id: "whatsapp-contact-to-guest",
-                title: "How to add a person from the contact list to the guest list",
+                id: "whatsapp-sender",
+                title: "How to work with Sender",
                 summary:
-                    "Finding someone in the contact book and moving them onto the guest list for an event.",
+                    "The send dialog behind a template: picking the event, audience and sender limit, what the Contact Book, Guest List, QR code and language switches change about who is actually messaged, and why a send keeps running after the dialog closes.",
                 sectionSlug: "whatsapp-broadcast",
-                destination: { label: "Contact Book", tab: "whatsapp-broadcast", view: "contact-book" },
-                video: { videoId: "whatsapp-contact-to-guest", filename: "whatsapp-contact-to-guest.mp4" },
+                destination: { label: "Twilio Templates (Sender)", tab: "whatsapp-broadcast", view: null },
+                video: { videoId: "whatsapp-sender", filename: "whatsapp-sender.mp4" },
                 durationLabel: null,
                 order: 4,
             },

@@ -26,7 +26,7 @@ const VIDEO_FILES = Object.freeze({
   "whatsapp-twilio-templates": "whatsapp-twilio-templates.mp4",
   "whatsapp-auto-response": "whatsapp-auto-response.mp4",
   "whatsapp-guest-list": "whatsapp-guest-list.mp4",
-  "whatsapp-contact-to-guest": "whatsapp-contact-to-guest.mp4",
+  "whatsapp-sender": "whatsapp-sender.mp4",
   "whatsapp-reporting": "whatsapp-reporting.mp4",
   "place-id-finder": "place-id-finder.mp4",
   "pdf-generator": "pdf-generator.mp4",
