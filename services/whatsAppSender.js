@@ -12,6 +12,7 @@ const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
 const {generateQR_WhatsApp} = require("../services/qrGenerator");
+const { isOptedOut } = require("../services/optOutService");
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -236,6 +237,10 @@ const messageSender = async (req) => {
       eventId,
     } = req.body;
 
+    // Collects every safeSendMessage result across all branches below so we
+    // can report which recipients were skipped for being opted out (FR-008).
+    const sendResults = [];
+
     // Helper function to safely send message and swallow errors
 
     const safeSendMessage = async (el, eventId) => {
@@ -249,6 +254,14 @@ const messageSender = async (req) => {
             origin_function: "sendMessageToPhone",
           });
           return null;
+        }
+
+        // Backstop opt-out check (spec 003-twilio-optout-webhook): skip numbers
+        // we've independently recorded as opted-out, in addition to Twilio's
+        // own native STOP/21610 enforcement.
+        if (isOptedOut(el.phone)) {
+          console.log(`${Date.now()} - Skipping send to ${el.phone}: number is opted out.`);
+          return { skipped: true, reason: "opted_out", phone: el.phone };
         }
 
         if (process.env.ENVIRONMENT === "PRODUCTION") {
@@ -284,8 +297,8 @@ const messageSender = async (req) => {
             })
         );
 
-        
-        await Promise.all(result.map((x) => safeSendMessage(x, eventId)));
+
+        sendResults.push(...(await Promise.all(result.map((x) => safeSendMessage(x, eventId)))));
     }
 
     if (useContactBook) {
@@ -310,7 +323,7 @@ const messageSender = async (req) => {
         const batch = batches[i];
 
         console.log(`${Date.now()} - Sending batch ${i + 1} of ${batches.length}...`);
-        await Promise.all(batch.map((x) => safeSendMessage(x, eventId)));
+        sendResults.push(...(await Promise.all(batch.map((x) => safeSendMessage(x, eventId)))));
         console.log(`${Date.now()} - Batch ${i + 1} sent.`);
 
         // Delay before sending next batch except after last batch
@@ -334,10 +347,22 @@ const messageSender = async (req) => {
             );
         }
 
-        await Promise.all(enrichedPhoneList.map((x) => safeSendMessage(x, eventId)));
+        sendResults.push(...(await Promise.all(enrichedPhoneList.map((x) => safeSendMessage(x, eventId)))));
     }
 
-    return { status: true };
+    const skippedOptOut = sendResults
+      .filter((r) => r && r.skipped && r.reason === "opted_out")
+      .map((r) => r.phone);
+
+    if (skippedOptOut.length) {
+      console.log(`${Date.now()} - Skipped ${skippedOptOut.length} opted-out number(s):`, skippedOptOut);
+      dbService.create("error_log", {
+        error: `Skipped ${skippedOptOut.length} opted-out number(s): ${skippedOptOut.join(", ")}`,
+        origin_function: "messageSender_optout_skip",
+      });
+    }
+
+    return { status: true, skippedOptOut };
   } catch (error) {
     console.error(`${Date.now()} - WhatsApp sender error:`, error); 
     // You can decide whether to return false or not here.

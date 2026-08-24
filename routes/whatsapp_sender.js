@@ -7,6 +7,7 @@ const {
   handleAutoResponse,
   fetchHistory,
 } = require("../services/whatsAppSender");
+const { matchOptOutKeyword, recordOptOut, listOptOuts } = require("../services/optOutService");
 
 
 const dbService = require("../services/dbService");
@@ -80,10 +81,22 @@ const adminIdentity = (req) =>
 
 
 router.post("/api/whatsapp/send", (req, res) => {
-  // Fire and forget: run messageSender but don't await
-  messageSender(req).catch((error) => {
-    console.error(`${Date.now()} - Background messageSender error:`, error);
-  });
+  // Fire and forget: run messageSender but don't await. The response below is
+  // already sent before this resolves, so opted-out skips (FR-008) surface
+  // via the logs it points to, rather than in the HTTP response itself —
+  // messageSender() already writes a skip summary to error_log when non-empty.
+  messageSender(req)
+    .then((result) => {
+      if (result?.skippedOptOut?.length) {
+        console.log(
+          `${Date.now()} - messageSender skipped ${result.skippedOptOut.length} opted-out number(s):`,
+          result.skippedOptOut
+        );
+      }
+    })
+    .catch((error) => {
+      console.error(`${Date.now()} - Background messageSender error:`, error);
+    });
 
   // Respond immediately
   res.status(200).json({
@@ -844,13 +857,42 @@ router.get("/api/whatsapp/twilio-response-logs", async (req, res) => {
   }
 });
 
+// Admin dashboard opt-out list view (spec 003-twilio-optout-webhook, User
+// Story 4). Access control is inherited from the blanket authorize_admin
+// middleware applied to all /api/ routes in server.js — no new check needed.
+router.get("/api/whatsapp/optout-list", (req, res) => {
+  try {
+    const { pageNumber, limit, sortField, sortOrder, advancedClauses } =
+      dbService._QuerySqlConverter(req.query, "whatsapp_opt_outs");
+
+    const { data: _data, total } = listOptOuts({
+      pageNumber,
+      limit,
+      sortField,
+      sortOrder,
+      advancedClauses,
+    });
+
+    // Epoch ms → UAE, same conversion already applied to received_at above.
+    const data = (_data ?? []).map((row) => ({
+      ...row,
+      opted_out_at: row.opted_out_at ? toUAE(row.opted_out_at) : null,
+    }));
+
+    return res.json({ status: true, data, total });
+  } catch (error) {
+    console.error(`${Date.now()} - Error in /api/whatsapp/optout-list:`, error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
 router.post(
   "/webhooks/whatsapp",
   express.urlencoded({ extended: false }),
   async (req, res) => {
     try {
       const eventId = req.query.eventId ?? undefined;
-      const { From, ButtonPayload } = req.body;
+      const { From, Body, ButtonPayload } = req.body;
       const response = new MessagingResponse();
       response.message("");
 
@@ -858,6 +900,20 @@ router.post(
       res.end(response.toString());
 
       await handleAutoResponse(From, ButtonPayload, eventId);
+
+      // Independent opt-out backstop (spec 003-twilio-optout-webhook): record
+      // known opt-outs ourselves since Twilio exposes no report/API for them.
+      // Guarded so a failure here never affects the webhook response above.
+      try {
+        if (From && Body) {
+          const matchedKeyword = matchOptOutKeyword(Body);
+          if (matchedKeyword) {
+            recordOptOut(From, matchedKeyword);
+          }
+        }
+      } catch (optOutErr) {
+        console.error(`${Date.now()} - Failed to record WhatsApp opt-out:`, optOutErr);
+      }
 
       // Fire and forget: save raw payload + log message to DB
       dbService.create("twilio_responses", {

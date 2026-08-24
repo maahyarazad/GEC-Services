@@ -27,7 +27,7 @@ import WhastAppTypeReport from '../Dashboard/WhastAppTypeReport';
 import WhastAppAttendanceTypeReport from '../Dashboard/WhastAppAttendanceTypeReport';
 import ContactBookMissingContentSidReport from '../Dashboard/ContactBookMissingContentSidReport';
 import { useNavigate, useLocation } from "react-router-dom";
-import { MdInsights, MdPersonSearch, MdVpnKey } from "react-icons/md";
+import { MdInsights, MdPersonSearch, MdVpnKey, MdPersonOff } from "react-icons/md";
 import { PiUserCircleCheckDuotone } from "react-icons/pi";
 import ContactBookDataGrid from './ContactBookDataGrid';
 import ViewModeButtonGroup from "./ViewModeButtonGroup";
@@ -43,6 +43,7 @@ import CreateTwilioTemplate from "./CreateTwilioTemplate";
 import { SiTwilio } from "react-icons/si";
 import GuestListPanel from "./GuestListPanel";
 import EventLogsPanel from "./EventLogsPanel";
+import OptOutListPanel from "./OptOutListPanel";
 import RevealTwilioCredentials from "./RevealTwilioCredentials";
 import ResponseLogsMobileList from "./ResponseLogsMobileList";
 import NotepadModal from "./NotepadModal";
@@ -920,6 +921,7 @@ const WhatsappBroadcast = () => {
             // Knowledge Base jump control needs them addressable.
             "create-template": "create-template",
             "event-logs": "event-logs",
+            "optout-list": "optout-list",
         };
 
         setOpenPanel(panelMap[modalView] ?? null);
@@ -1246,6 +1248,14 @@ const WhatsappBroadcast = () => {
                 <EventLogsPanel active={openPanel === 'event-logs'} />
             </SlideMenu>
 
+            <SlideMenu id={'optout-list'}
+                isOpen={openPanel === 'optout-list'}
+                onClose={() => { handleSetOpenPanel(null) }}
+                headerTitle={'Opt-Out List'}
+            >
+                <OptOutListPanel active={openPanel === 'optout-list'} />
+            </SlideMenu>
+
             <SlideMenu id={'event-list'}
                 isOpen={openPanel === 'event-list'}
                 onClose={() => { handleSetOpenPanel(null) }}
@@ -1347,6 +1357,9 @@ const WhatsappBroadcast = () => {
                     </Button>
                     <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('event-logs')} title="Attendance logs for all previous events">
                         <BsClockHistory size={17} style={{ marginRight: 4 }} /> Event Logs
+                    </Button>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('optout-list')} title="Numbers that have opted out of WhatsApp messages">
+                        <MdPersonOff size={17} style={{ marginRight: 4 }} /> Opt-Out List
                     </Button>
 
                     <Divider component="div"/>
