@@ -88,3 +88,4 @@ backups/
 # Knowledge Base tutorial recordings (placed on the server by hand, never committed)
 file_storage/knowledge_base/*
 !file_storage/knowledge_base/.gitkeep
+exclude_table.sql

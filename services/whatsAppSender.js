@@ -152,6 +152,7 @@ const contactBookData = (conditions, useAudience, eventId) => {
             }
             AND contentSid IS NULL
         AND id        NOT IN (SELECT contact_book_id FROM excluded_guests)
+        AND phone     NOT IN (SELECT phoneNumber FROM exclude_table)
         AND type      NOT IN ('Wüstenkinder', 'expert_guest', 'only_guest')
         GROUP BY phone
         ORDER BY
@@ -175,13 +176,14 @@ const contactBookData = (conditions, useAudience, eventId) => {
       FROM contact_book
       WHERE phone IS NOT NULL AND blacklist = 0
       AND id NOT IN (SELECT contact_book_id FROM excluded_guests)
+      AND phone NOT IN (SELECT phoneNumber FROM exclude_table)
        AND type IN ('${useAudience}')
       ${
         Object.keys(conditions).length === 0
           ? ``
           : `AND language = '${conditions?.language?.slice(0, 2)}'`
       }
-      AND contentSid IS NULL GROUP BY phone LIMIT ${conditions.senderLimit}
+     GROUP BY phone LIMIT ${conditions.senderLimit}
     `;
   }
 
