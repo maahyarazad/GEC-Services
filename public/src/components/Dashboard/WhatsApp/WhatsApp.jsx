@@ -1437,13 +1437,13 @@ const WhatsappBroadcast = () => {
                         sx={{ textTransform: 'none', justifyContent: 'flex-start' }} title='Reveal Twilio Account SID and Auth Token' onClick={() => setRevealTwilioOpen(true)}>
                         <MdVpnKey style={{ marginRight: 4 }} /> Twilio Credentials
                     </Button>
-                    <Button
+                    {/* <Button
                         variant="outlined"
                         color="error"
                         size="small"
                         sx={{ textTransform: 'none', justifyContent: 'flex-start' }} title='Clear Delivery Flag from Contact Book' onClick={clearContactBook}>
                         <AiOutlineClear /> Clear Delivery Flag
-                    </Button>
+                    </Button> */}
 
                     {/* <Button
                         variant="outlined"
