@@ -717,7 +717,7 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
           AND td.metadata_createdAt <= ?
       ),
       base AS (
-        SELECT id, metadata_createdAt, contentSid, SmsStatus, messageSid, full_name, phone
+        SELECT id, datetime(metadata_createdAt, 'localtime'), contentSid, SmsStatus, messageSid, full_name, phone
         FROM ranked WHERE rn = 1
       )
     `;
