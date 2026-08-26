@@ -886,6 +886,9 @@ const WhatsappBroadcast = () => {
                     filterParams,
                     start ? `startDate=${encodeURIComponent(start)}` : '',
                     end ? `endDate=${encodeURIComponent(end)}` : '',
+                    // The server stores delivery timestamps in UTC and converts
+                    // them into whatever zone this browser is in.
+                    `tz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}`,
                 ].filter(Boolean).join('&');
 
                 const response = await fetch(

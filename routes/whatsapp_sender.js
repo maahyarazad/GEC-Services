@@ -36,6 +36,31 @@ const toUAE = (dateStr) => {
   return dayjs.utc(dateStr).tz(UAE_TZ).format("YYYY-MM-DD HH:mm:ss");;
 };
 
+/**
+ * The web client's IANA zone, taken from ?tz= (or the x-timezone header) and
+ * validated by handing it to dayjs — an unknown zone throws there, and an
+ * unvalidated string would poison every subsequent conversion in the request.
+ * Falls back to UAE so existing callers that send nothing keep their behaviour.
+ */
+const resolveClientTimeZone = (req) => {
+  const requested = req.query?.tz || req.get?.("x-timezone");
+  if (!requested || typeof requested !== "string") return UAE_TZ;
+  try {
+    dayjs.utc().tz(requested);
+    return requested;
+  } catch {
+    return UAE_TZ;
+  }
+};
+
+// UTC timestamp string → the client's local wall clock.
+const toClientZone = (dateStr, tz) =>
+  dateStr ? dayjs.utc(dateStr).tz(tz).format("YYYY-MM-DD HH:mm:ss") : null;
+
+// A local wall-clock string → the UTC form stored in the DB column.
+const clientZoneToUtc = (dateStr, tz) =>
+  dayjs.tz(dateStr, tz).utc().format("YYYY-MM-DD HH:mm:ss");
+
 // ─── Twilio template deletion helpers ────────────────────────────────────────
 
 // Twilio content SIDs are "HX" followed by 32 hex characters. Anything else is
@@ -563,7 +588,11 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
   try {
     // Keep the date range out of the generic converter — otherwise startDate /
     // endDate would be picked up as legacy column filters.
-    const { startDate: rawStart, endDate: rawEnd, ...gridQuery } = req.query;
+    const { startDate: rawStart, endDate: rawEnd, tz: _tz, ...gridQuery } = req.query;
+
+    // metadata_createdAt is stored in UTC; every date the client sends and
+    // every timestamp sent back is in the browser's own zone.
+    const clientTz = resolveClientTimeZone(req);
 
     const templates = await fetchContentTemplates();
     const templateMap = new Map();
@@ -638,9 +667,13 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
     const startDay = toDayString(startDate, rawStart);
     const endDay = toDayString(endDate, rawEnd);
 
-    // Both ends are inclusive: the whole start day and the whole end day.
-    const start = `${startDay} 00:00:00`;
-    const end = `${endDay} 23:59:59`;
+    // Both ends are inclusive: the whole start day and the whole end day, as
+    // the client experiences them — so the bounds are built in the client's
+    // zone and then shifted to UTC to match the stored column.
+    const localStart = `${startDay} 00:00:00`;
+    const localEnd = `${endDay} 23:59:59`;
+    const start = clientZoneToUtc(localStart, clientTz);
+    const end = clientZoneToUtc(localEnd, clientTz);
 
     // ── WHERE clause: grid filters ──────────────────────────────────────────
     // The date range is pushed down into the CTE instead (see below) — it is a
@@ -717,7 +750,7 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
           AND td.metadata_createdAt <= ?
       ),
       base AS (
-        SELECT id, datetime(metadata_createdAt, 'localtime'), contentSid, SmsStatus, messageSid, full_name, phone
+        SELECT id, metadata_createdAt, contentSid, SmsStatus, messageSid, full_name, phone
         FROM ranked WHERE rn = 1
       )
     `;
@@ -748,6 +781,7 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
     const result = rows.map((row) => ({
       ...row,
       templateFriendlyName: templateMap.get(row.contentSid) ?? null,
+      metadata_createdAt: toClientZone(row.metadata_createdAt, clientTz),
     }));
 
     const totalPages = Math.ceil(totalCount / limit);
@@ -757,8 +791,9 @@ router.get("/api/whatsapp/twilio-delivery-logs", async (req, res) => {
       status: true,
       result,
       filters: {
-        startDate: start,
-        endDate: end,
+        startDate: localStart,
+        endDate: localEnd,
+        timeZone: clientTz,
       },
       pagination: {
         page,
