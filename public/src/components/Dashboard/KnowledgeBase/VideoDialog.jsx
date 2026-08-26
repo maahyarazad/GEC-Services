@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { Dialog, DialogTitle, DialogContent, IconButton } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, IconButton, CircularProgress } from "@mui/material";
 import { MdClose } from "react-icons/md";
 
 // See knowledgeBase.telemetry.js — the API lives on a different origin in
@@ -14,27 +14,62 @@ const SERVER_URL = import.meta.env.VITE_SERVERURL;
  * fullscreen, keyboard and screen-reader support for free, and behaves correctly
  * on iOS Safari — all without adding a player library to the bundle.
  *
- * `preload="metadata"` fetches only enough to show the duration and enable
- * seeking. The httpOnly `a-usr` admin cookie rides along automatically on this
- * same-origin request, so there is no token to pass and no blob to fetch.
+ * Authentication is a streaming ticket, not the admin cookie. A <video> element
+ * cannot attach an Authorization header, and the cookie only reaches a
+ * cross-origin request if the element opts in — which Safari's ITP and Chrome's
+ * third-party cookie phase-out then block anyway. So the dialog first asks the
+ * API for a short-lived, single-video ticket over an ordinary credentialed
+ * fetch, and plays the URL that comes back. That URL needs no cookie, which is
+ * what lets the browser drive playback with Range requests: `preload="metadata"`
+ * fetches only enough to show the duration, and a seek fetches only the region
+ * seeked to, instead of buffering the whole file first.
  */
 const VideoDialog = ({ topic, open, onClose, onPlay }) => {
     const [failed, setFailed] = useState(false);
+    const [streamingUrl, setStreamingUrl] = useState(null);
 
-    // A fresh topic gets a fresh error state, or a previous failure would stick.
+    const videoId = topic?.video?.videoId;
+
     useEffect(() => {
-        if (open) setFailed(false);
-    }, [open, topic?.id]);
+        // A fresh topic gets a fresh error state, and — just as importantly — a
+        // fresh URL: a ticket left over from the previously-viewed topic is
+        // scoped to that video and would only ever 404 here.
+        setFailed(false);
+        setStreamingUrl(null);
+
+        if (!open || !videoId) return;
+
+        // Tickets expire, so one is minted per dialog-open rather than cached
+        // for the session.
+        let cancelled = false;
+
+        fetch(`${SERVER_URL}/api/knowledge-base/videos/${videoId}/ticket`, {
+            // Cross-origin in development, so the admin cookie needs an explicit
+            // opt-in. The server allows this origin with credentials: true.
+            credentials: "include",
+        })
+            .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
+            .then((data) => {
+                if (cancelled) return;
+                if (!data?.streamingUrl) return Promise.reject(new Error("No streamingUrl"));
+                setStreamingUrl(`${SERVER_URL}${data.streamingUrl}`);
+            })
+            .catch(() => {
+                // Reuses the same panel a failed <video> load shows: from the
+                // administrator's side, "no ticket" and "no video" are the same
+                // outcome and deserve the same message.
+                if (!cancelled) setFailed(true);
+            });
+
+        // The dialog can be closed, or the topic switched, while the ticket is
+        // still in flight — without this, that late response would set state on
+        // a dialog the administrator has already moved on from.
+        return () => {
+            cancelled = true;
+        };
+    }, [open, videoId]);
 
     if (!topic?.video) return null;
-
-    const src = `${SERVER_URL}/api/knowledge-base/videos/${topic.video.videoId}`;
-
-    // A media element only sends cookies cross-origin when it opts in, and only
-    // then if the server echoes the origin back with credentials allowed — which
-    // it does for CLIENT_ORIGIN. Same-origin (production) needs no attribute, and
-    // setting one there would demand CORS headers the server has no reason to send.
-    const isCrossOrigin = Boolean(SERVER_URL) && !src.startsWith(window.location.origin);
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -58,11 +93,18 @@ const VideoDialog = ({ topic, open, onClose, onPlay }) => {
                             Knowledge Base still works.
                         </p>
                     </div>
+                ) : !streamingUrl ? (
+                    // The <video> element is deliberately not mounted until the
+                    // ticket resolves: mounting it with an empty src fires onError
+                    // immediately and would latch the failure panel above before
+                    // the ticket ever arrived.
+                    <div className="kb-video__loading" style={{ display: "grid", placeItems: "center", minHeight: 240 }}>
+                        <CircularProgress size={28} aria-label="Loading tutorial" />
+                    </div>
                 ) : (
                     <video
                         className="kb-video__frame"
-                        src={src}
-                        {...(isCrossOrigin ? { crossOrigin: "use-credentials" } : {})}
+                        src={streamingUrl}
                         controls
                         preload="metadata"
                         onPlay={onPlay}

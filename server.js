@@ -13,6 +13,9 @@ const { serveWithOgTags } = require("./middleware/ogTags");
 const { createWebSocketServer } = require("./websocket/admin.js");
 const imapPoller = require("./services/imapPoller.js");
 const registerRoutes = require("./routes.js");
+// Only the ticket-authenticated stream route; the rest of the Knowledge Base
+// router is wired up by registerRoutes() below, behind the admin gate.
+const { streamRouter: knowledgeBaseStream } = require("./routes/knowledge_base.js");
 
 // Services used by the scheduled jobs in the cron section below.
 const GSheetService = require("./services/gSheetService.js");
@@ -97,9 +100,25 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use((req, res, next) => {
-  console.log(`${Date.now()} - Received request for: ${req.url}`);
+  // Knowledge Base streaming tickets ride in the query string, so an unredacted
+  // req.url would write a live credential into stdout and every aggregated log
+  // that follows — turning a deliberately short-lived token into a durable one
+  // for anyone with log access. This is the only place the raw URL is printed.
+  const safeUrl = req.url.replace(/([?&]token=)[^&]*/gi, "$1[redacted]");
+  console.log(`${Date.now()} - Received request for: ${safeUrl}`);
   next();
 });
+
+// The Knowledge Base video stream authenticates with a ticket in the query
+// string instead of the admin cookie, because a <video> element cannot send an
+// Authorization header and a cross-origin cookie depends on the browser's
+// third-party cookie policy. That means it MUST be registered above the
+// blanket /api/ gate below: Express matches middleware in registration order,
+// so underneath it every cookie-less ticketed request is 401'd before the
+// ticket is ever examined. The ticket itself is minted by the cookie-gated
+// GET /api/knowledge-base/videos/:videoId/ticket, and is valid for one video,
+// one admin and a short window.
+app.use(knowledgeBaseStream);
 
 // Auth + static assets must be registered before the application routes.
 app.use("/api/", authorize.authorize_admin);
