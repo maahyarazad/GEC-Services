@@ -159,7 +159,7 @@ router.get("/api/whatsapp/list", async (req, res) => {
 
 router.post("/api/twilio/create-template", async (req, res) => {
   try {
-    const { friendly_name, language, body, variable_examples, buttons, type, media } = req.body;
+    const { friendly_name, language, body, variable_examples, buttons, type, media, category } = req.body;
 
     if (!friendly_name || !language || !body) {
       return res.status(400).json({ status: false, message: "friendly_name, language, and body are required" });
@@ -169,6 +169,18 @@ router.post("/api/twilio/create-template", async (req, res) => {
     const templateType = type || "twilio/quick-reply";
     if (!SUPPORTED_TYPES.includes(templateType)) {
       return res.status(400).json({ status: false, message: `Unsupported template type: ${templateType}` });
+    }
+
+    // WhatsApp approval category. Absent means MARKETING, which is what every
+    // caller got before this field existed. The comparison is exact and
+    // case-sensitive: the form always sends the canonical value, so "utility"
+    // means a caller that has not been updated, not a value to coerce.
+    // AUTHENTICATION is a real WhatsApp category but needs an authentication
+    // content type this endpoint cannot build, so it is rejected here.
+    const SUPPORTED_CATEGORIES = ["MARKETING", "UTILITY"];
+    const templateCategory = category || "MARKETING";
+    if (!SUPPORTED_CATEGORIES.includes(templateCategory)) {
+      return res.status(400).json({ status: false, message: `Unsupported template category: ${category}. Expected MARKETING or UTILITY` });
     }
 
     // Normalize media into an array of non-empty URL / {{variable}} strings.
@@ -250,7 +262,8 @@ router.post("/api/twilio/create-template", async (req, res) => {
       return res.status(twilioRes.status).json({ status: false, message: data?.message || "Twilio error", details: data });
     }
 
-    // Submit for WhatsApp approval (Marketing category)
+    // Submit for WhatsApp approval under the requested category. Meta may still
+    // re-categorise it during review; the response echoes what was accepted.
     const approvalRes = await fetch(
       `https://content.twilio.com/v1/Content/${data.sid}/ApprovalRequests/whatsapp`,
       {
@@ -261,7 +274,7 @@ router.post("/api/twilio/create-template", async (req, res) => {
         },
         body: JSON.stringify({
           name: friendly_name,
-          category: "MARKETING",
+          category: templateCategory,
         }),
       }
     );

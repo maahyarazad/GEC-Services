@@ -22,6 +22,26 @@ const LANGUAGES = [
     { value: 'de', label: 'German (de)' }
 ];
 
+// WhatsApp approval categories. Meta reviews and bills against these, and the
+// category cannot be changed once submitted — only deleted and recreated.
+const CATEGORIES = [
+    {
+        value: 'MARKETING',
+        label: 'Marketing',
+        help: 'Promotions, offers, announcements and invitations — anything sent to reach or re-engage an audience. Example: an event invitation.',
+    },
+    {
+        value: 'UTILITY',
+        label: 'Utility',
+        help: 'Messages about a transaction or booking the recipient already has. Example: a registration confirmation, or a QR-code ticket for someone already registered.',
+    },
+];
+
+// Display label for a raw category value, falling back to the value itself so
+// an unexpected one from Twilio is shown rather than swallowed.
+const categoryLabel = (value) =>
+    CATEGORIES.find((c) => c.value === value)?.label ?? value;
+
 const DEFAULT_BUTTONS = [
     { title: 'Teilnehmen', id: 'ATTEND' },
     { title: 'Nicht teilnehmen', id: 'NOT_ATTEND' },
@@ -39,6 +59,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
         type: 'twilio/quick-reply',
         buttons: DEFAULT_BUTTONS.map((b) => ({ ...b })),
         media_url: '{{qr_code_url}}',
+        category: 'MARKETING',
     });
 
     const set = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
@@ -132,11 +153,12 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                     media: isMediaType && form.media_url.trim()
                         ? [form.media_url.trim()]
                         : [],
+                    category: form.category,
                 }),
             });
             const data = await res.json();
             if (data.status) {
-                showSnackbar(`Template "${data.template.friendly_name}" created successfully`);
+                showSnackbar(`Template "${data.template.friendly_name}" created successfully (${categoryLabel(data.approval?.category ?? form.category)})`);
                 onSuccess?.();
                 setForm({
                     friendly_name: '',
@@ -146,6 +168,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                     type: 'twilio/quick-reply',
                     buttons: DEFAULT_BUTTONS.map((b) => ({ ...b })),
                     media_url: '',
+                    category: 'MARKETING',
                 });
             } else {
                 showSnackbar(data.message || 'Failed to create template', 'error');
@@ -183,6 +206,26 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                     <ToggleButton value="twilio/text">Text only</ToggleButton>
                     <ToggleButton value="twilio/media">Media</ToggleButton>
                 </ToggleButtonGroup>
+            </Box>
+
+            {/* Approval category */}
+            <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                    Category
+                </Typography>
+                <ToggleButtonGroup
+                    value={form.category}
+                    exclusive
+                    onChange={(_, v) => v && set('category', v)}
+                    size="small"
+                >
+                    {CATEGORIES.map((c) => (
+                        <ToggleButton key={c.value} value={c.value}>{c.label}</ToggleButton>
+                    ))}
+                </ToggleButtonGroup>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                    {CATEGORIES.find((c) => c.value === form.category)?.help}
+                </Typography>
             </Box>
 
             {/* Name + Language row */}
