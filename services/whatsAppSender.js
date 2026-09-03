@@ -834,7 +834,7 @@ async function handleAutoResponse(From, ButtonPayload) {
         const onGuestList = stmt.get(Number(contact.id),Number(event.id));
 
         const replyMessageTemplate = contact.language === "de"  
-        ? templates.result.find((x) => x.sid === "HXe071f9fc417a3b7c62adb3bda68588e5")
+        ? templates.result.find((x) => x.sid === "HXa7da14800646269872ca57d98ead6770")
         : templates.result.find((x) => x.sid === "HXdb4faaac494a7e50c777de2527d0ddc2");
         
 
