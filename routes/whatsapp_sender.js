@@ -159,7 +159,7 @@ router.get("/api/whatsapp/list", async (req, res) => {
 
 router.post("/api/twilio/create-template", async (req, res) => {
   try {
-    const { friendly_name, language, body, variable_examples, buttons, type, media } = req.body;
+    const { friendly_name, language, body, variable_examples, buttons, type, media, category } = req.body;
 
     if (!friendly_name || !language || !body) {
       return res.status(400).json({ status: false, message: "friendly_name, language, and body are required" });
@@ -169,6 +169,34 @@ router.post("/api/twilio/create-template", async (req, res) => {
     const templateType = type || "twilio/quick-reply";
     if (!SUPPORTED_TYPES.includes(templateType)) {
       return res.status(400).json({ status: false, message: `Unsupported template type: ${templateType}` });
+    }
+
+    // WhatsApp approval category. Absent means MARKETING, which is what every
+    // caller got before this field existed. The comparison is exact and
+    // case-sensitive: the form always sends the canonical value, so "utility"
+    // means a caller that has not been updated, not a value to coerce.
+    // AUTHENTICATION is a real WhatsApp category but needs an authentication
+    // content type this endpoint cannot build, so it is rejected here.
+    const SUPPORTED_CATEGORIES = ["MARKETING", "UTILITY"];
+    const templateCategory = category || "MARKETING";
+    if (!SUPPORTED_CATEGORIES.includes(templateCategory)) {
+      return res.status(400).json({ status: false, message: `Unsupported template category: ${category}. Expected MARKETING or UTILITY` });
+    }
+
+    // Quick-reply buttons are administrator-editable, so their count is no
+    // longer fixed at the two the form used to hardcode. WhatsApp caps them at
+    // three and a quick-reply template with none is malformed; Twilio rejects
+    // both, but it does so after the content resource has been created, which
+    // would leave an orphan. Check here instead, before either call.
+    const MAX_QUICK_REPLY_BUTTONS = 3;
+    if (templateType === "twilio/quick-reply") {
+      const buttonList = Array.isArray(buttons) ? buttons : [];
+      if (buttonList.length < 1 || buttonList.length > MAX_QUICK_REPLY_BUTTONS) {
+        return res.status(400).json({ status: false, message: `A quick-reply template needs between 1 and ${MAX_QUICK_REPLY_BUTTONS} buttons, got ${buttonList.length}` });
+      }
+      if (buttonList.some((b) => typeof b?.title !== "string" || !b.title.trim())) {
+        return res.status(400).json({ status: false, message: "Each quick-reply button needs a title" });
+      }
     }
 
     // Normalize media into an array of non-empty URL / {{variable}} strings.
@@ -190,8 +218,8 @@ router.post("/api/twilio/create-template", async (req, res) => {
     }
 
     const actions = (buttons || []).map((b, i) => ({
-      title: b.title || null,
-      id: b.id || `btn_${i + 1}`,
+      title: (b.title || "").trim() || null,
+      id: (b.id || "").trim() || `btn_${i + 1}`,
     }));
 
     const typePayload =
@@ -250,7 +278,8 @@ router.post("/api/twilio/create-template", async (req, res) => {
       return res.status(twilioRes.status).json({ status: false, message: data?.message || "Twilio error", details: data });
     }
 
-    // Submit for WhatsApp approval (Marketing category)
+    // Submit for WhatsApp approval under the requested category. Meta may still
+    // re-categorise it during review; the response echoes what was accepted.
     const approvalRes = await fetch(
       `https://content.twilio.com/v1/Content/${data.sid}/ApprovalRequests/whatsapp`,
       {
@@ -261,7 +290,7 @@ router.post("/api/twilio/create-template", async (req, res) => {
         },
         body: JSON.stringify({
           name: friendly_name,
-          category: "MARKETING",
+          category: templateCategory,
         }),
       }
     );

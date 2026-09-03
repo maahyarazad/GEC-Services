@@ -1260,7 +1260,7 @@ const WhatsappBroadcast = () => {
                 id="create-template"
                 isOpen={openPanel === 'create-template'}
                 onClose={() => handleSetOpenPanel(null)}
-                headerTitle="Create Twilio Template"
+                headerTitle="Create Meta Template"
             >
                 <div style={{ width: '100%', padding: 8 }}>
                     <CreateTwilioTemplate onSuccess={() => { handleSetOpenPanel(null); fetchData(); }} />
@@ -1356,7 +1356,7 @@ const WhatsappBroadcast = () => {
                         color="secondary"
                         size="small"
                         sx={{ textTransform: 'none', justifyContent: 'flex-start' }}
-                        title="Create Twilio Template"
+                        title="Create Meta Template"
                         onClick={() => handleSetOpenPanel('create-template')}
                     >
                         <SiTwilio size={17} style={{ marginRight: 4 }} /> Create Template

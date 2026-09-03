@@ -132,60 +132,70 @@ function hasPlaceholders(text) {
 }
 
 const contactBookData = (conditions, useAudience, eventId) => {
+  const params = { eventId: Number(eventId) };
+
+  let languageFilter = "";
+  if (conditions?.language) {
+    languageFilter = "AND cb.language = @language";
+    params.language = conditions.language.slice(0, 2);
+  }
+
   let query = "";
 
   if (useAudience === "all") {
     query = `
-        WITH excluded_guests AS (
-            SELECT contact_book_id
-            FROM event_guest_list WHERE event_id = ${Number(eventId)}
-        )
-        SELECT *
-        FROM contact_book
-        WHERE phone     IS NOT NULL
-        AND blacklist = 0
-            ${
-              Object.keys(conditions).length === 0
-                ? ``
-                : `AND language = '${conditions?.language?.slice(0, 2)}'`
-            }
-            AND contentSid IS NULL
-        AND id        NOT IN (SELECT contact_book_id FROM excluded_guests)
-        AND type      NOT IN ('Wüstenkinder', 'expert_guest', 'only_guest')
-        GROUP BY phone
-        ORDER BY
-            CASE type
-                WHEN 'gec_staff'               THEN 1
-                WHEN 'club_partner'            THEN 2
-                WHEN 'club_member'             THEN 3
-                WHEN 'expert'                  THEN 4
-                WHEN 'difa'                    THEN 5
-                WHEN 'medical_society'         THEN 6
-                ELSE                                7
-            END;
-            `;
-  } else {
-    query = `
-     WITH excluded_guests AS (
-            SELECT contact_book_id
-            FROM event_guest_list WHERE event_id = ${Number(eventId)}
-        )
+      WITH excluded_guests AS (
+        SELECT contact_book_id
+        FROM event_guest_list
+        WHERE event_id = @eventId
+      )
       SELECT *
-      FROM contact_book
-      WHERE phone IS NOT NULL AND blacklist = 0
-      AND id NOT IN (SELECT contact_book_id FROM excluded_guests)
-       AND type IN ('${useAudience}')
-      ${
-        Object.keys(conditions).length === 0
-          ? ``
-          : `AND language = '${conditions?.language?.slice(0, 2)}'`
-      }
-      AND contentSid IS NULL GROUP BY phone LIMIT ${conditions.senderLimit}
+      FROM contact_book AS cb
+      WHERE cb.phone IS NOT NULL
+        AND cb.blacklist = 0
+        ${languageFilter}
+        AND cb.contentSid IS NULL
+        AND cb.id    NOT IN (SELECT contact_book_id FROM excluded_guests)
+        AND cb.type  NOT IN ('Wüstenkinder', 'expert_guest', 'only_guest')
+        AND cb.phone NOT IN (SELECT phone FROM unsubscribe_contacts)
+      GROUP BY cb.phone
+      ORDER BY
+        CASE cb.type
+          WHEN 'gec_staff'       THEN 1
+          WHEN 'club_partner'    THEN 2
+          WHEN 'club_member'     THEN 3
+          WHEN 'expert'          THEN 4
+          WHEN 'difa'            THEN 5
+          WHEN 'medical_society' THEN 6
+          ELSE                        7
+        END
+    `;
+  } else {
+    params.useAudience = useAudience;
+    params.senderLimit = Number(conditions.senderLimit);
+
+    query = `
+      WITH excluded_guests AS (
+        SELECT contact_book_id
+        FROM event_guest_list
+        WHERE event_id = @eventId
+      )
+      SELECT *
+      FROM contact_book AS cb
+      WHERE cb.phone IS NOT NULL
+        AND cb.blacklist = 0
+        AND cb.id    NOT IN (SELECT contact_book_id FROM excluded_guests)
+        AND cb.phone NOT IN (SELECT phone FROM unsubscribe_contacts)
+        AND cb.type  IN (@useAudience)
+        ${languageFilter}
+        AND cb.contentSid IS NULL
+      GROUP BY cb.phone
+      LIMIT @senderLimit
     `;
   }
 
   const stmt = db.prepare(query);
-  const result = stmt.all();
+  const result = stmt.all(params);
 
   return result;
 };
@@ -768,46 +778,69 @@ async function fetchTwilioMessagesDetails(sentMessages) {
 
 async function handleAutoResponse(From, ButtonPayload) {
   try {
-    if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
-      const from = From.replace("whatsapp:", "");
+    const from = From.replace("whatsapp:", "");
+    const contact = db
+      .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
+      .get(from);
 
-      const contact = db
-        .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
-        .get(from);
       if (!contact) return;
 
 
+    const templates = await fetchContentTemplates();
+    const phoneList = [{ id: "8176278162873", phone: contact.phone }];
+    const simpleResponseTemplate = templates.result.find((x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc");
+
+    if (!simpleResponseTemplate) {
+      console.error(`${Date.now()} - handleAutoResponse: auto-response template HXb1ce9479f3d42819bef456f00448afcc not found`);
+      return;
+    }
+
+    if (ButtonPayload === "ATTEND") {
+
       const event_id = await fetchEvent(From);
 
-      //console.log(`handleAutoResponse const event_id = ${event_id}`);
       const event = db
         .prepare(`SELECT * FROM events WHERE id = ?`)
         .get(event_id);
-      if (!event) return;
-
-        //console.log(`handleAutoResponse const event = ${JSON.stringify(event)}`);
-
-      const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
-      const type = guestTypes.includes(contact.type) ? "guest" : "general";
-      const lang = contact.language === "de" ? "de" : "en";
-
-      const templates = await fetchContentTemplates();
-      const template = templates.result.find(
-        (x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc"
-      );
-
-      const phoneList = [{ id: "8176278162873", phone: contact.phone }];
-      const payload = { 1: event[`auto_response_${type}_${lang}`] };
-
-    //console.log(`handleAutoResponse const payload = ${JSON.stringify(payload)}`);
       
-      await messageSender({ body: { template, phoneList, payload } });
+      const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
+
+      const type = guestTypes.includes(contact.type) ? "guest" : "general";  
+
+      const payload = { 1: event[`auto_response_${type}_${contact.language}`] };
+
+
+        
+      await messageSender({ body: { template: simpleResponseTemplate, phoneList, payload } });
 
       dbService.create("event_guest_list", {
         contact_book_id: Number(contact.id),
         event_id: Number(event.id),
       });
     }
+
+    if (ButtonPayload === "NOT_ATTEND") {
+          
+          const replyMessage = contact.language === "de" 
+          ? "Danke für deine Nachricht. Schade, dass es nicht klappt. Dann freue ich mich, dich beim nächsten Mal zu sehen." 
+          : "Thank you for your reply. Sad to hear that, but let's meet next time.";
+
+          const payload = { 1: replyMessage };
+          await messageSender({ body: { template: simpleResponseTemplate, phoneList, payload } });
+    }
+
+    if (ButtonPayload === "UNSUBSCRIBE") {
+        const replyMessage = contact.language === "de" 
+        ? "Sie werden keine Nachrichten mehr von uns erhalten."
+        : "You will no longer receive messages from us."; 
+         
+          const payload = { 1: replyMessage };
+          await messageSender({ body: { template: simpleResponseTemplate, phoneList, payload } });
+
+        const insert = db.prepare(`INSERT INTO unsubscribe_contacts (phone) VALUES (?)`);
+        insert.run(from);
+    }
+
   } catch (e) {
     console.error(`${Date.now()} -`, e);
   }
@@ -831,20 +864,20 @@ const flattenObject = (obj, parentKey = "", result = {}) => {
 };
 
 const normalizeRow = (row) => {
-  // 1️⃣ Parse payload
+  // Parse payload
   let payload = {};
   try {
     payload = JSON.parse(row.payload);
   } catch {}
 
-  // 2️⃣ Parse ChannelMetadata if exists
+  //  Parse ChannelMetadata if exists
   if (payload.ChannelMetadata) {
     try {
       payload.ChannelMetadata = JSON.parse(payload.ChannelMetadata);
     } catch {}
   }
 
-  // 3️⃣ Merge & flatten
+  // Merge & flatten
   return flattenObject({
     ...row,
     payload,

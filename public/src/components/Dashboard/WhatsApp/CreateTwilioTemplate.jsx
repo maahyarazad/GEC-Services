@@ -22,10 +22,35 @@ const LANGUAGES = [
     { value: 'de', label: 'German (de)' }
 ];
 
+// WhatsApp approval categories. Meta reviews and bills against these, and the
+// category cannot be changed once submitted — only deleted and recreated.
+const CATEGORIES = [
+    {
+        value: 'MARKETING',
+        label: 'Marketing',
+        help: 'Promotions, offers, announcements and invitations — anything sent to reach or re-engage an audience. Example: an event invitation.',
+    },
+    {
+        value: 'UTILITY',
+        label: 'Utility',
+        help: 'Messages about a transaction or booking the recipient already has. Example: a registration confirmation, or a QR-code ticket for someone already registered.',
+    },
+];
+
+// Display label for a raw category value, falling back to the value itself so
+// an unexpected one from Twilio is shown rather than swallowed.
+const categoryLabel = (value) =>
+    CATEGORIES.find((c) => c.value === value)?.label ?? value;
+
 const DEFAULT_BUTTONS = [
     { title: 'Teilnehmen', id: 'ATTEND' },
     { title: 'Nicht teilnehmen', id: 'NOT_ATTEND' },
 ];
+
+// WhatsApp caps quick-reply templates at three buttons, and a template with
+// none is not a quick-reply template at all. The server enforces the same
+// bounds — this only keeps the form from offering an option Twilio would reject.
+const MAX_BUTTONS = 3;
 
 export default function CreateTwilioTemplate({ onSuccess }) {
     const { showSnackbar } = useSnackbar();
@@ -39,6 +64,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
         type: 'twilio/quick-reply',
         buttons: DEFAULT_BUTTONS.map((b) => ({ ...b })),
         media_url: '{{qr_code_url}}',
+        category: 'MARKETING',
     });
 
     const set = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
@@ -66,7 +92,24 @@ export default function CreateTwilioTemplate({ onSuccess }) {
             variable_examples: prev.variable_examples.filter((_, i) => i !== index),
         }));
 
+    // A new button carries no id — the server fills a blank one in as btn_<n>,
+    // so an administrator only has to think about the id when they need a
+    // specific one to match against in the auto-response handler.
+    const addButton = () =>
+        setForm((prev) =>
+            prev.buttons.length >= MAX_BUTTONS
+                ? prev
+                : { ...prev, buttons: [...prev.buttons, { title: '', id: '' }] }
+        );
+
+    const removeButton = (index) =>
+        setForm((prev) => ({
+            ...prev,
+            buttons: prev.buttons.filter((_, i) => i !== index),
+        }));
+
     const isMediaType = form.type === 'twilio/media';
+    const isQuickReply = form.type === 'twilio/quick-reply';
 
     // Derive variable names from the body (and media URL for media templates)
     // in order of first appearance — Twilio resolves {{...}} across both.
@@ -89,6 +132,11 @@ export default function CreateTwilioTemplate({ onSuccess }) {
     const isSlugified = form.friendly_name !== '' && form.friendly_name === slugify(form.friendly_name);
     const isBodyFilled = form.body.trim() !== '';
     const isMediaFilled = !isMediaType || form.media_url.trim() !== '';
+    // Blank-titled buttons are dropped from the request rather than sent, so
+    // without this the form would silently create a template with fewer buttons
+    // than the administrator typed.
+    const areButtonsFilled = !isQuickReply ||
+        (form.buttons.length > 0 && form.buttons.every((b) => b.title.trim() !== ''));
     const submitDisabledReason = !isBodyFilled && !isSlugified
         ? 'Message body and a normalized friendly name are required'
         : !isBodyFilled
@@ -99,8 +147,12 @@ export default function CreateTwilioTemplate({ onSuccess }) {
         ? 'Friendly name is required'
         : !isSlugified
         ? 'Friendly name must be normalized — click Normalize'
+        : !areButtonsFilled && form.buttons.length === 0
+        ? 'A quick-reply template needs at least one button'
+        : !areButtonsFilled
+        ? 'Every quick-reply button needs a title'
         : '';
-    const canSubmit = isSlugified && isBodyFilled && isMediaFilled && !submitting;
+    const canSubmit = isSlugified && isBodyFilled && isMediaFilled && areButtonsFilled && !submitting;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -126,17 +178,18 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                     body: form.body,
                     variable_examples: form.variable_examples.map((v) => v.trim()).filter(Boolean),
                     type: form.type,
-                    buttons: form.type === 'twilio/quick-reply'
+                    buttons: isQuickReply
                         ? form.buttons.filter((b) => b.title.trim())
                         : [],
                     media: isMediaType && form.media_url.trim()
                         ? [form.media_url.trim()]
                         : [],
+                    category: form.category,
                 }),
             });
             const data = await res.json();
             if (data.status) {
-                showSnackbar(`Template "${data.template.friendly_name}" created successfully`);
+                showSnackbar(`Template "${data.template.friendly_name}" created successfully (${categoryLabel(data.approval?.category ?? form.category)})`);
                 onSuccess?.();
                 setForm({
                     friendly_name: '',
@@ -146,6 +199,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                     type: 'twilio/quick-reply',
                     buttons: DEFAULT_BUTTONS.map((b) => ({ ...b })),
                     media_url: '',
+                    category: 'MARKETING',
                 });
             } else {
                 showSnackbar(data.message || 'Failed to create template', 'error');
@@ -183,6 +237,26 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                     <ToggleButton value="twilio/text">Text only</ToggleButton>
                     <ToggleButton value="twilio/media">Media</ToggleButton>
                 </ToggleButtonGroup>
+            </Box>
+
+            {/* Approval category */}
+            <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                    Category
+                </Typography>
+                <ToggleButtonGroup
+                    value={form.category}
+                    exclusive
+                    onChange={(_, v) => v && set('category', v)}
+                    size="small"
+                >
+                    {CATEGORIES.map((c) => (
+                        <ToggleButton key={c.value} value={c.value}>{c.label}</ToggleButton>
+                    ))}
+                </ToggleButtonGroup>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                    {CATEGORIES.find((c) => c.value === form.category)?.help}
+                </Typography>
             </Box>
 
             {/* Name + Language row */}
@@ -274,11 +348,11 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                 </Button>
             </Box>
 
-            {form.type === 'twilio/quick-reply' && (
+            {isQuickReply && (
                 <>
                     <Divider>Quick-Reply Buttons</Divider>
                     {form.buttons.map((btn, i) => (
-                        <Box key={i} sx={{ display: 'flex', gap: 1 }}>
+                        <Box key={i} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                             <TextField
                                 label={`Button ${i + 1} Title`}
                                 value={btn.title}
@@ -291,10 +365,35 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                                 value={btn.id}
                                 onChange={(e) => setButton(i, 'id', e.target.value)}
                                 size="small"
+                                placeholder={`btn_${i + 1}`}
                                 sx={{ flex: 1 }}
                             />
+                            {form.buttons.length > 1 && (
+                                <IconButton
+                                    size="small"
+                                    onClick={() => removeButton(i)}
+                                    tabIndex={-1}
+                                    aria-label={`Remove button ${i + 1}`}
+                                >
+                                    <MdClose size={18} />
+                                </IconButton>
+                            )}
                         </Box>
                     ))}
+                    {form.buttons.length < MAX_BUTTONS && (
+                        <Button
+                            size="small"
+                            startIcon={<MdAdd />}
+                            onClick={addButton}
+                            sx={{ alignSelf: 'flex-start', textTransform: 'none' }}
+                        >
+                            Add Button
+                        </Button>
+                    )}
+                    <Typography variant="caption" color="text.secondary">
+                        WhatsApp allows up to {MAX_BUTTONS} quick-reply buttons. Leave an ID
+                        blank to have one generated.
+                    </Typography>
                 </>
             )}
 

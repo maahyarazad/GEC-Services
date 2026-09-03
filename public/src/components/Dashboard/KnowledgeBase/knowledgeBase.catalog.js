@@ -46,11 +46,11 @@ export const KNOWLEDGE_BASE_TOPICS = Object.freeze([
         subTopics: [
             {
                 id: "whatsapp-twilio-templates",
-                title: "How to create the different types of Twilio template",
+                title: "How to create the different types of Meta template",
                 summary:
                     "Building each template type, what the variables mean, and getting one approved before a send.",
                 sectionSlug: "whatsapp-broadcast",
-                destination: { label: "Create Twilio Template", tab: "whatsapp-broadcast", view: "create-template" },
+                destination: { label: "Create Meta Template", tab: "whatsapp-broadcast", view: "create-template" },
                 video: { videoId: "whatsapp-twilio-templates", filename: "whatsapp-twilio-templates.mp4" },
                 durationLabel: null,
                 order: 1,
