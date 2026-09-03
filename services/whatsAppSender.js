@@ -816,7 +816,13 @@ async function handleAutoResponse(From, ButtonPayload) {
 
       const payload = { 1: event[`auto_response_${type}_${contact.language}`] };
 
-      await messageSender({ body: { template: simpleResponseTemplate, phoneList, payload } });
+       await sendMessageToPhone(
+                contact.phone,
+                simpleResponseTemplate,
+                payload,
+                null,
+                Number(event.id)
+            );
 
       dbService.create("event_guest_list", {
         contact_book_id: Number(contact.id),
@@ -834,10 +840,9 @@ async function handleAutoResponse(From, ButtonPayload) {
         ? templates.result.find((x) => x.sid === "HXe071f9fc417a3b7c62adb3bda68588e5")
         : templates.result.find((x) => x.sid === "HX8597c391e879a7eaa30af7e6a21e1d63");
         
-        console.log(replyMessageTemplate);
-        console.log(onGuestList);
+        console.log(`============================================${replyMessageTemplate} ============================================`);
+        console.log(`============================================${onGuestList}============================================`);
 
-        //   await messageSender({ body: { template: replyMessageTemplate, phoneList, payload: {}}});
 
           await sendMessageToPhone(
                 contact.phone,
@@ -863,7 +868,15 @@ async function handleAutoResponse(From, ButtonPayload) {
         : "You will no longer receive messages from us."; 
          
           const payload = { 1: replyMessage };
-          await messageSender({ body: { template: simpleResponseTemplate, phoneList, payload } });
+
+           await sendMessageToPhone(
+                contact.phone,
+                simpleResponseTemplate,
+                payload,
+                null,
+                Number(event.id)
+            );
+
 
         const insert = db.prepare(`INSERT INTO unsubscribe_contacts (phone) VALUES (?)`);
         insert.run(from);
@@ -880,7 +893,14 @@ async function handleAutoResponse(From, ButtonPayload) {
             : "You've been removed from the guest list.";
 
         const payload = { 1: replyMessage };
-        await messageSender({ body: { template: simpleResponseTemplate, phoneList, payload } });
+             await sendMessageToPhone(
+                contact.phone,
+                simpleResponseTemplate,
+                payload,
+                null,
+                Number(event.id)
+            );
+
 
     }
 
