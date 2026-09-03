@@ -790,11 +790,10 @@ async function handleAutoResponse(From, ButtonPayload) {
     if (!contact) return;
 
     const templates = await fetchContentTemplates();
-
+    const phoneList = [{ id: "8176278162873", phone: contact.phone }];
     const simpleResponseTemplate = templates.result.find((x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc");
 
     if (ButtonPayload === "ATTEND") {
-
 
       const event_id = await fetchEvent(From);
 
@@ -804,13 +803,9 @@ async function handleAutoResponse(From, ButtonPayload) {
       
       const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
 
-      const type = guestTypes.includes(contact.type) ? "guest" : "general";
+      const type = guestTypes.includes(contact.type) ? "guest" : "general";  
 
-      const lang = contact.language === "de" ? "de" : "en";      
-
-      const phoneList = [{ id: "8176278162873", phone: contact.phone }];
-
-      const payload = { 1: event[`auto_response_${type}_${lang}`] };
+      const payload = { 1: event[`auto_response_${type}_${contact.language}`] };
 
       await messageSender({ body: { simpleResponseTemplate, phoneList, payload } });
 
@@ -827,7 +822,7 @@ async function handleAutoResponse(From, ButtonPayload) {
           : "Thank you for your reply. Sad to hear that, but let's meet next time.";
 
           const payload = { 1: replyMessage };
-          await messageSender({ body: { simpleResponseTemplate, phoneList, payload } });
+          await messageSender({ body: { simpleResponseTemplate, , payload } });
     }
 
     if (ButtonPayload === "UNSUBSCRIBE") {
