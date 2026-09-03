@@ -183,6 +183,22 @@ router.post("/api/twilio/create-template", async (req, res) => {
       return res.status(400).json({ status: false, message: `Unsupported template category: ${category}. Expected MARKETING or UTILITY` });
     }
 
+    // Quick-reply buttons are administrator-editable, so their count is no
+    // longer fixed at the two the form used to hardcode. WhatsApp caps them at
+    // three and a quick-reply template with none is malformed; Twilio rejects
+    // both, but it does so after the content resource has been created, which
+    // would leave an orphan. Check here instead, before either call.
+    const MAX_QUICK_REPLY_BUTTONS = 3;
+    if (templateType === "twilio/quick-reply") {
+      const buttonList = Array.isArray(buttons) ? buttons : [];
+      if (buttonList.length < 1 || buttonList.length > MAX_QUICK_REPLY_BUTTONS) {
+        return res.status(400).json({ status: false, message: `A quick-reply template needs between 1 and ${MAX_QUICK_REPLY_BUTTONS} buttons, got ${buttonList.length}` });
+      }
+      if (buttonList.some((b) => typeof b?.title !== "string" || !b.title.trim())) {
+        return res.status(400).json({ status: false, message: "Each quick-reply button needs a title" });
+      }
+    }
+
     // Normalize media into an array of non-empty URL / {{variable}} strings.
     const mediaList = (Array.isArray(media) ? media : media ? [media] : [])
       .map((m) => (typeof m === "string" ? m.trim() : ""))
@@ -202,8 +218,8 @@ router.post("/api/twilio/create-template", async (req, res) => {
     }
 
     const actions = (buttons || []).map((b, i) => ({
-      title: b.title || null,
-      id: b.id || `btn_${i + 1}`,
+      title: (b.title || "").trim() || null,
+      id: (b.id || "").trim() || `btn_${i + 1}`,
     }));
 
     const typePayload =
