@@ -879,6 +879,7 @@ router.post(
   async (req, res) => {
     try {
       const eventId = req.query.eventId ?? undefined;
+      console.log(`Request Body ==== ${req.body}`);
       const { From, ButtonPayload } = req.body;
       const response = new MessagingResponse();
       response.message("");

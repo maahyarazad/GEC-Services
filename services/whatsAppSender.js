@@ -783,7 +783,9 @@ async function handleAutoResponse(From, ButtonPayload) {
       .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
       .get(from);
 
-    console.log(`Contact found:${from}`);  
+    console.log(`Contact found: ${From}`);  
+    console.log(`ButtonPayload: ${ButtonPayload}`);  
+
     if (!contact) return;
 
     const templates = await fetchContentTemplates();
@@ -791,6 +793,7 @@ async function handleAutoResponse(From, ButtonPayload) {
     const simpleResponseTemplate = templates.result.find((x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc");
 
     if (ButtonPayload === "ATTEND") {
+
 
       const event_id = await fetchEvent(From);
 
