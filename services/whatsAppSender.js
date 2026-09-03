@@ -807,6 +807,10 @@ async function handleAutoResponse(From, ButtonPayload) {
 
       const payload = { 1: event[`auto_response_${type}_${contact.language}`] };
 
+        console.log(`event_id ${event_id}`);
+        console.log(`event ${event}`);
+        console.log(`payload ${payload}`);
+        
       await messageSender({ body: { simpleResponseTemplate, phoneList, payload } });
 
       dbService.create("event_guest_list", {
@@ -822,7 +826,7 @@ async function handleAutoResponse(From, ButtonPayload) {
           : "Thank you for your reply. Sad to hear that, but let's meet next time.";
 
           const payload = { 1: replyMessage };
-          await messageSender({ body: { simpleResponseTemplate, phoneList , payload } });
+          await messageSender({ body: { simpleResponseTemplate, phoneList, payload } });
     }
 
     if (ButtonPayload === "UNSUBSCRIBE") {
