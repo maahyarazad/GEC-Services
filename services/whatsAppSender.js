@@ -735,17 +735,11 @@ async function fetchEvent(From) {
     const row = db.prepare(historyQuery).get(from, From);
 
     console.log(`fetchEvent row result = ${row}`);
-    
-    if(!row) {
-        console.log(`fetchEvent row result = ${row}`);
-        return null;
-    }
 
     const eventId = (row?.type === 's' ? row.event_id : null) ?? 0;
-
-    //console.log(`fetchEvent const eventId = ${eventId}`);
     
     return Number(eventId);
+
   } catch (error) {
     console.error(`${Date.now()} - Failed to fetch event:`, error);
     throw error;
@@ -795,7 +789,7 @@ async function handleAutoResponse(From, ButtonPayload) {
         fetchEvent(From)
     ]);
 
-    console.error(`${Date.now()} - handleAutoResponse: event_id:${event_id}`);
+    console.log(`${Date.now()} - handleAutoResponse: event_id:${event_id}`);
 
     if (event_id === null) {
       console.error(`${Date.now()} - handleAutoResponse: event_id not found`);
