@@ -828,8 +828,6 @@ async function handleAutoResponse(From, ButtonPayload) {
         
         console.log(onGuestList);
 
-
-         const _payload = { 1: replyMessage };
           await messageSender({ body: { template: replyMessageTemplate, phoneList } });
           return;
 
