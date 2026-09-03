@@ -783,15 +783,20 @@ async function handleAutoResponse(From, ButtonPayload) {
       .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
       .get(from);
 
+      if (!contact) return;
     console.log(`Contact found: ${From}`);  
     console.log(`ButtonPayload: ${ButtonPayload}`);  
     console.log(`Contact: ${JSON.stringify(contact)}`);  
 
-    if (!contact) return;
 
     const templates = await fetchContentTemplates();
     const phoneList = [{ id: "8176278162873", phone: contact.phone }];
     const simpleResponseTemplate = templates.result.find((x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc");
+
+    if (!simpleResponseTemplate) {
+      console.error(`${Date.now()} - handleAutoResponse: auto-response template HXb1ce9479f3d42819bef456f00448afcc not found`);
+      return;
+    }
 
     if (ButtonPayload === "ATTEND") {
 
@@ -811,7 +816,7 @@ async function handleAutoResponse(From, ButtonPayload) {
         console.log(`event ${event}`);
         console.log(`payload ${payload}`);
         
-      await messageSender({ body: { simpleResponseTemplate, phoneList, payload } });
+      await messageSender({ body: { template: simpleResponseTemplate, phoneList, payload } });
 
       dbService.create("event_guest_list", {
         contact_book_id: Number(contact.id),
@@ -826,7 +831,7 @@ async function handleAutoResponse(From, ButtonPayload) {
           : "Thank you for your reply. Sad to hear that, but let's meet next time.";
 
           const payload = { 1: replyMessage };
-          await messageSender({ body: { simpleResponseTemplate, phoneList, payload } });
+          await messageSender({ body: { template: simpleResponseTemplate, phoneList, payload } });
     }
 
     if (ButtonPayload === "UNSUBSCRIBE") {
@@ -835,7 +840,7 @@ async function handleAutoResponse(From, ButtonPayload) {
         : "You will no longer receive messages from us."; 
          
           const payload = { 1: replyMessage };
-          await messageSender({ body: { simpleResponseTemplate, phoneList, payload } });
+          await messageSender({ body: { template: simpleResponseTemplate, phoneList, payload } });
 
         const insert = db.prepare(`INSERT INTO unsubscribe_contacts (phone) VALUES (?)`);
         insert.run(from);
