@@ -790,7 +790,10 @@ async function handleAutoResponse(From, ButtonPayload) {
         fetchEvent(From)
     ]);
 
-    if(!event_id) return;
+    if (!event_id) {
+      console.error(`${Date.now()} - handleAutoResponse: event_id not found`);
+      return;
+    }
 
     const phoneList = [{ id: "8176278162873", phone: contact.phone }];
     const simpleResponseTemplate = templates.result.find((x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc");
