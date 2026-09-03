@@ -734,6 +734,8 @@ async function fetchEvent(From) {
     // First ? = WaId (bare number), second ? = To (whatsapp:+...)
     const row = db.prepare(historyQuery).get(from, From);
 
+    console.log(`fetchEvent row result = ${row}`);
+    
     if(!row) {
         console.log(`fetchEvent row result = ${row}`);
         return null;
@@ -793,7 +795,9 @@ async function handleAutoResponse(From, ButtonPayload) {
         fetchEvent(From)
     ]);
 
-    if (!event_id) {
+    console.error(`${Date.now()} - handleAutoResponse: event_id:${event_id}`);
+
+    if (event_id === null) {
       console.error(`${Date.now()} - handleAutoResponse: event_id not found`);
       return;
     }
