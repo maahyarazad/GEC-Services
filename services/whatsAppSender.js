@@ -789,14 +789,11 @@ async function handleAutoResponse(From, ButtonPayload) {
         fetchEvent(From)
     ]);
 
-    console.log(`${Date.now()} - handleAutoResponse: event_id:${event_id}`);
-
-    if (event_id === null) {
+    if (event_id === 0) {
       console.error(`${Date.now()} - handleAutoResponse: event_id not found`);
       return;
     }
 
-    const phoneList = [{ id: "8176278162873", phone: contact.phone }];
     const simpleResponseTemplate = templates.result.find((x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc");
 
     if (!simpleResponseTemplate) {
@@ -838,28 +835,34 @@ async function handleAutoResponse(From, ButtonPayload) {
 
         const replyMessageTemplate = contact.language === "de"  
         ? templates.result.find((x) => x.sid === "HXe071f9fc417a3b7c62adb3bda68588e5")
-        : templates.result.find((x) => x.sid === "HX8597c391e879a7eaa30af7e6a21e1d63");
+        : templates.result.find((x) => x.sid === "HXdb4faaac494a7e50c777de2527d0ddc2");
         
-        console.log(`============================================${replyMessageTemplate} ============================================`);
-        console.log(`============================================${onGuestList}============================================`);
 
-
-          await sendMessageToPhone(
-                contact.phone,
-                replyMessageTemplate,
-                {},
-                null,
-                Number(event.id)
-            );
-
-          return;
+        if(isObject(onGuestList)){
+            await sendMessageToPhone(
+                  contact.phone,
+                  replyMessageTemplate,
+                  {},
+                  null,
+                  Number(event.id)
+              );
+  
+            return;
+        }
 
           const replyMessage = contact.language === "de" 
           ? "Danke für deine Nachricht. Schade, dass es nicht klappt. Dann freue ich mich, dich beim nächsten Mal zu sehen." 
           : "Thank you for your reply. Sad to hear that, but let's meet next time.";
 
           const payload = { 1: replyMessage };
-          await messageSender({ body: { template: simpleResponseTemplate, phoneList, payload } });
+
+          await sendMessageToPhone(
+                  contact.phone,
+                  simpleResponseTemplate,
+                  payload,
+                  null,
+                  Number(event.id)
+              );
     }
 
     if (ButtonPayload === "UNSUBSCRIBE") {
@@ -900,8 +903,6 @@ async function handleAutoResponse(From, ButtonPayload) {
                 null,
                 Number(event.id)
             );
-
-
     }
 
   } catch (e) {
@@ -953,6 +954,11 @@ function chunkArray(arr, size) {
     chunks.push(arr.slice(i, i + size));
   }
   return chunks;
+}
+
+
+function isObject(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 module.exports = {
