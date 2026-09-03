@@ -785,8 +785,11 @@ async function handleAutoResponse(From, ButtonPayload) {
 
       if (!contact) return;
 
+    const [templates, event_id] = await Promise.all([
+        fetchContentTemplates(),
+        fetchEvent(From)
+    ]);
 
-    const templates = await fetchContentTemplates();
     const phoneList = [{ id: "8176278162873", phone: contact.phone }];
     const simpleResponseTemplate = templates.result.find((x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc");
 
@@ -794,14 +797,10 @@ async function handleAutoResponse(From, ButtonPayload) {
       console.error(`${Date.now()} - handleAutoResponse: auto-response template HXb1ce9479f3d42819bef456f00448afcc not found`);
       return;
     }
+    
+    if(!event_id) return;
 
     if (ButtonPayload === "ATTEND") {
-
-      const event_id = await fetchEvent(From);
-
-      const event = db
-        .prepare(`SELECT * FROM events WHERE id = ?`)
-        .get(event_id);
       
       const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
 
@@ -809,18 +808,31 @@ async function handleAutoResponse(From, ButtonPayload) {
 
       const payload = { 1: event[`auto_response_${type}_${contact.language}`] };
 
-
-        
       await messageSender({ body: { template: simpleResponseTemplate, phoneList, payload } });
 
       dbService.create("event_guest_list", {
         contact_book_id: Number(contact.id),
-        event_id: Number(event.id),
+        event_id: event_id,
       });
     }
 
     if (ButtonPayload === "NOT_ATTEND") {
           
+        const checkGuestListQuery = `SELECT 1 FROM event_guest_list WHERE contact_book_id = ? AND event_id = ?`
+        const stmt = db.prepare(checkGuestListQuery);
+        const onGuestList = stmt.get(Number(contact.id),Number(event_id));
+
+        const replyMessageTemplate = contact.language === "de"  
+        ? templates.result.find((x) => x.sid === "HXe071f9fc417a3b7c62adb3bda68588e5")
+        : templates.result.find((x) => x.sid === "HX8597c391e879a7eaa30af7e6a21e1d63");
+        
+        console.log(onGuestList);
+
+
+         const _payload = { 1: replyMessage };
+          await messageSender({ body: { template: replyMessageTemplate, phoneList } });
+          return;
+
           const replyMessage = contact.language === "de" 
           ? "Danke für deine Nachricht. Schade, dass es nicht klappt. Dann freue ich mich, dich beim nächsten Mal zu sehen." 
           : "Thank you for your reply. Sad to hear that, but let's meet next time.";
@@ -839,6 +851,21 @@ async function handleAutoResponse(From, ButtonPayload) {
 
         const insert = db.prepare(`INSERT INTO unsubscribe_contacts (phone) VALUES (?)`);
         insert.run(from);
+    }
+
+    if (ButtonPayload === "CONFIRM") {
+
+        const deleteGuestListQuery = `DELETE FROM event_guest_list WHERE contact_book_id = ? AND event_id = ?`;
+        const stmt = db.prepare(deleteGuestListQuery);          
+        stmt.run(Number(contact.id), Number(event_id));
+
+        const replyMessage = contact.language === "de"
+            ? "Du wurdest von der Gästeliste entfernt."
+            : "You've been removed from the guest list.";
+
+        const payload = { 1: replyMessage };
+        await messageSender({ body: { template: simpleResponseTemplate, phoneList, payload } });
+
     }
 
   } catch (e) {
