@@ -790,6 +790,8 @@ async function handleAutoResponse(From, ButtonPayload) {
         fetchEvent(From)
     ]);
 
+    if(!event_id) return;
+
     const phoneList = [{ id: "8176278162873", phone: contact.phone }];
     const simpleResponseTemplate = templates.result.find((x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc");
 
@@ -798,7 +800,9 @@ async function handleAutoResponse(From, ButtonPayload) {
       return;
     }
     
-    if(!event_id) return;
+    const event = db
+        .prepare(`SELECT * FROM events WHERE id = ?`)
+        .get(event_id);
 
     if (ButtonPayload === "ATTEND") {
       
@@ -812,7 +816,7 @@ async function handleAutoResponse(From, ButtonPayload) {
 
       dbService.create("event_guest_list", {
         contact_book_id: Number(contact.id),
-        event_id: event_id,
+        event_id: Number(event.id),
       });
     }
 
@@ -820,7 +824,7 @@ async function handleAutoResponse(From, ButtonPayload) {
           
         const checkGuestListQuery = `SELECT 1 FROM event_guest_list WHERE contact_book_id = ? AND event_id = ?`
         const stmt = db.prepare(checkGuestListQuery);
-        const onGuestList = stmt.get(Number(contact.id),Number(event_id));
+        const onGuestList = stmt.get(Number(contact.id),Number(event.id));
 
         const replyMessageTemplate = contact.language === "de"  
         ? templates.result.find((x) => x.sid === "HXe071f9fc417a3b7c62adb3bda68588e5")
@@ -856,7 +860,7 @@ async function handleAutoResponse(From, ButtonPayload) {
 
         const deleteGuestListQuery = `DELETE FROM event_guest_list WHERE contact_book_id = ? AND event_id = ?`;
         const stmt = db.prepare(deleteGuestListQuery);          
-        stmt.run(Number(contact.id), Number(event_id));
+        stmt.run(Number(contact.id),Number(event.id));
 
         const replyMessage = contact.language === "de"
             ? "Du wurdest von der Gästeliste entfernt."
