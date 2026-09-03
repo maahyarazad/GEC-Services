@@ -785,6 +785,7 @@ async function handleAutoResponse(From, ButtonPayload) {
 
     console.log(`Contact found: ${From}`);  
     console.log(`ButtonPayload: ${ButtonPayload}`);  
+    console.log(`Contact: ${JSON.stringify(contact)}`);  
 
     if (!contact) return;
 
