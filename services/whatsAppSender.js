@@ -784,9 +784,6 @@ async function handleAutoResponse(From, ButtonPayload) {
       .get(from);
 
       if (!contact) return;
-    console.log(`Contact found: ${From}`);  
-    console.log(`ButtonPayload: ${ButtonPayload}`);  
-    console.log(`Contact: ${JSON.stringify(contact)}`);  
 
 
     const templates = await fetchContentTemplates();
@@ -812,9 +809,7 @@ async function handleAutoResponse(From, ButtonPayload) {
 
       const payload = { 1: event[`auto_response_${type}_${contact.language}`] };
 
-        console.log(`event_id ${event_id}`);
-        console.log(`event ${event}`);
-        console.log(`payload ${payload}`);
+
         
       await messageSender({ body: { template: simpleResponseTemplate, phoneList, payload } });
 
