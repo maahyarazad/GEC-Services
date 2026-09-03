@@ -451,3 +451,11 @@ CREATE TABLE IF NOT EXISTS knowledge_base_view_log (
 
 CREATE INDEX IF NOT EXISTS idx_kb_view_log_topic   ON knowledge_base_view_log (topic_id);
 CREATE INDEX IF NOT EXISTS idx_kb_view_log_created ON knowledge_base_view_log (created_at);
+
+
+
+  CREATE TABLE IF NOT EXISTS unsubscribe_contacts (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    phone         INTEGER NOT NULL,
+    created_at    DATETIME DEFAULT (datetime('now'))
+  );
