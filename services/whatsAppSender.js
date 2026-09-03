@@ -783,12 +783,14 @@ async function handleAutoResponse(From, ButtonPayload) {
       .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
       .get(from);
 
+    console.log(`Contact found:${from}`);  
     if (!contact) return;
+
     const templates = await fetchContentTemplates();
 
     const simpleResponseTemplate = templates.result.find((x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc");
 
-    if (ButtonPayload === "INTERESTED" || ButtonPayload === "ATTEND") {
+    if (ButtonPayload === "ATTEND") {
 
       const event_id = await fetchEvent(From);
 
@@ -819,7 +821,7 @@ async function handleAutoResponse(From, ButtonPayload) {
           const replyMessage = contact.language === "de" 
           ? "Danke für deine Nachricht. Schade, dass es nicht klappt. Dann freue ich mich, dich beim nächsten Mal zu sehen." 
           : "Thank you for your reply. Sad to hear that, but let's meet next time.";
-          
+
           const payload = { 1: replyMessage };
           await messageSender({ body: { simpleResponseTemplate, phoneList, payload } });
     }
