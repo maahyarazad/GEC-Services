@@ -533,7 +533,7 @@ router.post("/whatsapp/twilio-callback", async (req, res) => {
           `INSERT INTO contact_book_events (contact_book_id, event_id, contentSid) VALUES (?, ?, ?)`
         ).run(contactRow.id, row.event_id, row.contentSid);
 
-        db.prepare(`UPDATE contact_book SET contentSid = ? WHERE phone = ?`).run(row.contentSid, phone);
+        // db.prepare(`UPDATE contact_book SET contentSid = ? WHERE phone = ?`).run(row.contentSid, phone);
       });
 
       handleDelivered();

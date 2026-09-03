@@ -694,8 +694,6 @@ async function fetchEvent(From) {
 //console.log(`fetchEvent const From = ${From}`);
 //console.log(`fetchEvent const from = ${from}`);
 
-
-
     const historyQuery = `
       -- Received messages
       SELECT
@@ -734,7 +732,12 @@ async function fetchEvent(From) {
     `;
 
     // First ? = WaId (bare number), second ? = To (whatsapp:+...)
-    const row = db.prepare(historyQuery).all(from, From)[0];
+    const row = db.prepare(historyQuery).get(from, From);
+
+    if(!row) {
+        console.log(`fetchEvent row result = ${row}`);
+        return null;
+    }
 
     const eventId = (row?.type === 's' ? row.event_id : null) ?? 0;
 
