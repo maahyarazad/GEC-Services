@@ -822,7 +822,7 @@ async function handleAutoResponse(From, ButtonPayload) {
           : "Thank you for your reply. Sad to hear that, but let's meet next time.";
 
           const payload = { 1: replyMessage };
-          await messageSender({ body: { simpleResponseTemplate, , payload } });
+          await messageSender({ body: { simpleResponseTemplate, phoneList , payload } });
     }
 
     if (ButtonPayload === "UNSUBSCRIBE") {
