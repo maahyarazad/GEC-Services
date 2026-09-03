@@ -837,7 +837,16 @@ async function handleAutoResponse(From, ButtonPayload) {
         console.log(replyMessageTemplate);
         console.log(onGuestList);
 
-          await messageSender({ body: { template: replyMessageTemplate, phoneList, payload: {}}});
+        //   await messageSender({ body: { template: replyMessageTemplate, phoneList, payload: {}}});
+
+          await sendMessageToPhone(
+                contact.phone,
+                replyMessageTemplate,
+                {},
+                null,
+                Number(event.id)
+            );
+
           return;
 
           const replyMessage = contact.language === "de" 
