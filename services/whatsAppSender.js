@@ -126,71 +126,54 @@ async function enrichPhoneListWithContactData(phoneList, db) {
 }
 
 
-// Helper to detect placeholders in body
+// Helper to detect placeholders in body/
 function hasPlaceholders(text) {
   return /{{\s*[^}]+\s*}}/.test(text);
 }
 
-const contactBookData = (conditions, useAudience, eventId) => {
+const contactBookData = (conditions, useAudience, eventId, contentSid) => {
   const params = { eventId: Number(eventId) };
-
-  let languageFilter = "";
-  if (conditions?.language) {
-    languageFilter = "AND cb.language = @language";
-    params.language = conditions.language.slice(0, 2);
-  }
+  params.language = conditions.language.slice(0, 2);
+  params.contentSid = contentSid
 
   let query = "";
 
   if (useAudience === "all") {
     query = `
-      WITH excluded_guests AS (
-        SELECT contact_book_id
-        FROM event_guest_list
-        WHERE event_id = @eventId
-      )
-      SELECT *
+           SELECT *
       FROM contact_book AS cb
       WHERE cb.phone IS NOT NULL
         AND cb.blacklist = 0
-        ${languageFilter}
-        AND cb.contentSid IS NULL
-        AND cb.id    NOT IN (SELECT contact_book_id FROM excluded_guests)
+       AND cb.language = @language
+		AND cb.id not in (SELECT cbe.contact_book_id FROM contact_book_events as cbe WHERE cbe.event_id = @eventId AND cbe.contentSid = @contentSid)
         AND cb.type  NOT IN ('Wüstenkinder', 'expert_guest', 'only_guest')
-        AND cb.phone NOT IN (SELECT phone FROM unsubscribe_contacts)
-      GROUP BY cb.phone
-      ORDER BY
-        CASE cb.type
-          WHEN 'gec_staff'       THEN 1
+		AND cb.phone NOT IN (SELECT uc.phone FROM unsubscribe_contacts as uc)
+      ORDER BY 
+		CASE cb.type
+			WHEN 'gec_staff'       THEN 1
           WHEN 'club_partner'    THEN 2
           WHEN 'club_member'     THEN 3
           WHEN 'expert'          THEN 4
           WHEN 'difa'            THEN 5
           WHEN 'medical_society' THEN 6
           ELSE                        7
-        END
+        END;
     `;
   } else {
     params.useAudience = useAudience;
     params.senderLimit = Number(conditions.senderLimit);
 
     query = `
-      WITH excluded_guests AS (
-        SELECT contact_book_id
-        FROM event_guest_list
-        WHERE event_id = @eventId
-      )
-      SELECT *
+       SELECT *
       FROM contact_book AS cb
       WHERE cb.phone IS NOT NULL
         AND cb.blacklist = 0
-        AND cb.id    NOT IN (SELECT contact_book_id FROM excluded_guests)
-        AND cb.phone NOT IN (SELECT phone FROM unsubscribe_contacts)
-        AND cb.type  IN (@useAudience)
-        ${languageFilter}
-        AND cb.contentSid IS NULL
-      GROUP BY cb.phone
-      LIMIT @senderLimit
+        AND cb.language = @language
+		AND cb.id NOT in (SELECT cbe.contact_book_id FROM contact_book_events as cbe WHERE cbe.event_id = @eventId AND cbe.contentSid = @contentSid)
+        AND cb.type = @useAudience
+		AND cb.phone NOT IN (SELECT uc.phone FROM unsubscribe_contacts as uc)
+        LIMIT @senderLimit;
+        
     `;
   }
 
@@ -305,7 +288,7 @@ const messageSender = async (req) => {
         conditions.language = template.language;
       }
 
-      const contactBook = contactBookData(conditions, useAudience, eventId);
+      const contactBook = contactBookData(conditions, useAudience, eventId, template.sid);
 
       let batchSize = 10; // safe batch size below max throughput
       let delayMs = 1 * 60 * 1000; // 1 minute
