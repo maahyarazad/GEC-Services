@@ -372,6 +372,13 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, mediaTemp
                     onClose={() => setEventModalOpen(false)}
                     maxWidth="sm"
                     fullWidth
+                    // keepMounted is load-bearing, not an optimisation. EventSearch owns
+                    // the guest-list fetch AND the websocket refetch-nonce effect. Without
+                    // this, closing the modal on selection unmounts it, which (a) aborts the
+                    // fetch that selection just started, stranding the panel on its spinner,
+                    // and (b) kills the nonce effect, so live guest-list refreshes stop
+                    // working on mobile whenever the modal is closed.
+                    keepMounted
                 >
                     <DialogTitle>Select Event</DialogTitle>
                     <DialogContent dividers>
