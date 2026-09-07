@@ -2,7 +2,19 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
 import { getEvents, setSelectedEvent, getGuestListRefetchNonce, getSelectedEvent, setSelectedGuestList, setGuestListLoading } from "../../../features/eventSlice";
 import { Box } from '@mui/material'
-const EventSearch = () => {
+import PropTypes from 'prop-types';
+// `containerHeight` / `listHeight` default to the inline-layout values, so rendering
+// with no props is byte-for-byte what it was before these props existed. They are
+// overridden only when this component is rendered inside the mobile selection modal,
+// where the inline heights (tuned to a 20dvh strip) are far too short.
+//
+// `onSelected` lets a host close itself after a pick. It fires *after* the existing
+// dispatch + fetch, and deliberately does not wrap or replace either.
+const EventSearch = ({
+    containerHeight = { xs: '20dvh', md: '85dvh' },
+    listHeight = { xs: 'calc(20dvh - 60px)', md: 'calc(85dvh - 60px)' },
+    onSelected,
+} = {}) => {
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedItem, setSelectedItem] = useState('');
@@ -68,7 +80,8 @@ const EventSearch = () => {
         setSelectedItem(x.id);
         dispatch(setSelectedEvent(x));
         fetchGuestList(x.id);
-    }, [dispatch, fetchGuestList]);
+        onSelected?.();
+    }, [dispatch, fetchGuestList, onSelected]);
 
     // Re-fetch the guest list whenever a refetch is requested. The nonce changes
     // on every `triggerRefetchGuestList()` dispatch — including back-to-back
@@ -88,7 +101,7 @@ const EventSearch = () => {
         <Box sx={{
             flex: 1,
             minWidth: 0,
-            height: { xs: '20dvh', md: '85dvh' },  // 👈 shorter on mobile
+            height: containerHeight,  // 👈 shorter on mobile; overridden inside the modal
             width: { xs: '100%', md: 'auto' },      // 👈 full width on mobile
         }}>
             <div className='rounded border p-2'>
@@ -109,7 +122,7 @@ const EventSearch = () => {
                 {/* List */}
                 <Box sx={{
                     overflow: 'scroll',
-                    height: { xs: 'calc(20dvh - 60px)', md: 'calc(85dvh - 60px)' } // 👈 matches parent height
+                    height: listHeight // 👈 matches parent height
                 }}>
 
                     <ul className="list-unstyled p-0 m-0 list-group" >
@@ -145,6 +158,15 @@ const EventSearch = () => {
 
         </Box>
     );
+};
+
+EventSearch.propTypes = {
+    // Height of the component's outer Box. Defaults to the inline-layout value.
+    containerHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    // Height of the scrollable event list. Defaults to the inline-layout value.
+    listHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    // Fired after an event is selected, so a host modal can close itself.
+    onSelected: PropTypes.func,
 };
 
 export default EventSearch;

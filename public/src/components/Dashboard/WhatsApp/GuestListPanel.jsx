@@ -3,7 +3,7 @@ import EventSearch from './EventSearch';
 import {
     Box, Chip, CircularProgress, Typography,
     Dialog, DialogTitle, DialogContent, DialogActions,
-    Button,
+    Button, useMediaQuery, useTheme,
 } from '@mui/material';
 import { getSelectedGuestList, getSelectedEvent, getGuestListLoading } from '../../../features/eventSlice';
 import { useAppSelector } from '../../../store/hooks';
@@ -23,6 +23,25 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, mediaTemp
     // Primitive event key — everything that only cares about "which event"
     // depends on this rather than the (possibly re-created) object reference.
     const eid = eventId?.id;
+
+    // ── Mobile event selection ───────────────────────────────────────────────
+    // Below `md` the panel already stacks (see the root Box's flexDirection), and
+    // the inline event list eats ~20dvh at the top — enough to push the grid's
+    // pagination bar off a real phone's visible viewport. On mobile the list moves
+    // into a modal behind a one-line trigger, reclaiming that space.
+    //
+    // `md` is used deliberately: it is the same breakpoint that already switches
+    // this layout from row to column, so the selector and the layout always change
+    // together. The codebase has three different "mobile" thresholds (900 here,
+    // 768 in SlideMenu, 600 in CustomDataGrid) — this adds no fourth one.
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const [eventModalOpen, setEventModalOpen] = useState(false);
+
+    // T013: never leave the dialog mounted over the desktop layout after a resize.
+    useEffect(() => {
+        if (!isMobile) setEventModalOpen(false);
+    }, [isMobile]);
 
     // ── WhatsApp media-template selection ────────────────────────────────────
     // Every available `twilio/media` template is always sent for QR Code
@@ -257,9 +276,40 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, mediaTemp
             height: '100%',
             p: 1,
         }}>
-            <Box sx={{ flexShrink: 0, width: { xs: '100%', md: 280 } }}>
-                <EventSearch />
-            </Box>
+            {isMobile ? (
+                // Mobile: one-line trigger. Must stay a single line — if a long title
+                // wrapped, it would eat back the vertical space this exists to reclaim.
+                <Box sx={{ flexShrink: 0, width: '100%' }}>
+                    <Button
+                        fullWidth
+                        variant="outlined"
+                        onClick={() => setEventModalOpen(true)}
+                        sx={{
+                            textTransform: 'none',
+                            justifyContent: 'flex-start',
+                            color: eventId ? 'text.primary' : 'text.secondary',
+                            '& .MuiButton-label': { minWidth: 0 },
+                        }}
+                    >
+                        <Box
+                            component="span"
+                            sx={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                minWidth: 0,
+                            }}
+                        >
+                            {eventId?.title ?? 'Select an event'}
+                        </Box>
+                    </Button>
+                </Box>
+            ) : (
+                // Desktop: unchanged from before this feature — same element, same sx.
+                <Box sx={{ flexShrink: 0, width: { xs: '100%', md: 280 } }}>
+                    <EventSearch />
+                </Box>
+            )}
             <Box sx={{
                 flex: 1,
                 minWidth: 0,
@@ -313,6 +363,31 @@ export default function GuestListPanel({ onGuestAttend, onRemoveGuest, mediaTemp
                     onSaved={fetchGuestNotes}
                 />
             </Box>
+
+            {/* Mobile event selection modal — holds the same EventSearch the desktop
+                layout renders inline, so all selection/fetch logic stays in one place. */}
+            {isMobile && (
+                <Dialog
+                    open={eventModalOpen}
+                    onClose={() => setEventModalOpen(false)}
+                    maxWidth="sm"
+                    fullWidth
+                >
+                    <DialogTitle>Select Event</DialogTitle>
+                    <DialogContent dividers>
+                        <EventSearch
+                            containerHeight="55dvh"
+                            listHeight="calc(55dvh - 60px)"
+                            onSelected={() => setEventModalOpen(false)}
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setEventModalOpen(false)} sx={{ textTransform: 'none' }}>
+                            Cancel
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            )}
 
             {/* QR code viewer */}
             <Dialog open={qrViewOpen} onClose={closeQrView} maxWidth="xs">
