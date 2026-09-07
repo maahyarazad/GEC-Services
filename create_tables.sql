@@ -454,8 +454,8 @@ CREATE INDEX IF NOT EXISTS idx_kb_view_log_created ON knowledge_base_view_log (c
 
 
 
-  CREATE TABLE IF NOT EXISTS unsubscribe_contacts (
+CREATE TABLE IF NOT EXISTS unsubscribe_contacts (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    phone         INTEGER NOT NULL,
+    phone         INTEGER NOT NULL UNIQUE,
     created_at    DATETIME DEFAULT (datetime('now'))
-  );
+);

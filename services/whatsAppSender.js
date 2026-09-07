@@ -820,7 +820,7 @@ async function handleAutoResponse(From, ButtonPayload) {
         ? templates.result.find((x) => x.sid === "HXa7da14800646269872ca57d98ead6770")
         : templates.result.find((x) => x.sid === "HXdb4faaac494a7e50c777de2527d0ddc2");
         
-
+        
         if(isObject(onGuestList)){
             await sendMessageToPhone(
                   contact.phone,
