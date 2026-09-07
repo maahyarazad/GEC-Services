@@ -42,9 +42,9 @@ const EventSearch = ({
     const abortRef = useRef(null);
 
     const fetchGuestList = useCallback(async (id) => {
-        abortRef.current?.abort();
+
         const controller = new AbortController();
-        abortRef.current = controller;
+
         try {
             setLoading(true);
             // Shared flag so GuestListPanel can unmount its grid and show a
@@ -73,21 +73,7 @@ const EventSearch = ({
         }
     }, [dispatch]);
 
-    // Abort any pending request on unmount.
-    //
-    // If a request really was in flight, also clear the shared loading flag. The
-    // aborted request's own `finally` deliberately skips that (it is guarded by
-    // `!controller.signal.aborted`), which is correct when a *newer* fetch has
-    // superseded it — that fetch immediately sets the flag true again. It is wrong
-    // on unmount, where nothing is left to clear it and GuestListPanel would render
-    // its spinner forever.
-    useEffect(() => () => {
-        const controller = abortRef.current;
-        if (controller && !controller.signal.aborted) {
-            controller.abort();
-            dispatch(setGuestListLoading(false));
-        }
-    }, [dispatch]);
+
 
     const handleSelect = useCallback((x) => {
         setSelectedItem(x.id);
