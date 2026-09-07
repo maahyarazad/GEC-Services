@@ -10,6 +10,7 @@ import { FaStickyNote } from "react-icons/fa";
 import { FaHistory } from "react-icons/fa";
 import { TbClipboardCheck } from "react-icons/tb";
 import ActionCell from './ActionCell';
+import UnsubscribeActionCell from './UnsubscribeActionCell';
 import { BiSolidCheckCircle } from "react-icons/bi";
 import { PiQrCodeBold } from "react-icons/pi";
 import { BsDashCircle } from "react-icons/bs";
@@ -519,3 +520,57 @@ export const tabstyle = {
     },
 
 }
+
+
+// Columns for the Unsubscribed Contacts grid.
+//
+// Every cb.* field arrives nullable regardless of its NOT NULL declaration on
+// contact_book — the LEFT JOIN produces NULLs for opt-outs with no matching
+// contact. `contact_id === null` is the signal that the row is unmatched.
+//
+// `phone` arrives as a JSON *number* without the leading '+': unsubscribe_contacts.phone
+// has INTEGER affinity, so SQLite strips the '+' on insert. Format it for display.
+export const unsubscribeColumn = ({ onDeleteUnsubscribe }) => [
+    {
+        field: 'phone', headerName: 'Phone Number', width: 160, filterable: true,
+        renderCell: (params) => (params.row.phone ? `+${params.row.phone}` : ''),
+    },
+    {
+        field: 'name', headerName: 'Name', width: 200, filterable: false, sortable: false,
+        renderCell: (params) => {
+            if (params.row.contact_id === null || params.row.contact_id === undefined) {
+                return (
+                    <Tooltip title="This phone is not in the contact book" slotProps={slotPropsStyle} arrow>
+                        <span style={{ color: '#9e9e9e', fontStyle: 'italic' }}>
+                            No matching contact
+                        </span>
+                    </Tooltip>
+                );
+            }
+
+            const name = [params.row.title, params.row.first_name, params.row.last_name]
+                .filter(Boolean)
+                .join(' ')
+                .trim();
+
+            return name || '—';
+        },
+    },
+    { field: 'type', headerName: 'Type', width: 130, filterable: true },
+    { field: 'language', headerName: 'Language', width: 100, filterable: true },
+    { field: 'club_partner_name', headerName: 'Club / Partner', width: 160, filterable: true },
+    { field: 'created_at', headerName: 'Unsubscribed At', width: 170, filterable: true },
+    {
+        field: '_',
+        headerName: 'Actions',
+        width: 100,
+        filterable: false,
+        sortable: false,
+        renderCell: (params) => (
+            <UnsubscribeActionCell
+                params={params}
+                onDeleteUnsubscribe={onDeleteUnsubscribe}
+            />
+        ),
+    },
+];

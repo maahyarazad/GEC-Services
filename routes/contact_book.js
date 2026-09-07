@@ -508,4 +508,120 @@ router.get("/contacts/:id(\\d+)", authorization_middleware.authorize_operator,(r
   }
 });
 
+// ─── Unsubscribe contacts ────────────────────────────────────────────────────
+// Rows in `unsubscribe_contacts` are written by the WhatsApp auto-response handler
+// (services/whatsAppSender.js) when a recipient taps UNSUBSCRIBE, and are read back
+// by the broadcast audience filters as `cb.phone NOT IN (SELECT uc.phone ...)`.
+//
+// The join below deliberately compares `cb.phone = uc.phone` even though the columns
+// have different declared types (contact_book.phone is VARCHAR, unsubscribe_contacts.phone
+// is INTEGER). SQLite resolves it via type affinity, and this is the *same* comparison
+// the broadcast filter makes — so this panel shows exactly the exclusion set the sender
+// applies. Do not "fix" it with a cast here without also changing whatsAppSender.js.
+const UNSUBSCRIBE_LEFT_JOIN = {
+  table: "contact_book AS cb",
+  on: "cb.phone = uc.phone",
+};
+
+// IMPORTANT: `uc.id AS id` and `cb.id AS contact_id` must never be collapsed into
+// `SELECT *` or `uc.*`. Both tables declare `id` and `phone`; without this explicit
+// aliasing `cb.id` overwrites `uc.id` in the result row, and the DELETE below would
+// target the wrong table's primary key — deleting the wrong person's contact record.
+// This aliasing is the guard behind FR-009.
+const UNSUBSCRIBE_COLUMNS = [
+  "uc.id AS id",
+  "uc.phone AS phone",
+  "uc.created_at",
+  "cb.id AS contact_id",
+  "cb.title",
+  "cb.first_name",
+  "cb.last_name",
+  "cb.gender",
+  "cb.language",
+  "cb.type",
+  "cb.club_partner_name",
+  "cb.blacklist",
+];
+
+// List unsubscribed phones, LEFT JOINed to contact_book so opt-outs with no matching
+// contact are still returned (with every cb.* field null).
+router.get(
+  "/api/unsubscribe-contacts",
+  authorization_middleware.authorize_admin,
+  (req, res) => {
+    try {
+      const { pageNumber, limit, sortField, sortOrder, filters, jsonFilters, advancedClauses } =
+        dbService._QuerySqlConverter(req.query, "unsubscribe_contacts AS uc");
+
+      // Count over the SAME join as the data query, so the pager can never disagree
+      // with the rows actually rendered (contact_book.phone is not UNIQUE).
+      const total = dbService._getTotalCount(
+        "unsubscribe_contacts AS uc",
+        filters,
+        advancedClauses,
+        UNSUBSCRIBE_LEFT_JOIN
+      );
+
+      const data = dbService._getAll("unsubscribe_contacts AS uc", filters, {
+        columns: UNSUBSCRIBE_COLUMNS,
+        leftJoin: UNSUBSCRIBE_LEFT_JOIN,
+        advancedClauses,
+        jsonFilters,
+        sortField: sortField || "uc.id",
+        sortOrder: sortOrder || "desc",
+        pageNumber,
+        limit,
+      });
+
+      return res.status(200).json({
+        status: true,
+        data,
+        total,
+        page: pageNumber + 1,
+        pageSize: limit,
+      });
+    } catch (error) {
+      console.error(`${Date.now()} - Failed to fetch unsubscribe contacts:`, error);
+      return res
+        .status(500)
+        .json({ status: false, message: "Failed to fetch unsubscribe contacts" });
+    }
+  }
+);
+
+// Hard-delete one unsubscribe record. Irreversible: the phone re-enters the broadcast
+// audience on the next send. Only `unsubscribe_contacts` is touched — the joined
+// contact_book row is never modified (FR-008), and the table has no foreign keys.
+router.delete(
+  "/api/unsubscribe-contacts",
+  authorization_middleware.authorize_admin,
+  (req, res) => {
+    try {
+      const { id } = req.body;
+
+      if (!id || Number.isNaN(Number(id))) {
+        return res.status(400).json({ status: false, message: "ID is required" });
+      }
+
+      const result = dbService.remove("unsubscribe_contacts", Number(id));
+
+      if (result.changes === 0) {
+        return res
+          .status(404)
+          .json({ status: false, message: "Unsubscribe record not found" });
+      }
+
+      return res.status(200).json({
+        status: true,
+        message: "Unsubscribe record deleted successfully",
+      });
+    } catch (error) {
+      console.error(`${Date.now()} - Failed to delete unsubscribe record:`, error.message);
+      return res
+        .status(500)
+        .json({ status: false, message: "Failed to delete unsubscribe record" });
+    }
+  }
+);
+
 module.exports = router;

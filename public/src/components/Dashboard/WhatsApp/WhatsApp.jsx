@@ -30,6 +30,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { MdInsights, MdPersonSearch, MdVpnKey } from "react-icons/md";
 import { PiUserCircleCheckDuotone } from "react-icons/pi";
 import ContactBookDataGrid from './ContactBookDataGrid';
+import UnsubscribeDataGrid from './UnsubscribeDataGrid';
 import ViewModeButtonGroup from "./ViewModeButtonGroup";
 import EventSection from '../../Sections/EventSection';
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
@@ -46,7 +47,7 @@ import EventLogsPanel from "./EventLogsPanel";
 import RevealTwilioCredentials from "./RevealTwilioCredentials";
 import ResponseLogsMobileList from "./ResponseLogsMobileList";
 import NotepadModal from "./NotepadModal";
-import { BsPeopleFill, BsClockHistory } from "react-icons/bs";
+import { BsPeopleFill, BsClockHistory, BsDashCircle } from "react-icons/bs";
 const WhatsappBroadcast = () => {
 
     const location = useLocation();
@@ -115,6 +116,15 @@ const WhatsappBroadcast = () => {
     const [contactSortModel, setContactSortModel] = useState([{ field: 'id', sort: 'asc' }]);
     const [contactFilterItems, setContactFilterItems] = useState([]);
     const [debouncedContactFilterItems, setDebouncedContactFilterItems] = useState([]);
+
+    // ── Unsubscribed contacts panel ──────────────────────────────────────
+    const [unsubscribeList, setUnsubscribeList] = useState([]);
+    const [unsubscribeRowCount, setUnsubscribeRowCount] = useState(0);
+    const [unsubscribePaginationModel, setUnsubscribePaginationModel] = useState({ page: 0, pageSize: 25 });
+    const [unsubscribeSortModel, setUnsubscribeSortModel] = useState([{ field: 'created_at', sort: 'desc' }]);
+    const [unsubscribeFilterItems, setUnsubscribeFilterItems] = useState([]);
+    const [debouncedUnsubscribeFilterItems, setDebouncedUnsubscribeFilterItems] = useState([]);
+
     const [viewMode, setViewMode] = useState("default"); // "default" | "corrupted" | "guest_list"
     const [debouncedViewMode, setDebouncedViewMode] = useState(viewMode);
     const [messageState, setMessageState] = useState({
@@ -244,6 +254,39 @@ const WhatsappBroadcast = () => {
     }, [debouncedViewMode]);
 
 
+    const fetchUnsubscribeData = useCallback(async (pagination, sort, filters) => {
+        try {
+            setloading_logs(true);
+
+            const { field: sortField = '', sort: sortOrder = '' } = (sort ?? [])[0] ?? {};
+            const filterParams = buildContactFilterParams(filters ?? []);
+
+            const queryParams = [
+                `page=${(pagination?.page ?? 0) + 1}`,
+                `pageSize=${pagination?.pageSize ?? 25}`,
+                sortField ? `sortField=${sortField}` : '',
+                sortOrder ? `sortOrder=${sortOrder}` : '',
+                filterParams,
+            ].filter(Boolean).join('&');
+
+            const response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/unsubscribe-contacts?${queryParams}`,
+                { credentials: 'include' }
+            );
+
+            if (response.status === 200) {
+                const response_data = await response.json();
+                setUnsubscribeList(response_data.data);
+                if (response_data.total !== undefined) setUnsubscribeRowCount(response_data.total);
+            }
+        } catch (err) {
+            console.error('Failed to fetch unsubscribe contacts:', err);
+        } finally {
+            setloading_logs(false);
+        }
+    }, []);
+
+
 
 
 
@@ -293,6 +336,29 @@ const WhatsappBroadcast = () => {
             fetchContactData(contactPaginationModel, contactSortModel, debouncedContactFilterItems);
         }
     }, [openPanel, fetchContactData, contactPaginationModel, contactSortModel, debouncedContactFilterItems]);
+
+    // Debounce unsubscribe filter changes — same rule as the contact book: only send
+    // to the server when the effective filter *values* change, not when the user is
+    // still picking a column or an operator.
+    const unsubscribeFilterSentRef = useRef([]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            const currentKey = getEffectiveFilterKey(unsubscribeFilterItems);
+            const sentKey    = getEffectiveFilterKey(unsubscribeFilterSentRef.current);
+            if (currentKey === sentKey) return;
+            unsubscribeFilterSentRef.current = unsubscribeFilterItems;
+            setDebouncedUnsubscribeFilterItems(unsubscribeFilterItems);
+            setUnsubscribePaginationModel((prev) => ({ ...prev, page: 0 }));
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [unsubscribeFilterItems]);
+
+    useEffect(() => {
+        if (openPanel === 'unsubscribed') {
+            fetchUnsubscribeData(unsubscribePaginationModel, unsubscribeSortModel, debouncedUnsubscribeFilterItems);
+        }
+    }, [openPanel, fetchUnsubscribeData, unsubscribePaginationModel, unsubscribeSortModel, debouncedUnsubscribeFilterItems]);
 
     // Batch-fetch notes for contact book
     const [contactNotes, setContactNotes] = useState(new Map());
@@ -413,6 +479,66 @@ const WhatsappBroadcast = () => {
                 color: 'error',
             },
             () => { deleteContact(row.id); },
+            () => { }
+        );
+    };
+
+
+    const deleteUnsubscribe = async (unsubscribeId) => {
+        try {
+            setloading_logs(true);
+
+            const response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/unsubscribe-contacts`,
+                {
+                    method: 'DELETE',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: unsubscribeId }),
+                }
+            );
+
+            const responseData = await response.json();
+
+            if (!response.ok) {
+                showSnackbar(responseData.message, "error");
+            } else {
+                showSnackbar(responseData.message, "success");
+            }
+
+            await fetchUnsubscribeData(
+                unsubscribePaginationModel,
+                unsubscribeSortModel,
+                debouncedUnsubscribeFilterItems
+            );
+        } catch (err) {
+            console.error('Failed to delete unsubscribe record:', err);
+            showSnackbar(err.message, "error");
+        } finally {
+            setloading_logs(false);
+        }
+    };
+
+
+    // NOTE: row.id is unsubscribe_contacts.id — never row.contact_id, which is the
+    // joined contact_book row and must not be touched by this action.
+    const onDeleteUnsubscribe = (row) => {
+        openDialog(
+            <>
+                <>
+                    Are you sure you want to <strong>remove this number from the unsubscribe list</strong>?
+                    This action <strong>cannot be undone</strong>, and this person will
+                    <strong> start receiving broadcast messages again</strong>.
+                </>
+            </>,
+            'Remove from Unsubscribe List',
+            {
+                text: 'Remove',
+                color: 'error',
+            },
+            () => { deleteUnsubscribe(row.id); },
             () => { }
         );
     };
@@ -1221,6 +1347,27 @@ const WhatsappBroadcast = () => {
                 </div>
             </SlideMenu>
 
+            <SlideMenu id={'unsubscribed'}
+                isOpen={openPanel === 'unsubscribed'}
+                onClose={() => { handleSetOpenPanel(null); }}
+                headerTitle={'Unsubscribed Contacts'}
+            >
+                <div style={{ width: '100%', height: 'calc(100vh - 125px)' }} className={`${openPanel === 'unsubscribed' ? "" : "hidden"}`}>
+                    <UnsubscribeDataGrid
+                        unsubscribeList={unsubscribeList}
+                        paginationModel={unsubscribePaginationModel}
+                        setPaginationModel={setUnsubscribePaginationModel}
+                        onDeleteUnsubscribe={onDeleteUnsubscribe}
+                        rowCount={unsubscribeRowCount}
+                        sortModel={unsubscribeSortModel}
+                        onSortModelChange={setUnsubscribeSortModel}
+                        filterItems={unsubscribeFilterItems}
+                        onFilterItemsChange={setUnsubscribeFilterItems}
+                        loading={loading_logs}
+                    />
+                </div>
+            </SlideMenu>
+
             <SlideMenu id={'guest-list'}
                 isOpen={openPanel === 'guest-list'}
                 onClose={() => { handleSetOpenPanel(null) }}
@@ -1335,6 +1482,9 @@ const WhatsappBroadcast = () => {
                     </Button>
                     <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('event-list')}>
                         <BsCalendar2Event size={17} style={{ marginRight: 4 }} /> Event List
+                    </Button>
+                    <Button variant="outlined" color="primary" sx={{ textTransform: 'none', justifyContent: 'flex-start' }} onClick={() => handleSetOpenPanel('unsubscribed')} title="People who replied UNSUBSCRIBE — excluded from every broadcast">
+                        <BsDashCircle size={17} style={{ marginRight: 4 }} /> Unsubscribed
                     </Button>
 
                     <Divider component="div"/>
