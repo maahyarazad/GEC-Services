@@ -78,7 +78,8 @@ export async function validateAndConvertXlsx(
     await workbook.xlsx.load(arrayBuffer);
 
     
-    const worksheet = workbook.worksheets.find(x => x._name === 'employee_list');
+    debugger;
+    const worksheet = workbook.worksheets.find(x => x.name === 'employee_list');
     
     if (!worksheet) {
       return { valid: false, error: "The file is empty." };
