@@ -78,7 +78,6 @@ export async function validateAndConvertXlsx(
     await workbook.xlsx.load(arrayBuffer);
 
     
-    debugger;
     const worksheet = workbook.worksheets.find(x => x.name === 'employee_list');
     
     if (!worksheet) {
