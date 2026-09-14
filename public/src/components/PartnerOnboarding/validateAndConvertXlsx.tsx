@@ -77,9 +77,9 @@ export async function validateAndConvertXlsx(
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(arrayBuffer);
 
-    console.log(JSON.stringify(workbook));
+
     const worksheet = workbook.worksheets.find(x => x.name === 'employee_list');
-    console.log(worksheet);
+    
     
 
 
@@ -248,6 +248,7 @@ worksheet.eachRow((row) => {
       faultyRecords,
     };
   } catch (err) {
+    console.error(err);
     return {
       valid: false,
       error: "Failed to parse file. Please upload a valid .xlsx file.",
