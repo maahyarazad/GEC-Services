@@ -130,29 +130,29 @@ export default function PartnerOnboarding() {
     }, []);
 
     // ── Auto-login ────────────────────────────────────────────────────────
-    const autoLogin = useCallback(async () => {
-        try {
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/partner-auto-login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-            });
-            const data = await response.json();
-            if (data) {
-                setWiz({ otpVisible: false, authenticate: true, partner: data.data, email: data.data.email });
-                setActiveStep((s) => s + 1);
-            }
-        } catch (err) {
-            console.error("Error fetching data:", err);
-        }
-    }, []);
+    // const autoLogin = useCallback(async () => {
+    //     try {
+    //         const response = await fetch(`${import.meta.env.VITE_SERVERURL}/partner-auto-login`, {
+    //             method: "POST",
+    //             headers: { "Content-Type": "application/json" },
+    //             credentials: "include",
+    //         });
+    //         const data = await response.json();
+    //         if (data) {
+    //             setWiz({ otpVisible: false, authenticate: true, partner: data.data, email: data.data.email });
+    //             setActiveStep((s) => s + 1);
+    //         }
+    //     } catch (err) {
+    //         console.error("Error fetching data:", err);
+    //     }
+    // }, []);
 
-    useEffect(() => {
-        if (!INITIAL_WIZARD_STATE.isMounted) {
-            autoLogin();
-            setWiz({ isMounted: true });
-        }
-    }, [wizardState.isMounted]);
+    // useEffect(() => {
+    //     if (!INITIAL_WIZARD_STATE.isMounted) {
+    //         autoLogin();
+    //         setWiz({ isMounted: true });
+    //     }
+    // }, [wizardState.isMounted]);
 
     // ── OTP: Send ─────────────────────────────────────────────────────────
     const handleSendOtp = async () => {
