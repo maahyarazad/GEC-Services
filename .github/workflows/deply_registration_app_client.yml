@@ -45,14 +45,14 @@ jobs:
             ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             "rm -rf ~/node/services.german-emirates-club.com/public/* && mkdir -p ~/node/services.german-emirates-club.com/public"
 
-      - name: Upload new build to server
-        run: |
-            rsync -avz \
-            -e "ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }}" \
-            public/dist/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/node/services.german-emirates-club.com/public/
+    #   - name: Upload new build to server
+    #     run: |
+    #         rsync -avz \
+    #         -e "ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }}" \
+    #         public/dist/ \
+    #         ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/node/services.german-emirates-club.com/public/
 
-      - name: Verify deployment
-        run: |
-          ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            "ls -la ~/node/services.german-emirates-club.com/public/"
+    #   - name: Verify deployment
+    #     run: |
+    #       ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+    #         "ls -la ~/node/services.german-emirates-club.com/public/"
