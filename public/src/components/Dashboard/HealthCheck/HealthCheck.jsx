@@ -111,7 +111,7 @@ function SiteHealthChecker() {
             {/* ── Header ── */}
             <div className="hc-header">
                 <div className="hc-header__left">
-                    <Typography className="hc-header__title">Website Health</Typography>
+                    <Typography className="hc-header__title">Website Health €</Typography>
                     {!loading && total > 0 && (
                         <span className={`hc-header__badge ${allUp ? 'hc-header__badge--ok' : 'hc-header__badge--warn'}`}>
                             {allUp ? `All ${total} services operational` : `${upCount} / ${total} operational`}
