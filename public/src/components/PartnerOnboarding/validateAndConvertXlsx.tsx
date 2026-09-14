@@ -77,9 +77,12 @@ export async function validateAndConvertXlsx(
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(arrayBuffer);
 
-    
+    console.log(JSON.stringify(workbook));
     const worksheet = workbook.worksheets.find(x => x.name === 'employee_list');
+    console.log(worksheet);
     
+
+
     if (!worksheet) {
       return { valid: false, error: "The file is empty." };
     }
