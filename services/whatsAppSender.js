@@ -775,11 +775,20 @@ async function handleAutoResponse(From, ButtonPayload) {
     console.log(`${Date.now()} - ${JSON.stringify(contact)}`);
       if (!contact) return;
 
-    const [templates, event_id] = await Promise.allSettled([
+    await Promise.allSettled([
         fetchContentTemplates(),
         fetchEvent(From)
     ]);
 
+    const templates = templatesResult.status === 'fulfilled' ? templatesResult.value : null;
+    const event_id = eventResult.status === 'fulfilled' ? eventResult.value : null;
+
+    if (templatesResult.status === 'rejected') {
+        console.error('fetchContentTemplates failed:', templatesResult.reason);
+    }
+    if (eventResult.status === 'rejected') {
+        console.error('fetchEvent failed:', eventResult.reason);
+    }
 
     console.log(`${Date.now()} - event_id -${event_id}`);
 
