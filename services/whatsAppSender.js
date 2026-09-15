@@ -671,11 +671,12 @@ async function fetchHistory(phone) {
 
 async function fetchEvent(From) {
   try {
+      console.log(`fetchEvent const From = ${From}`);
+      console.log(`fetchEvent const from = ${from}`);
+      
     const from = From.replace("whatsapp:", "");
     const toNumber = `whatsapp:+${from}`;
 
-//console.log(`fetchEvent const From = ${From}`);
-//console.log(`fetchEvent const from = ${from}`);
 
     const historyQuery = `
       -- Received messages
