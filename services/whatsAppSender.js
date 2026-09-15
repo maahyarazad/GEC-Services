@@ -813,12 +813,12 @@ async function handleAutoResponse(From, ButtonPayload) {
         .prepare(`SELECT * FROM events WHERE id = ?`)
         .get(event_id);
 
+    const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
+
+    const type = guestTypes.includes(contact.type) ? "guest" : "general";  
+    
     if (ButtonPayload === "ATTEND") {
       
-      const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
-
-      const type = guestTypes.includes(contact.type) ? "guest" : "general";  
-
       const payload = { 1: event[`auto_response_${type}_${contact.language}`] };
 
        await sendMessageToPhone(
@@ -845,7 +845,10 @@ async function handleAutoResponse(From, ButtonPayload) {
         ? templates.result.find((x) => x.sid === "HXa7da14800646269872ca57d98ead6770")
         : templates.result.find((x) => x.sid === "HXdb4faaac494a7e50c777de2527d0ddc2");
         
-        
+         console.log(`${Date.now()} - onGuestList ${JSON.stringify(contact)}`);
+         console.log(`${Date.now()} - onGuestList ${JSON.stringify(onGuestList)}`);
+
+
         if(isObject(onGuestList)){
             await sendMessageToPhone(
                   contact.phone,
