@@ -761,10 +761,17 @@ async function fetchTwilioMessagesDetails(sentMessages) {
 async function handleAutoResponse(From, ButtonPayload) {
   try {
     const from = From.replace("whatsapp:", "");
-    const contact = db
-      .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
-      .get(from);
+    
 
+    console.log(`${Date.now()} - From - ${From}`);
+    console.log(`${Date.now()} - ButtonPayload - ${ButtonPayload}`);
+    console.log(`${Date.now()} - from - ${from}`);
+    
+    const contact = db
+    .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
+    .get(from);
+    
+    console.log(`${Date.now()} - ${contact}`);
       if (!contact) return;
 
     const [templates, event_id] = await Promise.all([
