@@ -69,12 +69,23 @@ function TitleManager() {
 }
 
 
+// CircularProgress strokes with `currentColor`, so a plain `color` can't
+// render a gradient — define it once as an SVG gradient and reference it
+// via `stroke: url(#id)` instead.
 const FallBackLoader = () => (
         <div
             className="d-flex justify-content-center align-items-center flex-column"
             style={{ height: "100vh", width: "100vw" }}
         >
-            <CircularProgress sx={{ color: "var(--primary)" }} />
+            <svg width={0} height={0}>
+                <defs>
+                    <linearGradient id="fallback-loader-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="rgb(221, 174, 58)" />
+                        <stop offset="100%" stopColor="rgb(185, 150, 43)" />
+                    </linearGradient>
+                </defs>
+            </svg>
+            <CircularProgress sx={{ "& .MuiCircularProgress-circle": { stroke: "url(#fallback-loader-gradient)" } }} />
         </div>
     );
 
