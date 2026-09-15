@@ -672,10 +672,9 @@ async function fetchHistory(phone) {
 async function fetchEvent(From) {
   try {
       console.log(`fetchEvent const From = ${From}`);
+      const from = From.replace("whatsapp:", "");
       console.log(`fetchEvent const from = ${from}`);
-      
-    const from = From.replace("whatsapp:", "");
-    const toNumber = `whatsapp:+${from}`;
+
 
 
     const historyQuery = `
