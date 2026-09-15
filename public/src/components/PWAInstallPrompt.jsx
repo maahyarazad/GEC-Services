@@ -124,6 +124,11 @@ export default function PWAInstallPrompt() {
         textTransform: 'none',
         borderRadius: 8,
         boxShadow: 3,
+        backgroundColor: 'var(--primary)',
+        '&:hover': {
+            backgroundColor: 'var(--primary)',
+            opacity: 0.9,
+        },
     };
 
     if (!installPrompt && iOS) {

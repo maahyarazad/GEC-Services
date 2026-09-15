@@ -74,7 +74,7 @@ const FallBackLoader = () => (
             className="d-flex justify-content-center align-items-center flex-column"
             style={{ height: "100vh", width: "100vw" }}
         >
-            <CircularProgress />
+            <CircularProgress sx={{ color: "var(--primary)" }} />
         </div>
     );
 
