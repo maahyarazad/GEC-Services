@@ -771,13 +771,17 @@ async function handleAutoResponse(From, ButtonPayload) {
     .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
     .get(from);
     
-    console.log(`${Date.now()} - ${contact}`);
+
+    console.log(`${Date.now()} - ${JSON.stringify(contact)}`);
       if (!contact) return;
 
-    const [templates, event_id] = await Promise.all([
+    const [templates, event_id] = await Promise.allSettled([
         fetchContentTemplates(),
         fetchEvent(From)
     ]);
+
+
+    console.log(`${Date.now()} - event_id -${event_id}`);
 
     if (event_id === 0) {
       console.error(`${Date.now()} - handleAutoResponse: event_id not found`);
