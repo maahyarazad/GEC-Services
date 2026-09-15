@@ -843,7 +843,7 @@ async function handleAutoResponse(From, ButtonPayload, OriginalRepliedMessageSid
 
         const replyMessageTemplate = contact.language === "de"  
         ? templates.result.find((x) => x.sid === "HXa7da14800646269872ca57d98ead6770")
-        : templates.result.find((x) => x.sid === "HXdb4faaac494a7e50c777de2527d0ddc2");
+        : templates.result.find((x) => x.sid === "HX8597c391e879a7eaa30af7e6a21e1d63");
         
          console.log(`${Date.now()} - onGuestList ${JSON.stringify(contact)}`);
          console.log(`${Date.now()} - onGuestList ${JSON.stringify(onGuestList)}`);
