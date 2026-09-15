@@ -780,6 +780,11 @@ async function handleAutoResponse(From, ButtonPayload) {
         fetchEvent(From)
     ]);
 
+    const [templatesResult, eventResult] = await Promise.allSettled([
+        fetchContentTemplates(),
+        fetchEvent(From)
+    ]);
+
     const templates = templatesResult.status === 'fulfilled' ? templatesResult.value : null;
     const event_id = eventResult.status === 'fulfilled' ? eventResult.value : null;
 
