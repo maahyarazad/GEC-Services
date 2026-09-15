@@ -669,64 +669,64 @@ async function fetchHistory(phone) {
   }
 }
 
-async function fetchEvent(From) {
-  try {
+function fetchEvent(From) {
+  return new Promise((resolve, reject) => {
+    try {
       console.log(`fetchEvent const From = ${From}`);
+
       const from = From.replace("whatsapp:", "");
       console.log(`fetchEvent const from = ${from}`);
 
+      const historyQuery = `
+        -- Received messages
+        SELECT
+            json_extract(tr.payload, '$.Body')              AS body,
+            json_extract(tr.payload, '$.MediaUrl0')         AS media_url,
+            json_extract(tr.payload, '$.MediaContentType0') AS media_type,
+            NULL                                            AS messageSid,
+            NULL                                            AS contentSid,
+            NULL                                            AS event_id,
+            datetime(tr.received_at, '+4 hours')            AS received_at,
+            'r'                                             AS type
+        FROM twilio_responses tr
+        WHERE json_extract(tr.payload, '$.WaId') = ?
 
+        UNION ALL
 
-    const historyQuery = `
-      -- Received messages
-      SELECT
-          json_extract(tr.payload, '$.Body')              AS body,
-          json_extract(tr.payload, '$.MediaUrl0')         AS media_url,
-          json_extract(tr.payload, '$.MediaContentType0') AS media_type,
-          NULL                                            AS messageSid,
-          NULL                                            AS contentSid,
-          NULL                                            AS event_id,
-          datetime(tr.received_at, '+4 hours')            AS received_at,
-          'r'                                             AS type
-      FROM twilio_responses tr
-      WHERE json_extract(tr.payload, '$.WaId') = ?
+        -- Sent messages
+        SELECT
+            NULL                                            AS body,
+            NULL                                            AS media_url,
+            NULL                                            AS media_type,
+            ttm.messageSid                                  AS messageSid,
+            ttm.contentSid                                  AS contentSid,
+            ttm.event_id                                    AS event_id,
+            datetime(td.metadata_createdAt, '+4 hours')     AS received_at,
+            's'                                             AS type
+        FROM twilio_delivery td
+        INNER JOIN twilio_template_message ttm
+            ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
+        WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
+          AND json_extract(td.response, '$.To')           = ?
+          AND ttm.contentSid IS NOT NULL
 
-      UNION ALL
+        ORDER BY received_at DESC
+        LIMIT 1;
+      `;
 
-      -- Sent messages
-      SELECT
-          NULL                                            AS body,
-          NULL                                            AS media_url,
-          NULL                                            AS media_type,
-          ttm.messageSid                                  AS messageSid,
-          ttm.contentSid                                  AS contentSid,
-          ttm.event_id                                    AS event_id,
-          datetime(td.metadata_createdAt, '+4 hours')     AS received_at,
-          's'                                             AS type
-      FROM twilio_delivery td
-      INNER JOIN twilio_template_message ttm
-          ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
-      WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
-        AND json_extract(td.response, '$.To')           = ?
-        AND ttm.contentSid IS NOT NULL
+      // First ? = WaId (bare number), second ? = To (whatsapp:+...)
+      const row = db.prepare(historyQuery).get(from, From);
 
-      ORDER BY received_at DESC
-      LIMIT 1;
-    `;
+      console.log(`fetchEvent row result = ${row}`);
 
-    // First ? = WaId (bare number), second ? = To (whatsapp:+...)
-    const row = db.prepare(historyQuery).get(from, From);
+      const eventId = (row?.type === 's' ? row.event_id : null) ?? 0;
 
-    console.log(`fetchEvent row result = ${row}`);
-
-    const eventId = (row?.type === 's' ? row.event_id : null) ?? 0;
-    
-    return Number(eventId);
-
-  } catch (error) {
-    console.error(`${Date.now()} - Failed to fetch event:`, error);
-    throw error;
-  }
+      resolve(Number(eventId));
+    } catch (error) {
+      console.error(`${Date.now()} - Failed to fetch event:`, error);
+      reject(error);
+    }
+  });
 }
 
 async function fetchTwilioMessagesDetails(sentMessages) {
