@@ -1,13 +1,13 @@
-import React, {  } from "react";
+import React, { useMemo } from "react";
 import {
     Box,
     Typography,Chip
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
-export default function ResultPanel({wizardState}){
-    
-    const successAlertSx = {
+// Hoisted out of the component: this object never depends on props, so
+// re-creating it on every render only produced a new `sx` identity for MUI to diff.
+const successAlertSx = {
     background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
     border: "1px solid rgba(34, 197, 94, 0.3)",
     borderLeft: "4px solid #16a34a",
@@ -24,17 +24,25 @@ export default function ResultPanel({wizardState}){
     },
 };
 
+// Takes the two fields it actually reads instead of the whole wizardState object.
+// wizardState gets a new identity on every setWiz(), which would defeat React.memo.
+function ResultPanel({ rowCount, faultyRecords }) {
+
+    const faultyCount = faultyRecords?.length ?? 0;
+    const validCount = rowCount ?? 0;
+
+    const metrics = useMemo(() => [
+        { label: "Total rows", value: validCount + faultyCount, color: "text.primary" },
+        { label: "Valid rows", value: validCount, color: "success.main" },
+        { label: "Faulty rows", value: faultyCount, color: faultyCount ? "warning.main" : "success.main" },
+    ], [validCount, faultyCount]);
 
     return (
   <Box sx={{ maxHeight: 180, overflowY: "auto", py: 1 }}>
 
     {/* ── Summary metrics ── */}
     <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1.25, mb: 2 }}>
-      {[
-        { label: "Total rows", value: (wizardState.rowCount ?? 0) + (wizardState.faultyRecords?.length ?? 0), color: "text.primary" },
-        { label: "Valid rows", value: wizardState.rowCount ?? 0, color: "success.main" },
-        { label: "Faulty rows", value: wizardState.faultyRecords?.length ?? 0, color: wizardState.faultyRecords?.length ? "warning.main" : "success.main" },
-      ].map(({ label, value, color }) => (
+      {metrics.map(({ label, value, color }) => (
         <Box key={label} sx={{ bgcolor: "action.hover", borderRadius: 1, p: 1.25 }}>
           <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
             {label}
@@ -47,7 +55,7 @@ export default function ResultPanel({wizardState}){
     </Box>
 
     {/* ── No faults ── */}
-    {!wizardState.faultyRecords?.length && (
+    {!faultyCount && (
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.5, ...successAlertSx }}>
         <CheckCircleOutlineIcon color="success" fontSize="small" />
         <Typography variant="body2" color="success.dark">
@@ -57,13 +65,13 @@ export default function ResultPanel({wizardState}){
     )}
 
     {/* ── Faulty records ── */}
-    {!!wizardState.faultyRecords?.length && (
+    {!!faultyCount && (
       <>
         <Typography variant="overline" color="text.secondary" display="block" sx={{ mb: 1 }}>
           Faulty records
         </Typography>
 
-        {wizardState.faultyRecords.map((rec) => {
+        {faultyRecords.map((rec) => {
           const displayName =
             [rec.data["First Name"], rec.data["Last Name"]].filter(Boolean).join(" ") ||
             rec.data["Company Email"] ||
@@ -102,5 +110,7 @@ export default function ResultPanel({wizardState}){
 
   </Box>
 )
-    
+
 }
+
+export default React.memo(ResultPanel);
