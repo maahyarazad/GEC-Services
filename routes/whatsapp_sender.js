@@ -879,14 +879,14 @@ router.post(
   async (req, res) => {
     try {
       const eventId = req.query.eventId ?? undefined;
-      const { From, ButtonPayload } = req.body;
+      const { From, ButtonPayload, OriginalRepliedMessageSid } = req.body;
       const response = new MessagingResponse();
       response.message("");
 
       res.writeHead(200, { "Content-Type": "text/xml" });
       res.end(response.toString());
 
-      await handleAutoResponse(From, ButtonPayload, eventId);
+      await handleAutoResponse(From, ButtonPayload, eventId, OriginalRepliedMessageSid);
 
       // Fire and forget: save raw payload + log message to DB
       dbService.create("twilio_responses", {

@@ -669,9 +669,11 @@ async function fetchHistory(phone) {
   }
 }
 
-function fetchEvent(From) {
+function fetchEvent(From, OriginalRepliedMessageSid) {
   return new Promise((resolve, reject) => {
     try {
+      console.log(`OriginalRepliedMessageSid const From = ${OriginalRepliedMessageSid}`);
+      
       console.log(`fetchEvent const From = ${From}`);
 
       const from = From.replace("whatsapp:", "");
@@ -680,7 +682,7 @@ function fetchEvent(From) {
       const historyQuery = `
         -- Received messages
         SELECT
-            json_extract(tr.payload, '$.Body')              AS body,
+            json_extract(tr.payload, '$.OriginalRepliedMessageSid')              AS body,
             json_extract(tr.payload, '$.MediaUrl0')         AS media_url,
             json_extract(tr.payload, '$.MediaContentType0') AS media_type,
             NULL                                            AS messageSid,
@@ -758,13 +760,14 @@ async function fetchTwilioMessagesDetails(sentMessages) {
   return results;
 }
 
-async function handleAutoResponse(From, ButtonPayload) {
+async function handleAutoResponse(From, ButtonPayload, OriginalRepliedMessageSid) {
   try {
     const from = From.replace("whatsapp:", "");
     
 
     console.log(`${Date.now()} - From - ${From}`);
     console.log(`${Date.now()} - ButtonPayload - ${ButtonPayload}`);
+    console.log(`${Date.now()} - OriginalRepliedMessageSid - ${OriginalRepliedMessageSid}`);
     console.log(`${Date.now()} - from - ${from}`);
     
     const contact = db
@@ -775,14 +778,11 @@ async function handleAutoResponse(From, ButtonPayload) {
     console.log(`${Date.now()} - ${JSON.stringify(contact)}`);
       if (!contact) return;
 
-    await Promise.allSettled([
-        fetchContentTemplates(),
-        fetchEvent(From)
-    ]);
+
 
     const [templatesResult, eventResult] = await Promise.allSettled([
         fetchContentTemplates(),
-        fetchEvent(From)
+        fetchEvent(From, OriginalRepliedMessageSid)
     ]);
 
     const templates = templatesResult.status === 'fulfilled' ? templatesResult.value : null;
