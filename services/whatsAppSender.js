@@ -719,20 +719,20 @@ async function handleAutoResponse(From, ButtonPayload, OriginalRepliedMessageSid
   try {
     const from = From.replace("whatsapp:", "");    
 
-    console.log(`${Date.now()} - handleAutoResponse - From - ${From}`);
-    console.log(`${Date.now()} - handleAutoResponse - ButtonPayload - ${ButtonPayload}`);
-    console.log(`${Date.now()} - handleAutoResponse - OriginalRepliedMessageSid - ${OriginalRepliedMessageSid}`);
-    console.log(`${Date.now()} - handleAutoResponse - from - ${from}`);
+    // console.log(`${Date.now()} - handleAutoResponse - From - ${From}`);
+    // console.log(`${Date.now()} - handleAutoResponse - ButtonPayload - ${ButtonPayload}`);
+    // console.log(`${Date.now()} - handleAutoResponse - OriginalRepliedMessageSid - ${OriginalRepliedMessageSid}`);
+    // console.log(`${Date.now()} - handleAutoResponse - from - ${from}`);
     
     const contact = db
     .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
     .get(from);
-    
-
-    console.log(`${Date.now()} - ${JSON.stringify(contact)}`);
-      if (!contact) return;
-
-
+        
+    if (!contact){
+        console.error('fetchEvent failed:', 'could not find the contact');
+        return;
+    } 
+        
     const [templatesResult, eventResult] = await Promise.allSettled([
         fetchContentTemplates(),
         fetchEvent(OriginalRepliedMessageSid)
@@ -744,11 +744,10 @@ async function handleAutoResponse(From, ButtonPayload, OriginalRepliedMessageSid
     if (templatesResult.status === 'rejected') {
         console.error('fetchContentTemplates failed:', templatesResult.reason);
     }
+    
     if (eventResult.status === 'rejected') {
         console.error('fetchEvent failed:', eventResult.reason);
     }
-
-    console.log(`${Date.now()} - event_id -${event_id}`);
 
     if (event_id === 0) {
       console.error(`${Date.now()} - handleAutoResponse: event_id not found`);

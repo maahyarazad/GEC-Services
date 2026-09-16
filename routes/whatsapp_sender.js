@@ -880,9 +880,9 @@ router.post(
     try {
       const { From, ButtonPayload, OriginalRepliedMessageSid } = req.body;
 
-        console.log(`${Date.now()} - /webhooks/whatsapp - Request - ${req.method} ${req.originalUrl}`);
-        console.log(`${Date.now()} - /webhooks/whatsapp - Request Body - ${JSON.stringify(req.body)}`);
-        console.log(`${Date.now()} - /webhooks/whatsapp - OriginalRepliedMessageSid - ${OriginalRepliedMessageSid}`);
+        // console.log(`${Date.now()} - /webhooks/whatsapp - Request - ${req.method} ${req.originalUrl}`);
+        // console.log(`${Date.now()} - /webhooks/whatsapp - Request Body - ${JSON.stringify(req.body)}`);
+        // console.log(`${Date.now()} - /webhooks/whatsapp - OriginalRepliedMessageSid - ${OriginalRepliedMessageSid}`);
 
       const response = new MessagingResponse();
       response.message("");
