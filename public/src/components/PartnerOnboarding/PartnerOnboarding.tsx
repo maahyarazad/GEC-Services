@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 
@@ -60,7 +60,7 @@ const SUCCESS_TOAST_MESSAGES = ["Document uploaded successfully.", "Onboarding s
 // ── Step Icon ─────────────────────────────────────────────────────────────
 const stepIcons = [LoginOutlinedIcon, UploadFileOutlinedIcon, LocalShippingOutlinedIcon, TaskAltOutlinedIcon];
 
-function GoldStepIcon({ active, completed, icon }) {
+const GoldStepIcon = React.memo(function GoldStepIcon({ active, completed, icon }) {
     const Icon = stepIcons[Number(icon) - 1];
     return (
         <GoldStepIconRoot ownerState={{ active, completed }}>
@@ -71,7 +71,7 @@ function GoldStepIcon({ active, completed, icon }) {
             )}
         </GoldStepIconRoot>
     );
-}
+});
 
 // ── Initial Wizard State ──────────────────────────────────────────────────
 const INITIAL_WIZARD_STATE = {
@@ -114,7 +114,14 @@ export default function PartnerOnboarding() {
     const [activeStep, setActiveStep] = useState(0);
     const [wizardState, setWizardState] = useState(INITIAL_WIZARD_STATE);
 
-    const setWiz = (patch) => setWizardState((prev) => ({ ...prev, ...patch }));
+    // Stable identity so every useCallback/useMemo below can depend on it without
+    // being re-created each render. Accepts an object patch or an updater fn.
+    const setWiz = useCallback((patch) => {
+        setWizardState((prev) => ({
+            ...prev,
+            ...(typeof patch === "function" ? patch(prev) : patch),
+        }));
+    }, []);
     const { showSnackbar } = useSnackbar();
 
     const otpRef = useRef();
@@ -127,7 +134,7 @@ export default function PartnerOnboarding() {
         const params = new URLSearchParams(window.location.search);
         const emailParam = params.get("email");
         if (emailParam) setWiz({ email: emailParam });
-    }, []);
+    }, [setWiz]);
 
     // ── Auto-login ────────────────────────────────────────────────────────
     const autoLogin = useCallback(async () => {
@@ -145,17 +152,21 @@ export default function PartnerOnboarding() {
         } catch (err) {
             console.error("Error fetching data:", err);
         }
-    }, []);
+    }, [setWiz]);
 
+    // Guarded by a ref, not INITIAL_WIZARD_STATE: that module constant is never
+    // mutated, so the old condition stayed true and autoLogin() ran a second time
+    // as soon as setWiz({ isMounted: true }) retriggered this effect.
+    const autoLoginStarted = useRef(false);
     useEffect(() => {
-        if (!INITIAL_WIZARD_STATE.isMounted) {
-            autoLogin();
-            setWiz({ isMounted: true });
-        }
-    }, [wizardState.isMounted]);
+        if (autoLoginStarted.current) return;
+        autoLoginStarted.current = true;
+        autoLogin();
+        setWiz({ isMounted: true });
+    }, [autoLogin, setWiz]);
 
     // ── OTP: Send ─────────────────────────────────────────────────────────
-    const handleSendOtp = async () => {
+    const handleSendOtp = useCallback(async () => {
         const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(wizardState.email.trim());
         if (!isValid) {
             setWiz({ emailError: true });
@@ -202,7 +213,7 @@ export default function PartnerOnboarding() {
                     statusRef.current.classList.remove("text-danger");
                     statusRef.current.innerText = "OTP sent to " + wizardState.email;
                 }
-                setWiz({ otpResponseStatus: true, otpValid: true, initialSeconds: 300, otpKey: wizardState.otpKey + 1 });
+                setWiz((prev) => ({ otpResponseStatus: true, otpValid: true, initialSeconds: 300, otpKey: prev.otpKey + 1 }));
                 otpFocus?.current?.scrollIntoView({ behavior: "smooth", block: "center" });
                 const data = await res.json().catch(() => ({}));
                 setWiz({ otpResponseMessage: data.message ?? "" });
@@ -213,10 +224,10 @@ export default function PartnerOnboarding() {
         } catch (e) {
             showSnackbar(e.message || "Network error. Please check your connection.", "error");
         }
-    };
+    }, [wizardState.email, showSnackbar, setWiz]);
 
     // ── OTP: Verify ───────────────────────────────────────────────────────
-    const handlePostOTP = async (value) => {
+    const handlePostOTP = useCallback(async (value) => {
         try {
             const res = await fetch(`${import.meta.env.VITE_SERVERURL}/partner-otp-check`, {
                 method: "POST",
@@ -249,10 +260,10 @@ export default function PartnerOnboarding() {
         } catch (err) {
             showSnackbar(err.message || "Verification failed. Please try again.", "error");
         }
-    };
+    }, [wizardState.email, showSnackbar, setWiz]);
 
     // ── OTP Timer expiry ──────────────────────────────────────────────────
-    const handleExpiredChange = () => setWiz({ otpValid: false });
+    const handleExpiredChange = useCallback(() => setWiz({ otpValid: false }), [setWiz]);
 
     // ── Pre-fill delivery info on entering Step 3 ─────────────────────────
     useEffect(() => {
@@ -279,10 +290,10 @@ export default function PartnerOnboarding() {
         };
 
         fetchDeliveryInfo();
-    }, [activeStep]);
+    }, [activeStep, wizardState.partner?.title, setWiz]);
 
     // ── Phone validation ──────────────────────────────────────────────────
-    const validateAndSetPhone = (raw: string) => {
+    const validateAndSetPhone = useCallback((raw: string) => {
         // 1. Trim whitespace  2. Strip non-digit/non-plus chars  3. Ensure leading +
         let cleaned = raw.trim().replace(/[^\d+]/g, '');
         if (cleaned && !cleaned.startsWith('+')) cleaned = '+' + cleaned;
@@ -295,7 +306,7 @@ export default function PartnerOnboarding() {
             }
         }
         setWiz({ phoneNumber: raw, phoneNumberError: error });
-    };
+    }, [setWiz]);
 
     // ── Token check ───────────────────────────────────────────────────────
     const getToken = async () => {
@@ -305,7 +316,7 @@ export default function PartnerOnboarding() {
 
     // ── File handling ─────────────────────────────────────────────────────
     
-    const handleFileDrop = async (dropped: File) => {
+    const handleFileDrop = useCallback(async (dropped: File) => {
         try {
             setWiz({ startProcessingXLSX: true });
             const isXlsx =
@@ -340,13 +351,13 @@ export default function PartnerOnboarding() {
             showSnackbar(SUCCESS_TOAST_MESSAGES[0], "success");
             
         } catch (e) {
-            console.error(err);
+            console.error(e);
             showSnackbar(e.message || "An unexpected error occurred while processing the file.", "error");
         } finally {
             setWiz({ startProcessingXLSX: false });
         }
 
-    }
+    }, [showSnackbar, setWiz]);
 
 
 
@@ -355,7 +366,7 @@ export default function PartnerOnboarding() {
 
     // ── Navigation ────────────────────────────────────────────────────────
 
-    const handleSubmitCSV = async () => {
+    const handleSubmitCSV = useCallback(async () => {
         try {
             const formData = new FormData();
 
@@ -390,10 +401,18 @@ export default function PartnerOnboarding() {
         finally {
             setWiz({ uploading: false });
         }
-    }
+    }, [
+        wizardState.csvFile,
+        wizardState.partner,
+        wizardState.deliveryAddress,
+        wizardState.contactPerson,
+        wizardState.phoneNumber,
+        showSnackbar,
+        setWiz,
+    ]);
 
 
-    const handleNext = async () => {
+    const handleNext = useCallback(async () => {
 
         if (activeStep === STEPS.length - 1) {
 
@@ -410,12 +429,12 @@ export default function PartnerOnboarding() {
 
 
 
-    };
+    }, [activeStep, handleSubmitCSV, setWiz]);
 
-    const handleBack = () => setActiveStep((s) => s - 1);
+    const handleBack = useCallback(() => setActiveStep((s) => s - 1), []);
 
     // ── Step 0: Login ─────────────────────────────────────────────────────
-    const StepLogin = (
+    const StepLogin = useMemo(() => (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
             <Box>
                 <FieldLabel>Partner Email Address</FieldLabel>
@@ -477,10 +496,23 @@ export default function PartnerOnboarding() {
                 <span ref={otpFocus} />
             </Box>
         </Box>
-    );
+    ), [
+        wizardState.authenticate,
+        wizardState.email,
+        wizardState.emailError,
+        wizardState.otpVisible,
+        wizardState.otpResponseStatus,
+        wizardState.otpValid,
+        wizardState.otpKey,
+        wizardState.initialSeconds,
+        handleSendOtp,
+        handlePostOTP,
+        handleExpiredChange,
+        setWiz,
+    ]);
 
     // ── Step 1: Upload ────────────────────────────────────────────────────
-    const StepUpload = (
+    const StepUpload = useMemo(() => (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 {[
@@ -558,7 +590,7 @@ export default function PartnerOnboarding() {
             }
 
             {wizardState.uploadedFile && wizardState.valid && (
-                <ResultPanel wizardState={wizardState} />
+                <ResultPanel rowCount={wizardState.rowCount} faultyRecords={wizardState.faultyRecords} />
 
             )}
 
@@ -580,10 +612,20 @@ export default function PartnerOnboarding() {
             )}
 
         </Box>
-    );
+    ), [
+        wizardState.email,
+        wizardState.partner?.title,
+        wizardState.uploadedFile,
+        wizardState.valid,
+        wizardState.startProcessingXLSX,
+        wizardState.rowCount,
+        wizardState.faultyRecords,
+        handleFileDrop,
+        setWiz,
+    ]);
 
     // ── Step 2: Delivery Info ─────────────────────────────────────────────
-    const StepDelivery = (
+    const StepDelivery = useMemo(() => (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
             <Box>
                 <FieldLabel>Delivery Address *</FieldLabel>
@@ -618,10 +660,17 @@ export default function PartnerOnboarding() {
                 />
             </Box>
         </Box>
-    );
+    ), [
+        wizardState.deliveryAddress,
+        wizardState.contactPerson,
+        wizardState.phoneNumber,
+        wizardState.phoneNumberError,
+        validateAndSetPhone,
+        setWiz,
+    ]);
 
     // ── Step 3: Review ────────────────────────────────────────────────────
-    const StepReview = (
+    const StepReview = useMemo(() => (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {[
                 { label: "Company Name", value: wizardState?.partner?.title || null, empty: "-" },
@@ -696,11 +745,19 @@ export default function PartnerOnboarding() {
             )}
 
         </Box>
+    ), [
+        wizardState.partner?.title,
+        wizardState.rowCount,
+        wizardState.faultyRecords,
+        wizardState.wizardCompleted,
+    ]);
+
+    const panels = useMemo(
+        () => [StepLogin, StepUpload, StepDelivery, StepReview],
+        [StepLogin, StepUpload, StepDelivery, StepReview],
     );
 
-    const panels = [StepLogin, StepUpload, StepDelivery, StepReview];
-
-    const isNextButtonDisabled = () => {
+    const isNextButtonDisabled = useMemo(() => {
 
         if (activeStep === 0 && !wizardState.authenticate) {
             return true;
@@ -724,7 +781,29 @@ export default function PartnerOnboarding() {
         }
 
         return false;
-    };
+    }, [
+        activeStep,
+        wizardState.authenticate,
+        wizardState.rowCount,
+        wizardState.deliveryAddress,
+        wizardState.contactPerson,
+        wizardState.phoneNumber,
+        wizardState.phoneNumberError,
+        wizardState.wizardCompleted,
+    ]);
+
+    // Only depends on activeStep, so typing in any field no longer rebuilds 4 Steps.
+    const stepperEl = useMemo(() => (
+        <Stepper activeStep={activeStep} alternativeLabel connector={<GoldConnector />} sx={{ mb: 4 }}>
+            {STEPS.map((label) => (
+                <Step key={label}>
+                    <StepLabel StepIconComponent={GoldStepIcon} sx={stepLabelSx}>
+                        {label}
+                    </StepLabel>
+                </Step>
+            ))}
+        </Stepper>
+    ), [activeStep]);
 
 
     // ── Render ────────────────────────────────────────────────────────────
@@ -756,15 +835,7 @@ export default function PartnerOnboarding() {
                         </Typography>
 
                         {/* Stepper */}
-                        <Stepper activeStep={activeStep} alternativeLabel connector={<GoldConnector />} sx={{ mb: 4 }}>
-                            {STEPS.map((label) => (
-                                <Step key={label}>
-                                    <StepLabel StepIconComponent={GoldStepIcon} sx={stepLabelSx}>
-                                        {label}
-                                    </StepLabel>
-                                </Step>
-                            ))}
-                        </Stepper>
+                        {stepperEl}
 
                         {/* Divider */}
                         <Box sx={dividerSx} />
@@ -788,7 +859,7 @@ export default function PartnerOnboarding() {
                                 variant="contained"
                                 endIcon={activeStep < STEPS.length - 1 ? <ArrowForwardIcon /> : !wizardState.uploading && <CheckCircleOutlineIcon />}
                                 onClick={handleNext}
-                                disabled={isNextButtonDisabled()}
+                                disabled={isNextButtonDisabled}
                                 sx={{ flex: activeStep > 0 ? 2 : 1, ...primaryBtnSx }}
                             >
 

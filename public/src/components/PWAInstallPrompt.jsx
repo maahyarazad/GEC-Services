@@ -124,6 +124,11 @@ export default function PWAInstallPrompt() {
         textTransform: 'none',
         borderRadius: 8,
         boxShadow: 3,
+        background: 'linear-gradient(135deg, rgb(221, 174, 58) 0%, rgb(185, 150, 43) 100%)',
+        '&:hover': {
+            background: 'linear-gradient(135deg, rgb(221, 174, 58) 0%, rgb(185, 150, 43) 100%)',
+            opacity: 0.9,
+        },
     };
 
     if (!installPrompt && iOS) {

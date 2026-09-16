@@ -669,64 +669,21 @@ async function fetchHistory(phone) {
   }
 }
 
-async function fetchEvent(From) {
-  try {
-    const from = From.replace("whatsapp:", "");
-    const toNumber = `whatsapp:+${from}`;
+function fetchEvent(OriginalRepliedMessageSid) {
+  return new Promise((resolve, reject) => {
+    try {
+      
+      const query = `SELECT event_id FROM twilio_template_message WHERE messageSid = ?`
 
-//console.log(`fetchEvent const From = ${From}`);
-//console.log(`fetchEvent const from = ${from}`);
+      const row = db.prepare(query).get(OriginalRepliedMessageSid);
 
-    const historyQuery = `
-      -- Received messages
-      SELECT
-          json_extract(tr.payload, '$.Body')              AS body,
-          json_extract(tr.payload, '$.MediaUrl0')         AS media_url,
-          json_extract(tr.payload, '$.MediaContentType0') AS media_type,
-          NULL                                            AS messageSid,
-          NULL                                            AS contentSid,
-          NULL                                            AS event_id,
-          datetime(tr.received_at, '+4 hours')            AS received_at,
-          'r'                                             AS type
-      FROM twilio_responses tr
-      WHERE json_extract(tr.payload, '$.WaId') = ?
+      resolve(Number(row.event_id ));
 
-      UNION ALL
-
-      -- Sent messages
-      SELECT
-          NULL                                            AS body,
-          NULL                                            AS media_url,
-          NULL                                            AS media_type,
-          ttm.messageSid                                  AS messageSid,
-          ttm.contentSid                                  AS contentSid,
-          ttm.event_id                                    AS event_id,
-          datetime(td.metadata_createdAt, '+4 hours')     AS received_at,
-          's'                                             AS type
-      FROM twilio_delivery td
-      INNER JOIN twilio_template_message ttm
-          ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
-      WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
-        AND json_extract(td.response, '$.To')           = ?
-        AND ttm.contentSid IS NOT NULL
-
-      ORDER BY received_at DESC
-      LIMIT 1;
-    `;
-
-    // First ? = WaId (bare number), second ? = To (whatsapp:+...)
-    const row = db.prepare(historyQuery).get(from, From);
-
-    console.log(`fetchEvent row result = ${row}`);
-
-    const eventId = (row?.type === 's' ? row.event_id : null) ?? 0;
-    
-    return Number(eventId);
-
-  } catch (error) {
-    console.error(`${Date.now()} - Failed to fetch event:`, error);
-    throw error;
-  }
+    } catch (error) {
+      console.error(`${Date.now()} - Failed to fetch event:`, error);
+      reject(error);
+    }
+  });
 }
 
 async function fetchTwilioMessagesDetails(sentMessages) {
@@ -758,19 +715,39 @@ async function fetchTwilioMessagesDetails(sentMessages) {
   return results;
 }
 
-async function handleAutoResponse(From, ButtonPayload) {
+async function handleAutoResponse(From, ButtonPayload, OriginalRepliedMessageSid) {
   try {
-    const from = From.replace("whatsapp:", "");
+    const from = From.replace("whatsapp:", "");    
+
+    // console.log(`${Date.now()} - handleAutoResponse - From - ${From}`);
+    // console.log(`${Date.now()} - handleAutoResponse - ButtonPayload - ${ButtonPayload}`);
+    // console.log(`${Date.now()} - handleAutoResponse - OriginalRepliedMessageSid - ${OriginalRepliedMessageSid}`);
+    // console.log(`${Date.now()} - handleAutoResponse - from - ${from}`);
+    
     const contact = db
-      .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
-      .get(from);
-
-      if (!contact) return;
-
-    const [templates, event_id] = await Promise.all([
+    .prepare(`SELECT * FROM contact_book WHERE phone = ?`)
+    .get(from);
+        
+    if (!contact){
+        console.error('fetchEvent failed:', 'could not find the contact');
+        return;
+    } 
+        
+    const [templatesResult, eventResult] = await Promise.allSettled([
         fetchContentTemplates(),
-        fetchEvent(From)
+        fetchEvent(OriginalRepliedMessageSid)
     ]);
+
+    const templates = templatesResult.status === 'fulfilled' ? templatesResult.value : null;
+    const event_id = eventResult.status === 'fulfilled' ? eventResult.value : null;
+
+    if (templatesResult.status === 'rejected') {
+        console.error('fetchContentTemplates failed:', templatesResult.reason);
+    }
+    
+    if (eventResult.status === 'rejected') {
+        console.error('fetchEvent failed:', eventResult.reason);
+    }
 
     if (event_id === 0) {
       console.error(`${Date.now()} - handleAutoResponse: event_id not found`);
@@ -788,12 +765,12 @@ async function handleAutoResponse(From, ButtonPayload) {
         .prepare(`SELECT * FROM events WHERE id = ?`)
         .get(event_id);
 
+    const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
+
+    const type = guestTypes.includes(contact.type) ? "guest" : "general";  
+    
     if (ButtonPayload === "ATTEND") {
       
-      const guestTypes = ["expert_guest", "only_guest", "Wüstenkinder"];
-
-      const type = guestTypes.includes(contact.type) ? "guest" : "general";  
-
       const payload = { 1: event[`auto_response_${type}_${contact.language}`] };
 
        await sendMessageToPhone(
@@ -818,8 +795,7 @@ async function handleAutoResponse(From, ButtonPayload) {
 
         const replyMessageTemplate = contact.language === "de"  
         ? templates.result.find((x) => x.sid === "HXa7da14800646269872ca57d98ead6770")
-        : templates.result.find((x) => x.sid === "HXdb4faaac494a7e50c777de2527d0ddc2");
-        
+        : templates.result.find((x) => x.sid === "HX8597c391e879a7eaa30af7e6a21e1d63");
         
         if(isObject(onGuestList)){
             await sendMessageToPhone(

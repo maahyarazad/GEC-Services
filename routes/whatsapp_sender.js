@@ -878,15 +878,19 @@ router.post(
   express.urlencoded({ extended: false }),
   async (req, res) => {
     try {
-      const eventId = req.query.eventId ?? undefined;
-      const { From, ButtonPayload } = req.body;
+      const { From, ButtonPayload, OriginalRepliedMessageSid } = req.body;
+
+        // console.log(`${Date.now()} - /webhooks/whatsapp - Request - ${req.method} ${req.originalUrl}`);
+        // console.log(`${Date.now()} - /webhooks/whatsapp - Request Body - ${JSON.stringify(req.body)}`);
+        // console.log(`${Date.now()} - /webhooks/whatsapp - OriginalRepliedMessageSid - ${OriginalRepliedMessageSid}`);
+
       const response = new MessagingResponse();
       response.message("");
 
       res.writeHead(200, { "Content-Type": "text/xml" });
       res.end(response.toString());
 
-      await handleAutoResponse(From, ButtonPayload, eventId);
+      await handleAutoResponse(From, ButtonPayload, OriginalRepliedMessageSid);
 
       // Fire and forget: save raw payload + log message to DB
       dbService.create("twilio_responses", {
