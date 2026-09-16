@@ -878,12 +878,11 @@ router.post(
   express.urlencoded({ extended: false }),
   async (req, res) => {
     try {
-      const eventId = req.query.eventId ?? undefined;
       const { From, ButtonPayload, OriginalRepliedMessageSid } = req.body;
-      
-console.log(`${Date.now()} - eventId - ${eventId}`);
+
 console.log(`${Date.now()} - Request - ${req.method} ${req.originalUrl}`);
 console.log(`${Date.now()} - Request Body - ${JSON.stringify(req.body)}`);
+console.log(`${Date.now()} - OriginalRepliedMessageSid - ${OriginalRepliedMessageSid}`);
 
       const response = new MessagingResponse();
       response.message("");
@@ -891,7 +890,7 @@ console.log(`${Date.now()} - Request Body - ${JSON.stringify(req.body)}`);
       res.writeHead(200, { "Content-Type": "text/xml" });
       res.end(response.toString());
 
-      await handleAutoResponse(From, ButtonPayload, eventId, OriginalRepliedMessageSid);
+      await handleAutoResponse(From, ButtonPayload, OriginalRepliedMessageSid);
 
       // Fire and forget: save raw payload + log message to DB
       dbService.create("twilio_responses", {
