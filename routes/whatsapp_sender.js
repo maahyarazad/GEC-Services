@@ -881,7 +881,8 @@ router.post(
       const eventId = req.query.eventId ?? undefined;
       const { From, ButtonPayload, OriginalRepliedMessageSid } = req.body;
 
-      console.log(`${Date.now()} - Request Body - ${req.body}`);
+      console.log(`${Date.now()} - Request  - ${JSON.stringify(req)}`);
+      console.log(`${Date.now()} - Request Body - ${JSON.stringify(req.body)}`);
 
       const response = new MessagingResponse();
       response.message("");

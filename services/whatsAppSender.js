@@ -845,10 +845,6 @@ async function handleAutoResponse(From, ButtonPayload, OriginalRepliedMessageSid
         ? templates.result.find((x) => x.sid === "HXa7da14800646269872ca57d98ead6770")
         : templates.result.find((x) => x.sid === "HX8597c391e879a7eaa30af7e6a21e1d63");
         
-         console.log(`${Date.now()} - onGuestList ${JSON.stringify(contact)}`);
-         console.log(`${Date.now()} - onGuestList ${JSON.stringify(onGuestList)}`);
-
-
         if(isObject(onGuestList)){
             await sendMessageToPhone(
                   contact.phone,
