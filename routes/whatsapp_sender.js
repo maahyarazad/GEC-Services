@@ -880,9 +880,10 @@ router.post(
     try {
       const eventId = req.query.eventId ?? undefined;
       const { From, ButtonPayload, OriginalRepliedMessageSid } = req.body;
-
-      console.log(`${Date.now()} - Request  - ${JSON.stringify(req)}`);
-      console.log(`${Date.now()} - Request Body - ${JSON.stringify(req.body)}`);
+      
+console.log(`${Date.now()} - eventId - ${eventId}`);
+console.log(`${Date.now()} - Request - ${req.method} ${req.originalUrl}`);
+console.log(`${Date.now()} - Request Body - ${JSON.stringify(req.body)}`);
 
       const response = new MessagingResponse();
       response.message("");
