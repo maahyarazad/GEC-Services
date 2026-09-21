@@ -34,22 +34,15 @@ import { FcMultipleInputs } from "react-icons/fc";
 import { RiEditLine } from "react-icons/ri";
 import { TbTrashX } from "react-icons/tb";
 const activeAccountStyle = {
-    background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
-    border: "1px solid rgba(34, 197, 94, 0.3)",
+    background: "linear-gradient(90deg, #dcfce7 10%, #f0fdf4 100%)",
     borderLeft: "4px solid #16a34a",
     color: "#14532d",
     display: 'flex',
     justifyContent: 'center',
     fontWeight: 500,
     borderRadius: "10px",
-    boxShadow: "0 4px 20px rgba(34, 197, 94, 0.12), 0 1px 4px rgba(0,0,0,0.06)",
-    "& .MuiAlert-icon": { color: "#16a34a", fontSize: "20px" },
-    "& .MuiAlert-message": { padding: 0, fontSize: "0.875rem", lineHeight: 1.5 },
-    "& .MuiAlert-action": {
-        paddingTop: 0,
-        "& .MuiIconButton-root": { color: "#15803d", opacity: 0.7 },
-    },
 };
+
 
 
 const PartnerOnboardingSection = React.lazy(() => import("../Sections/PartnerOnboardingSection"));
@@ -432,7 +425,7 @@ const MemberCardDataGrid = () => {
     // memo is keyed on the columns array — rebuilding it every render defeated both.
     
     const leftCols = useMemo(() => [
-        { key: 'partner', label: 'Partner' },
+        { key: 'partner', label: 'Partner', render: (row) => (<span style={{...row.style, display: 'block', paddingLeft: 4}}>{row.partner}</span>) },
         { key: 'available_update', label: 'Available Update' , render: (row) => (<span style={centerStyle}>{row.available_update === 0 ? `-` : row.available_update}</span>) },
         { key: 'active_account', label: 'Active Accounts' , render: (row) => (<span style={row.style}>{row.active_account === 0 ? `-` : row.active_account}</span>) },
         { key: 'vp_issued', label: 'VP Issued', render: (row) => (<span style={row.style}>{row.vp_issued === 0 ? `-` : row.vp_issued}</span>) },
