@@ -10,12 +10,14 @@
         "public",
         "data",
         "file_storage",
-        "app.db"
+        "app.db",
+        "qr_files",
+        "qr-files"
       ],
       "log_file": "logs/my-app.log",
       "error_file": "logs/my-app-error.log",
       "restart_delay": 1000,
-      "max_memory_restart": "200M",
+      "max_memory_restart": "512M",
       "env": {
         "NODE_ENV": "development",
         "DB_CONNECTION_STRING": "your_connection_string"

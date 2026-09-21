@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
-const { parse } = require("csv-parse/sync");
+const { getPool } = require("../services/workerPool");
 const dbService = require("../services/dbService");
 require("dotenv").config();
 const authorization_middleware = require("../middleware/auth");
@@ -10,6 +10,9 @@ const db = dbService.getDB();
 // ── Multer: keep file in memory, CSV only ──────────────────────────────────
 const upload = multer({
   storage: multer.memoryStorage(),
+  // Bounds the work a single upload can hand the CSV worker pool. Offloading
+  // changes where parsing happens, not how much there is — without this cap one
+  // oversized file could saturate the pool.
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
   fileFilter: (req, file, cb) => {
     if (file.mimetype === "text/csv" || file.originalname.endsWith(".csv")) {
@@ -143,7 +146,7 @@ router.post("/partner-auto-login",authorization_middleware.authorize_partner ,as
 });
 
 // ── New CSV upload endpoint ────────────────────────────────────────────────
-router.post("/upload-csv",authorization_middleware.authorize_partner ,upload.single("file"), (req, res) => {
+router.post("/upload-csv",authorization_middleware.authorize_partner ,upload.single("file"), async (req, res) => {
   try {
 
     const partner = req.body.partner;
@@ -164,13 +167,16 @@ router.post("/upload-csv",authorization_middleware.authorize_partner ,upload.sin
         .json({ status: false, message: "No file uploaded" });
     }
 
-    // 3. Parse CSV bytes → array of row objects
+    // 3. Parse CSV bytes → array of row objects, off the event loop
     //    csv-parse reads the first row as column headers automatically
-    const rows = parse(req.file.buffer, {
-      columns: true, // use header row as keys
-      skip_empty_lines: true,
-      trim: true, // strip whitespace from values
-    });
+    const rows = await getPool("csv").exec("parseCSV", [
+      req.file.buffer,
+      {
+        columns: true, // use header row as keys
+        skip_empty_lines: true,
+        trim: true, // strip whitespace from values
+      },
+    ]);
 
     if (rows.length === 0) {
       return res

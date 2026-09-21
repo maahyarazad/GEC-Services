@@ -23,6 +23,7 @@ const betterSqlite3 = require("better-sqlite3");
 const Jobs = require("./services/sqllite_jobs.js");
 const MongoDbBackUpJob = require("./services/MongoDbBackUpJob.js");
 const dbService = require("./services/dbService.js");
+const { terminateAll } = require("./services/workerPool.js");
 
 let db;
 
@@ -177,3 +178,28 @@ if(process.env.ENVIRONMENT === 'DEV'){
 server.listen(PORT, () => {
   console.log(`${Date.now()} - 🚀 Server + WS listening on http://localhost:${PORT}`);
 });
+
+// Worker threads keep the process alive on their own, so `pm2 reload` would hang
+// until the kill timeout unless the pools are drained first.
+let shuttingDown = false;
+
+async function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
+  console.log(`${Date.now()} - ${signal} received, draining worker pools...`);
+
+  try {
+    await terminateAll();
+  } catch (error) {
+    console.error(`${Date.now()} - Error while draining worker pools:`, error);
+  }
+
+  server.close(() => process.exit(0));
+
+  // Don't let a lingering keep-alive connection hold the process open forever.
+  setTimeout(() => process.exit(0), 10000).unref();
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

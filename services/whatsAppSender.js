@@ -12,6 +12,7 @@ const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
 const {generateQR_WhatsApp} = require("../services/qrGenerator");
+const { getMaxWorkers } = require("./workerPool");
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -271,11 +272,7 @@ const messageSender = async (req) => {
       const stmt = db.prepare(query);
       const result = stmt.all([Number(eventId), template.language.slice(0, 2)]);
 
-        await Promise.all(
-            result.map(async (x) => {
-                x.qr_code_url = await generateQR_WhatsApp(Number(x.id), Number(eventId));
-            })
-        );
+        await attachQrCodeUrls(result, eventId, (x) => x.id);
 
         
         await Promise.all(result.map((x) => safeSendMessage(x, eventId)));
@@ -320,11 +317,7 @@ const messageSender = async (req) => {
         const enrichedPhoneList = await enrichPhoneListWithContactData(phoneList, db);
         
         if (templateType && templateType === 'twilio/media') {
-            await Promise.all(
-                enrichedPhoneList.map(async (x) => {
-                    x.qr_code_url = await generateQR_WhatsApp(Number(x.contactId), Number(eventId));
-                })
-            );
+            await attachQrCodeUrls(enrichedPhoneList, eventId, (x) => x.contactId);
         }
 
         await Promise.all(enrichedPhoneList.map((x) => safeSendMessage(x, eventId)));
@@ -913,6 +906,30 @@ function chunkArray(arr, size) {
     chunks.push(arr.slice(i, i + size));
   }
   return chunks;
+}
+
+/**
+ * Attach a QR code URL to every row, a poolful at a time.
+ *
+ * Mapping the whole array at once queues one promise and one result per row
+ * against a fixed-width pool — no extra throughput, just peak memory
+ * proportional to the guest list. Chunking to the pool width keeps the pool
+ * saturated with a bounded number of in-flight tasks.
+ *
+ * @param {object[]} rows    rows to annotate, mutated in place
+ * @param {number}   eventId
+ * @param {(row: object) => number} getContactId  reads the contact id off a row
+ */
+async function attachQrCodeUrls(rows, eventId, getContactId) {
+  const batches = chunkArray(rows, getMaxWorkers());
+
+  for (const batch of batches) {
+    await Promise.all(
+      batch.map(async (x) => {
+        x.qr_code_url = await generateQR_WhatsApp(Number(getContactId(x)), Number(eventId));
+      })
+    );
+  }
 }
 
 
