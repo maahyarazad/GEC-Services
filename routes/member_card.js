@@ -284,39 +284,34 @@ router.get("/api/member-card-partner-stats", (req, res) => {
     const stmt = db.prepare(`
      WITH mc AS (
     SELECT
-        partner,
-        COUNT(*) AS member_count,
-        REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+        REPLACE(REPLACE(REPLACE(REPLACE(
             lower(trim(partner)),
-        'Ü', 'u'), 'ü', 'u'),
-        'Ö', 'o'), 'ö', 'o'),
-        'Ä', 'a'), 'ä', 'a'),
-        'ß', 'ss') AS norm_partner
-    FROM member_card
+        'ü','u'),'ö','o'),'ä','a'),'ß','ss') AS norm_partner,
+        MIN(partner)                         AS partner,
+        COUNT(*)                             AS member_count,
+        COUNT(*) FILTER (WHERE active = 1)   AS active_account
+    FROM member_card WHERE partner != ''
     GROUP BY norm_partner
 ),
 pod AS (
     SELECT
-        partner,
-        COUNT(*) AS total_records,
-        REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+        REPLACE(REPLACE(REPLACE(REPLACE(
             lower(trim(partner)),
-        'Ü', 'u'), 'ü', 'u'),
-        'Ö', 'o'), 'ö', 'o'),
-        'Ä', 'a'), 'ä', 'a'),
-        'ß', 'ss') AS norm_partner
+        'ü','u'),'ö','o'),'ä','a'),'ß','ss') AS norm_partner,
+        COUNT(*)                             AS total_records
     FROM partner_onboarding_data
-    WHERE metadata_createdAt >= datetime('now', '-1 month')
+    WHERE metadata_createdAt >= datetime('now','-1 month')
       AND synchronized != 1
     GROUP BY norm_partner
 )
 SELECT
     mc.partner,
     mc.member_count,
-    COALESCE(pod.total_records, 0) AS available_update
+    COALESCE(pod.total_records, 0) AS available_update,
+    mc.active_account
 FROM mc
 LEFT JOIN pod ON mc.norm_partner = pod.norm_partner
-ORDER BY available_update DESC, mc.member_count DESC;
+ORDER BY available_update DESC, mc.active_account DESC;
     `);
     const data = stmt.all();
     return res.json({ status: true, data });
@@ -539,6 +534,43 @@ WHERE rn = 1;
   } catch (error) {
     console.error(`${Date.now()} - Error in /api/member-card-sync:`, error);
     res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
+router.post("/api/resend-membership-email", async (req, res) => {
+  const { partner } = req.body;
+  if (!partner)
+    return res
+      .status(400)
+      .json({ status: false, message: "partner is required" });
+
+  try {
+
+    const query = `SELECT * FROM member_card AS mc WHERE mc.partner = ? and  mc.active = 1`
+
+    const corporateCardEmailSet = db.prepare(query).all(partner);
+
+    // Responds before sending: a large batch would otherwise hold the request
+    // open past the client timeout. `queued` is what was accepted for sending,
+    // not what was delivered.
+    res.json({ status: true, queued: corporateCardEmailSet.length });
+
+    if (corporateCardEmailSet.length > 0) {
+      await sendBatchEmails(corporateCardEmailSet);
+    }
+
+
+  } catch (error) {
+    console.error(
+      `${Date.now()} - Error in /api/resend-membership-email:`,
+      error
+    );
+
+    // The success response is already sent before the batch runs, so a failure
+    // inside sendBatchEmails must not try to respond a second time.
+    if (!res.headersSent) {
+      res.status(500).json({ status: false, message: "Server error" });
+    }
   }
 });
 

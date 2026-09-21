@@ -12,6 +12,7 @@ const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
 const timezone = require("dayjs/plugin/timezone");
 const {generateQR_WhatsApp} = require("../services/qrGenerator");
+const {isObject, chunkArray} = require('../helpers/essentials');
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -869,57 +870,6 @@ async function handleAutoResponse(From, ButtonPayload, OriginalRepliedMessageSid
   }
 }
 
-const flattenObject = (obj, parentKey = "", result = {}) => {
-  for (const key in obj) {
-    const newKey = parentKey ? `${parentKey}_${key}` : key;
-
-    if (
-      typeof obj[key] === "object" &&
-      obj[key] !== null &&
-      !Array.isArray(obj[key])
-    ) {
-      flattenObject(obj[key], newKey, result);
-    } else {
-      result[newKey] = obj[key];
-    }
-  }
-  return result;
-};
-
-const normalizeRow = (row) => {
-  // Parse payload
-  let payload = {};
-  try {
-    payload = JSON.parse(row.payload);
-  } catch {}
-
-  //  Parse ChannelMetadata if exists
-  if (payload.ChannelMetadata) {
-    try {
-      payload.ChannelMetadata = JSON.parse(payload.ChannelMetadata);
-    } catch {}
-  }
-
-  // Merge & flatten
-  return flattenObject({
-    ...row,
-    payload,
-  });
-};
-
-function chunkArray(arr, size) {
-  const chunks = [];
-  for (let i = 0; i < arr.length; i += size) {
-    chunks.push(arr.slice(i, i + size));
-  }
-  return chunks;
-}
-
-
-function isObject(value) {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 module.exports = {
   fetchHistory,
   otpSender,
@@ -927,7 +877,5 @@ module.exports = {
   fetchContentTemplates,
   deleteContentTemplate,
   handleAutoResponse,
-  flattenObject,
-  normalizeRow,
   corruptedContactBookData,
 };

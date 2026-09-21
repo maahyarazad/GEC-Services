@@ -131,7 +131,7 @@ const getEffectiveFilterKey = (items) =>
 
 // ─── Simple searchable mini-table ────────────────────────────────────────────
 
-const MiniTable = ({ title, rows, columns: cols, loading, searchPlaceholder }) => {
+const MiniTable = React.memo(function MiniTable({ title, rows, columns: cols, loading, searchPlaceholder }) {
     const [search, setSearch] = useState('');
 
     const filtered = useMemo(() => {
@@ -193,9 +193,11 @@ const MiniTable = ({ title, rows, columns: cols, loading, searchPlaceholder }) =
             </TableContainer>
         </Box>
     );
-};
+});
 
 // ─── Main component ───────────────────────────────────────────────────────────
+
+const emptyForm = { title: '', firstname: '', lastname: '', gender: '', mobile_number: '', email: '', partner: '', birthday: '', type: 7 };
 
 const MemberCardDataGrid = () => {
     const [loadingRowId, setLoadingRowId] = useState(null);
@@ -216,6 +218,7 @@ const MemberCardDataGrid = () => {
     const [partnerStats, setPartnerStats] = useState([]);
     const [partnerStatsLoading, setPartnerStatsLoading] = useState(false);
     const [syncingPartner, setSyncingPartner] = useState(null);
+    const [resendingPartner, setResendingPartner] = useState(null);
     const [partnerSyncKey, setPartnerSyncKey] = useState(0);
 
     // GEC grouped partners (right table)
@@ -230,7 +233,6 @@ const MemberCardDataGrid = () => {
 
     // ─── Employee form state ──────────────────────────────────────────────────
 
-    const emptyForm = { title: '', firstname: '', lastname: '', gender: '', mobile_number: '', email: '', partner: '', birthday: '', type: 7 };
     const [formOpen, setFormOpen] = useState(false);
     const [formData, setFormData] = useState(emptyForm);
     const [editingId, setEditingId] = useState(null);
@@ -243,7 +245,8 @@ const MemberCardDataGrid = () => {
         try {
             const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-card-partner-stats`, { credentials: 'include' });
             const d = await r.json();
-            setPartnerStats(d.data ?? []);
+            debugger;
+            setPartnerStats((d.data ?? []).filter((x) => x.partner !== null && x.partner !== ''));
         } catch (e) {
             console.error('partner stats fetch failed', e);
         } finally {
@@ -261,7 +264,7 @@ const MemberCardDataGrid = () => {
             const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/gec-grouped-partners`, { credentials: 'include' });
             const d = await r.json();
             
-            setGecPartners(d.data ?? []);
+            setGecPartners((d.data ?? []).filter((x) => x.partner !== null && x.partner !== ''));
         } catch (e) {
             console.error('GEC partners fetch failed', e);
         } finally {
@@ -324,7 +327,54 @@ const MemberCardDataGrid = () => {
         return { inServices, notInServices, totalMembers, total: rightTableRows.length };
     }, [rightTableRows, partnerStats]);
 
-    const handleSync = async (partner) => {
+    const handleResendInvitation = useCallback(async (partner) => {
+        setResendingPartner(partner);
+        try {
+            const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/resend-membership-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ partner }),
+            });
+            const d = await r.json();
+
+            if (!d.status) {
+                showSnackbar(`Resend failed: ${d.message ?? 'Unknown error'}`, 'error');
+                return;
+            }
+
+            // The endpoint responds as soon as the batch is queued, before the
+            // emails are actually sent — so this reports queued, not delivered.
+            const queued = d.queued ?? 0;
+
+            if (queued === 0) {
+                showSnackbar(`No active members found for "${partner}" — nothing to send`, 'warning');
+            } else {
+                showSnackbar(`Queued ${queued} invitation email${queued === 1 ? '' : 's'} for "${partner}"`);
+            }
+        } catch (e) {
+            console.error('Resend invitation failed', e);
+            showSnackbar('Resend failed — check console', 'error');
+        } finally {
+            setResendingPartner(null);
+        }
+    }, [showSnackbar]);
+
+    // Declared after its dependency so the dependency array does not reference
+    // handleResendInvitation before its `const` initializes.
+    const confirmResendInvitation = useCallback((row) => {
+        const count = row.active_account ?? 0;
+        openDialog(
+            <>Resend the membership invitation email to <strong>{count}</strong> active member{count === 1 ? '' : 's'} of <strong>{row.partner}</strong>?</>,
+            'Resend Invitation Email',
+            { text: 'Resend', color: 'primary' },
+            () => handleResendInvitation(row.partner),
+            () => { }
+        );
+    }, [openDialog, handleResendInvitation]);
+
+
+    const handleSync = useCallback(async (partner) => {
         setSyncingPartner(partner);
         try {
             const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-card-sync`, {
@@ -348,16 +398,20 @@ const MemberCardDataGrid = () => {
         } finally {
             setSyncingPartner(null);
         }
-    };
+    }, [showSnackbar, fetchPartnerStats, fetchPendingCounts]);
 
-    const leftCols = [
+    // Column defs are passed to a memoized MiniTable, whose internal filtering
+    // memo is keyed on the columns array — rebuilding it every render defeated both.
+    const leftCols = useMemo(() => [
         { key: 'partner', label: 'Partner' },
         { key: 'member_count', label: 'Members' },
         { key: 'available_update', label: 'Available Update' },
+        { key: 'active_account', label: 'Active Accounts' },
         {
             key: '_sync',
             label: '',
             render: (row) =>
+                
                 row.available_update > 0 ? (
                     <Button
                         size="small"
@@ -371,9 +425,27 @@ const MemberCardDataGrid = () => {
                     </Button>
                 ) : null,
         },
-    ];
+        {
+            key: '_action',
+            label: '',
+            render: (row) =>
+                
+                row.active_account > 0 ? (
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        disabled={resendingPartner === row.partner}
+                        onClick={() => confirmResendInvitation(row)}
+                        sx={{ fontSize: 11, textTransform: 'none', whiteSpace: 'nowrap', py: 0 }}
+                    >
+                        {resendingPartner === row.partner ? <CircularProgress size={14} color="inherit" /> : 'Resend Invitation Email'}
+                    </Button>
+                ) : null,
+        },
+    ], [syncingPartner, handleSync, resendingPartner, confirmResendInvitation]);
 
-    const rightCols = [
+    const rightCols = useMemo(() => [
         {
             key: 'group_name',
             label: 'Partner (GEC)',
@@ -418,7 +490,7 @@ const MemberCardDataGrid = () => {
                     <Chip label="In Services" size="small" color="success" variant="outlined" sx={{ fontSize: 11 }} />
                 ),
         },
-    ];
+    ], [syncingPartner, handleSync]);
 
     // ─── Members DataGrid logic ──────────────────────────────────────────────
 
@@ -466,21 +538,22 @@ const MemberCardDataGrid = () => {
     useEffect(() => {
         if (!showMembersGrid) return;
         fetchData(paginationModel, sortModel, debouncedFilterItems, activeFilter);
-    }, [paginationModel, sortModel, debouncedFilterItems, showMembersGrid, activeFilter]);
+    }, [fetchData, paginationModel, sortModel, debouncedFilterItems, showMembersGrid, activeFilter]);
+
+    // Latest query state, readable from callbacks without becoming a dependency.
+    // Taking paginationModel/sortModel/filters as deps would churn the identity of
+    // every handler — and therefore the whole column array — on each page or sort.
+    const queryRef = useRef({ paginationModel, sortModel, debouncedFilterItems });
+    queryRef.current = { paginationModel, sortModel, debouncedFilterItems };
+
+    const refetchMembers = useCallback(() => {
+        const { paginationModel: p, sortModel: srt, debouncedFilterItems: f } = queryRef.current;
+        fetchData(p, srt, f);
+    }, [fetchData]);
 
     // ─── Handlers ────────────────────────────────────────────────────────────
 
-    const confirmSendInvitationEmail = (member_data) => {
-        openDialog(
-            <>Are you sure you want to send an invitation email to <strong>{member_data?.email || 'this member'}</strong>?</>,
-            'Send Invitation Email',
-            { text: 'Send', color: 'primary' },
-            () => handleSendInvitationEmail(member_data),
-            () => { }
-        );
-    };
-
-    const handleSendInvitationEmail = async (member_data) => {
+    const handleSendInvitationEmail = useCallback(async (member_data) => {
         try {
             setLoadingRowId(member_data.id);
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/send-invitation-email`, {
@@ -497,9 +570,21 @@ const MemberCardDataGrid = () => {
         } finally {
             setLoadingRowId(null);
         }
-    };
+    }, [showSnackbar]);
 
-    const handleResetPassword = async (row) => {
+    // Declared after handleSendInvitationEmail: naming it in the dependency array
+    // before its `const` initializes would throw a ReferenceError.
+    const confirmSendInvitationEmail = useCallback((member_data) => {
+        openDialog(
+            <>Are you sure you want to send an invitation email to <strong>{member_data?.email || 'this member'}</strong>?</>,
+            'Send Invitation Email',
+            { text: 'Send', color: 'primary' },
+            () => handleSendInvitationEmail(member_data),
+            () => { }
+        );
+    }, [openDialog, handleSendInvitationEmail]);
+
+    const handleResetPassword = useCallback(async (row) => {
         try {
             setLoadingRowId(row.id);
             await fetch(`${import.meta.env.VITE_SERVERURL}/api/gic-user/send-reset-password`, {
@@ -513,9 +598,9 @@ const MemberCardDataGrid = () => {
         } finally {
             setLoadingRowId(null);
         }
-    };
+    }, []);
 
-    const handleExport = async () => {
+    const handleExport = useCallback(async () => {
         try {
             setIsDownloading(true);
             const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/member-card-csv-data`, { credentials: 'include' });
@@ -542,11 +627,11 @@ const MemberCardDataGrid = () => {
         } finally {
             setIsDownloading(false);
         }
-    };
+    },[]);
 
-    const handleOpenAdd = () => { setFormData(emptyForm); setEditingId(null); setFormOpen(true); };
+    const handleOpenAdd = useCallback(() => { setFormData(emptyForm); setEditingId(null); setFormOpen(true); }, []);
 
-    const handleOpenEdit = (row) => {
+    const handleOpenEdit = useCallback((row) => {
         setFormData({
             title: row.title || '',
             firstname: row.firstname || '',
@@ -560,19 +645,9 @@ const MemberCardDataGrid = () => {
         });
         setEditingId(row.id);
         setFormOpen(true);
-    };
+    },[]);
 
-    const handleConfirmDelete = (row) => {
-        openDialog(
-            <>Are you sure you want to deactivate <strong>{row.firstname} {row.lastname}</strong>?</>,
-            'Deactivate Corporate Member',
-            { text: 'Deactivate', color: 'error' },
-            () => handleDeleteEmployee(row.id),
-            () => { }
-        );
-    };
-
-    const handleDeleteEmployee = async (id) => {
+    const handleDeleteEmployee = useCallback(async (id) => {
         try {
             const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/partner-onboarding/employee/${id}`, {
                 method: 'DELETE',
@@ -581,16 +656,26 @@ const MemberCardDataGrid = () => {
             const d = await r.json();
             if (d.status) {
                 showSnackbar('Member deactivated');
-                fetchData(paginationModel, sortModel, debouncedFilterItems);
+                refetchMembers();
             } else {
                 showSnackbar(`Failed: ${d.message}`, 'error');
             }
         } catch {
             showSnackbar('Delete failed', 'error');
         }
-    };
+    }, [showSnackbar, refetchMembers]);
 
-    const handleFormSave = async () => {
+    const handleConfirmDelete = useCallback((row) => {
+        openDialog(
+            <>Are you sure you want to deactivate <strong>{row.firstname} {row.lastname}</strong>?</>,
+            'Deactivate Corporate Member',
+            { text: 'Deactivate', color: 'error' },
+            () => handleDeleteEmployee(row.id),
+            () => { }
+        );
+    }, [openDialog, handleDeleteEmployee]);
+
+    const handleFormSave = useCallback(async () => {
         const { firstname, lastname, email, partner } = formData;
         if (!firstname || !lastname || !email || !partner) {
             showSnackbar('First name, last name, email, and partner are required', 'error');
@@ -611,7 +696,7 @@ const MemberCardDataGrid = () => {
             if (d.status) {
                 showSnackbar(editingId ? 'Member updated' : 'Member added');
                 setFormOpen(false);
-                fetchData(paginationModel, sortModel, debouncedFilterItems);
+                refetchMembers();
             } else {
                 showSnackbar(`Failed: ${d.message}`, 'error');
             }
@@ -620,12 +705,23 @@ const MemberCardDataGrid = () => {
         } finally {
             setFormSaving(false);
         }
-    };
+    }, [formData, editingId, showSnackbar, refetchMembers]);
 
-    const handleOpenMembersGrid = () => {
+    const handleOpenMembersGrid = useCallback(() => {
         setShowMembersGrid(true);
-        fetchData(paginationModel, sortModel, debouncedFilterItems);
-    };
+        refetchMembers();
+    }, [refetchMembers]);
+
+    // The grid's column array is rebuilt only when something it renders changes.
+    // Previously `columns({...})` ran inline in JSX, handing CustomDataGrid a new
+    // array on every render regardless of how stable the handlers were.
+    const gridColumns = useMemo(() => columns({
+        onResendPasswordReset: handleResetPassword,
+        loadingRowId,
+        onSendInvitationEmail: confirmSendInvitationEmail,
+        onEdit: handleOpenEdit,
+        onDelete: handleConfirmDelete,
+    }), [handleResetPassword, loadingRowId, confirmSendInvitationEmail, handleOpenEdit, handleConfirmDelete]);
 
 
     // ─── Render ───────────────────────────────────────────────────────────────
@@ -707,9 +803,9 @@ const MemberCardDataGrid = () => {
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, flex: 1, minHeight: 0 }}>
 
                 {/* Left — Local DB partner stats */}
-                <Box sx={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', }}>
+                <Box sx={{ flex: 2, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', }}>
                     <MiniTable
-                        title="Partner Member Counts (Local DB)"
+                        title="GEC Services Partner Cooperate Membership Status"
                         rows={partnerStats}
                         columns={leftCols}
                         loading={partnerStatsLoading}
@@ -762,13 +858,7 @@ const MemberCardDataGrid = () => {
                     <Box sx={{ flex: 1, minHeight: 0 }}>
                         <CustomDataGrid
                             rows={members}
-                            columns={columns({
-                                onResendPasswordReset: handleResetPassword,
-                                loadingRowId,
-                                onSendInvitationEmail: confirmSendInvitationEmail,
-                                onEdit: handleOpenEdit,
-                                onDelete: handleConfirmDelete,
-                            })}
+                            columns={gridColumns}
                             loading={loading}
                             showToolbar
 

@@ -8,6 +8,7 @@ const { SESClient, SendRawEmailCommand } = require("@aws-sdk/client-ses");
 const nodemailer = require("nodemailer");
 const { emailTemplates } = require("./templates/email_template");
 const moment = require("moment");
+const {chunkArray} = require("../helpers/essentials");
 
 function slugToTitle(slug) {
   return slug
@@ -1862,11 +1863,25 @@ async function membership_courtacy_at_venue_message(data) {
   }
 
 }
+
 const sendBatchEmails = async (corporateCardEmailSet) => {
   try {
-    corporateCardEmailSet.forEach(async (r) => {
-      await membership__invitation(r);
-    });
+    const batchSize = 25;
+    const delayMs = 1 * 10 * 1000; // 10 seconds
+    const batches = chunkArray(corporateCardEmailSet, batchSize);
+
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i];
+
+      console.log(
+        `${Date.now()} - Sending batch ${i + 1} of ${batches.length}...`
+      );
+
+        await Promise.all(batch.map((x) => membership__invitation(x)));
+      console.log(`${Date.now()} - Batch ${i + 1} sent.`);
+
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
   } catch (error) {
     dbService.create("error_log", {
       error: error.toString(),
