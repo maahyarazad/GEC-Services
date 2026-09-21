@@ -289,7 +289,8 @@ router.get("/api/member-card-partner-stats", (req, res) => {
         'ü','u'),'ö','o'),'ä','a'),'ß','ss') AS norm_partner,
         MIN(partner)                         AS partner,
         COUNT(*)                             AS member_count,
-        COUNT(*) FILTER (WHERE active = 1)   AS active_account
+        COUNT(*) FILTER (WHERE active = 1)   AS active_account,
+        COUNT(*) FILTER (WHERE serial_number IS NOT NULL) AS vp_issued
     FROM member_card WHERE partner != ''
     GROUP BY norm_partner
 ),
@@ -308,7 +309,8 @@ SELECT
     mc.partner,
     mc.member_count,
     COALESCE(pod.total_records, 0) AS available_update,
-    mc.active_account
+    mc.active_account,
+    mc.vp_issued
 FROM mc
 LEFT JOIN pod ON mc.norm_partner = pod.norm_partner
 ORDER BY available_update DESC, mc.active_account DESC;
