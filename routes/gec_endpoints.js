@@ -19,7 +19,7 @@ router.get(
       const query = `
        SELECT partner, COUNT(DISTINCT mobile_number) AS total_records
     FROM partner_onboarding_data
-    WHERE metadata_createdAt >= datetime('now', '-3 month')
+    WHERE metadata_createdAt >= datetime('now', '-6 month')
       AND synchronized = 1 
     GROUP BY partner;
     `;
