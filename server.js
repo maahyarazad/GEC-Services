@@ -159,7 +159,7 @@ imapPoller.start(io);
 
 if(process.env.ENVIRONMENT === 'DEV'){
 
-    cron.schedule("0 0 * * *", async () => {
+    cron.schedule("0 3 * * *", async () => {
       try {
         console.log(`${Date.now()} - [Cron | daily] Starting: MongoDB backup —`, new Date());
         await MongoDbBackUpJob.run();
