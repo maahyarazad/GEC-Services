@@ -1,7 +1,7 @@
 import "./header.css";
 import PropTypes from "prop-types";
 import { useEffect, useState, memo } from "react";
-import CHookDateTime from "./CHookDateTime";
+import useDateTime from "./CHookDateTime";
 
 import { RiLogoutBoxRLine } from "react-icons/ri";
 import Tooltip from "@mui/material/Tooltip";
@@ -17,7 +17,7 @@ export const Header = memo(function Header({ adminUser, adminEmail, setAdminUser
 
     }
 
-    const dateTime = CHookDateTime();
+    const dateTime = useDateTime();
     const navigate = useNavigate();
     const HandleLogout = async () => {
         try {

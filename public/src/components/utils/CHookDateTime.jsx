@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const CHookDateTime = () => {
+const useDateTime = () => {
     const [formattedDate, setFormattedDate] = useState('');
 
     useEffect(() => {
@@ -25,4 +25,4 @@ const CHookDateTime = () => {
     
 };
 
-export default CHookDateTime;
+export default useDateTime;
