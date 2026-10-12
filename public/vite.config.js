@@ -7,7 +7,8 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     //visualizer({ open: true }),
     react({
-    jsxRuntime: "automatic",
+    jsxRuntime: "automatic", 
+    babel: {plugins : ['babel-plugin-react-compiler']}
   }),
     splitVendorChunkPlugin(), // helps code-splitting vendor libs
  
