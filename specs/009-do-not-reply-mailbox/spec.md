@@ -18,10 +18,12 @@ it to a new branch."
 > and open one message's body on demand (attachments out of scope for v1);
 > **(2) git** = work proceeds on the new branch `009-do-not-reply-mailbox`.
 >
-> **Hard constraint from the user**: details are fetched from the mail server using the **`curl`
-> CLI only** — not an IMAP client library (the project's existing `imapflow` usage is NOT reused
-> for this feature). Parsing the bytes curl returns may use the already-present `mailparser`;
-> the *fetching* is 100% curl.
+> **Implementation note (amended 2026-10-13)**: the original hard constraint was to fetch with the
+> `curl` CLI only. At the user's request this was **changed to use `ImapFlow`** (the same IMAP client
+> the project already uses in `services/imapPoller.js`), with `mailparser` for message parsing. The
+> service was refactored accordingly; the public service API, the HTTP endpoints, and the UI are
+> unchanged. Earlier references to `curl`/stdin in this spec and the other 009 artifacts are
+> superseded by this note.
 >
 > **Security note**: this is a live view of real mailboxes. Credentials live only in server-side
 > env vars and are never sent to or exposed in the browser. The mailbox password was visible in
@@ -128,8 +130,9 @@ mail (incoming tickets) is as useful to browse as do-not-reply (outbound).
   grouped with the existing logs sections, reachable like other sections and guarded by the same
   admin authentication.
 - **FR-002**: The system MUST fetch all mailbox details (folder list, message headers, message
-  bodies) from the IMAPS webmail server using the **`curl` CLI only**. No IMAP client library may be
-  used for fetching in this feature.
+  bodies) from the IMAPS webmail server server-side, using `ImapFlow` (reusing the project's existing
+  IMAP stack) with `mailparser` for parsing. *(Amended from the original "`curl` CLI only"
+  requirement — see the implementation note above.)*
 - **FR-003**: The section MUST support at least two folders per account — **Inbox** and **Sent** —
   listing messages newest-first with date-time, counterpart address, subject, and size.
 - **FR-004**: The admin MUST be able to open a single message and see its headers and body; HTML
@@ -138,8 +141,9 @@ mail (incoming tickets) is as useful to browse as do-not-reply (outbound).
   and **support**; the section reloads for the chosen account.
 - **FR-006**: Mailbox credentials MUST remain server-side (env vars) and MUST NEVER be sent to,
   stored in, or exposed by the browser. The client identifies an account only by a key.
-- **FR-007**: Every curl invocation MUST run under an enforced timeout and MUST be constructed so no
-  credential appears in the process argument list (and thus not in `ps` / shell history / logs).
+- **FR-007**: Every mail-server connection MUST run under enforced connect/socket timeouts, and
+  credentials MUST stay in server env/process memory only — never in the browser, a URL, logs, or a
+  process argument list.
 - **FR-008**: Message lists MUST be paged/bounded so a large mailbox cannot produce an unbounded
   response or a long-running request.
 - **FR-009**: All mailbox endpoints MUST require admin authentication; unauthenticated requests MUST
@@ -184,9 +188,8 @@ mail (incoming tickets) is as useful to browse as do-not-reply (outbound).
 
 ## Assumptions
 
-- **curl is available on the host** with IMAP/IMAPS support (verified: curl 8.x with IMAP).
-- **Fetching is curl-only**; parsing the returned RFC822 bytes may reuse the already-present
-  `mailparser` dependency (no new dependency, and parsing is not fetching).
+- **Fetching uses `ImapFlow`** (already a dependency, used by `services/imapPoller.js`) over IMAPS,
+  with `mailparser` for parsing. No new dependency. *(Amended from the original curl-only approach.)*
 - **Host**: `buenapublica.cmpsrv.com` over IMAPS (port 993), from `IMAP_HOST`/`IMAP_PORT` with
   `SMTP_HOST` fallback, matching the existing poller's convention.
 - **Accounts/credentials** reuse existing env vars: do-not-reply → `SMTP_SENDER` + `SMTP_PASS`;

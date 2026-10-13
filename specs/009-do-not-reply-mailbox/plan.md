@@ -4,6 +4,11 @@
 
 **Input**: Feature specification from `/specs/009-do-not-reply-mailbox/spec.md`
 
+> **Amended 2026-10-13**: the mailbox fetch mechanism was changed from the `curl` CLI to `ImapFlow`
+> (the project's existing IMAP stack) at the user's request. `services/mailboxService.js` was
+> refactored; the public service API, HTTP endpoints, and UI are unchanged. References to
+> `curl`/`execFile`/stdin below are historical and superseded by this note.
+
 ## Summary
 
 Add a **Do-Not-Reply Mail Box** section to the admin dashboard (grouped with the logs sections) that

@@ -5,7 +5,8 @@ Router: `routes/mailbox.js`, root-mounted in `routes.js`. Every endpoint is guar
 `fetch(..., { credentials: 'include' })`.
 
 **The client sends only an account KEY and a folder KEY — never an address, never a password.**
-Credentials are resolved server-side from env vars and fed to `curl` on stdin.
+Credentials are resolved server-side from env vars and used only by the server-side IMAP client
+(`ImapFlow`; amended from the original curl approach). They never reach the browser.
 
 Unauthenticated/forbidden → `401 { authenticated:false, message:"Unauthorized" }` / `403 … "Forbidden"`
 (FR-009). Responses use the project's `status: true|false` envelope.
@@ -114,6 +115,7 @@ Attachment entries are metadata only — v1 does not expose download.
 
 - The browser never receives or sends a mailbox password or address-as-selector; only account/folder
   **keys** cross the wire (FR-006).
-- `account`/`folder`/`uid` are validated against allow-lists / type before any curl call (FR-012);
-  `curl` is invoked via `execFile` (no shell) with credentials on stdin, never in argv (FR-007).
+- `account`/`folder`/`uid` are validated against allow-lists / type before any mail-server call
+  (FR-012); credentials stay in server env/process memory, never in argv, logs, or the browser
+  (FR-007).
 - All endpoints are read-only; there is no create/delete/move/send endpoint (FR-010).

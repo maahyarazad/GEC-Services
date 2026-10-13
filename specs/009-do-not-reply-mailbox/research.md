@@ -1,4 +1,12 @@
-# Phase 0 Research: Do-Not-Reply Mail Box (curl IMAPS viewer)
+# Phase 0 Research: Do-Not-Reply Mail Box (IMAP viewer)
+
+> **Amended 2026-10-13**: the fetch mechanism was changed from the `curl` CLI to **`ImapFlow`** (the
+> project's existing IMAP client, as in `services/imapPoller.js`) at the user's request, with
+> `mailparser` for parsing. R1–R4 below describe the original curl approach and are kept for history;
+> the shipped `services/mailboxService.js` uses ImapFlow (per-request connect, `getMailboxLock`,
+> `fetch`/`fetchOne`, peek preserved by restoring `\Seen`, connect/socket timeouts). R5–R9
+> (accounts/folders allow-list, safe HTML rendering, dashboard placement, read-only/peek, the
+> security follow-up) are unchanged and still apply.
 
 Decisions resolving the Technical Context unknowns. Each: Decision / Rationale / Alternatives.
 All credential references are env-var names only — no secret appears here.

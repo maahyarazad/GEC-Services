@@ -16,9 +16,14 @@ Run/validation guide proving the feature works end-to-end. Shapes: see
 - Backend runnable (`npm run dev` at repo root); client dev server (`cd public && npm run dev`).
 - An admin dashboard login so the `a-usr` cookie is set (endpoints are admin-guarded).
 
-## Step 0 — Prove curl can reach the mailbox (no app involved)
+> **Amended 2026-10-13**: the service now uses `ImapFlow`, not `curl`. Step 0's curl recipes are no
+> longer how the app fetches, but they remain a handy standalone way to sanity-check mailbox
+> connectivity/credentials from the host shell. The in-app validation (V1–V7) is unchanged.
 
-These are the exact mechanics the service uses. Credentials via stdin:
+## Step 0 — (Optional) Prove the mailbox is reachable from the host shell
+
+These `curl` recipes are NOT how the app fetches anymore (it uses ImapFlow), but they're a quick way
+to confirm credentials/connectivity. Credentials via stdin:
 
 ```bash
 # List folders for the do-not-reply account
