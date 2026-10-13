@@ -102,7 +102,20 @@ app.use((req, res, next) => {
 });
 
 // Auth + static assets must be registered before the application routes.
+// First gate: any authenticated admin may pass (keeps Place ID Finder's
+// /api/maps/* reachable for limited-tier sessions).
 app.use("/api/", authorize.authorize_admin);
+
+// Second gate: everything under /api/ is restricted to full-tier admins EXCEPT
+// Place ID Finder's maps endpoints, the one /api/ feature a limited session may
+// use (PDF Generator is client-only). This single chokepoint enforces the
+// restriction for every current and future /api/ admin endpoint — see
+// specs/008-sso-role-access/. originalUrl is used so the match is independent
+// of how the middleware's mount path is stripped.
+app.use("/api/", (req, res, next) => {
+  if (req.originalUrl.startsWith("/api/maps/")) return next();
+  return authorize.authorize_admin_full(req, res, next);
+});
 
 // Knowledge Base tutorial recordings live in file_storage/knowledge_base/, which
 // the /uploads static mount below would otherwise serve to anyone who knows a
