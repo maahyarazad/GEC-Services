@@ -459,3 +459,23 @@ CREATE TABLE IF NOT EXISTS unsubscribe_contacts (
     phone         INTEGER NOT NULL UNIQUE,
     created_at    DATETIME DEFAULT (datetime('now'))
 );
+
+
+-- Do-not-reply email log (feature 008-email-log-dashboard).
+-- One row per recipient per do-not-reply send attempt. Written by
+-- services/emailLogService.logEmailSend() from inside the email transport;
+-- created at startup by the idempotent migration in routes/email_log.js.
+-- Stores recipient + category + time + status only — never body/attachments.
+CREATE TABLE IF NOT EXISTS email_log (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  category    TEXT    NOT NULL,                       -- stable category key (see services/emailLogCategories.js)
+  recipient   TEXT    NOT NULL,                       -- single lower-cased destination address
+  subject     TEXT,                                   -- optional send subject
+  status      TEXT    NOT NULL CHECK (status IN ('sent','failed')),
+  error       TEXT,                                   -- short summary when status='failed'
+  created_at  INTEGER NOT NULL                        -- epoch ms, matching this project's log convention
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_log_category  ON email_log (category);
+CREATE INDEX IF NOT EXISTS idx_email_log_created   ON email_log (created_at);
+CREATE INDEX IF NOT EXISTS idx_email_log_recipient ON email_log (recipient);
