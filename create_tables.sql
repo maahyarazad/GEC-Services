@@ -473,6 +473,8 @@ CREATE TABLE IF NOT EXISTS email_log (
   subject     TEXT,                                   -- optional send subject
   status      TEXT    NOT NULL CHECK (status IN ('sent','failed')),
   error       TEXT,                                   -- short summary when status='failed'
+  message_id  TEXT,                                   -- nodemailer response.messageId (null on failure)
+  response    TEXT,                                   -- nodemailer SMTP response string (null on failure)
   created_at  INTEGER NOT NULL                        -- epoch ms, matching this project's log convention
 );
 

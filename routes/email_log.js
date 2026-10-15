@@ -1,11 +1,3 @@
-// Admin API for the do-not-reply email log (feature 008-email-log-dashboard).
-//
-// Read-only. Entries are written only by services/emailLogService.logEmailSend()
-// inside the email transport — there is no HTTP endpoint that creates/edits/
-// deletes log rows. Both endpoints require admin auth (cookie `a-usr` JWT).
-//
-// Contract: specs/008-email-log-dashboard/contracts/email-log-api.md
-
 const express = require("express");
 const router = express.Router();
 const dbService = require("../services/dbService");
@@ -13,31 +5,6 @@ const db = dbService.getDB();
 const authorize = require("../middleware/auth");
 const emailLogService = require("../services/emailLogService");
 
-// ─── DB migration (idempotent — runs once at startup) ────────────────────────
-// Mirrors the DDL documented in create_tables.sql.
-(function runMigrations() {
-  const steps = [
-    `CREATE TABLE IF NOT EXISTS email_log (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      category    TEXT    NOT NULL,
-      recipient   TEXT    NOT NULL,
-      subject     TEXT,
-      status      TEXT    NOT NULL CHECK (status IN ('sent','failed')),
-      error       TEXT,
-      created_at  INTEGER NOT NULL
-    )`,
-    `CREATE INDEX IF NOT EXISTS idx_email_log_category  ON email_log (category)`,
-    `CREATE INDEX IF NOT EXISTS idx_email_log_created   ON email_log (created_at)`,
-    `CREATE INDEX IF NOT EXISTS idx_email_log_recipient ON email_log (recipient)`,
-  ];
-  for (const sql of steps) {
-    try {
-      db.exec(sql);
-    } catch (err) {
-      console.error(`${Date.now()} - email_log migration step failed:`, err);
-    }
-  }
-})();
 
 // Every /api/email-log/* route is admin-only.
 router.use("/api/email-log", authorize.authorize_admin);

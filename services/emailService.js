@@ -102,7 +102,8 @@ async function sendRawEmailWithAttachments({
     const response = await transporter.sendMail(mailOptions);
     console.log(`${Date.now()} - Email sent:`, response.messageId);
     // Best-effort log — never affects the return value (feature 008).
-    emailLogService.logEmailSend({ category, to, bcc, subject, status: "sent" });
+    // Pass the nodemailer response so the log keeps its messageId + SMTP reply.
+    emailLogService.logEmailSend({ category, to, bcc, subject, status: "sent", response });
     return response;
   } catch (error) {
     console.error(`${Date.now()} - sendRawEmailWithAttachments SMTP error:`, error);

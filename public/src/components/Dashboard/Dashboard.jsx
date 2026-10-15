@@ -484,10 +484,10 @@ const Admin = ({ data }) => {
         case "Knowledge Base":
             content = <KnowledgeBase />;
             break;
-        case 13:
+        case "Email Logs":
             content = <EmailLogs />;
             break;
-        case 14:
+        case "Do-Not-Reply Mail Box":
             content = <MailBox />;
             break;
     }

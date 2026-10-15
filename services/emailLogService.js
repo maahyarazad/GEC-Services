@@ -38,9 +38,19 @@ function extractRecipients(value) {
   return [...new Set(out.map((a) => a.toLowerCase()))];
 }
 
+// Pull the two useful fields out of a nodemailer sendMail() result so we can
+// trace a single send request: its Message-ID and the SMTP server's reply
+// (e.g. "250 OK ..."). Missing/odd shapes degrade to null.
+function extractResponse(response) {
+  if (!response || typeof response !== "object") return { messageId: null, smtp: null };
+  const messageId = response.messageId ? String(response.messageId).slice(0, 500) : null;
+  const smtp = response.response ? String(response.response).slice(0, 500) : null;
+  return { messageId, smtp };
+}
+
 // Best-effort: record one row per recipient for a single send attempt.
 // NEVER throws — a logging failure must not affect email delivery (FR-003).
-function logEmailSend({ category, to, bcc, subject, status, error } = {}) {
+function logEmailSend({ category, to, bcc, subject, status, error, response } = {}) {
   try {
     const cat = category || UNCATEGORISED;
     const recipients = [...extractRecipients(to), ...extractRecipients(bcc)];
@@ -53,6 +63,7 @@ function logEmailSend({ category, to, bcc, subject, status, error } = {}) {
       ? String(error.message || error).slice(0, 500)
       : null;
     const subj = subject ? String(subject).slice(0, 500) : null;
+    const { messageId, smtp } = extractResponse(response);
 
     for (const recipient of recipients) {
       dbService.create("email_log", {
@@ -61,6 +72,8 @@ function logEmailSend({ category, to, bcc, subject, status, error } = {}) {
         subject: subj,
         status: safeStatus,
         error: errSummary,
+        message_id: messageId,
+        response: smtp,
         created_at: now,
       });
     }
@@ -123,7 +136,7 @@ function queryEntries({ category, search, page, pageSize } = {}) {
 
   const rows = db
     .prepare(
-      `SELECT id, category, recipient, subject, status, error, created_at
+      `SELECT id, category, recipient, subject, status, error, message_id, response, created_at
          FROM email_log
          ${whereSql}
         ORDER BY created_at DESC, id DESC
@@ -139,6 +152,8 @@ function queryEntries({ category, search, page, pageSize } = {}) {
     subject: r.subject,
     status: r.status,
     error: r.error,
+    messageId: r.message_id,
+    response: r.response,
     createdAt: r.created_at,
   }));
 
