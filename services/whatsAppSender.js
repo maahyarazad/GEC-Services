@@ -433,12 +433,10 @@ async function sendMessageToPhone(
       case "twilio/text":
         break;
       case "twilio/call-to-action":
-        if (data.body && hasPlaceholders(data.body)) {
-          messageOptions.contentVariables = JSON.stringify({
-            1: "Your dynamic content here",
-            first_name: "John",
-          });
-        }
+        messageOptions.interactive = buildInteractiveMessage(
+          templateType,
+          data
+        );
         break;
       case "twilio/media":
         // this for default
