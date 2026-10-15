@@ -480,6 +480,27 @@ async function sendMessageToPhone(
   }
 }
 
+// Default values substituted for template variables (e.g. {{first_name}}) when
+// building the interactive object. Edit/extend these to taste — they are the
+// fallbacks shown when no per-contact value is supplied.
+const INTERACTIVE_VARIABLE_DEFAULTS = {
+  first_name: "there",
+  last_name: "",
+  title: "",
+  gender: "",
+  club_partner_name: "",
+};
+
+// Replace every {{ variable }} placeholder in `text` with its default. A
+// variable with no entry in the map — and any other leftover placeholder —
+// collapses to an empty string, so a raw "{{...}}" never reaches the recipient.
+function applyVariableDefaults(text, defaults = INTERACTIVE_VARIABLE_DEFAULTS) {
+  if (typeof text !== "string") return text;
+  return text.replace(/{{\s*([^}]+?)\s*}}/g, (_match, name) =>
+    Object.prototype.hasOwnProperty.call(defaults, name) ? defaults[name] : ""
+  );
+}
+
 // Helper function to build interactive object for WhatsApp interactive messages
 function buildInteractiveMessage(type, data) {
   switch (type) {
@@ -544,6 +565,26 @@ function buildInteractiveMessage(type, data) {
           })),
         },
       };
+
+    case "twilio/call-to-action": {
+      // Twilio call-to-action → WhatsApp "cta_url" interactive. Use the first
+      // URL action as the button. Variables declared in the body and URL
+      // (e.g. {{first_name}}) are swapped for their defaults here.
+      const urlAction = (data.actions || []).find(
+        (action) => action.type === "URL" || action.url
+      );
+      return {
+        type: "cta_url",
+        body: { text: applyVariableDefaults(data.body || "") },
+        action: {
+          name: "cta_url",
+          parameters: {
+            display_text: urlAction?.title || "Open",
+            url: applyVariableDefaults(urlAction?.url || ""),
+          },
+        },
+      };
+    }
 
     default:
       throw new Error(`Interactive message type not supported: ${type}`);
