@@ -173,10 +173,11 @@ export default function EmailLogs() {
 
   return (
     <Box sx={{ p: 2, maxWidth: 1100, mx: "auto" }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1}}>
         <MdEmail size={22} />
-        <Typography variant="h6" sx={{ fontWeight: 500 }}>
-          Do-Not-Reply Email Log
+         <pre style={{padding: 0, margin: 0}}>do-not-replay</pre> 
+        <Typography variant="h6" sx={{ fontWeight: 500, flexDirection: 'row' }}>
+             Email Log
         </Typography>
       </Box>
 
@@ -268,9 +269,14 @@ export default function EmailLogs() {
             No matching emails.
           </Paper>
         ) : (
-          <Paper variant="outlined">
-            <TableContainer>
-              <Table size="small">
+          <Paper
+            variant="outlined"
+            sx={{ maxHeight: "70vh", display: "flex", flexDirection: "column" }}
+          >
+            {/* Only the rows scroll; the sticky header and the pager below stay
+                in view so the Paper never grows past 70vh. */}
+            <TableContainer sx={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+              <Table size="small" stickyHeader>
                 <TableHead>
                   <TableRow>
                     <TableCell>Sent</TableCell>
@@ -305,6 +311,7 @@ export default function EmailLogs() {
               onPageChange={(e, newPage) => setPage(newPage)}
               rowsPerPage={PAGE_SIZE}
               rowsPerPageOptions={[PAGE_SIZE]}
+              sx={{ flexShrink: 0, borderTop: 1, borderColor: "divider" }}
             />
           </Paper>
         ))}
