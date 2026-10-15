@@ -395,36 +395,7 @@ module.exports = {
   // exported for unit tests (no network):
   _test: { parseFetchRecords, parseSearch, parseInternalDate, readTokens, tokensToAttrs },
 };
-// Do-Not-Reply Mail Box service (009-do-not-reply-mailbox).
-//
-// Talks to the IMAPS mail server with ImapFlow (same stack as
-// services/imapPoller.js) and parses messages with mailparser. Exposes a small
-// read-only API consumed by routes/mailbox.js:
-//   - listFolders(accountKey)
-//   - listMessages({ account, folder, page, pageSize })  → paged, newest-first
-//   - getMessage({ account, folder, uid })               → one message (peek)
-//
-// Credentials are resolved server-side from env (services/mailboxAccounts.js)
-// and never leave the server. All reads use peek semantics so opening a message
-// does not change its \Seen state (FR-010). Connections are per-request and
-// time-bounded.
 
-const { ImapFlow } = require("imapflow");
-const { simpleParser } = require("mailparser");
-const accounts = require("./mailboxAccounts");
-
-const CONNECTION_TIMEOUT = 10 * 1000; // TCP connect
-const GREETING_TIMEOUT = 10 * 1000; // server greeting
-const SOCKET_TIMEOUT = 20 * 1000; // inactivity
-
-// ─── Typed error ─────────────────────────────────────────────────────────────
-class MailboxError extends Error {
-  constructor(code, message) {
-    super(message || code);
-    this.name = "MailboxError";
-    this.code = code; // 'auth'|'unreachable'|'timeout'|'parse'|'unavailable'|'unknown'
-  }
-}
 
 // Map a raw ImapFlow / socket error to a safe, typed error. Detail is logged
 // server-side only and never surfaced to the client (FR-011).
