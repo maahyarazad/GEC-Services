@@ -33,6 +33,8 @@ const support = require("./routes/support.js");
 const gec_endpoints = require("./routes/gec_endpoints.js");
 const knowledge_base = require("./routes/knowledge_base.js");
 const twilio_credentials = require("./routes/twilio_credentials.js");
+const email_log = require("./routes/email_log.js");
+const mailbox = require("./routes/mailbox.js");
 
 // Routers mounted at the app root ("/").
 const rootRouters = [
@@ -61,7 +63,9 @@ const rootRouters = [
   events,
   gec_member_check,
   knowledge_base,
-  twilio_credentials
+  twilio_credentials,
+  email_log,
+  mailbox
 ];
 
 function registerRoutes(app) {

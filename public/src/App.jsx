@@ -99,12 +99,32 @@ function AppRoutes() {
             <RouteLoader />
             <TitleManager />
             <Routes>
-                <Route path="/" element={<Login />} />
+                <Route path="/" element={
+                    <React.Suspense fallback={<FallBackLoader/>}>
+                        <Login />
+                    </React.Suspense>
+                } />
                 <Route path="/account-deletion" element={<AccountDeletionRequestPage />} />
-                <Route path="/registration/:event" element={<TemplateForm />} />
-                <Route path="/registration/:event/success" element={<SuccessTemplatePage />} />
-                <Route path="/guest-registration/:eventSlug" element={<GuestRegistration />} />
-                <Route path="/event-registration/:queryParam" element={<EventRegistration />} />
+                <Route path="/registration/:event" element={
+                    <React.Suspense fallback={<FallBackLoader/>}>
+                        <TemplateForm />
+                    </React.Suspense>
+                } />
+                <Route path="/registration/:event/success" element={
+                    <React.Suspense fallback={<FallBackLoader/>}>
+                        <SuccessTemplatePage />
+                    </React.Suspense>
+                } />
+                <Route path="/guest-registration/:eventSlug" element={
+                    <React.Suspense fallback={<FallBackLoader/>}>
+                        <GuestRegistration />
+                    </React.Suspense>
+                } />
+                <Route path="/event-registration/:queryParam" element={
+                    <React.Suspense fallback={<FallBackLoader/>}>
+                        <EventRegistration />
+                    </React.Suspense>
+                } />
                 <Route path="/membership" element={
                     <React.Suspense fallback={<FallBackLoader/>}>
                         <PurchaseMemberShip />

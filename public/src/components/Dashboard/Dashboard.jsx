@@ -23,7 +23,7 @@ import { FcSurvey } from "react-icons/fc";
 import { GiArchiveRegister } from "react-icons/gi";
 import { GoShieldLock } from "react-icons/go";
 import { GrCatalogOption, GrDocumentPdf } from "react-icons/gr";
-import { MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight, MdTerminal, MdLocalShipping, MdLocationOn, MdSupportAgent, MdMenuBook, MdArrowBack } from "react-icons/md";
+import { MdOutlineHealthAndSafety, MdChevronLeft, MdChevronRight, MdTerminal, MdLocalShipping, MdLocationOn, MdSupportAgent, MdMenuBook, MdArrowBack, MdOutlineEmail, MdMarkEmailRead } from "react-icons/md";
 import { PiBriefcaseDuotone } from "react-icons/pi";
 
 // Utils
@@ -46,6 +46,8 @@ const DeliveryTrackingSection = React.lazy(() => import("../Sections/DeliveryTra
 const PlaceIdFinder = React.lazy(() => import("./PlaceIdFinder/PlaceIdFinder"));
 const SupportSection = React.lazy(() => import("./Support/SupportSection"));
 const KnowledgeBase = React.lazy(() => import("./KnowledgeBase/KnowledgeBase"));
+const EmailLogs = React.lazy(() => import("./EmailLogs/EmailLogs"));
+// const MailBox = React.lazy(() => import("./MailBox/MailBox"));
 
 // import RegistrationList from "./Registration/RegistrationList";
 // import RegistrationDataGrid from "../gallery/RegistrationDataGrid";
@@ -298,6 +300,14 @@ const Admin = ({ data }) => {
             icon: <MdMenuBook size={20} />,
             label: "Knowledge Base",
         },
+        {
+            icon: <MdOutlineEmail size={20} />,
+            label: "Email Logs",
+        },
+        // {
+        //     icon: <MdMarkEmailRead size={20} />,
+        //     label: "Do-Not-Reply Mail Box",
+        // },
     ];
 
     // The only two sections a limited-tier session may see/use. Server-side
@@ -474,6 +484,12 @@ const Admin = ({ data }) => {
         case "Knowledge Base":
             content = <KnowledgeBase />;
             break;
+        case "Email Logs":
+            content = <EmailLogs />;
+            break;
+        // case "Do-Not-Reply Mail Box":
+        //     content = <MailBox />;
+        //     break;
     }
 
 

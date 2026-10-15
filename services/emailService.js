@@ -9,6 +9,7 @@ const nodemailer = require("nodemailer");
 const { emailTemplates } = require("./templates/email_template");
 const moment = require("moment");
 const {chunkArray} = require("../helpers/essentials");
+const emailLogService = require("./emailLogService");
 
 function slugToTitle(slug) {
   return slug
@@ -72,6 +73,7 @@ async function sendRawEmailWithAttachments({
   text = "",
   attachments = [],
   bcc = [],
+  category, // do-not-reply email-log category key (feature 008); optional
 }) {
   const transporter = nodemailer.createTransport({
     secure: false,
@@ -99,9 +101,15 @@ async function sendRawEmailWithAttachments({
   try {
     const response = await transporter.sendMail(mailOptions);
     console.log(`${Date.now()} - Email sent:`, response.messageId);
+    // Best-effort log — never affects the return value (feature 008).
+    // Pass the nodemailer response so the log keeps its messageId + SMTP reply.
+    emailLogService.logEmailSend({ category, to, bcc, subject, status: "sent", response });
     return response;
   } catch (error) {
     console.error(`${Date.now()} - sendRawEmailWithAttachments SMTP error:`, error);
+    // Record the failed attempt before re-throwing — best-effort, never changes
+    // the thrown error (feature 008).
+    emailLogService.logEmailSend({ category, to, bcc, subject, status: "failed", error });
     throw error;
   }
 }
@@ -248,6 +256,7 @@ async function event_confirm_registration_email_aws(reqBody) {
 `;
 
   await sendRawEmailWithAttachments({
+    category: "event-registration",
     to: reqBody.email,
     subject: `Registration Completed – ${reqBody.title}`,
     html: htmlBody, // your HTML with <img src="cid:event-location"> and <img src="cid:qr-code">
@@ -344,6 +353,7 @@ async function comfirm_message_email(reqBody) {
     // };
 
     return await sendRawEmailWithAttachments({
+      category: "confirmation-message",
       to: reqBody.email,
       subject: `Application Submitted – ${event_name}`,
       html: htmlBody,
@@ -586,6 +596,7 @@ async function event_confirm_registration_email(reqBody) {
     ];
     // ✅ Send email using your own SMTP function
     return await sendRawEmailWithAttachments({
+      category: "event-registration",
       to: reqBody.email,
       subject: `Registration Completed – ${title}`,
       html: htmlBody,
@@ -839,6 +850,7 @@ async function membership_pass_email({ data }) {
 
     // ✅ Send email using your own SMTP function
     return await sendRawEmailWithAttachments({
+      category: "membership-pass",
       to: member.email,
       subject: `Your Corporate Card Has Been Issued`,
       html: htmlBody,
@@ -946,6 +958,7 @@ Thank you,
 
     // ✅ Send email using your own SMTP function
     return await sendRawEmailWithAttachments({
+      category: "membership-invitation",
       to: data.email,
       subject: `${data?.partner || "Our partner"} offers you your Membership Pass - for free!`,
       html: htmlBody,
@@ -1179,6 +1192,7 @@ Teilnahme.</p>
 
     // ✅ Send email using your own SMTP function
     return await sendRawEmailWithAttachments({
+      category: "event-registration",
       to: reqBody.email,
       subject: `Registration Completed – ${reqBody.title}`,
       html: htmlBody,
@@ -1254,6 +1268,7 @@ async function email_otp(reqBody) {
 `;
 
     return await sendRawEmailWithAttachments({
+      category: "otp",
       to: reqBody.email,
       subject: `Your OTP Code – ${event_name}`,
       html: htmlBody,
@@ -1327,6 +1342,7 @@ async function email_request_received(reqBody) {
 `;
 
     return await sendRawEmailWithAttachments({
+      category: "request-received",
       to: reqBody.email,
       subject: `Request Received – ${title}`,
       html: htmlBody,
@@ -1519,6 +1535,7 @@ async function company_data_confirmation_email(reqBody) {
 `;
 
     return await sendRawEmailWithAttachments({
+      category: "company-data-confirmation",
       to: company_email,
       subject: `Company Data Received – ${event_name}`,
       html: htmlBody,
@@ -1589,6 +1606,7 @@ async function gic__reset_password(reqBody) {
 `;
 
     return await sendRawEmailWithAttachments({
+      category: "password-reset",
       to: reqBody.email,
       subject: `${org_name} - Reset Your Password`,
       html: htmlBody,
@@ -1667,6 +1685,7 @@ async function emailMembershipCard(reqBody, pkpassBuffer) {
     ];
 
     return await sendRawEmailWithAttachments({
+      category: "membership-card",
       to: email,
       subject: `Your German Emirates Club Membership Card`,
       html: htmlBody,
@@ -1792,6 +1811,7 @@ async function send_party_invitation(data) {
 `;
 
     return await sendRawEmailWithAttachments({
+      category: "party-invitation",
       to: email,
       subject: `🎉 You're Invited: German Emirates Club 20th Anniversary Celebration`,
       html: htmlBody,
@@ -1848,6 +1868,7 @@ async function membership_courtacy_at_venue_message(data) {
     `;
 
     return await sendRawEmailWithAttachments({
+      category: "venue-courtesy",
       to: email,
       subject: `Welcome! Thank You for Being Part of the German Emirates Club - ${slugToTitle(
         event

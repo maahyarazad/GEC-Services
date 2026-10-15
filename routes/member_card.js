@@ -548,7 +548,7 @@ router.post("/api/resend-membership-email", async (req, res) => {
 
   try {
 
-    const query = `SELECT * FROM member_card AS mc WHERE mc.partner = ? and  mc.active = 1`
+    const query = `SELECT * FROM member_card AS mc WHERE mc.partner = ? AND mc.active = 1 AND mc.serial_number IS NULL`
 
     const corporateCardEmailSet = db.prepare(query).all(partner);
 
