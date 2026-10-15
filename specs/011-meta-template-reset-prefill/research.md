@@ -22,14 +22,14 @@
 
 ## R3 — Targeting the {{qr_code_url}} example field (the real design question)
 
-**Decision**: On switching type to `twilio/media`, set the `variable_examples` entry **at the index of `qr_code_url` within the derived `templateVars` list** to `QR_SAMPLE_URL`, extending `variable_examples` if it is shorter than that index.
+**Decision**: On switching type to `twilio/media`, **append** `QR_SAMPLE_URL` as the **last** entry of `variable_examples`, aligned to the `qr_code_url` slot. On switching **away** from Media, remove the preset (revert).
 
-Because `templateVars` is built by scanning the **body first, then the media URL** (existing `useMemo`, lines 116–130), and the media URL is fixed to `{{qr_code_url}}`, `qr_code_url` is always the **last** entry in `templateVars` for a media template — its index equals the count of distinct body variables. The handler computes that index from the current body (not a hard-coded position) so it stays correct whether the body has 0, 1, or many variables.
+Because `templateVars` is built by scanning the **body first, then the media URL** (existing `useMemo`), and the media URL is fixed to `{{qr_code_url}}`, `qr_code_url` is always the **last** entry in `templateVars` for a media template — its index equals the count of distinct body variables. So the QR sample must be the last example entry.
 
-Concretely, the type-toggle handler, when the new value is `twilio/media`:
-1. Derive the body's distinct variables in order (same regex/scan as `templateVars`).
-2. Let `qrIndex = bodyVars.length` (qr_code_url sits right after the body vars).
-3. Build a new `variable_examples` where index `qrIndex` is `QR_SAMPLE_URL`, preserving existing entries for body-variable indices `< qrIndex` and padding with `''` if needed.
+Concretely, the type-toggle handler:
+1. Derive the body's distinct variables in order (`extractVars`).
+2. On **→ media**: keep the first `bodyVars.length` examples (trim trailing junk, pad with `''` if shorter), then `push(QR_SAMPLE_URL)` so QR is the last item aligned to `qr_code_url`.
+3. On **media → non-media**: `filter` out `QR_SAMPLE_URL`; if the result is empty, fall back to `['Hans Smith']`.
 
 **Rationale**: FR-005 — the sample must land on the field actually labelled `{{qr_code_url}}` and must not overwrite a body variable's example. Deriving `qrIndex` from the body makes it robust to any number of body variables, matching exactly how the UI labels each example field (`templateVars[i]`).
 
@@ -40,11 +40,11 @@ Concretely, the type-toggle handler, when the new value is `twilio/media`:
 
 ## R4 — Toggling Media on and off
 
-**Decision**: Apply the prefill every time the type becomes `twilio/media`. Switching away does not strip the value (harmless: the `{{qr_code_url}}` variable no longer exists for non-media types, so that example field is not shown/submitted for them). No special teardown.
+**Decision**: Append the QR sample every time the type becomes `twilio/media`, and **remove** it (revert) whenever the type leaves Media. Re-entering Media re-appends it as the last item; switching between two non-media types leaves `variable_examples` untouched.
 
-**Rationale**: Idempotent and simple; satisfies the edge cases (repeated toggling keeps a valid sample; switching away leaves body-variable examples intact). FR-004.
+**Rationale**: The QR sample is meaningful only for media templates, so it should not linger on a non-media template after switching away (explicit user requirement). Appending/removing by value keeps the behaviour symmetric and idempotent, and preserves the body-variable examples across toggles. FR-004 / FR-008.
 
-**Alternatives considered**: Only prefill if the QR example is empty — rejected: re-selecting Media should guarantee a valid sample even if the admin blanked it; re-applying the default is acceptable per spec.
+**Alternatives considered**: Leaving the preset in place after switching away — rejected: it would carry a stray image URL into a text/quick-reply template's examples.
 
 ## R5 — The sample URL as a constant
 

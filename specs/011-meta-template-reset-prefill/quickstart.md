@@ -46,8 +46,15 @@ shows `https://services.german-emirates-club.com/qr_codes/gms-imgs-1771589235591
    Media off and on again.
 
 **Expected**: the `{{name}}` example value is preserved; the `{{qr_code_url}}`
-example (shown as the last example field) holds the sample URL — it did not
+example is the **last** example field and holds the sample URL — it did not
 overwrite the `{{name}}` example.
+
+3. With a Media template prefilled, switch the type to **Text only** (or Quick
+   Reply).
+
+**Expected**: the QR sample example is **removed** (reverted); body-variable
+examples remain. Switching between Text and Quick Reply does not change the
+example list.
 
 ## Scenario D — Sample URL reaches the payload (US2, FR-006)
 

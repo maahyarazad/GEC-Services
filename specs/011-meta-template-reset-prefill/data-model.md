@@ -36,20 +36,28 @@ Ordered list of distinct `{{...}}` variable names, scanned **body first, then
 
 Constant: `QR_SAMPLE_URL = "https://services.german-emirates-club.com/qr_codes/gms-imgs-17715892355912574.png"`.
 
-When `type` becomes `twilio/media`:
+When `type` becomes `twilio/media` — QR is appended as the **last** example:
 
 ```
-bodyVars  = distinct {{...}} names in form.body, in order
-qrIndex   = bodyVars.length           # qr_code_url is appended after body vars
-examples  = clone(form.variable_examples)
-pad examples with '' up to qrIndex
-examples[qrIndex] = QR_SAMPLE_URL
+bodyVars = distinct {{...}} names in form.body, in order
+examples = form.variable_examples.slice(0, bodyVars.length)  # keep body-var examples, drop trailing junk
+pad examples with '' up to bodyVars.length
+examples.push(QR_SAMPLE_URL)                                 # qr_code_url is the last templateVar
 form.variable_examples = examples
 ```
 
-- Entries at indices `< qrIndex` (body variables' examples) are preserved.
-- If `variable_examples` was shorter than `qrIndex`, missing slots are padded
-  with `''` so the QR sample lands on the correct (qr) index.
+- Body-variable example values (the first `bodyVars.length` entries) are preserved.
+- QR is always the final entry, aligned to the `{{qr_code_url}}` slot.
+
+When `type` leaves `twilio/media` (→ text / quick-reply) — revert:
+
+```
+examples = form.variable_examples.filter(v => v !== QR_SAMPLE_URL)  # drop the preset
+form.variable_examples = examples.length ? examples : ['Hans Smith']
+```
+
+- The QR preset is removed; body-variable examples remain.
+- Switching between two non-media types leaves `variable_examples` untouched.
 
 ## Submit mapping (unchanged contract)
 
