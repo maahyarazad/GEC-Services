@@ -46,6 +46,32 @@ const authorization_middleware = {
     }
   },
 
+  // Full-tier gate for the admin panel. Runs authorize_admin's verification
+  // first, then requires the session be full-tier. Used both on specific
+  // full-only routes and as the /api/ chokepoint in server.js (which exempts
+  // Place ID Finder's maps endpoints). See specs/008-sso-role-access/.
+  authorize_admin_full: (req, res, next) => {
+    authorization_middleware.authorize_admin(req, res, () => {
+      const user = req.user;
+
+      // Validated external service tokens (x-access-token) are trusted as full.
+      const viaExternal = Boolean(req.headers["x-access-token"]) && Boolean(user);
+
+      // A full SSO/password session, or a legacy admin token minted before the
+      // accessLevel claim existed (treated as full for backward compatibility).
+      const isFull =
+        Boolean(user) &&
+        (user.accessLevel === "full" ||
+          (user.role === "admin" && user.accessLevel === undefined));
+
+      if (isFull || viaExternal) return next();
+
+      return res
+        .status(403)
+        .json({ authenticated: true, message: "Forbidden: full admin required" });
+    });
+  },
+
   authorize_member: (req, res, next) => {
     try {
       const token = req?.cookies["member-usr"];

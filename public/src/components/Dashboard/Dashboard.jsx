@@ -81,6 +81,11 @@ const Admin = ({ data }) => {
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
     const [adminUser, setAdminUser] = useState(false);
     const [adminEmail, setAdminEmail] = useState(null);
+    // Access tier from the server session: "full" (whole panel) or "limited"
+    // (PDF Generator + Place ID Finder only). Defaults to "full" so a full
+    // session is never briefly under-shown; limited is only ever set explicitly
+    // from the server response. See specs/008-sso-role-access/.
+    const [accessLevel, setAccessLevel] = useState("full");
     const [showPassword, setShowPassowrd] = useState(false);
 
     const checkAuth = useCallback(async () => {
@@ -104,6 +109,7 @@ const Admin = ({ data }) => {
                     if (autoData.success) {
                         setAdminUser(true);
                         setAdminEmail(autoData.email || autoEmail);
+                        setAccessLevel(autoData.accessLevel || "full");
 
                         // Strip the sensitive credentials from the URL so the token
                         // isn't left in history / shareable links.
@@ -138,6 +144,7 @@ const Admin = ({ data }) => {
                 const data = await res.json();
                 setAdminUser(true);
                 setAdminEmail(data.email || null);
+                setAccessLevel(data.accessLevel || "full");
             }
 
 
@@ -303,6 +310,15 @@ const Admin = ({ data }) => {
         },
     ];
 
+    // The only two sections a limited-tier session may see/use. Server-side
+    // enforcement lives in the /api/ chokepoint (server.js); this list drives
+    // the UI so a limited user is never shown a section they cannot reach.
+    const LIMITED_LABELS = ["PDF Generator", "Place ID Finder"];
+    const visibleTabs =
+        accessLevel === "limited"
+            ? tabConfig.filter((tab) => LIMITED_LABELS.includes(tab.label))
+            : tabConfig;
+
     const [tabValue, setTabValue] = useState(0);
     const [burgerActive, setBurgerActive] = useState(false);
     const [showMenu, setShowMenu] = useState(null);
@@ -332,12 +348,12 @@ const Admin = ({ data }) => {
         text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
 
     useEffect(() => {
-        const tabSlug = slugify(tabConfig[0].label);
+        const tabSlug = slugify(visibleTabs[0].label);
 
         if (location.search) {
             const params = new URLSearchParams(location.search);
             const tab = params.get("tab");
-            const index = tabConfig.findIndex(tabItem => slugify(tabItem.label) === tab);
+            const index = visibleTabs.findIndex(tabItem => slugify(tabItem.label) === tab);
 
             // If index is invalid, fallback to 0
             setTabValue(index >= 0 ? index : 0);
@@ -351,7 +367,7 @@ const Admin = ({ data }) => {
 
     const handletabChange = (event, newValue) => {
 
-        const tabSlug = slugify(tabConfig[newValue].label);
+        const tabSlug = slugify(visibleTabs[newValue].label);
 
         // Push new history entry with state
         navigate(`/admin?tab=${tabSlug}`, {
@@ -367,8 +383,8 @@ const Admin = ({ data }) => {
         const onPopState = () => {
             const tabFromState = window.history.state?.usr?.tab;
             if (tabFromState) {
-                const index = tabConfig.findIndex(tab => slugify(tab.label) === tabFromState);
-                setTabValue(index);
+                const index = visibleTabs.findIndex(tab => slugify(tab.label) === tabFromState);
+                if (index >= 0) setTabValue(index);
             }
         };
 
@@ -385,9 +401,24 @@ const Admin = ({ data }) => {
         const tab = new URLSearchParams(location.search).get("tab");
         if (!tab) return;
 
-        const index = tabConfig.findIndex(tabItem => slugify(tabItem.label) === tab);
+        const index = visibleTabs.findIndex(tabItem => slugify(tabItem.label) === tab);
         if (index >= 0) setTabValue(index);
-    }, [location.search]);
+    }, [location.search, accessLevel]);
+
+    // For a limited session, a requested tab that is not in the visible set
+    // (whether from a stale URL, a deep link, or a demotion) must not render.
+    // Redirect to the first allowed section instead. Runs when the tier or URL
+    // changes. Full sessions see every tab, so this is a no-op for them.
+    useEffect(() => {
+        if (accessLevel !== "limited") return;
+        const requested = new URLSearchParams(location.search).get("tab");
+        const allowed = visibleTabs.some(tabItem => slugify(tabItem.label) === requested);
+        if (!allowed) {
+            const fallbackSlug = slugify(visibleTabs[0].label);
+            setTabValue(0);
+            navigate(`/admin?tab=${fallbackSlug}`, { state: { tab: fallbackSlug }, replace: true });
+        }
+    }, [accessLevel, location.search]);
 
     // The Knowledge Base jump control tags its destination with
     // from=knowledge-base so the target section can offer an explicit way back.
@@ -397,7 +428,7 @@ const Admin = ({ data }) => {
         new URLSearchParams(location.search).get("from") === "knowledge-base";
 
     const backToKnowledgeBase = () => {
-        const index = tabConfig.findIndex(tabItem => slugify(tabItem.label) === "knowledge-base");
+        const index = visibleTabs.findIndex(tabItem => slugify(tabItem.label) === "knowledge-base");
         navigate("/admin?tab=knowledge-base", { state: { tab: "knowledge-base" } });
         if (index >= 0) setTabValue(index);
     };
@@ -409,45 +440,48 @@ const Admin = ({ data }) => {
     }, [])
 
 
+    // Render by the active section's label (from visibleTabs), not a raw index,
+    // so a crafted index/slug can never surface a section hidden from this tier.
+    const activeLabel = visibleTabs[tabValue]?.label;
     let content;
-    switch (tabValue) {
-        case 0:
+    switch (activeLabel) {
+        case "Website Health":
             content = <HealthCheck />;
             break;
-        case 1:
+        case "Registration Config":
             content = <RegistrationConfig />;
             break;
-        case 2:
+        case "Registrant Section":
             content = <RegistrantSection />;
             break;
-        case 3:
+        case "Surveys":
             content = <SurveyDataGrid />;
             break;
-        case 4:
+        case "Partner Onboarding":
             content = <MemberCardDataGrid />;
             break;
-        case 5:
+        case "Expert Circle":
             content = <MemberDataGrid />;
             break;
-        case 6:
+        case "PDF Generator":
             content = <PDFGenerator />;
             break;
-        case 7:
+        case "WhatsApp Broadcast":
             content = <WhatsappBroadcast />;
             break;
-        case 8:
+        case "Server Logs":
             content = <ServerLogs />;
             break;
-        case 9:
+        case "Delivery & Tracking":
             content = <DeliveryTrackingSection />;
             break;
-        case 10:
+        case "Place ID Finder":
             content = <PlaceIdFinder />;
             break;
-        case 11:
+        case "Support Center":
             content = <SupportSection />;
             break;
-        case 12:
+        case "Knowledge Base":
             content = <KnowledgeBase />;
             break;
         case 13:
@@ -505,7 +539,7 @@ const Admin = ({ data }) => {
                                 },
                             }}
                         >
-                            {tabConfig.map((tab, index) => (
+                            {visibleTabs.map((tab, index) => (
                                 <Tab
                                     key={index}
                                     icon={tab.icon}
@@ -518,7 +552,7 @@ const Admin = ({ data }) => {
                     </Box>
                 </div>
                 <div>
-                    {cameFromKnowledgeBase && tabValue !== 12 && (
+                    {cameFromKnowledgeBase && activeLabel !== "Knowledge Base" && (
                         <Button
                             className="kb-back-link"
                             size="small"

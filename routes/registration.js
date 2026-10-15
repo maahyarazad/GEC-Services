@@ -22,6 +22,7 @@ require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const authorization_middleware = require("../middleware/auth");
+const { classify } = require("../services/adminAccess");
 const rateLimit = require("express-rate-limit");
 const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
@@ -577,8 +578,9 @@ router.post("/admin/login", upload.none(), loginLimiter, (req, res) => {
   const oneWeekInSeconds = 7 * 24 * 60 * 60;
   const oneWeekInMilliseconds = oneWeekInSeconds * 1000;
 
+  // Password login is the operator's master credential → always full admin.
   const token = jwt.sign(
-    { role: "admin", mapboxToken: process.env.VITE_APP_MAPBOX_TOKEN },
+    { role: "admin", accessLevel: "full", mapboxToken: process.env.VITE_APP_MAPBOX_TOKEN },
     process.env.JWT_SECRET,
     { expiresIn: `${oneWeekInSeconds}s` }
   );
@@ -633,8 +635,11 @@ router.get("/admin/auto-login", loginLimiter, (req, res) => {
     const oneWeekInSeconds = 7 * 24 * 60 * 60;
     const oneWeekInMilliseconds = oneWeekInSeconds * 1000;
 
+    // Tier the SSO session by email against the configured allowlist.
+    const accessLevel = classify({ email });
+
     const sessionToken = jwt.sign(
-      { role: "admin", email, mapboxToken: process.env.VITE_APP_MAPBOX_TOKEN },
+      { role: "admin", email, accessLevel, mapboxToken: process.env.VITE_APP_MAPBOX_TOKEN },
       process.env.JWT_SECRET,
       { expiresIn: `${oneWeekInSeconds}s` }
     );
@@ -646,7 +651,7 @@ router.get("/admin/auto-login", loginLimiter, (req, res) => {
       maxAge: oneWeekInMilliseconds,
     });
 
-    return res.json({ success: true, email });
+    return res.json({ success: true, email, accessLevel });
   } catch (err) {
     console.error(`${Date.now()} - Auto-login error:`, err);
     return res.status(500).json({ success: false, error: "Server error" });
@@ -795,7 +800,12 @@ router.get("/admin/check-auth", (req, res) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (decoded.role === "admin") {
-      return res.json({ authenticated: true, email: decoded.email || null });
+      // Legacy tokens minted before the accessLevel claim are treated as full.
+      return res.json({
+        authenticated: true,
+        email: decoded.email || null,
+        accessLevel: decoded.accessLevel || "full",
+      });
     }
     return res.status(401).json({ authenticated: false });
   } catch {
