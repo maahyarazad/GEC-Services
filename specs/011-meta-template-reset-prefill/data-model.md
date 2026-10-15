@@ -36,6 +36,7 @@ Ordered list of distinct `{{...}}` variable names, scanned **body first, then
 
 Constant: `QR_SAMPLE_URL = "https://services.german-emirates-club.com/qr_codes/gms-imgs-17715892355912574.png"`.
 
+<<<<<<< HEAD
 When `type` becomes `twilio/media` — QR is appended as the **last** example:
 
 ```
@@ -58,6 +59,22 @@ form.variable_examples = examples.length ? examples : ['Hans Smith']
 
 - The QR preset is removed; body-variable examples remain.
 - Switching between two non-media types leaves `variable_examples` untouched.
+=======
+When `type` becomes `twilio/media`:
+
+```
+bodyVars  = distinct {{...}} names in form.body, in order
+qrIndex   = bodyVars.length           # qr_code_url is appended after body vars
+examples  = clone(form.variable_examples)
+pad examples with '' up to qrIndex
+examples[qrIndex] = QR_SAMPLE_URL
+form.variable_examples = examples
+```
+
+- Entries at indices `< qrIndex` (body variables' examples) are preserved.
+- If `variable_examples` was shorter than `qrIndex`, missing slots are padded
+  with `''` so the QR sample lands on the correct (qr) index.
+>>>>>>> 549a1d27d (Reset Create Meta Template form on create; prefill QR example on Media)
 
 ## Submit mapping (unchanged contract)
 

@@ -95,46 +95,6 @@ export default function CreateTwilioTemplate({ onSuccess }) {
 
     const set = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
-    // Template-type toggle.
-    //
-    // → Media: the media URL is fixed to {{qr_code_url}}, which templateVars
-    //   lists last (body variables are scanned first). So QR_SAMPLE_URL is
-    //   appended as the LAST example, aligned to the qr_code_url slot. Example
-    //   values for the body's variables are preserved (trailing junk beyond the
-    //   body variables is trimmed first so the sample lands on the qr slot).
-    //
-    // → away from Media: revert — drop the QR preset so it never lingers on a
-    //   non-media template.
-    const handleTypeChange = (newType) => {
-        // ToggleButtonGroup emits null when the active button is re-clicked.
-        if (!newType) return;
-        setForm((prev) => {
-            if (newType === prev.type) return prev;
-
-            if (newType === 'twilio/media') {
-                const bodyVars = extractVars(prev.body);
-                // Keep one example per body variable, then QR as the last item.
-                const variable_examples = prev.variable_examples.slice(0, bodyVars.length);
-                while (variable_examples.length < bodyVars.length) variable_examples.push('');
-                variable_examples.push(QR_SAMPLE_URL);
-                return { ...prev, type: newType, variable_examples };
-            }
-
-            // Leaving Media (or any → non-media): remove the QR preset. Fall
-            // back to the default single example so the form still shows a field.
-            if (prev.type === 'twilio/media') {
-                const variable_examples = prev.variable_examples.filter((v) => v !== QR_SAMPLE_URL);
-                return {
-                    ...prev,
-                    type: newType,
-                    variable_examples: variable_examples.length ? variable_examples : ['Hans Smith'],
-                };
-            }
-
-            return { ...prev, type: newType };
-        });
-    };
-
     const setButton = (index, field, value) =>
         setForm((prev) => {
             const buttons = prev.buttons.map((b, i) =>

@@ -31,6 +31,7 @@ Component: `public/src/components/Dashboard/WhatsApp/CreateTwilioTemplate.jsx`.
 **Trigger**: the Template Type toggle changes to `twilio/media`.
 
 **Contract**:
+<<<<<<< HEAD
 - `QR_SAMPLE_URL` (`https://services.german-emirates-club.com/qr_codes/gms-imgs-17715892355912574.png`)
   is appended as the **last** entry of `variable_examples`, aligned to the
   `{{qr_code_url}}` slot (qr_code_url is the last `templateVars` entry for media,
@@ -50,6 +51,21 @@ Component: `public/src/components/Dashboard/WhatsApp/CreateTwilioTemplate.jsx`.
 **Idempotency / toggles**:
 - Selecting Media again re-appends the sample as the last item.
 - Switching between two non-media types does not touch `variable_examples`.
+=======
+- The `variable_examples` entry mapped to the `{{qr_code_url}}` variable is set
+  to `https://services.german-emirates-club.com/qr_codes/gms-imgs-17715892355912574.png`.
+- The target index is derived as the number of distinct `{{...}}` variables in
+  the current body (qr_code_url is the last `templateVars` entry for media), so:
+  - example values for body variables (indices before it) are **preserved**;
+  - if needed, `variable_examples` is padded with `''` so the sample lands on
+    the qr index, not an earlier slot.
+- The field labelled **"Example value for {{qr_code_url}}"** shows the sample URL.
+
+**Idempotency / toggles**:
+- Selecting Media again re-applies the sample (safe even if the admin blanked it).
+- Switching to `twilio/text` or `twilio/quick-reply` does not corrupt remaining
+  example values; the qr example is simply not shown/submitted for non-media types.
+>>>>>>> 549a1d27d (Reset Create Meta Template form on create; prefill QR example on Media)
 
 ## Unchanged
 
