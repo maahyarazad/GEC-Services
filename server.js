@@ -34,19 +34,8 @@ try {
   process.exit(1);
 }
 
-// Read and apply SQL schema from create_tables.sql
-(async () => {
-  try {
-    // const sql = await fs.readFile(
-    //   path.resolve(__dirname, "create_tables.sql"),
-    //   "utf8"
-    // );
-    // db.exec(sql);
-    // console.log("Tables created or already exist.");
-  } catch (err) {
-    console.error(`${Date.now()} - Failed to create tables or read SQL file:`, err.message);
-  }
-})();
+// Schema lives in create_tables.sql and is applied out-of-band; the app does not
+// run migrations at startup.
 
 app.use(
   session({

@@ -369,7 +369,9 @@ CREATE TABLE IF NOT EXISTS contact_book_notes (
     assigned_to   INTEGER,
     created_at    DATETIME DEFAULT (datetime('now')),
     updated_at    DATETIME DEFAULT (datetime('now')),
-    resolved_at   DATETIME
+    resolved_at   DATETIME,
+    -- Previously added at runtime by the routes/support.js migration IIFE.
+    has_unread_customer_reply INTEGER NOT NULL DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS support_ticket_attachments (
@@ -390,6 +392,8 @@ CREATE TABLE IF NOT EXISTS contact_book_notes (
     comment    TEXT    NOT NULL,
     is_public  INTEGER NOT NULL DEFAULT 0,
     created_at DATETIME DEFAULT (datetime('now')),
+    -- Previously added at runtime by the routes/support.js migration IIFE.
+    source     TEXT    NOT NULL DEFAULT 'admin',
     FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
   );
 
@@ -400,6 +404,16 @@ CREATE TABLE IF NOT EXISTS contact_book_notes (
     action     TEXT NOT NULL,
     old_value  TEXT,
     new_value  TEXT,
+    created_at DATETIME DEFAULT (datetime('now')),
+    FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
+  );
+
+  -- Previously created at runtime by the routes/support.js migration IIFE.
+  -- Maps a support ticket to the email Message-IDs used for reply threading.
+  CREATE TABLE IF NOT EXISTS support_email_threads (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id  INTEGER NOT NULL,
+    message_id TEXT    NOT NULL,
     created_at DATETIME DEFAULT (datetime('now')),
     FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
   );

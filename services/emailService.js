@@ -151,9 +151,13 @@ async function sendRawEmailWithAttachments_AppSupport({
   try {
     const response = await transporter.sendMail(mailOptions);
     console.log(`${Date.now()} - Email sent:`, response.messageId);
+    // Best-effort log so app-support emails show up in the Email Logs dashboard
+    // under the "App Support" category (feature 012). Never affects delivery.
+    emailLogService.logEmailSend({ category: "app-support", to, bcc, subject, status: "sent", response });
     return response;
   } catch (error) {
     console.error(`${Date.now()} - sendRawEmailWithAttachments_AppSupport SMTP error:`, error);
+    emailLogService.logEmailSend({ category: "app-support", to, bcc, subject, status: "failed", error });
     throw error;
   }
 }
