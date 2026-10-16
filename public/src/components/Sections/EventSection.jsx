@@ -9,6 +9,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
+import Autocomplete from '@mui/material/Autocomplete';
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import Switch from '@mui/material/Switch';
@@ -43,6 +44,15 @@ const EMPTY_AUTO_RESPONSE = {
 // ─── columns ────────────────────────────────────────────────────────────────
 const formatDate = (value) => {
     return value ? new Date(value).toLocaleString() : '—';
+};
+
+// Normalise any date value to the `datetime-local` input format
+// (YYYY-MM-DDTHH:mm), matching how openEdit formats a stored event date.
+// Returns '' for an absent or unparseable date so the field clears cleanly.
+const toDateTimeLocal = (value) => {
+    if (!value) return '';
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 16);
 };
 
 const buildColumns = (onEdit, onDelete, onAutoResponse, onToggleActive, togglingId) => [
@@ -137,6 +147,12 @@ const EventSection = () => {
     const [formErrors, setFormErrors] = useState({});
     const [saving, setSaving] = useState(false);
 
+    // web_events template dropdown (feature 010): read-only options fetched from
+    // the external MySQL table; selecting one seeds the form. Load failure is
+    // non-blocking — the modal stays usable for manual entry.
+    const [templates, setTemplates] = useState([]);
+    const [selectedTemplate, setSelectedTemplate] = useState(null);
+
     // delete confirm
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleteOpen, setDeleteOpen] = useState(false);
@@ -186,6 +202,28 @@ const EventSection = () => {
         fetchData(paginationModel, sortModel, filterModel);
     }, [paginationModel, sortModel, applyFilterTrigger]);
 
+    // ── web_events templates (feature 010) ───────────────────────────────────
+
+    const fetchTemplates = useCallback(async () => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_SERVERURL}/api/web-events`,
+                { credentials: 'include' }
+            );
+            if (!response.ok) throw new Error(`Failed to load templates (${response.status})`);
+            const json = await response.json();
+            setTemplates(Array.isArray(json.data) ? json.data : []);
+        } catch (err) {
+            // Non-blocking: leave the dropdown empty, keep manual entry working.
+            console.error('Failed to fetch web_events templates:', err);
+            setTemplates([]);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchTemplates();
+    }, [fetchTemplates]);
+
     // ── CSV export ─────────────────────────────────────────────────────────
 
     const handleExport = async () => {
@@ -222,19 +260,36 @@ const EventSection = () => {
     const openCreate = () => {
         setFormData(EMPTY_FORM);
         setFormErrors({});
+        setSelectedTemplate(null);
         setModalMode('create');
         setModalOpen(true);
     };
 
     const openEdit = (row) => {
-        const formatted = row.event_date ? new Date(row.event_date).toISOString().slice(0, 16) : '';
+        const formatted = toDateTimeLocal(row.event_date);
         setFormData({ id: row.id, title: row.title || '', description: row.description || '', event_date: formatted });
         setFormErrors({});
+        setSelectedTemplate(null);
         setModalMode('edit');
         setModalOpen(true);
     };
 
     const closeModal = () => setModalOpen(false);
+
+    // Seed the form from a selected web_events template. Spreads over the
+    // current form so the event `id` (set by openEdit) is preserved in edit
+    // mode. Clearing the selection leaves the current field values untouched.
+    const handleTemplateSelect = (option) => {
+        setSelectedTemplate(option);
+        if (!option) return;
+        setFormData((prev) => ({
+            ...prev,
+            title: option.title || '',
+            description: option.description || '',
+            event_date: toDateTimeLocal(option.eventDate),
+        }));
+        setFormErrors({});
+    };
 
     const handleFormChange = (e) => {
         const { name, value } = e.target;
@@ -457,6 +512,23 @@ const EventSection = () => {
                 </DialogTitle>
 
                 <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '16px !important' }}>
+                    <Autocomplete
+                        options={templates}
+                        value={selectedTemplate}
+                        onChange={(e, option) => handleTemplateSelect(option)}
+                        getOptionLabel={(option) => option?.title || ''}
+                        isOptionEqualToValue={(option, val) => option.id === val.id}
+                        noOptionsText="No web events available"
+                        size="small"
+                        fullWidth
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Load from web event (optional)"
+                                helperText="Select a web event to pre-fill the fields below"
+                            />
+                        )}
+                    />
                     <TextField
                         label="Title"
                         name="title"

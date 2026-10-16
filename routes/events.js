@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const dbService = require("../services/dbService");
+const { getPool } = require("../services/mysqlService");
 const {check_generateQR_WhatsApp} = require("../services/qrGenerator");
 const fs = require("fs");
 const path = require("path");
@@ -257,6 +258,34 @@ router.post("/api/events/qr-code-generated/by-ids", async (req, res) => {
     })
   );
   return res.json({ status: true, data });
+});
+
+// ── GET /api/web-events  – read-only list of website events (external MySQL) ──
+// Backs the "Load from web event" template dropdown in the Create/Edit Event
+// modal (feature 010). Read-only: selects only the columns the modal seeds from
+// (title, description, date) plus a stable id, normalised to { id, title,
+// description, eventDate }. web_events has no event_date column — eventTime is
+// the event's date/time (time is the record-created timestamp). Admin-only via
+// the existing /api/ chokepoint in server.js; no auth added here.
+router.get("/api/web-events", async (req, res) => {
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      "SELECT id, title, description, eventTime AS eventDate FROM web_events ORDER BY eventTime DESC"
+    );
+
+    const data = rows.map((row) => ({
+      id: row.id,
+      title: row.title || "",
+      description: row.description || "",
+      eventDate: row.eventDate || null,
+    }));
+
+    return res.json({ status: true, data });
+  } catch (error) {
+    console.error(`${Date.now()} - Error in GET /api/web-events:`, error);
+    return res.status(500).json({ status: false, message: "Server error" });
+  }
 });
 
 module.exports = router;

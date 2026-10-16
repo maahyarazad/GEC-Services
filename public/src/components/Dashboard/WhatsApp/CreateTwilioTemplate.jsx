@@ -17,6 +17,20 @@ import { useSnackbar } from '../../Providers/Snackbar';
 const slugify = (val) =>
     val.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 
+// Distinct {{...}} variable names in `text`, in order of first appearance.
+// Mirrors how the templateVars useMemo scans text, so an index computed here
+// lines up with the example fields the UI renders.
+const extractVars = (text) => {
+    const seen = new Set();
+    const result = [];
+    const pattern = /\{\{([^}]+)\}\}/g;
+    let m;
+    while ((m = pattern.exec(text || '')) !== null) {
+        if (!seen.has(m[1])) { seen.add(m[1]); result.push(m[1]); }
+    }
+    return result;
+};
+
 const LANGUAGES = [
     { value: 'en', label: 'English (en)' },
     { value: 'de', label: 'German (de)' }
@@ -52,22 +66,74 @@ const DEFAULT_BUTTONS = [
 // bounds — this only keeps the form from offering an option Twilio would reject.
 const MAX_BUTTONS = 3;
 
+// Sample image shown to WhatsApp as the approval example for the
+// {{qr_code_url}} media variable. Media templates always send their image via
+// this placeholder, so the example must be a real, reachable image URL.
+const QR_SAMPLE_URL =
+    'https://services.german-emirates-club.com/qr_codes/gms-imgs-17715892355912574.png';
+
+// Single source of truth for the form's initial state. Used both as the mount
+// value and the post-create reset, so "reset == fresh load". Returns a fresh
+// object each call (with fresh buttons/variable_examples arrays) so no render
+// mutates a shared reference.
+const makeInitialForm = () => ({
+    friendly_name: '',
+    language: 'de',
+    body: '',
+    variable_examples: ['Hans Smith'],
+    type: 'twilio/quick-reply',
+    buttons: DEFAULT_BUTTONS.map((b) => ({ ...b })),
+    media_url: '{{qr_code_url}}',
+    category: 'MARKETING',
+});
+
 export default function CreateTwilioTemplate({ onSuccess }) {
     const { showSnackbar } = useSnackbar();
     const [submitting, setSubmitting] = useState(false);
 
-    const [form, setForm] = useState({
-        friendly_name: '',
-        language: 'de',
-        body: '',
-        variable_examples: ['Hans Smith'],
-        type: 'twilio/quick-reply',
-        buttons: DEFAULT_BUTTONS.map((b) => ({ ...b })),
-        media_url: '{{qr_code_url}}',
-        category: 'MARKETING',
-    });
+    const [form, setForm] = useState(makeInitialForm);
 
     const set = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+
+    // Template-type toggle.
+    //
+    // → Media: the media URL is fixed to {{qr_code_url}}, which templateVars
+    //   lists last (body variables are scanned first). So QR_SAMPLE_URL is
+    //   appended as the LAST example, aligned to the qr_code_url slot. Example
+    //   values for the body's variables are preserved (trailing junk beyond the
+    //   body variables is trimmed first so the sample lands on the qr slot).
+    //
+    // → away from Media: revert — drop the QR preset so it never lingers on a
+    //   non-media template.
+    const handleTypeChange = (newType) => {
+        // ToggleButtonGroup emits null when the active button is re-clicked.
+        if (!newType) return;
+        setForm((prev) => {
+            if (newType === prev.type) return prev;
+
+            if (newType === 'twilio/media') {
+                const bodyVars = extractVars(prev.body);
+                // Keep one example per body variable, then QR as the last item.
+                const variable_examples = prev.variable_examples.slice(0, bodyVars.length);
+                while (variable_examples.length < bodyVars.length) variable_examples.push('');
+                variable_examples.push(QR_SAMPLE_URL);
+                return { ...prev, type: newType, variable_examples };
+            }
+
+            // Leaving Media (or any → non-media): remove the QR preset. Fall
+            // back to the default single example so the form still shows a field.
+            if (prev.type === 'twilio/media') {
+                const variable_examples = prev.variable_examples.filter((v) => v !== QR_SAMPLE_URL);
+                return {
+                    ...prev,
+                    type: newType,
+                    variable_examples: variable_examples.length ? variable_examples : ['Hans Smith'],
+                };
+            }
+
+            return { ...prev, type: newType };
+        });
+    };
 
     const setButton = (index, field, value) =>
         setForm((prev) => {
@@ -191,16 +257,8 @@ export default function CreateTwilioTemplate({ onSuccess }) {
             if (data.status) {
                 showSnackbar(`Template "${data.template.friendly_name}" created successfully (${categoryLabel(data.approval?.category ?? form.category)})`);
                 onSuccess?.();
-                setForm({
-                    friendly_name: '',
-                    language: 'de',
-                    body: '',
-                    variable_examples: ['Hans Smith'],
-                    type: 'twilio/quick-reply',
-                    buttons: DEFAULT_BUTTONS.map((b) => ({ ...b })),
-                    media_url: '',
-                    category: 'MARKETING',
-                });
+                // Full reset to the canonical initial state (same source as mount).
+                setForm(makeInitialForm());
             } else {
                 showSnackbar(data.message || 'Failed to create template', 'error');
             }
@@ -230,7 +288,7 @@ export default function CreateTwilioTemplate({ onSuccess }) {
                 <ToggleButtonGroup
                     value={form.type}
                     exclusive
-                    onChange={(_, v) => v && set('type', v)}
+                    onChange={(_, v) => handleTypeChange(v)}
                     size="small"
                 >
                     <ToggleButton value="twilio/quick-reply">Quick Reply</ToggleButton>
