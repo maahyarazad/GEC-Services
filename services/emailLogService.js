@@ -11,7 +11,18 @@
 // (mirrored in create_tables.sql), following the knowledge_base_view_log pattern.
 
 const dbService = require("./dbService");
-const { labelFor, UNCATEGORISED } = require("./emailLogCategories");
+const { labelFor, UNCATEGORISED, APP_SUPPORT } = require("./emailLogCategories");
+
+// Translate the dashboard's mailbox toggle into a SQL fragment + params on the
+// `category` column. "app-support" is the single app.support@ category; anything
+// else (the default) is the do-not-reply@ mailbox, i.e. every other category.
+function mailboxClause(mailbox) {
+  if (mailbox === APP_SUPPORT) {
+    return { sql: "category = ?", params: [APP_SUPPORT] };
+  }
+  // do-not-reply: everything except the app-support category.
+  return { sql: "category <> ?", params: [APP_SUPPORT] };
+}
 
 // Normalise a `to`/`bcc` value (string, comma-separated string, array, or
 // nodemailer address objects) into a flat list of lower-cased address strings.
@@ -85,18 +96,20 @@ function logEmailSend({ category, to, bcc, subject, status, error, response } = 
 
 // Category summary: one row per category that has at least one entry, most
 // active first. Shape matches contracts/email-log-api.md.
-function getCategories() {
+function getCategories({ mailbox } = {}) {
   const db = dbService.getDB();
+  const { sql, params } = mailboxClause(mailbox);
   const rows = db
     .prepare(
       `SELECT category,
               COUNT(*)        AS count,
               MAX(created_at) AS lastSent
          FROM email_log
+        WHERE ${sql}
         GROUP BY category
         ORDER BY count DESC`
     )
-    .all();
+    .all(...params);
 
   const categories = rows.map((r) => ({
     key: r.category,
@@ -110,11 +123,13 @@ function getCategories() {
 
 // Paged entries, newest first. Optional category filter + recipient substring
 // search, composed with AND. Shape matches contracts/email-log-api.md.
-function queryEntries({ category, search, page, pageSize } = {}) {
+function queryEntries({ category, search, page, pageSize, mailbox } = {}) {
   const db = dbService.getDB();
 
-  const where = [];
-  const params = [];
+  // Always scope to the selected mailbox, then AND any category/search filters.
+  const mbox = mailboxClause(mailbox);
+  const where = [mbox.sql];
+  const params = [...mbox.params];
   if (category) {
     where.push("category = ?");
     params.push(String(category));

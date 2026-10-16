@@ -29,11 +29,22 @@ import TablePagination from "@mui/material/TablePagination";
 import CircularProgress from "@mui/material/CircularProgress";
 import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
+import RadioGroup from "@mui/material/RadioGroup";
+import Radio from "@mui/material/Radio";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import { IoSearchOutline } from "react-icons/io5";
 import { MdArrowBack, MdClose, MdEmail } from "react-icons/md";
 
 const SERVER = import.meta.env.VITE_SERVERURL;
 const PAGE_SIZE = 50;
+
+// The two mailboxes the log can be scoped to. The value is sent to the API as
+// ?mailbox=…; "do-not-reply" is the default (every category except app-support)
+// and "app-support" is the app.support@ mailbox (the single app-support category).
+const MAILBOXES = [
+  { value: "do-not-reply", label: "do-not-reply" },
+  { value: "app-support", label: "app.support" },
+];
 
 function formatTs(ts) {
   if (!ts) return "—";
@@ -64,6 +75,9 @@ async function getJson(url) {
 }
 
 export default function EmailLogs() {
+  // Which mailbox the whole view is scoped to (feature 013).
+  const [mailbox, setMailbox] = useState(MAILBOXES[0].value);
+
   // Category summary (US1)
   const [categories, setCategories] = useState([]);
   const [catLoading, setCatLoading] = useState(true);
@@ -88,14 +102,16 @@ export default function EmailLogs() {
     setCatLoading(true);
     setError("");
     try {
-      const data = await getJson(`${SERVER}/api/email-log/categories`);
+      const data = await getJson(
+        `${SERVER}/api/email-log/categories?mailbox=${encodeURIComponent(mailbox)}`
+      );
       setCategories(data.categories || []);
     } catch (e) {
       setError(e.message);
     } finally {
       setCatLoading(false);
     }
-  }, []);
+  }, [mailbox]);
 
   useEffect(() => {
     loadCategories();
@@ -128,6 +144,7 @@ export default function EmailLogs() {
           params.set("category", selectedCategory.key);
         }
         if (searchTerm) params.set("search", searchTerm);
+        params.set("mailbox", mailbox);
         params.set("page", String(page + 1)); // API is 1-based
         params.set("pageSize", String(PAGE_SIZE));
         const data = await getJson(
@@ -146,7 +163,7 @@ export default function EmailLogs() {
     return () => {
       cancelled = true;
     };
-  }, [inEntriesView, selectedCategory, searchTerm, page]);
+  }, [inEntriesView, selectedCategory, searchTerm, page, mailbox]);
 
   const openCategory = (cat) => {
     setSelectedCategory({ key: cat.key, label: cat.label });
@@ -165,6 +182,17 @@ export default function EmailLogs() {
     setPage(0);
   };
 
+  // Switching mailbox starts a clean view: drop any drill-down / search and
+  // reset paging so the new mailbox's category list is what loads.
+  const changeMailbox = (next) => {
+    if (next === mailbox) return;
+    setMailbox(next);
+    setSelectedCategory(null);
+    setSearchInput("");
+    setSearchTerm("");
+    setPage(0);
+  };
+
   const heading = searchTerm
     ? `Search results for “${searchTerm}”`
     : selectedCategory
@@ -173,12 +201,26 @@ export default function EmailLogs() {
 
   return (
     <Box sx={{ p: 2, maxWidth: 1100, mx: "auto" }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1}}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, flexWrap: "wrap" }}>
         <MdEmail size={22} />
-         <pre style={{padding: 0, margin: 0}}>do-not-replay</pre> 
-        <Typography variant="h6" sx={{ fontWeight: 500, flexDirection: 'row' }}>
-             Email Log
+        <Typography variant="h6" sx={{ fontWeight: 500 }}>
+          Email Log
         </Typography>
+        <RadioGroup
+          row
+          value={mailbox}
+          onChange={(e) => changeMailbox(e.target.value)}
+          sx={{ ml: 1 }}
+        >
+          {MAILBOXES.map((m) => (
+            <FormControlLabel
+              key={m.value}
+              value={m.value}
+              control={<Radio size="small" />}
+              label={<pre style={{ padding: 0, margin: 0 }}>{m.label}</pre>}
+            />
+          ))}
+        </RadioGroup>
       </Box>
 
       {/* Search bar on top (US3) */}
@@ -235,8 +277,8 @@ export default function EmailLogs() {
           </Box>
         ) : categories.length === 0 ? (
           <Paper variant="outlined" sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
-            No emails have been logged yet. Entries appear here as do-not-reply
-            emails are sent.
+            No emails have been logged for this mailbox yet. Entries appear here
+            as emails are sent.
           </Paper>
         ) : (
           <Paper variant="outlined">

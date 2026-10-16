@@ -28,6 +28,11 @@ const EMAIL_CATEGORIES = Object.freeze({
 
 const UNCATEGORISED = "uncategorised";
 
+// The single category used for mail sent from the app.support@ mailbox; every
+// other category belongs to the do-not-reply@ mailbox. This split drives the
+// mailbox toggle in the Email Logs dashboard (feature 013).
+const APP_SUPPORT = "app-support";
+
 // Resolve a stored key to its label, falling back to the key itself so an
 // unknown/legacy value still renders something meaningful rather than blank.
 function labelFor(key) {
@@ -35,4 +40,4 @@ function labelFor(key) {
   return EMAIL_CATEGORIES[key] || key;
 }
 
-module.exports = { EMAIL_CATEGORIES, UNCATEGORISED, labelFor };
+module.exports = { EMAIL_CATEGORIES, UNCATEGORISED, APP_SUPPORT, labelFor };

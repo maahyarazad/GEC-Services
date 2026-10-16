@@ -12,7 +12,9 @@ router.use("/api/email-log", authorize.authorize_admin);
 // GET /api/email-log/categories — category summary for the top-level list (US1).
 router.get("/api/email-log/categories", (req, res) => {
   try {
-    const { categories, total } = emailLogService.getCategories();
+    const { categories, total } = emailLogService.getCategories({
+      mailbox: req.query.mailbox,
+    });
     return res.json({ status: true, categories, total });
   } catch (err) {
     return res.status(500).json({ status: false, message: err.message });
@@ -22,12 +24,13 @@ router.get("/api/email-log/categories", (req, res) => {
 // GET /api/email-log/entries — paged drill-down (US2) + recipient search (US3).
 router.get("/api/email-log/entries", (req, res) => {
   try {
-    const { category, search, page, pageSize } = req.query;
+    const { category, search, page, pageSize, mailbox } = req.query;
     const result = emailLogService.queryEntries({
       category,
       search,
       page,
       pageSize,
+      mailbox,
     });
     return res.json({ status: true, ...result });
   } catch (err) {
