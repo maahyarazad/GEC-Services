@@ -39,25 +39,8 @@ const TOPIC_IDS = new Set(Object.keys(VIDEO_FILES));
 
 const VIEW_EVENT_TYPES = new Set(["topic_opened", "video_played"]);
 
-// ─── DB migration (idempotent — runs once at startup) ────────────────────────
-// Mirrors the DDL documented in create_tables.sql.
-(function runMigrations() {
-  const steps = [
-    `CREATE TABLE IF NOT EXISTS knowledge_base_view_log (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      topic_id    TEXT    NOT NULL,
-      event_type  TEXT    NOT NULL
-                  CHECK (event_type IN ('topic_opened', 'video_played')),
-      admin_user  TEXT,
-      created_at  INTEGER NOT NULL
-    )`,
-    `CREATE INDEX IF NOT EXISTS idx_kb_view_log_topic   ON knowledge_base_view_log (topic_id)`,
-    `CREATE INDEX IF NOT EXISTS idx_kb_view_log_created ON knowledge_base_view_log (created_at)`,
-  ];
-  for (const sql of steps) {
-    try { db.exec(sql); } catch { /* already applied */ }
-  }
-})();
+// Schema (knowledge_base_view_log + indexes) is declared in create_tables.sql —
+// no runtime migration here.
 
 // server.js already applies authorize_admin to everything under /api/, but this
 // router states its own requirement too: these routes must never be reachable

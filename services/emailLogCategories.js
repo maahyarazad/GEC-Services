@@ -22,6 +22,7 @@ const EMAIL_CATEGORIES = Object.freeze({
   "party-invitation": "Party Invitation",
   "venue-courtesy": "Venue Courtesy Message",
   "newsletter-batch": "Newsletter / Batch",
+  "app-support": "App Support",
   uncategorised: "Other / Uncategorised",
 });
 

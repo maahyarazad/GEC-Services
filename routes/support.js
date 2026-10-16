@@ -15,25 +15,8 @@ const { fileTypeFromBuffer } = require("file-type");
 const STORAGE_DIR = path.resolve(__dirname, "../support_attachments");
 if (!fs.existsSync(STORAGE_DIR)) fs.mkdirSync(STORAGE_DIR, { recursive: true });
 
-// ─── DB migrations (idempotent — run once at startup) ─────────────────────────
-(function runMigrations() {
-  const steps = [
-    `ALTER TABLE support_ticket_comments ADD COLUMN source TEXT NOT NULL DEFAULT 'admin'`,
-    `ALTER TABLE support_tickets ADD COLUMN has_unread_customer_reply INTEGER NOT NULL DEFAULT 0`,
-    `CREATE TABLE IF NOT EXISTS support_email_threads (
-      id         INTEGER PRIMARY KEY AUTOINCREMENT,
-      ticket_id  INTEGER NOT NULL,
-      message_id TEXT    NOT NULL,
-      created_at DATETIME DEFAULT (datetime('now')),
-      FOREIGN KEY (ticket_id) REFERENCES support_tickets(id)
-    )`,
-  ];
-  for (const sql of steps) {
-    try { db.exec(sql); } catch { /* already exists */ }
-  }
-})();
-
-
+// Schema (support_ticket_comments.source, support_tickets.has_unread_customer_reply,
+// and support_email_threads) is declared in create_tables.sql — no runtime migration here.
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ALLOWED_MIME = new Set([
