@@ -37,11 +37,7 @@ A media template always sends its image via the `{{qr_code_url}}` placeholder (t
 **Acceptance Scenarios**:
 
 1. **Given** the Create Template form, **When** the admin switches the type to Media, **Then** the example value tied to `{{qr_code_url}}` is set to `https://services.german-emirates-club.com/qr_codes/gms-imgs-17715892355912574.png`.
-<<<<<<< HEAD
 2. **Given** the admin switched to Media and the `{{qr_code_url}}` example was prefilled (as the last entry), **When** they switch away to Text only or Quick Reply, **Then** the QR sample is removed and the body-variable example values remain unaffected.
-=======
-2. **Given** the admin switched to Media and the `{{qr_code_url}}` example was prefilled, **When** they switch away to Text only or Quick Reply, **Then** the body-variable example values are unaffected (the QR-only example applies to the media variable).
->>>>>>> 549a1d27d (Reset Create Meta Template form on create; prefill QR example on Media)
 3. **Given** a media template is created with the prefilled QR sample, **When** it is submitted, **Then** the sample URL is sent as the example for `{{qr_code_url}}`.
 
 ---
@@ -60,18 +56,11 @@ A media template always sends its image via the `{{qr_code_url}}` placeholder (t
 - **FR-001**: On a **successful** template creation, the form MUST reset every field to a single, canonical initial state (friendly name, language, body, variable examples, type, buttons, media URL, category).
 - **FR-002**: The post-create reset state MUST be identical to the state a freshly mounted form shows (one source of truth for "initial form"; no divergent duplicate).
 - **FR-003**: A **failed** create (client validation or server error) MUST NOT reset the form; entered values are preserved.
-<<<<<<< HEAD
 - **FR-004**: When the template type is switched to **Media**, `https://services.german-emirates-club.com/qr_codes/gms-imgs-17715892355912574.png` MUST be added as the **last** example value, aligned to the `{{qr_code_url}}` variable.
 - **FR-005**: The `{{qr_code_url}}` prefill MUST be the last example entry and MUST NOT overwrite example values that belong to body variables.
 - **FR-006**: The prefilled sample URL MUST be submitted as the `{{qr_code_url}}` example value when a media template is created (so it reaches WhatsApp approval).
 - **FR-007**: The feature MUST change only the Create Meta Template form behaviour; the create endpoint/contract and other template types' behaviour are unchanged.
 - **FR-008**: Switching the template type **away** from Media (to Text or Quick Reply) MUST revert the prefill by removing the QR sample example; body-variable examples MUST remain. Switching between two non-media types MUST NOT change the example list.
-=======
-- **FR-004**: When the template type is switched to **Media**, the example value corresponding to the `{{qr_code_url}}` variable MUST be prefilled with `https://services.german-emirates-club.com/qr_codes/gms-imgs-17715892355912574.png`.
-- **FR-005**: The `{{qr_code_url}}` prefill MUST populate the example field that maps to the `{{qr_code_url}}` variable specifically, without overwriting example values that belong to body variables.
-- **FR-006**: The prefilled sample URL MUST be submitted as the `{{qr_code_url}}` example value when a media template is created (so it reaches WhatsApp approval).
-- **FR-007**: The feature MUST change only the Create Meta Template form behaviour; the create endpoint/contract and other template types' behaviour are unchanged.
->>>>>>> 549a1d27d (Reset Create Meta Template form on create; prefill QR example on Media)
 
 ### Key Entities *(include if feature involves data)*
 

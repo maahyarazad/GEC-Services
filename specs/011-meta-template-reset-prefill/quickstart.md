@@ -46,7 +46,6 @@ shows `https://services.german-emirates-club.com/qr_codes/gms-imgs-1771589235591
    Media off and on again.
 
 **Expected**: the `{{name}}` example value is preserved; the `{{qr_code_url}}`
-<<<<<<< HEAD
 example is the **last** example field and holds the sample URL — it did not
 overwrite the `{{name}}` example.
 
@@ -57,11 +56,6 @@ overwrite the `{{name}}` example.
 examples remain. Switching between Text and Quick Reply does not change the
 example list.
 
-=======
-example (shown as the last example field) holds the sample URL — it did not
-overwrite the `{{name}}` example.
-
->>>>>>> 549a1d27d (Reset Create Meta Template form on create; prefill QR example on Media)
 ## Scenario D — Sample URL reaches the payload (US2, FR-006)
 
 1. With a Media template prefilled per Scenario C, open devtools Network, submit.
