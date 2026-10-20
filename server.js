@@ -16,7 +16,7 @@ const registerRoutes = require("./routes.js");
 
 // Services used by the scheduled jobs in the cron section below.
 const GSheetService = require("./services/gSheetService.js");
-const cron = require("node-cron");
+const schedule = require("node-schedule");
 
 // Setup DB connection
 const betterSqlite3 = require("better-sqlite3");
@@ -144,7 +144,9 @@ imapPoller.start(io);
 
 // https://crontab.guru/
 // Maahyar CM: node cron expression is different than normal expression use this site to check
-// cron.schedule("* */6 * * *", async () => {
+// Scheduling via node-schedule (https://github.com/node-schedule/node-schedule).
+// scheduleJob() accepts the same cron strings; note W and L are not supported.
+// schedule.scheduleJob("* */6 * * *", async () => {
 //   try {
 //     console.log(`${Date.now()} - [Cron | Every 6h] Starting: GSheet sync + phone normalization —`, new Date());
 //     await GSheetService.GSheetParser();
@@ -161,7 +163,7 @@ imapPoller.start(io);
 
 if(process.env.ENVIRONMENT === 'DEV'){
 
-    cron.schedule("0 3 * * *", async () => {
+    schedule.scheduleJob("0 3 * * *", async () => {
       try {
         console.log(`${Date.now()} - [Cron | daily] Starting: MongoDB backup —`, new Date());
         await MongoDbBackUpJob.run();
