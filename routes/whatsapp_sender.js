@@ -10,6 +10,7 @@ const {
 
 
 const dbService = require("../services/dbService");
+const { parseVCard } = require("../services/vcardParser");
 const db = dbService.getDB();
 const fs = require("fs");
 const path = require("path");
@@ -1144,6 +1145,54 @@ router.get("/api/whatsapp/download-media", async (req, res) => {
       message: "Failed to download media",
     });
   }
+});
+
+const VCARD_MAX_BYTES = 64 * 1024;
+
+router.get("/api/whatsapp/media-vcard", async (req, res) => {
+  const { mediaUrl } = req.query;
+
+  // Twilio credentials are attached to this request, so only fetch Twilio-hosted media.
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(mediaUrl);
+  } catch {
+    parsedUrl = null;
+  }
+  if (!parsedUrl || parsedUrl.protocol !== "https:" || parsedUrl.hostname !== "api.twilio.com") {
+    return res.status(400).json({ status: false, message: "Invalid mediaUrl" });
+  }
+
+  let text;
+  try {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+    const authHeader =
+      "Basic " + Buffer.from(`${accountSid}:${authToken}`).toString("base64");
+
+    // `size` makes node-fetch reject bodies larger than the cap.
+    const response = await fetch(parsedUrl.href, {
+      headers: { Authorization: authHeader },
+      size: VCARD_MAX_BYTES,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch media: ${response.statusText}`);
+    }
+
+    text = await response.text();
+  } catch (error) {
+    console.error(`${Date.now()} - vCard fetch error:`, error);
+    return res.status(502).json({ status: false, message: "Failed to fetch contact card" });
+  }
+
+  const contacts = parseVCard(text);
+  if (!contacts.length) {
+    return res.status(422).json({ status: false, message: "Could not parse contact card" });
+  }
+
+  return res.status(200).json({ status: true, contacts });
 });
 
 router.patch("/api/whatsapp/update-map-url", async (req, res) => {

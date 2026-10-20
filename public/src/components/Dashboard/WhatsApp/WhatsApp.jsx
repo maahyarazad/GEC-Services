@@ -20,7 +20,7 @@ import { IoAddCircleOutline } from "react-icons/io5";
 import { columns, responseColumns, normalizePhone } from './WhatsAppComponentConfig'
 import MessageModal from "./MessageModal";
 import { useAlertDialog } from "../../Providers/AlertProvider";
-import QuickReply from "./QuickReply";
+import QuickReply from "./QuickReply/QuickReply";
 import { IoStatsChartSharp } from "react-icons/io5";
 import WhastAppReport from '../Dashboard/WhastAppReport';
 import WhastAppTypeReport from '../Dashboard/WhastAppTypeReport';

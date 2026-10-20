@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import HoverItem from '../HoverItem';
+import HoverItem from '../../HoverItem';
 function EventDropdownSearch({ events = [], eventId, onSelect }) {
     const [search, setSearch] = useState("");
     const [open, setOpen] = useState(false);

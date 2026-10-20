@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useSnackbar } from '../../Providers/Snackbar';
+import { useSnackbar } from '../../../Providers/Snackbar';
 import { Button, CircularProgress } from '@mui/material';
-import ChatView from './ChatView';
+import ChatView from '../ChatView/ChatView';
 import './QuickReply.css';
 
 const QuickReply = ({ CloseModal, incoming_message }) => {
