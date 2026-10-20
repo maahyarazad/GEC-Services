@@ -17,7 +17,6 @@ import Tabs from "@mui/material/Tabs";
 
 // Icons
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
-import { BsPeopleFill } from "react-icons/bs";
 import { FaWhatsapp } from "react-icons/fa";
 import { FcSurvey } from "react-icons/fc";
 import { GiArchiveRegister } from "react-icons/gi";
@@ -268,10 +267,6 @@ const Admin = ({ data }) => {
             label: "Partner Onboarding",
         },
 
-        {
-            icon: <BsPeopleFill size={20} />,
-            label: "Expert Circle",
-        },
         {
             icon: <GrDocumentPdf size={20} />,
             label: "PDF Generator",

@@ -321,6 +321,7 @@ function GridToolbar({ columns, filters, onFiltersChange, visibleFields, onVisib
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterPos, setFilterPos] = useState({ top: 0, left: 0 });
   const filterAnchorRef = useRef(null);
+  const toolbarRef = useRef(null);
   const [colAnchor, setColAnchor] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -355,12 +356,36 @@ function GridToolbar({ columns, filters, onFiltersChange, visibleFields, onVisib
     return () => document.removeEventListener('keydown', handler);
   }, [filterOpen]);
 
+  // Auto-close when the toolbar leaves the screen.
+  // The panel is portaled to document.body (position: fixed), so it lives
+  // OUTSIDE the grid's DOM subtree. When a container hides the grid without
+  // unmounting it — e.g. SlideMenu / SlideModalProvider sliding it away with
+  // `transform: translateX(100%)`, or an ancestor set to `display:none` — nothing
+  // else would drop `filterOpen`, leaving the panel floating orphaned over the app.
+  // An IntersectionObserver on the toolbar root fires for translate-off-screen,
+  // display:none, and detachment alike, so we close the panel in every case while
+  // leaving normal partial scrolling (toolbar still visible) untouched.
+  useEffect(() => {
+    if (!filterOpen) return;
+    const el = toolbarRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry && !entry.isIntersecting) setFilterOpen(false);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [filterOpen]);
+
+  // Defensive: never let the open flag (and its body portal) outlive the toolbar.
+  useEffect(() => () => setFilterOpen(false), []);
+
   const activeCount = filters.filter(
     (f) => f.value !== '' || ['isEmpty', 'isNotEmpty'].includes(f.operator)
   ).length;
 
   return (
     <Box
+      ref={toolbarRef}
       sx={{
         display: 'flex',
         alignItems: 'center',

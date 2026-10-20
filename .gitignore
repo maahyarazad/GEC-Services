@@ -90,3 +90,4 @@ file_storage/knowledge_base/*
 !file_storage/knowledge_base/.gitkeep
 Job_Order_202600001.docx
 Job_Order_20261002.docx
+.specify/feature.json
