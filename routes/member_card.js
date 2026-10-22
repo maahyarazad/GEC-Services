@@ -29,6 +29,85 @@ function titleToSlug(title) {
     .replace(/[^\w-]+/g, ""); // remove any non-alphanumeric characters except dash
 }
 
+// ── Member card CSV export ─────────────────────────────────────────────────
+// Member passes are stored under the "CORPORATE CARD" title slug (see /member-pass).
+const MEMBER_CARD_PASS_SLUG = titleToSlug("CORPORATE CARD");
+
+const applePassUrl = (row) =>
+  row.serial_number
+    ? `${process.env.CLIENT_ORIGIN}/apple_pass/${MEMBER_CARD_PASS_SLUG}/${row.serial_number}.pkpass`
+    : "";
+
+// Leading = + - @ (or tab/CR) would run as a formula in Excel / Sheets (CSV injection).
+const neutralize = (value) => {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string" && /^[=+\-@\t\r]/.test(value)) return `'${value}`;
+  return value;
+};
+
+// Long digit strings (phones, card numbers) would otherwise show as 9.71E+11 in Excel.
+const textSafeNumber = (value) => {
+  if (value === null || value === undefined) return "";
+  const str = String(value);
+  return /^\+?\d{10,}$/.test(str) ? `="${str}"` : neutralize(value);
+};
+
+const toYesNo = (value) => {
+  if (value === null || value === undefined || value === "") return "";
+  return [1, true, "1", "true"].includes(value) ? "Yes" : "No";
+};
+
+const MEMBER_CARD_TYPE_LABELS = { 7: "Corporate (red)", 5: "Blue (non-paid)", 1: "Blue (paid)" };
+const typeLabel = (value) => {
+  if (value === null || value === undefined || value === "") return "";
+  return MEMBER_CARD_TYPE_LABELS[value] || String(value);
+};
+
+const pad2 = (n) => String(n).padStart(2, "0");
+
+// Dates are stored in mixed formats: SQLite "YYYY-MM-DD HH:MM:SS", ISO strings and Date.toString().
+const formatDate = (value, withTime = true) => {
+  if (value === null || value === undefined || value === "") return "";
+  const str = String(value);
+
+  // SQLite datetime text has no timezone — keep it as written.
+  const sqlite = str.match(/^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2}))?(?::\d{2}(?:\.\d+)?)?$/);
+  if (sqlite) return withTime && sqlite[2] ? `${sqlite[1]} ${sqlite[2]}` : sqlite[1];
+
+  const date = new Date(str);
+  if (Number.isNaN(date.getTime())) return str;
+
+  const day = `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())}`;
+  return withTime ? `${day} ${pad2(date.getUTCHours())}:${pad2(date.getUTCMinutes())}` : day;
+};
+
+// Column order and labels follow specs/015-member-card-csv-export/data-model.md
+const MEMBER_CARD_EXPORT_FIELDS = [
+  { label: "ID", value: (row) => row.id },
+  { label: "Active", value: (row) => toYesNo(row.active) },
+  { label: "Type", value: (row) => typeLabel(row.type) },
+  { label: "Card Number", value: (row) => textSafeNumber(row.card_number) },
+  { label: "Partner", value: (row) => neutralize(row.partner) },
+  { label: "Title", value: (row) => neutralize(row.title) },
+  { label: "First Name", value: (row) => neutralize(row.firstname) },
+  { label: "Last Name", value: (row) => neutralize(row.lastname) },
+  { label: "Gender", value: (row) => neutralize(row.gender) },
+  { label: "Birthday", value: (row) => formatDate(row.birthday, false) },
+  { label: "Mobile Number", value: (row) => textSafeNumber(row.mobile_number) },
+  { label: "Email", value: (row) => neutralize(row.email) },
+  { label: "Card Expiry Date", value: (row) => formatDate(row.card_expiry_date) },
+  { label: "Member ID", value: (row) => textSafeNumber(row.memberId) },
+  { label: "Username", value: (row) => neutralize(row.username) },
+  { label: "Paid", value: (row) => toYesNo(row.paid) },
+  { label: "Last Login", value: (row) => formatDate(row.last_login) },
+  { label: "Serial Number", value: (row) => neutralize(row.serial_number) },
+  { label: "Google Pass", value: (row) => neutralize(row.google_pass_token) },
+  { label: "Apple Pass", value: (row) => applePassUrl(row) },
+  { label: "Remarks", value: (row) => neutralize(row.remarks) },
+  { label: "Created At", value: (row) => formatDate(row.metadata_createdAt) },
+  { label: "Modified At", value: (row) => formatDate(row.metadata_modifiedAt) },
+];
+
 router.post("/member-card", upload.none(), async (req, res) => {
   try {
     const { username } = req.body;
@@ -236,6 +315,17 @@ router.post("/member-login", upload.none(), async (req, res) => {
       maxAge: 60 * 60 * 1000, // 1 hour
     });
 
+    // Best effort — a failed last_login stamp must not block the login.
+    if (member?.id && member?.email) {
+      try {
+        db.prepare(
+          "UPDATE member_card SET last_login = datetime('now') WHERE id = ? AND email = ?"
+        ).run(member.id, member.email);
+      } catch (error) {
+        console.error(`${Date.now()} - Failed to record last_login:`, error);
+      }
+    }
+
     return res.json({
       status: true,
       message: "Authentication Success",
@@ -410,7 +500,9 @@ WHERE rn = 1;
 
       const updateStmt = db.prepare(`
         UPDATE member_card
-        SET firstname = ?, lastname = ?, title = ?, birthday = ?, email = ?, active = 1,
+        SET firstname = ?, lastname = ?, title = ?,
+            gender = CASE ? WHEN 'm' THEN 'Herr' WHEN 'f' THEN 'Frau' ELSE gender END,
+            birthday = ?, email = ?, active = 1,
             remarks = 'synchronized ' || datetime('now'),
             metadata_modifiedAt = datetime('now')
         WHERE LOWER(partner) = LOWER(?) AND mobile_number = ?
@@ -418,7 +510,7 @@ WHERE rn = 1;
 
       for (const r of updateBatch) {
         if (checkPhoneConflict.get(r.mobile_number, r.partner)) continue;
-        updated += updateStmt.run(r.firstname, r.lastname, r.title, r.birthday, r.email, r.partner, r.mobile_number).changes;
+        updated += updateStmt.run(r.firstname, r.lastname, r.title, r.gender, r.birthday, r.email, r.partner, r.mobile_number).changes;
       }
 
       // STEP 2 — delete: soft-delete matching member_card rows
@@ -607,11 +699,18 @@ router.get("/api/member_card", (req, res) => {
 
 router.get("/api/member-card-csv-data", async (req, res) => {
   try {
-    const data = dbService.findAll("member_card");
+    const data = db.prepare("SELECT * FROM member_card ORDER BY id DESC").all();
+    const delimiter = req.query.delimiter === "semicolon" ? ";" : ",";
 
-    const csv = await exportTableAsCSV(data); // Await CSV generation
+    // BOM so Excel opens the file as UTF-8 (umlauts) instead of ANSI
+    const csv = await exportTableAsCSV(data, {
+      fields: MEMBER_CARD_EXPORT_FIELDS,
+      withBOM: true,
+      eol: "\r\n",
+      delimiter,
+    });
 
-    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader(
       "Content-Disposition",
       `attachment; filename=membership-data-${Date.now()}.csv`
