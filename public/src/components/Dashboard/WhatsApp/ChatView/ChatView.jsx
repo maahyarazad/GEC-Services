@@ -1,8 +1,10 @@
 import React, { useRef, useEffect } from "react";
 import "./ChatView.css";
 import { CircularProgress } from '@mui/material';
+import VCardBubble from "./VCardBubble";
 
 const SERVER_URL = import.meta.env.VITE_SERVERURL;
+const VCARD_TYPES = ["text/vcard", "text/x-vcard"];
 
 const isSameDay = (d1, d2) =>
     d1.getFullYear() === d2.getFullYear() &&
@@ -62,7 +64,17 @@ const MediaBubble = ({ media_url, media_type }) => {
         );
     }
 
-    return null;
+    if (VCARD_TYPES.includes(media_type.toLowerCase())) {
+        return <VCardBubble media_url={media_url} />;
+    }
+
+    // Anything we can't show inline (PDF, documents, …) gets a download link instead of an empty bubble.
+    return (
+        <div className="attachment">
+            <span>Attachment ({media_type})</span>
+            <a href={`${src}&filename=${encodeURIComponent(`attachment_${Date.now()}`)}`}>Download</a>
+        </div>
+    );
 };
 
 const ChatView = ({ messages, loadingHistory }) => {

@@ -5,7 +5,7 @@ import { TiDelete } from "react-icons/ti";
 import Modal from "../../Modal"
 import { useAppSelector } from "../../../store/hooks";
 import { getEvents } from "../../../features/eventSlice";
-import EventDropdownSearch from "./EventDropdownSearch";
+import EventDropdownSearch from "./EventDropdownSearch/EventDropdownSearch";
 import { BsExclamationTriangleFill } from "react-icons/bs";
 const MessageModal = ({
     state,
