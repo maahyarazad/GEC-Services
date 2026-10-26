@@ -12,7 +12,7 @@ afterwards:
 
 ```bash
 cp app.db backups/app-before-016.db           # restore with: cp backups/app-before-016.db app.db
-sqlite3 app.db < migrate_partner_onboarding_sync_status.sql
+sqlite3 app.db < sql_files/migrate_partner_onboarding_sync_status.sql
 npm start                                     # backend
 cd public && npm run dev                      # frontend
 ```

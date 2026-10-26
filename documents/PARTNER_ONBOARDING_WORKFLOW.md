@@ -309,9 +309,9 @@ These issues were found while reading the code and fixed in `specs/016-fix-partn
 | 8 | `INSERT OR IGNORE` never ignored anything, so re-uploads staged duplicates and `skipped` was always 0. | A re-upload replaces the pending row (old one `superseded`), and identical rows are `unchanged`. A partial unique index enforces one pending row per employee. |
 | 9 | Pending rows older than one month silently disappeared. | There is no age limit. Partners with rows older than 30 days are flagged with the oldest date. |
 
-**Schema:** `create_tables.sql` now carries `sync_status`, `synced_at`, `sync_note` and
+**Schema:** `sql_files/create_tables.sql` now carries `sync_status`, `synced_at`, `sync_note` and
 `ux_pod_pending_partner_phone`, and its stray `;` is fixed. Existing databases are updated with
-`migrate_partner_onboarding_sync_status.sql`, which must run **before** deploying the 016 code.
+`sql_files/migrate_partner_onboarding_sync_status.sql`, which must run **before** deploying the 016 code.
 
 **Still open (out of scope):**
 - `GET /partner-delivery-info` still reads the partner from the query string. It only reads

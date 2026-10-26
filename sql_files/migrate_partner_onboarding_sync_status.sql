@@ -11,7 +11,7 @@
 --
 -- Rows closed before this script ran are marked 'synchronized' with a note; they are not
 -- re-opened. Run once, BEFORE deploying the 016 code:
---   sqlite3 app.db < migrate_partner_onboarding_sync_status.sql
+--   sqlite3 app.db < sql_files/migrate_partner_onboarding_sync_status.sql
 -- A second run reports "duplicate column name" for the three ALTER TABLE statements; the
 -- remaining statements are guarded so they change nothing.
 
