@@ -43,6 +43,7 @@ export interface XlsxValidationResult {
   csvFile?: File;
   rowCount?: number;        // total valid rows
   faultyRecords?: FaultyRecord[];
+  warnings?: FaultyRecord[]; // valid rows submitted with a field left empty
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -62,6 +63,24 @@ function cellToString(val: unknown): string {
   }
   return String(val).trim();
 }
+
+// ExcelJS returns date cells as Date at UTC midnight — local parts could shift the day.
+function formatDateCell(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
+}
+
+// Date cells, formula cells (value in .result) and plain cells → string
+function cellValue(cell: unknown): string {
+  if (cell instanceof Date) return formatDateCell(cell);
+  if (cell !== null && typeof cell === "object" && "result" in (cell as object)) {
+    const result = (cell as { result: unknown }).result;
+    return result instanceof Date ? formatDateCell(result) : cellToString(result);
+  }
+  return cellToString(cell);
+}
+
+const READABLE_DATE = /^(\d{1,2}\/\d{1,2}\/\d{4}|\d{4}-\d{2}-\d{2})/;
 
 function csvEscape(str: string): string {
   return /[,"\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
@@ -161,6 +180,7 @@ worksheet.eachRow((row) => {
     // ── Validate rows ────────────────────────────────────────────────────
     const phonesSeen = new Map<string, number>(); // phone → first row number
     const faultyRecords: FaultyRecord[] = [];
+    const warnings: FaultyRecord[] = [];
     const validRows: string[][] = [];
 
     allDataRows.forEach(({ row, originalIndex }, dataIndex) => {
@@ -169,10 +189,18 @@ worksheet.eachRow((row) => {
       // Build a readable record for the faulty report
       const recordData: Record<string, string> = {};
       REQUIRED_HEADERS.forEach((h) => {
-
-        recordData[h] = typeof row[headerIndexMap[h]] === 'object' ? row[headerIndexMap[h]]?.result : cellToString(row[headerIndexMap[h]]);        
-        
+        recordData[h] = cellValue(row[headerIndexMap[h]]);
       });
+
+      // An unreadable birthday is left empty by the server — warn, but keep the row
+      const birthday = recordData["Date of Birth"];
+      if (birthday !== "" && !READABLE_DATE.test(birthday)) {
+        warnings.push({
+          rowNumber: dataIndex + 1,
+          data: recordData,
+          reasons: ['"Date of Birth" is not a readable date and will be left empty'],
+        });
+      }
 
       // 1. Empty mandatory fields
       MANDATORY_FIELDS.forEach((field) => {
@@ -246,6 +274,7 @@ worksheet.eachRow((row) => {
       csvFile,
       rowCount: validRows.length,
       faultyRecords,
+      warnings,
     };
   } catch (err) {
     console.error(err);

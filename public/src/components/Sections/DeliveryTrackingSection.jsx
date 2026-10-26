@@ -15,6 +15,8 @@ import Divider from '@mui/material/Divider';
 import Button from '@mui/material/Button';
 import CustomDataGrid from '../CustomDataGrid';
 import { useSnackbar } from '../Providers/Snackbar';
+import { useAlertDialog } from '../Providers/AlertProvider';
+import { formatSyncSummary, showSyncDetails } from './syncSummary';
 
 // ─── Column definitions (mirrors PartnerOnboardingSection) ───────────────────
 
@@ -124,6 +126,15 @@ function DeliveryInfoCard({ info, loading }) {
     );
 }
 
+// partner key → { total, en, de } pending staged rows
+const toPendingCountMap = (rows) => {
+    const map = {};
+    (rows ?? []).forEach(({ partner, pending_count, pending_en, pending_de }) => {
+        map[(partner ?? '').toLowerCase().trim()] = { total: pending_count, en: pending_en, de: pending_de };
+    });
+    return map;
+};
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 const DeliveryTrackingSection = () => {
@@ -142,6 +153,7 @@ const DeliveryTrackingSection = () => {
     const [syncing, setSyncing] = useState(false);
 
     const { showSnackbar } = useSnackbar();
+    const { openDialog } = useAlertDialog();
 
     // ── Delivery info state ────────────────────────────────────────────────────
     const [deliveryInfo, setDeliveryInfo] = useState(null);
@@ -161,11 +173,7 @@ const DeliveryTrackingSection = () => {
     const fetchPendingCounts = useCallback(async () => {
         try {
             const d = await fetch(`${import.meta.env.VITE_SERVERURL}/api/partner-onboarding-pending-counts`, { credentials: 'include' }).then(r => r.json());
-            const pcMap = {};
-            (d.data ?? []).forEach(({ partner, pending_count }) => {
-                pcMap[(partner ?? '').toLowerCase().trim()] = pending_count;
-            });
-            setPendingCounts(pcMap);
+            setPendingCounts(toPendingCountMap(d.data));
         } catch (e) {
             console.error('Failed to fetch pending counts', e);
         }
@@ -191,11 +199,7 @@ const DeliveryTrackingSection = () => {
             .then(([gecData, statsData, pendingData, deliveryData]) => {
                 setGecPartners(gecData.data ?? []);
                 setPartnerStats(statsData.data ?? []);
-                const pcMap = {};
-                (pendingData.data ?? []).forEach(({ partner, pending_count }) => {
-                    pcMap[(partner ?? '').toLowerCase().trim()] = pending_count;
-                });
-                setPendingCounts(pcMap);
+                setPendingCounts(toPendingCountMap(pendingData.data));
                 setPartnersWithDelivery(new Set(deliveryData.data ?? []));
             })
             .catch(console.error)
@@ -211,13 +215,13 @@ const DeliveryTrackingSection = () => {
             .map((p) => ({
                 group_name: p.group_name,
                 _notInServices: true,
-                _pendingCount: pendingCounts[(p.group_name ?? '').toLowerCase().trim()] ?? 0,
+                _pendingCount: pendingCounts[(p.group_name ?? '').toLowerCase().trim()]?.total ?? 0,
             }));
         return [
             ...partnerStats.map((s) => ({
                 group_name: s.partner,
                 _notInServices: false,
-                _pendingCount: pendingCounts[(s.partner ?? '').toLowerCase().trim()] ?? 0,
+                _pendingCount: pendingCounts[(s.partner ?? '').toLowerCase().trim()]?.total ?? 0,
             })),
             ...gecOnlyPartners,
         ];
@@ -250,6 +254,8 @@ const DeliveryTrackingSection = () => {
 
     // ── Sync ───────────────────────────────────────────────────────────────────
 
+    const selectedPendingDe = pendingCounts[(selectedPartner ?? '').toLowerCase().trim()]?.de ?? 0;
+
     const handleSync = async () => {
         if (!selectedPartner) return;
         setSyncing(true);
@@ -262,7 +268,8 @@ const DeliveryTrackingSection = () => {
             });
             const d = await r.json();
             if (d.status) {
-                showSnackbar(`Synced "${selectedPartner}" (DE): ${d.updated} updated, ${d.inserted} inserted, ${d.deactivated} deactivated`);
+                showSnackbar(formatSyncSummary(selectedPartner, d, 'DE'));
+                showSyncDetails(openDialog, selectedPartner, d);
                 fetchData(selectedPartner, paginationModel, sortModel, filterItems, showSynced);
                 fetchPendingCounts();
                 fetchPartnerStats();
@@ -390,16 +397,18 @@ const DeliveryTrackingSection = () => {
                                     🇩🇪 German-Speaking Employees — {selectedPartner}
                                 </Typography>
                                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                    <Button
-                                        size="small"
-                                        variant="outlined"
-                                        color="warning"
-                                        disabled={syncing}
-                                        onClick={handleSync}
-                                        sx={{ fontSize: 11, textTransform: 'none', whiteSpace: 'nowrap', py: 0 }}
-                                    >
-                                        {syncing ? <CircularProgress size={14} color="inherit" /> : 'Sync (DE)'}
-                                    </Button>
+                                    <span title={selectedPendingDe === 0 ? 'No pending German-speaking employees' : ''}>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            color="warning"
+                                            disabled={syncing || selectedPendingDe === 0}
+                                            onClick={handleSync}
+                                            sx={{ fontSize: 11, textTransform: 'none', whiteSpace: 'nowrap', py: 0 }}
+                                        >
+                                            {syncing ? <CircularProgress size={14} color="inherit" /> : 'Sync (DE)'}
+                                        </Button>
+                                    </span>
                                     <Chip
                                         label={showSynced ? 'Showing All' : 'Pending Only'}
                                         size="small"

@@ -13,6 +13,7 @@ const uniqid = require("uniqid");
 const path = require("path");
 const db = dbService.getDB();
 const { getPool } = require('../services/mysqlService');
+const { normalizePhone } = require("../helpers/essentials");
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -369,6 +370,27 @@ router.get("/api/gec-grouped-partners", async (req, res) => {
   }
 });
 
+// Partner names are compared lower-cased, trimmed and with umlauts folded
+// (ü→u, ö→o, ä→a, ß→ss) — foldPartnerSql in queries, foldPartner in JS.
+const foldPartnerSql = (expr) => `REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+      lower(trim(${expr})),
+    'Ü', 'u'), 'ü', 'u'),
+    'Ö', 'o'), 'ö', 'o'),
+    'Ä', 'a'), 'ä', 'a'),
+    'ß', 'ss')`;
+
+const foldPartner = (value) =>
+  String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/ü/g, "u")
+    .replace(/ö/g, "o")
+    .replace(/ä/g, "a")
+    .replace(/ß/g, "ss");
+
+// Same text format as SQLite datetime('now'), for remarks written from JS.
+const sqliteNow = () => new Date().toISOString().slice(0, 19).replace("T", " ");
+
 router.get("/api/member-card-partner-stats", (req, res) => {
   try {
     const stmt = db.prepare(`
@@ -389,16 +411,21 @@ pod AS (
         REPLACE(REPLACE(REPLACE(REPLACE(
             lower(trim(partner)),
         'ü','u'),'ö','o'),'ä','a'),'ß','ss') AS norm_partner,
-        COUNT(*)                             AS total_records
+        COUNT(*)                             AS total_records,
+        COUNT(*) FILTER (WHERE lower(trim(language)) = 'en') AS pending_en,
+        COUNT(*) FILTER (WHERE lower(trim(language)) = 'de') AS pending_de,
+        MIN(metadata_createdAt)              AS oldest_pending
     FROM partner_onboarding_data
-    WHERE metadata_createdAt >= datetime('now','-1 month')
-      AND synchronized != 1
+    WHERE synchronized != 1
     GROUP BY norm_partner
 )
 SELECT
     mc.partner,
     mc.member_count,
     COALESCE(pod.total_records, 0) AS available_update,
+    COALESCE(pod.pending_en, 0) AS pending_en,
+    COALESCE(pod.pending_de, 0) AS pending_de,
+    pod.oldest_pending,
     mc.active_account,
     mc.vp_issued
 FROM mc
@@ -416,10 +443,13 @@ ORDER BY available_update DESC, mc.active_account DESC;
 router.get("/api/partner-onboarding-pending-counts", (req, res) => {
   try {
     const data = db.prepare(`
-      SELECT partner, COUNT(*) AS pending_count
+      SELECT partner,
+        COUNT(*) AS pending_count,
+        COUNT(*) FILTER (WHERE lower(trim(language)) = 'en') AS pending_en,
+        COUNT(*) FILTER (WHERE lower(trim(language)) = 'de') AS pending_de,
+        MIN(metadata_createdAt) AS oldest_pending
       FROM partner_onboarding_data
-      WHERE metadata_createdAt >= datetime('now', '-1 month')
-        AND synchronized != 1
+      WHERE synchronized != 1
       GROUP BY partner
     `).all();
     return res.json({ status: true, data });
@@ -429,116 +459,94 @@ router.get("/api/partner-onboarding-pending-counts", (req, res) => {
   }
 });
 
+// Applies a partner's pending rows of ONE language to member_card. Every staged row is
+// closed individually with its outcome (sync_status), so rows of the other language and
+// rows that could not be applied are never marked as synchronized.
 router.post("/api/member-card-sync", (req, res) => {
   const { partner, language } = req.body;
   if (!partner) return res.status(400).json({ status: false, message: "partner is required" });
   if (!language || !['en', 'de'].includes(language))
     return res.status(400).json({ status: false, message: "language must be 'en' or 'de'" });
 
-
-  const corporateCardEmailSet = new Set();
-
+  // Cards created by this sync — they get the invitation email once the transaction commits.
+  const createdCards = [];
 
   try {
     const sync = db.transaction(() => {
-      // Step 0 — load the pending batch for this partner, filtered by language
-      const batch = db.prepare(`
-WITH norm_params AS (
-  SELECT
-    REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
-      lower(trim(?)),
-    'Ü', 'u'), 'ü', 'u'),
-    'Ö', 'o'), 'ö', 'o'),
-    'Ä', 'a'), 'ä', 'a'),
-    'ß', 'ss') AS partner_norm,
-    lower(trim(?)) AS language_norm
-),
-unsynced_table AS (
+      // Step 0 — every pending row for this partner and language; rn > 1 marks older rows
+      // for the same phone, which are superseded by the newest one.
+      const pending = db.prepare(`
+WITH unsynced_table AS (
   SELECT pod.*
   FROM partner_onboarding_data pod
-  CROSS JOIN norm_params np
-  WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
-            lower(trim(pod.partner)),
-        'Ü', 'u'), 'ü', 'u'),
-        'Ö', 'o'), 'ö', 'o'),
-        'Ä', 'a'), 'ä', 'a'),
-        'ß', 'ss') = np.partner_norm
-    AND lower(trim(pod.language)) = np.language_norm
-    AND metadata_createdAt >= datetime('now', '-1 month')
-    AND synchronized != 1
-),
-deduped AS (
-  SELECT *,
-    ROW_NUMBER() OVER (
-      PARTITION BY mobile_number
-      ORDER BY metadata_createdAt DESC
-    ) AS rn
-  FROM unsynced_table
+  WHERE ${foldPartnerSql("pod.partner")} = ${foldPartnerSql("?")}
+    AND lower(trim(pod.language)) = lower(trim(?))
+    AND pod.synchronized != 1
 )
-SELECT *
-FROM deduped
-WHERE rn = 1;
+SELECT *,
+  ROW_NUMBER() OVER (
+    PARTITION BY mobile_number
+    ORDER BY metadata_createdAt DESC, id DESC
+  ) AS rn
+FROM unsynced_table;
       `).all(partner, language);
 
-      if (batch.length === 0) return { updated: 0, inserted: 0, deactivated: 0 };
+      const result = {
+        inserted: 0, updated: 0, moved: 0, deactivated: 0, superseded: 0,
+        not_found: 0, conflict: 0, already_active: 0,
+        moves: [], conflicts: [],
+      };
 
-      const addBatch    = batch.filter(r => r.action_type === 'add');
-      const updateBatch = batch.filter(r => r.action_type === 'update');
-      const deleteBatch = batch.filter(r => r.action_type === 'delete');
-
-      let updated = 0;
-      let inserted = 0;
-      let deactivated = 0;
+      if (pending.length === 0) return result;
 
       // ── Prepared statements ───────────────────────────────────────────────
 
-      // STEP 1 — update: safe fields only, skip if phone belongs to another record
-      const checkPhoneConflict = db.prepare(`
-        SELECT id FROM member_card
-        WHERE mobile_number = ? AND LOWER(partner) != LOWER(?) LIMIT 1
+      const closeRow = db.prepare(`
+        UPDATE partner_onboarding_data
+        SET synchronized = 1, sync_status = ?, synced_at = datetime('now'), sync_note = ?
+        WHERE id = ?
       `);
 
+      const cardsByPhone = db.prepare(
+        `SELECT * FROM member_card WHERE mobile_number = ? ORDER BY active DESC, id DESC`
+      );
+
+      const getCard = db.prepare(`SELECT * FROM member_card WHERE id = ?`);
+
+      // update rows — safe fields only; an empty birthday keeps the card's birthday
       const updateStmt = db.prepare(`
         UPDATE member_card
         SET firstname = ?, lastname = ?, title = ?,
             gender = CASE ? WHEN 'm' THEN 'Herr' WHEN 'f' THEN 'Frau' ELSE gender END,
-            birthday = ?, email = ?, active = 1,
+            birthday = COALESCE(?, birthday), email = ?, active = 1,
             remarks = 'synchronized ' || datetime('now'),
             metadata_modifiedAt = datetime('now')
-        WHERE LOWER(partner) = LOWER(?) AND mobile_number = ?
+        WHERE id = ?
       `);
 
-      for (const r of updateBatch) {
-        if (checkPhoneConflict.get(r.mobile_number, r.partner)) continue;
-        updated += updateStmt.run(r.firstname, r.lastname, r.title, r.gender, r.birthday, r.email, r.partner, r.mobile_number).changes;
-      }
-
-      // STEP 2 — delete: soft-delete matching member_card rows
+      // delete rows — soft delete
       const deleteStmt = db.prepare(`
-        UPDATE member_card SET active = 0, remarks = 'synchronized delete ' || datetime('now')
-        WHERE LOWER(partner) = LOWER(?) AND mobile_number = ?
+        UPDATE member_card
+        SET active = 0, remarks = 'synchronized delete ' || datetime('now'),
+            metadata_modifiedAt = datetime('now')
+        WHERE id = ?
       `);
 
-      for (const r of deleteBatch) {
-        deactivated += deleteStmt.run(r.partner, r.mobile_number).changes;
-      }
-
-      // STEP 3 — add: per-record upsert with guard and card number generation
+      // add rows — skip a phone that is an active member of THIS partner and was synced
+      // for this partner within the last 3 months (legacy staged phones may carry a "+")
       const checkActiveGuard = db.prepare(`
         SELECT 1 FROM member_card mc
         WHERE mc.mobile_number = ? AND mc.active = 1
+          AND ${foldPartnerSql("mc.partner")} = ${foldPartnerSql("?")}
           AND EXISTS (
             SELECT 1 FROM partner_onboarding_data pod2
-            WHERE pod2.mobile_number = ?
-              AND pod2.synchronized = 1
+            WHERE REPLACE(pod2.mobile_number, '+', '') = ?
+              AND pod2.sync_status = 'synchronized'
+              AND ${foldPartnerSql("pod2.partner")} = ${foldPartnerSql("?")}
               AND pod2.metadata_createdAt >= datetime('now', '-3 months')
           )
         LIMIT 1
       `);
-
-      const checkMcByPhone = db.prepare(
-        `SELECT id FROM member_card WHERE mobile_number = ? LIMIT 1`
-      );
 
       const getMaxCardNumber = db.prepare(
         `SELECT MAX(card_number) AS max_num FROM member_card WHERE CAST(card_number AS TEXT) LIKE ?`
@@ -551,31 +559,98 @@ WHERE rn = 1;
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, datetime('now', '+1 year'), 'synchronized')
       `);
 
+      // add rows for an existing card — same partner (refresh) or another partner (move).
+      // card_number, serial_number, google_pass_token and memberId are kept.
       const updateMcAddStmt = db.prepare(`
         UPDATE member_card
-        SET firstname = ?, lastname = ?, title = ?,
-            gender    = CASE ? WHEN 'm' THEN 'Herr' WHEN 'f' THEN 'Frau' ELSE NULL END,
-            email = ?, birthday = ?,
+        SET partner = ?, firstname = ?, lastname = ?, title = ?,
+            gender    = CASE ? WHEN 'm' THEN 'Herr' WHEN 'f' THEN 'Frau' ELSE gender END,
+            email = ?, birthday = COALESCE(?, birthday),
             type      = CASE ? WHEN 'de' THEN 5 ELSE 7 END,
             active = 1,
             card_expiry_date = datetime('now', '+1 year'),
-            remarks = 'synchronized ' || datetime('now'),
+            remarks = ?,
             metadata_modifiedAt = datetime('now')
-        WHERE mobile_number = ?
+        WHERE id = ?
       `);
 
-      for (const r of addBatch) {
-        const mobile_number = r.mobile_number.replace('+','');
-        // 1.1 Guard: skip if phone is an active member synced within the last 3 months
-        if (checkActiveGuard.get(mobile_number, mobile_number)) continue;
+      // ── Apply each row ────────────────────────────────────────────────────
 
-        if (checkMcByPhone.get(mobile_number)) {
-          // 1 — Phone already in member_card → convert INSERT to UPDATE
-          updated += updateMcAddStmt.run(
-            r.firstname, r.lastname, r.title, r.gender, r.email, r.birthday, r.language, mobile_number
+      for (const r of pending) {
+        const close = (status, note = null) => closeRow.run(status, note, r.id);
+
+        if (r.rn > 1) {
+          close('superseded', 'older pending row for same phone');
+          result.superseded++;
+          continue;
+        }
+
+        const phone = normalizePhone(r.mobile_number);
+        if (!phone) {
+          close('not_found', 'no valid phone number');
+          result.not_found++;
+          continue;
+        }
+
+        const cards = cardsByPhone.all(phone);
+        const same = cards.filter((c) => foldPartner(c.partner) === foldPartner(r.partner));
+        const others = cards.filter((c) => foldPartner(c.partner) !== foldPartner(r.partner));
+        const birthday = r.birthday || null;
+
+        // update / delete never touch another partner's card
+        if (r.action_type === 'update' || r.action_type === 'delete') {
+          if (same.length > 0) {
+            for (const card of same) {
+              if (r.action_type === 'update') {
+                result.updated += updateStmt.run(
+                  r.firstname, r.lastname, r.title, r.gender, birthday, r.email, card.id
+                ).changes;
+              } else {
+                result.deactivated += deleteStmt.run(card.id).changes;
+              }
+            }
+            close('synchronized');
+          } else if (others.length > 0) {
+            result.conflict++;
+            result.conflicts.push({
+              mobile_number: phone,
+              action: r.action_type,
+              owner_partner: others[0].partner,
+            });
+            close('conflict', `owned by ${others[0].partner}`);
+          } else {
+            result.not_found++;
+            close('not_found');
+          }
+          continue;
+        }
+
+        // add
+        if (checkActiveGuard.get(phone, r.partner, phone, r.partner)) {
+          result.already_active++;
+          close('already_active');
+          continue;
+        }
+
+        if (same.length > 0) {
+          // Phone already a card of this partner → refresh and reactivate it
+          result.updated += updateMcAddStmt.run(
+            same[0].partner, r.firstname, r.lastname, r.title, r.gender, r.email, birthday,
+            r.language, `synchronized ${sqliteNow()}`, same[0].id
           ).changes;
+          close('synchronized');
+        } else if (others.length > 0) {
+          // Phone belongs to another partner's card → the employee changed jobs; move it
+          const from = others[0];
+          updateMcAddStmt.run(
+            r.partner, r.firstname, r.lastname, r.title, r.gender, r.email, birthday,
+            r.language, `moved from ${from.partner} to ${r.partner} ${sqliteNow()}`, from.id
+          );
+          result.moved++;
+          result.moves.push({ mobile_number: phone, from_partner: from.partner });
+          close('synchronized', `moved from ${from.partner}`);
         } else {
-          // INSERT new record with card number + expiry generation
+          // New member — next card number in the language's range, 1-year expiry
           const prefix = r.language === 'de' ? '5' : '7';
           const maxRow = getMaxCardNumber.get(`${prefix}%`);
           const baseNumber = r.language === 'de' ? 5000000 : 7000000;
@@ -583,48 +658,30 @@ WHERE rn = 1;
           const mcGender = r.gender === 'm' ? 'Herr' : r.gender === 'f' ? 'Frau' : null;
           const mcType = r.language === 'de' ? 5 : 7;
           const info = insertMcStmt.run(
-            r.partner, mobile_number, r.firstname, r.lastname, r.title,
-            mcGender, r.email, r.birthday, mcType, newCardNumber
+            r.partner, phone, r.firstname, r.lastname, r.title,
+            mcGender, r.email, birthday, mcType, newCardNumber
           );
           if (info.changes > 0) {
-            corporateCardEmailSet.add(r);
-            inserted++
-            };
+            createdCards.push(getCard.get(info.lastInsertRowid));
+            result.inserted++;
+          }
+          close('synchronized');
         }
       }
 
-      // STEP 4 — Mark all batch records as synchronized
-    db.prepare(`
-  UPDATE partner_onboarding_data
-  SET synchronized = 1
-  WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
-            lower(trim(partner)),
-        'Ü', 'u'), 'ü', 'u'),
-        'Ö', 'o'), 'ö', 'o'),
-        'Ä', 'a'), 'ä', 'a'),
-        'ß', 'ss')
-      =
-      REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
-            lower(trim(?)),
-        'Ü', 'u'), 'ü', 'u'),
-        'Ö', 'o'), 'ö', 'o'),
-        'Ä', 'a'), 'ä', 'a'),
-        'ß', 'ss')
-    AND metadata_createdAt >= datetime('now', '-1 month')
-    AND synchronized != 1
-`).run(partner);
-
-      return { updated, inserted, deactivated };
+      return result;
     });
 
     const result = sync();
 
-    if(corporateCardEmailSet.size > 0){
-        sendBatchEmails(corporateCardEmailSet);
+    // Sent after the response; failures are written to error_log per email.
+    if (createdCards.length > 0) {
+      sendBatchEmails(createdCards).catch((error) =>
+        console.error(`${Date.now()} - Invitation batch failed:`, error)
+      );
     }
 
-
-    return res.json({ status: true, ...result });
+    return res.json({ status: true, ...result, invitations_queued: createdCards.length });
   } catch (error) {
     console.error(`${Date.now()} - Error in /api/member-card-sync:`, error);
     res.status(500).json({ status: false, message: "Server error" });

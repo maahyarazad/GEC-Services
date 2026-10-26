@@ -1889,11 +1889,12 @@ async function membership_courtacy_at_venue_message(data) {
 
 }
 
+// Accepts any iterable (array or Set). One failed email is logged and does not stop the rest.
 const sendBatchEmails = async (corporateCardEmailSet) => {
   try {
     const batchSize = 25;
     const delayMs = 1 * 10 * 1000; // 10 seconds
-    const batches = chunkArray(corporateCardEmailSet, batchSize);
+    const batches = chunkArray(Array.from(corporateCardEmailSet ?? []), batchSize);
 
     for (let i = 0; i < batches.length; i++) {
       const batch = batches[i];
@@ -1902,10 +1903,20 @@ const sendBatchEmails = async (corporateCardEmailSet) => {
         `${Date.now()} - Sending batch ${i + 1} of ${batches.length}...`
       );
 
-        await Promise.all(batch.map((x) => membership__invitation(x)));
+      const results = await Promise.allSettled(batch.map((x) => membership__invitation(x)));
+      results.forEach((outcome, j) => {
+        if (outcome.status === "rejected") {
+          dbService.create("error_log", {
+            error: `${outcome.reason} (to: ${batch[j]?.email})`,
+            origin_function: "sendBatchEmails",
+          });
+        }
+      });
       console.log(`${Date.now()} - Batch ${i + 1} sent.`);
 
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      if (i < batches.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
     }
   } catch (error) {
     dbService.create("error_log", {
