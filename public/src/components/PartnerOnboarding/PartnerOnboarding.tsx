@@ -101,6 +101,7 @@ const INITIAL_WIZARD_STATE = {
     csvFile: null,
     rowCount: 0,
     faultyRecords: null,
+    warnings: null,
     startProcessingXLSX: false,
     // Step 2 — Review
     uploading: false,
@@ -346,6 +347,7 @@ export default function PartnerOnboarding() {
                 rowCount: result?.rowCount,
                 valid: result?.valid,
                 faultyRecords: result.faultyRecords,
+                warnings: result.warnings,
                 startProcessingXLSX: false,
             });
             showSnackbar(SUCCESS_TOAST_MESSAGES[0], "success");
@@ -387,8 +389,14 @@ export default function PartnerOnboarding() {
                 }
             );
             if (res.ok) {
+                const result = await res.json().catch(() => null);
                 setWiz({ wizardCompleted: true });
-                showSnackbar(SUCCESS_TOAST_MESSAGES[1], "success");
+                showSnackbar(
+                    result
+                        ? `Onboarding submitted — ${result.inserted ?? 0} new, ${result.replaced ?? 0} updated, ${result.unchanged ?? 0} unchanged`
+                        : SUCCESS_TOAST_MESSAGES[1],
+                    "success"
+                );
                 return;
             }
 
@@ -604,7 +612,8 @@ export default function PartnerOnboarding() {
                 csvFile: null,
                 rowCount: 0,
                 valid: false,
-                faultyRecords: 0 }) }} >
+                faultyRecords: 0,
+                warnings: null }) }} >
                             <IoMdCloseCircleOutline />
                         </IconButton>
                     </Typography>
@@ -677,6 +686,7 @@ export default function PartnerOnboarding() {
                 { label: "Total rows", value: (wizardState.rowCount ?? 0) + (wizardState.faultyRecords?.length ?? 0) },
                 { label: "Valid rows", value: wizardState.rowCount ?? 0 },
                 { label: "Faulty rows", value: wizardState.faultyRecords?.length ?? 0 },
+                { label: "Warnings", value: wizardState.warnings?.length ?? 0 },
             ]
                 .filter((_, index) => !wizardState.wizardCompleted || index === 0)
                 .map(({ label, value, empty }) => (
@@ -704,6 +714,16 @@ export default function PartnerOnboarding() {
                         </Typography>
                     </Box>
                 ))}
+
+            {!wizardState.wizardCompleted && wizardState.warnings?.length > 0 && (
+                <Box sx={infoCardSx}>
+                    {wizardState.warnings.map((w) => (
+                        <Typography key={w.rowNumber} variant="body2" sx={{ color: GEC.textSecondary }}>
+                            Row {w.rowNumber}: {w.reasons.join(", ")}
+                        </Typography>
+                    ))}
+                </Box>
+            )}
 
 
 
@@ -749,6 +769,7 @@ export default function PartnerOnboarding() {
         wizardState.partner?.title,
         wizardState.rowCount,
         wizardState.faultyRecords,
+        wizardState.warnings,
         wizardState.wizardCompleted,
     ]);
 

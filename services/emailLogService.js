@@ -8,7 +8,7 @@
 //     list of entries for the drill-down + search bar.
 //
 // The table itself is created by an idempotent migration in routes/email_log.js
-// (mirrored in create_tables.sql), following the knowledge_base_view_log pattern.
+// (mirrored in sql_files/create_tables.sql), following the knowledge_base_view_log pattern.
 
 const dbService = require("./dbService");
 const { labelFor, UNCATEGORISED, APP_SUPPORT } = require("./emailLogCategories");

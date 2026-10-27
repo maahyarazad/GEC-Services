@@ -16,7 +16,7 @@ const STORAGE_DIR = path.resolve(__dirname, "../support_attachments");
 if (!fs.existsSync(STORAGE_DIR)) fs.mkdirSync(STORAGE_DIR, { recursive: true });
 
 // Schema (support_ticket_comments.source, support_tickets.has_unread_customer_reply,
-// and support_email_threads) is declared in create_tables.sql — no runtime migration here.
+// and support_email_threads) is declared in sql_files/create_tables.sql — no runtime migration here.
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ALLOWED_MIME = new Set([

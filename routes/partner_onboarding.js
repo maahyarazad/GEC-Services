@@ -6,6 +6,7 @@ const { parse } = require("csv-parse/sync");
 const dbService = require("../services/dbService");
 require("dotenv").config();
 const authorization_middleware = require("../middleware/auth");
+const { normalizePhone, parseBirthday } = require("../helpers/essentials");
 const db = dbService.getDB();
 // ── Multer: keep file in memory, CSV only ──────────────────────────────────
 const upload = multer({
@@ -27,7 +28,7 @@ const VALID_LANGUAGES = ["en", "de"];
 const VALID_ACTION_TYPES = ["add", "update", "delete"];
 
 const insertContact = db.prepare(`
-  INSERT OR IGNORE INTO partner_onboarding_data (
+  INSERT INTO partner_onboarding_data (
       title,
       firstname,
       lastname,
@@ -41,8 +42,28 @@ const insertContact = db.prepare(`
   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
+// The employee's current pending row (at most one — see ux_pod_pending_partner_phone)
+const findPending = db.prepare(`
+  SELECT * FROM partner_onboarding_data
+  WHERE LOWER(TRIM(partner)) = LOWER(TRIM(?)) AND mobile_number = ? AND synchronized = 0
+  LIMIT 1
+`);
+
+const supersedePending = db.prepare(`
+  UPDATE partner_onboarding_data
+  SET synchronized = 1, sync_status = 'superseded', synced_at = datetime('now'),
+      sync_note = 'replaced by upload ' || datetime('now')
+  WHERE id = ?
+`);
+
+const COMPARED_FIELDS = ["title", "firstname", "lastname", "gender", "email", "birthday", "language", "action_type"];
+
+// A re-upload replaces the employee's pending row; an identical row is counted as unchanged.
 const insertMany = db.transaction((contacts, partner) => {
   let inserted = 0;
+  let replaced = 0;
+  let unchanged = 0;
+  let invalid = 0;
 
   for (const row of contacts) {
     // Normalise keys to lowercase
@@ -59,33 +80,51 @@ const insertMany = db.transaction((contacts, partner) => {
     const language = VALID_LANGUAGES.includes(r.language) ? r.language : "en";
     const action_type = VALID_ACTION_TYPES.includes(r["add/update/delete"]) ? r["add/update/delete"] : "add";
 
-    let birthday = null;
-    if (r["date of birth"]) {
-      const ddmmyyyy = r["date of birth"].match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-      if (ddmmyyyy) {
-        birthday = `${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`; // → YYYY-MM-DD
-      } else if (/^\d{4}-\d{2}-\d{2}/.test(r["date of birth"])) {
-        birthday = r["date of birth"];
-      }
+    // The wizard validates the "Normalized 🔒" column; "Mobile Number" is the free-text input
+    const mobile_number = normalizePhone(r["normalized 🔒"] || r["mobile number"]);
+    if (!mobile_number) {
+      invalid++;
+      continue;
     }
 
-    const info = insertContact.run(
+    const birthday = parseBirthday(r["date of birth"]);
+
+    const contact = {
       title,
-      r["first name"],
-      r["last name"],
+      firstname: r["first name"],
+      lastname: r["last name"],
       gender,
-      r["mobile number"],
-      r["company email"],
-      partner,
-      r["date of birth"],
+      email: r["company email"],
+      birthday,
       language,
-      action_type
+      action_type,
+    };
+
+    const existing = findPending.get(partner, mobile_number);
+    if (existing && COMPARED_FIELDS.every((f) => (existing[f] ?? "") === (contact[f] ?? ""))) {
+      unchanged++;
+      continue;
+    }
+    if (existing) supersedePending.run(existing.id);
+
+    insertContact.run(
+      contact.title,
+      contact.firstname,
+      contact.lastname,
+      contact.gender,
+      mobile_number,
+      contact.email,
+      partner,
+      contact.birthday,
+      contact.language,
+      contact.action_type
     );
 
-    if (info.changes > 0) inserted++;
+    if (existing) replaced++;
+    else inserted++;
   }
 
-  return inserted;
+  return { inserted, replaced, unchanged, invalid };
 });
 
 // ── Delivery info pre-fill ─────────────────────────────────────────────────
@@ -146,15 +185,18 @@ router.post("/partner-auto-login",authorization_middleware.authorize_partner ,as
 router.post("/upload-csv",authorization_middleware.authorize_partner ,upload.single("file"), (req, res) => {
   try {
 
-    const partner = req.body.partner;
+    // The partner comes from the signed partner session, never from the form — an "add"
+    // can move a card between partners, so the form field must not choose the partner.
+    const session = jwt.verify(req.cookies["partner-usr"], process.env.JWT_SECRET);
+    const partner = session?.partner?.title;
     const deliveryAddress = req.body.delivery_address || null;
     const contactPerson = req.body.contact_person || null;
     const phoneNumber = req.body.phone_number || null;
 
     if (!partner) {
       return res
-        .status(400)
-        .json({ status: false, message: "Partner is required" });
+        .status(401)
+        .json({ status: false, message: "Partner session has no partner" });
     }
 
     // 2. Check a file was actually attached
@@ -178,24 +220,32 @@ router.post("/upload-csv",authorization_middleware.authorize_partner ,upload.sin
         .json({ status: false, message: "CSV file is empty" });
     }
 
-    const inserted = insertMany(rows, partner);
+    // Employees and delivery info are saved together or not at all
+    const counts = db.transaction(() => {
+      const result = insertMany(rows, partner);
 
-    db.prepare(`
-      INSERT INTO partner_delivery_info (partner, delivery_address, contact_person, phone_number, updated_at)
-      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-      ON CONFLICT(partner) DO UPDATE SET
-        delivery_address = excluded.delivery_address,
-        contact_person = excluded.contact_person,
-        phone_number = excluded.phone_number,
-        updated_at = CURRENT_TIMESTAMP
-    `).run(partner, deliveryAddress, contactPerson, phoneNumber);
+      db.prepare(`
+        INSERT INTO partner_delivery_info (partner, delivery_address, contact_person, phone_number, updated_at)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(partner) DO UPDATE SET
+          delivery_address = excluded.delivery_address,
+          contact_person = excluded.contact_person,
+          phone_number = excluded.phone_number,
+          updated_at = CURRENT_TIMESTAMP
+      `).run(partner, deliveryAddress, contactPerson, phoneNumber);
+
+      return result;
+    })();
 
     return res.status(200).json({
       status: true,
       message: "CSV imported successfully",
       total: rows.length,
-      inserted, // rows actually written
-      skipped: rows.length - inserted, // duplicates ignored
+      inserted: counts.inserted, // new employees staged
+      replaced: counts.replaced, // replaced an earlier pending row
+      unchanged: counts.unchanged, // identical to the pending row — nothing staged
+      skipped: counts.unchanged, // kept for older clients
+      invalid: counts.invalid, // no usable phone number
     });
   } catch (error) {
     console.error(`${Date.now()} - CSV upload error:`, error);

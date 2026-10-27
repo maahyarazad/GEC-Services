@@ -39,7 +39,7 @@ const TOPIC_IDS = new Set(Object.keys(VIDEO_FILES));
 
 const VIEW_EVENT_TYPES = new Set(["topic_opened", "video_played"]);
 
-// Schema (knowledge_base_view_log + indexes) is declared in create_tables.sql —
+// Schema (knowledge_base_view_log + indexes) is declared in sql_files/create_tables.sql —
 // no runtime migration here.
 
 // server.js already applies authorize_admin to everything under /api/, but this

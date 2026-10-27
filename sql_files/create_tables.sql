@@ -295,9 +295,19 @@ CREATE TABLE IF NOT EXISTS partner_onboarding_data (
     partner TEXT,
     birthday DATETIME,
     language TEXT CHECK(language IN ('en', 'de')),
-    action_type VARCHAR(10) CHECK (action_type IN ('add', 'update', 'delete'));
-    synchronized INTEGER DEFAULT 0
+    action_type VARCHAR(10) CHECK (action_type IN ('add', 'update', 'delete')),
+    -- 0 = pending, 1 = closed; sync_status says how it was closed
+    synchronized INTEGER DEFAULT 0,
+    sync_status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (sync_status IN ('pending', 'synchronized', 'superseded', 'not_found', 'conflict', 'already_active')),
+    synced_at DATETIME,
+    sync_note TEXT
 );
+
+-- At most one pending row per employee (partner + phone)
+CREATE UNIQUE INDEX IF NOT EXISTS ux_pod_pending_partner_phone
+    ON partner_onboarding_data (LOWER(TRIM(partner)), mobile_number)
+    WHERE synchronized = 0;
 
 
 CREATE TABLE IF NOT EXISTS partner_delivery_info (

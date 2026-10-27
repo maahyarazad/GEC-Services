@@ -34,7 +34,7 @@ try {
   process.exit(1);
 }
 
-// Schema lives in create_tables.sql and is applied out-of-band; the app does not
+// Schema lives in sql_files/create_tables.sql and is applied out-of-band; the app does not
 // run migrations at startup.
 
 app.use(

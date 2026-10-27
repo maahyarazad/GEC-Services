@@ -33,6 +33,12 @@ import { SiMinutemailer } from "react-icons/si";
 import { FcMultipleInputs } from "react-icons/fc";
 import { RiEditLine } from "react-icons/ri";
 import { TbTrashX } from "react-icons/tb";
+import { formatSyncSummary, showSyncDetails } from './syncSummary';
+
+// SQLite datetime text ("YYYY-MM-DD HH:MM:SS") is UTC without a zone marker.
+const STALE_PENDING_MS = 30 * 24 * 60 * 60 * 1000;
+const isStalePending = (oldest) =>
+    !!oldest && Date.now() - new Date(`${String(oldest).replace(' ', 'T')}Z`).getTime() > STALE_PENDING_MS;
 const activeAccountStyle = {
     background: "linear-gradient(90deg, #dcfce7 10%, #f0fdf4 100%)",
     borderLeft: "4px solid #16a34a",
@@ -265,8 +271,7 @@ const MemberCardDataGrid = () => {
                         ? { ...x, style: { ...activeAccountStyle } }
                         : { ...x, style: { ...centerStyle } }
                     )
-                
-     debugger;
+
                 setPartnerStats(_data);
         } catch (e) {
             console.error('partner stats fetch failed', e);
@@ -304,8 +309,8 @@ const MemberCardDataGrid = () => {
             const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/partner-onboarding-pending-counts`, { credentials: 'include' });
             const d = await r.json();
             const map = {};
-            (d.data ?? []).forEach(({ partner, pending_count }) => {
-                map[(partner ?? '').toLowerCase().trim()] = pending_count;
+            (d.data ?? []).forEach(({ partner, pending_count, pending_en, pending_de }) => {
+                map[(partner ?? '').toLowerCase().trim()] = { total: pending_count, en: pending_en, de: pending_de };
             });
             setPendingCounts(map);
         } catch (e) {
@@ -326,7 +331,8 @@ const MemberCardDataGrid = () => {
             group_name: s.partner,
             member_count: s.member_count,
             _notInServices: !gecTitles.has((s.partner ?? '').toLowerCase().trim()),
-            _pendingCount: pendingCounts[(s.partner ?? '').toLowerCase().trim()] ?? 0,
+            _pendingCount: pendingCounts[(s.partner ?? '').toLowerCase().trim()]?.total ?? 0,
+            _pendingEn: pendingCounts[(s.partner ?? '').toLowerCase().trim()]?.en ?? 0,
         }));
 
         // GEC-only partners not already shown via legacyRows — always not in local Services
@@ -335,7 +341,8 @@ const MemberCardDataGrid = () => {
             .map((p) => ({
                 ...p,
                 _notInServices: true,
-                _pendingCount: pendingCounts[(p.group_name ?? '').toLowerCase().trim()] ?? 0,
+                _pendingCount: pendingCounts[(p.group_name ?? '').toLowerCase().trim()]?.total ?? 0,
+                _pendingEn: pendingCounts[(p.group_name ?? '').toLowerCase().trim()]?.en ?? 0,
             }));
 
         return [...legacyRows, ...gecOnlyRows];
@@ -406,7 +413,8 @@ const MemberCardDataGrid = () => {
             });
             const d = await r.json();
             if (d.status) {
-                showSnackbar(`Synced "${partner}": ${d.updated} updated, ${d.inserted} inserted, ${d.deactivated} deactivated`);
+                showSnackbar(formatSyncSummary(partner, d, 'EN'));
+                showSyncDetails(openDialog, partner, d);
                 fetchPartnerStats();
                 fetchPendingCounts();
                 setPartnerSyncKey(k => k + 1);
@@ -419,22 +427,35 @@ const MemberCardDataGrid = () => {
         } finally {
             setSyncingPartner(null);
         }
-    }, [showSnackbar, fetchPartnerStats, fetchPendingCounts]);
+    }, [showSnackbar, openDialog, fetchPartnerStats, fetchPendingCounts]);
 
     // Column defs are passed to a memoized MiniTable, whose internal filtering
     // memo is keyed on the columns array — rebuilding it every render defeated both.
     
     const leftCols = useMemo(() => [
         { key: 'partner', label: 'Partner', render: (row) => (<span style={{...row.style, display: 'block', paddingLeft: 4}}>{row.partner}</span>) },
-        { key: 'available_update', label: 'Available Update' , render: (row) => (<span style={centerStyle}>{row.available_update === 0 ? `-` : row.available_update}</span>) },
+        {
+            key: 'available_update',
+            label: 'Available Update',
+            render: (row) => (
+                <span style={{ ...centerStyle, alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
+                    {row.available_update === 0 ? `-` : `EN ${row.pending_en ?? 0} · DE ${row.pending_de ?? 0}`}
+                    {row.available_update > 0 && isStalePending(row.oldest_pending) && (
+                        <Tooltip title={`Oldest pending: ${String(row.oldest_pending).slice(0, 10)}`}>
+                            <Chip label="> 30 days" color="warning" size="small" sx={{ fontSize: 10, height: 18 }} />
+                        </Tooltip>
+                    )}
+                </span>
+            ),
+        },
         { key: 'active_account', label: 'Active Accounts' , render: (row) => (<span style={row.style}>{row.active_account === 0 ? `-` : row.active_account}</span>) },
         { key: 'vp_issued', label: 'VP Issued', render: (row) => (<span style={row.style}>{row.vp_issued === 0 ? `-` : row.vp_issued}</span>) },
         {
             key: '_sync',
             label: '',
             render: (row) =>
-                
-                row.available_update > 0 ? (
+                // German rows are synced from Delivery Tracking ("Sync (DE)")
+                row.pending_en > 0 ? (
                     <Button
                         size="small"
                         variant="outlined"
@@ -489,7 +510,7 @@ const MemberCardDataGrid = () => {
             key: '_sync',
             label: '',
             render: (row) =>
-                row._notInServices && row._pendingCount > 0 ? (
+                row._notInServices && row._pendingEn > 0 ? (
                     <Button
                         size="small"
                         variant="outlined"
