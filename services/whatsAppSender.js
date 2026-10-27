@@ -521,6 +521,27 @@ function buildInteractiveMessage(type, data) {
         },
       };
 
+    case "twilio/call-to-action": {
+      // WhatsApp supports call-to-action via a single URL button (cta_url).
+      // Phone-number actions aren't supported by WhatsApp interactive messages,
+      // so we surface the first URL action as the CTA button.
+      const ctaAction = (data.actions || []).find(
+        (action) => (action.type || "").toUpperCase() === "URL"
+      );
+
+      return {
+        type: "cta_url",
+        body: { text: data.body || "" },
+        action: {
+          name: "cta_url",
+          parameters: {
+            display_text: ctaAction?.title || "Open",
+            url: ctaAction?.url || "",
+          },
+        },
+      };
+    }
+
     case "twilio/card":
       // WhatsApp doesn't directly support cards but you can send a media message with buttons
       // Twilio WhatsApp supports "buttons" with media, so you can construct accordingly
