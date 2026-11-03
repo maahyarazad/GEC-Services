@@ -863,23 +863,34 @@ router.post("/members/mobile-check", upload.none(), async (req, res) => {
 
   try {
     const query = `
-      SELECT *
+      SELECT *,
+        CASE WHEN DATE('now') <= DATE(mc.card_expiry_date, 'start of month', '+1 month', '-1 day')
+          THEN 0 ELSE 1 END AS is_expired
       FROM member_card mc
       WHERE mc.mobile_number = ?
         AND mc.serial_number IS NOT NULL
         AND mc.active = 1
-        AND DATE('now') <= DATE(mc.card_expiry_date, 'start of month', '+1 month', '-1 day')
-    `; 
+    `;
 
     const stmt = db.prepare(query);
-    const memberRecords = stmt.all(sanitizedMobile);
+    const allRecords = stmt.all(sanitizedMobile);
+    const memberRecords = allRecords.filter((r) => r.is_expired === 0);
+    const expiredRecords = allRecords.filter((r) => r.is_expired === 1);
 
-    if (memberRecords.length > 0) { 
+    if (memberRecords.length > 0) {
       return res.status(200).json({
         status: true,
         message: "Member found",
         count: memberRecords.length,
         data: memberRecords,
+      });
+    } else if (expiredRecords.length > 0) {
+      return res.status(200).json({
+        status: false,
+        expired: true,
+        message: "Member card has expired",
+        count: expiredRecords.length,
+        data: expiredRecords,
       });
     } else {
       return res.status(404).json({
