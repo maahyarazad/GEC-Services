@@ -214,7 +214,7 @@ const MiniTable = React.memo(function MiniTable({ title, rows, columns: cols, lo
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-const emptyForm = { title: '', firstname: '', lastname: '', gender: '', mobile_number: '', email: '', partner: '', birthday: '', type: 7 };
+const emptyForm = { title: '', firstname: '', lastname: '', gender: '', mobile_number: '', email: '', partner: '', birthday: '', card_expiry_date: '', type: 7 };
 
 const MemberCardDataGrid = () => {
     const [loadingRowId, setLoadingRowId] = useState(null);
@@ -684,6 +684,7 @@ const MemberCardDataGrid = () => {
             email: row.email || '',
             partner: row.partner || '',
             birthday: row.birthday || '',
+            card_expiry_date: (row.card_expiry_date || '').slice(0, 10),
             type: row.type ?? 7,
         });
         setEditingId(row.id);
@@ -726,6 +727,20 @@ const MemberCardDataGrid = () => {
         }
         setFormSaving(true);
         try {
+            if (editingId) {
+                const patchR = await fetch(`${import.meta.env.VITE_SERVERURL}/api/partner-onboarding/employee/${editingId}/card-expiry-date`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ card_expiry_date: formData.card_expiry_date || null }),
+                });
+                const patchD = await patchR.json();
+                if (!patchD.status) {
+                    showSnackbar(`Failed to update card expiry date: ${patchD.message}`, 'error');
+                    return;
+                }
+            }
+
             const url = editingId
                 ? `${import.meta.env.VITE_SERVERURL}/api/partner-onboarding/employee/${editingId}`
                 : `${import.meta.env.VITE_SERVERURL}/api/partner-onboarding/employee`;
@@ -972,6 +987,13 @@ const MemberCardDataGrid = () => {
                             onChange={(e) => setFormData(p => ({ ...p, birthday: e.target.value }))}
                             slotProps={{ inputLabel: { shrink: true } }} sx={{ flex: 1 }}
                         />
+                        {editingId && (
+                            <TextField
+                                size="small" label="Card Expiry Date" type="date" value={formData.card_expiry_date}
+                                onChange={(e) => setFormData(p => ({ ...p, card_expiry_date: e.target.value }))}
+                                slotProps={{ inputLabel: { shrink: true } }} sx={{ flex: 1 }}
+                            />
+                        )}
                         <FormControl size="small" sx={{ minWidth: 180 }}>
                             <InputLabel>Type</InputLabel>
                             <Select value={formData.type} label="Type" onChange={(e) => setFormData(p => ({ ...p, type: e.target.value }))}>

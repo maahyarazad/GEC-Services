@@ -443,6 +443,32 @@ router.put("/api/partner-onboarding/employee/:id", (req, res) => {
   }
 });
 
+// ── Corporate Member PATCH — Card Expiry Date only ────────────────────────────
+router.patch("/api/partner-onboarding/employee/:id/card-expiry-date", (req, res) => {
+  try {
+    const { id } = req.params;
+    const { card_expiry_date } = req.body;
+
+    const CARD_EXPIRY_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+    if (card_expiry_date && !CARD_EXPIRY_DATE_RE.test(card_expiry_date)) {
+      return res.status(400).json({ status: false, message: "card_expiry_date must be in YYYY-MM-DD format" });
+    }
+
+    const result = db.prepare(`
+      UPDATE member_card
+      SET card_expiry_date = ?, metadata_modifiedAt = datetime('now')
+      WHERE id = ?
+    `).run(card_expiry_date || null, id);
+
+    if (result.changes === 0) return res.status(404).json({ status: false, message: "Record not found" });
+
+    return res.status(200).json({ status: true, message: "Card expiry date updated" });
+  } catch (error) {
+    console.error(`${Date.now()} - Update card expiry date error:`, error);
+    res.status(500).json({ status: false, message: "Server error" });
+  }
+});
+
 // ── Corporate Member DELETE (soft) ────────────────────────────────────────────
 router.delete("/api/partner-onboarding/employee/:id", (req, res) => {
   try {
