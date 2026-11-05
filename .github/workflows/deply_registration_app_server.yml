@@ -36,7 +36,7 @@ jobs:
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/node/services.german-emirates-club.com/
 
           scp -i ~/.ssh/id_rsa -P ${{ secrets.SSH_PORT }} -r \
-            services routes websocket middleware \
+            services routes websocket middleware helpers \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/node/services.german-emirates-club.com/
 
       - name: Install dependencies & restart server
