@@ -774,10 +774,10 @@ async function handleAutoResponse(From, ButtonPayload, OriginalRepliedMessageSid
       return;
     }
 
-    const simpleResponseTemplate = templates.result.find((x) => x.sid === "HXb1ce9479f3d42819bef456f00448afcc");
+    const simpleResponseTemplate = templates.result.find((x) => x.sid === "HX3e22753118f66dd5c26ed77270bbe5a9");
 
     if (!simpleResponseTemplate) {
-      console.error(`${Date.now()} - handleAutoResponse: auto-response template HXb1ce9479f3d42819bef456f00448afcc not found`);
+      console.error(`${Date.now()} - handleAutoResponse: auto-response template HX3e22753118f66dd5c26ed77270bbe5a9 not found`);
       return;
     }
     
