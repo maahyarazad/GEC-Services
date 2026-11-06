@@ -98,7 +98,7 @@ router.post("/api/whatsapp/quick-reply", async (req, res) => {
     const { message, incoming_message } = req.body;
     const templates = await fetchContentTemplates();
     const simple_response = templates.result.find(
-      (x) => x.sid === "HX3e22753118f66dd5c26ed77270bbe5a9"
+      (x) => x.sid === "HX2535ccf3fbdd0d9dae5423f6e815123c"
     );
 
     if (!message?.trim()) {
