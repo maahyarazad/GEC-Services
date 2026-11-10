@@ -157,10 +157,12 @@ const WhatsappBroadcast = () => {
     const [revealTwilioOpen, setRevealTwilioOpen] = useState(false);
     const [twilioCreditLow, setTwilioCreditLow] = useState(false);
     const [twilioCreditLowMessage, setTwilioCreditLowMessage] = useState(null);
-    const fetchData = useCallback(async () => {
+    // refresh: true comes from the template grid's Refresh button and makes the
+    // server drop its cached template list (see fetchContentTemplates).
+    const fetchData = useCallback(async ({ refresh = false } = {}) => {
         try {
 
-            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/list`, { credentials: "include" });
+            const response = await fetch(`${import.meta.env.VITE_SERVERURL}/api/whatsapp/list${refresh ? "?refresh=1" : ""}`, { credentials: "include" });
 
             if (response.status === 401) {
                 const response_data = await response.json();
@@ -1578,7 +1580,7 @@ const WhatsappBroadcast = () => {
 
                 {/* ── Main content area (desktop only; shown via modal on mobile) ── */}
                 <Box sx={{ flexGrow: 1, minWidth: 0, display: { xs: 'none', sm: 'block' } }}>
-                    {groupedByTypeKey && <TwilioTemplateDataGrid groupedByTypeKey={groupedByTypeKey} messageState={messageState} handleMessageStateChange={handleMessageStateChange} onRefresh={fetchData} />}
+                    {groupedByTypeKey && <TwilioTemplateDataGrid groupedByTypeKey={groupedByTypeKey} messageState={messageState} handleMessageStateChange={handleMessageStateChange} onRefresh={() => fetchData({ refresh: true })} />}
                     {twilioCreditLow && <TwilioCreditWarning twilioCreditLow={twilioCreditLow} twilioCreditLowMessage={twilioCreditLowMessage} />}
                 </Box>
 
@@ -1589,7 +1591,7 @@ const WhatsappBroadcast = () => {
                     title="Templates"
                 >
                     <Box>
-                        {groupedByTypeKey && <TwilioTemplateDataGrid groupedByTypeKey={groupedByTypeKey} messageState={messageState} handleMessageStateChange={handleMessageStateChange} onRefresh={fetchData} />}
+                        {groupedByTypeKey && <TwilioTemplateDataGrid groupedByTypeKey={groupedByTypeKey} messageState={messageState} handleMessageStateChange={handleMessageStateChange} onRefresh={() => fetchData({ refresh: true })} />}
                         {twilioCreditLow && <TwilioCreditWarning twilioCreditLow={twilioCreditLow} twilioCreditLowMessage={twilioCreditLowMessage} />}
                     </Box>
                 </Modal>

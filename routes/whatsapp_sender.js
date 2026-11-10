@@ -3,9 +3,13 @@ const router = express.Router();
 const {
   messageSender,
   fetchContentTemplates,
+  resetTemplateListCache,
   deleteContentTemplate,
   handleAutoResponse,
   fetchHistory,
+  HISTORY_PAGE_SIZE,
+  HISTORY_MAX_PAGE_SIZE,
+  InvalidCursorError,
 } = require("../services/whatsAppSender");
 
 
@@ -18,7 +22,7 @@ const { pipeline, Readable } = require("stream");
 const { promisify } = require("util");
 const streamPipeline = promisify(pipeline);
 const fetch = require("node-fetch");
-const { getCountCacheKey, countCache } = require("../services/cacheService");
+const { getCountCacheKey, countCache, insightCache } = require("../services/cacheService");
 const MessagingResponse = require("twilio").twiml.MessagingResponse;
 const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
@@ -143,7 +147,8 @@ router.post("/api/whatsapp/quick-reply", async (req, res) => {
 
 router.get("/api/whatsapp/list", async (req, res) => {
   try {
-    const result = await fetchContentTemplates(req, res);
+    // ?refresh=1 comes from the template grid's Refresh button.
+    const result = await fetchContentTemplates({ force: req.query.refresh === "1" });
     if (result.status) {
       res.status(200).json({ status: true, templates: result.result });
     } else {
@@ -279,6 +284,10 @@ router.post("/api/twilio/create-template", async (req, res) => {
       return res.status(twilioRes.status).json({ status: false, message: data?.message || "Twilio error", details: data });
     }
 
+    // The template exists in Twilio now, so the cached list is out of date
+    // even if the approval request below fails.
+    resetTemplateListCache();
+
     // Submit for WhatsApp approval under the requested category. Meta may still
     // re-categorise it during review; the response echoes what was accepted.
     const approvalRes = await fetch(
@@ -311,7 +320,8 @@ router.post("/api/twilio/create-template", async (req, res) => {
 
 router.get("/api/twilio/approvals", async (req, res) => {
   try {
-    const result = await fetchContentTemplates();
+    // ?refresh=1 comes from the template grid's Refresh button.
+    const result = await fetchContentTemplates({ force: req.query.refresh === "1" });
     if (!result.status) {
       return res.status(500).json({ status: false, message: "Failed to fetch templates" });
     }
@@ -477,21 +487,39 @@ router.delete("/api/twilio/template/:contentSid", async (req, res) => {
   });
 });
 
+// Paged chat history (spec 017). Newest page first; pass `nextCursor` back as
+// `cursor` to get the next-older page until `hasMore` is false.
 router.get("/api/whatsapp/history/:phone", async (req, res) => {
-  try {
-    const { phone } = req.params;
-    const result = await fetchHistory(phone);
+  const { phone } = req.params;
+  const { limit: rawLimit, cursor } = req.query;
 
-    if (result) {
-      res.status(200).json({ status: true, result });
-    } else {
-      res.status(500).json({ status: false, error: result });
+  let limit = HISTORY_PAGE_SIZE;
+  if (rawLimit !== undefined) {
+    if (typeof rawLimit !== "string" || !/^\d+$/.test(rawLimit)) {
+      return res.status(400).json({ status: false, message: "Invalid limit" });
     }
+    limit = Math.min(Math.max(Number(rawLimit), 1), HISTORY_MAX_PAGE_SIZE);
+  }
+
+  if (cursor !== undefined && typeof cursor !== "string") {
+    return res.status(400).json({ status: false, message: "Invalid cursor" });
+  }
+
+  try {
+    const { messages, hasMore, nextCursor } = await fetchHistory(phone, {
+      limit,
+      cursor,
+    });
+
+    res.status(200).json({ status: true, result: messages, hasMore, nextCursor });
   } catch (error) {
-    console.error(`${Date.now()} - Failed to send message`, error);
+    if (error instanceof InvalidCursorError) {
+      return res.status(400).json({ status: false, message: "Invalid cursor" });
+    }
+    console.error(`${Date.now()} - Failed to fetch WhatsApp history`, error);
     res
       .status(500)
-      .json({ status: false, message: "Failed to fetch WhatsApp templates" });
+      .json({ status: false, message: "Failed to fetch WhatsApp history" });
   }
 });
 
@@ -905,106 +933,157 @@ router.post(
   }
 );
 
+// ---------------------------------------------------------------------------
+// Insight report cache (spec 017 User Story 6, research R12)
+// ---------------------------------------------------------------------------
+
+const INSIGHT_TTL_PAST_MS = 24 * 60 * 60 * 1000; // range ends before today
+const INSIGHT_TTL_RECENT_MS = 5 * 60 * 1000; // range reaches today or later
+
+/**
+ * Normalise ?startDate/&endDate the way these routes always have
+ * (UTC date, YYYY-MM-DD). Returns null for a missing or unparsable date
+ * instead of letting toISOString() throw a RangeError into a 500.
+ */
+const parseInsightRange = ({ startDate, endDate } = {}) => {
+  const toDay = (value) => {
+    if (typeof value !== "string" || value === "") return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
+  };
+  const start = toDay(startDate);
+  const end = toDay(endDate);
+  return start && end ? { start, end } : null;
+};
+
+/**
+ * Serve a report's `data` from insightCache, or compute and store it.
+ * refresh: true (the report's Refresh button) skips the lookup and stores the
+ * new result. Callers get a copy, so they can't mutate the cached value.
+ * A compute that throws stores nothing.
+ */
+const getOrComputeInsight = async (route, start, end, refresh, compute) => {
+  const key = `${route}|${start}|${end}`;
+
+  if (!refresh) {
+    const hit = insightCache.get(key);
+    if (hit) return structuredClone(hit);
+  }
+
+  const data = await compute();
+  const today = new Date().toISOString().slice(0, 10);
+  insightCache.set(
+    key,
+    structuredClone(data),
+    end < today ? INSIGHT_TTL_PAST_MS : INSIGHT_TTL_RECENT_MS
+  );
+  return data;
+};
+
 router.get("/api/whatsapp/insight", async (req, res) => {
+  const range = parseInsightRange(req.query);
+  if (!range) {
+    return res.status(400).json({ status: false, message: "Invalid date range" });
+  }
+  const { start, end } = range;
+
   try {
-    const { startDate, endDate } = req.query;
-    const templates = await fetchContentTemplates();
-    const templateMap = new Map();
+    const data = await getOrComputeInsight("insight", start, end, req.query.refresh === "1", async () => {
+      const templates = await fetchContentTemplates();
+      const templateMap = new Map();
 
-    templates.result.forEach((t) => {
-      templateMap.set(t.sid, t.friendlyName);
-    });
+      templates.result.forEach((t) => {
+        templateMap.set(t.sid, t.friendlyName);
+      });
 
-    const start = new Date(startDate).toISOString().slice(0, 10);
-    const end = new Date(endDate).toISOString().slice(0, 10);
+      const deliveryQuery = `
 
-    const deliveryQuery = `
+      SELECT
+      'undelivered' AS type,
+              ttm.contentSid,
+              COUNT(json_extract(td.response, '$.To')) AS to_number
+          FROM twilio_delivery td
+          LEFT JOIN twilio_template_message ttm
+              ON json_extract(td.response, '$.SmsSid') = ttm.messageSid
+          WHERE json_extract(td.response, '$.MessageStatus') = 'undelivered'
+          AND td.metadata_createdAt BETWEEN ? AND ? GROUP BY ttm.contentSid
 
-    SELECT
-    'undelivered' AS type,
-            ttm.contentSid,
-            COUNT(json_extract(td.response, '$.To')) AS to_number
-        FROM twilio_delivery td
-        LEFT JOIN twilio_template_message ttm
-            ON json_extract(td.response, '$.SmsSid') = ttm.messageSid
-        WHERE json_extract(td.response, '$.MessageStatus') = 'undelivered'
-        AND td.metadata_createdAt BETWEEN ? AND ? GROUP BY ttm.contentSid
+        UNION ALL
+
+     SELECT
+      'delivered' AS type,
+  	ttm.contentSid,
+              COUNT(json_extract(td.response, '$.To')) AS to_number
+          FROM twilio_delivery td
+          LEFT JOIN twilio_template_message ttm
+              ON json_extract(td.response, '$.SmsSid') = ttm.messageSid
+          WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
+          AND td.metadata_createdAt BETWEEN ? AND ? GROUP BY ttm.contentSid
+
 
       UNION ALL
 
-   SELECT
-    'delivered' AS type,
-	ttm.contentSid,
-            COUNT(json_extract(td.response, '$.To')) AS to_number
-        FROM twilio_delivery td
-        LEFT JOIN twilio_template_message ttm
-            ON json_extract(td.response, '$.SmsSid') = ttm.messageSid
-        WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
-        AND td.metadata_createdAt BETWEEN ? AND ? GROUP BY ttm.contentSid
+     SELECT
+      'read' AS type,
+          ttm.contentSid,
+          COUNT(json_extract(td.response, '$.To')) AS to_number
+              FROM twilio_delivery td
+              LEFT JOIN twilio_template_message ttm
+                  ON json_extract(td.response, '$.SmsSid') = ttm.messageSid
+              WHERE json_extract(td.response, '$.MessageStatus') = 'read'
+              AND td.metadata_createdAt BETWEEN ? AND ? GROUP BY ttm.contentSid
+    `;
 
+      const responseQuery = `
+          SELECT 'notAttend' AS type, COUNT(*) AS to_number
+          FROM twilio_responses as tr
+          WHERE (json_extract(payload, '$.ButtonPayload') = ? 
+                  OR json_extract(payload, '$.ButtonPayload') = ?)
+              AND tr.received_at BETWEEN ? AND ? 
+          UNION ALL
+          SELECT 'attend' AS type, COUNT(*) AS to_number
+          FROM twilio_responses as tr
+          WHERE (json_extract(payload, '$.ButtonPayload') = ? 
+                  OR json_extract(payload, '$.ButtonPayload') = ?)
+              AND tr.received_at BETWEEN ? AND ? 
+          `;
 
-    UNION ALL
+      const stmt = db.prepare(deliveryQuery);
+      const rows = stmt.all(
+        start,
+        end, // undelivered
+        start,
+        end, // delivered
+        start,
+        end // read
+      );
 
-   SELECT
-    'read' AS type,
-        ttm.contentSid,
-        COUNT(json_extract(td.response, '$.To')) AS to_number
-            FROM twilio_delivery td
-            LEFT JOIN twilio_template_message ttm
-                ON json_extract(td.response, '$.SmsSid') = ttm.messageSid
-            WHERE json_extract(td.response, '$.MessageStatus') = 'read'
-            AND td.metadata_createdAt BETWEEN ? AND ? GROUP BY ttm.contentSid
-  `;
+      const delivery_result = rows.map((e) => ({
+        ...e,
+        templateName: templateMap.get(e.contentSid) || null,
+      }));
 
-    const responseQuery = `
-        SELECT 'notAttend' AS type, COUNT(*) AS to_number
-        FROM twilio_responses as tr
-        WHERE (json_extract(payload, '$.ButtonPayload') = ? 
-                OR json_extract(payload, '$.ButtonPayload') = ?)
-            AND tr.received_at BETWEEN ? AND ? 
-        UNION ALL
-        SELECT 'attend' AS type, COUNT(*) AS to_number
-        FROM twilio_responses as tr
-        WHERE (json_extract(payload, '$.ButtonPayload') = ? 
-                OR json_extract(payload, '$.ButtonPayload') = ?)
-            AND tr.received_at BETWEEN ? AND ? 
-        `;
+      const _stmt = db.prepare(responseQuery);
+      const _rows = _stmt.all(
+        "NOT_ATTEND",
+        "NOT_INTERESTED",
+        start,
+        end,
+        "ATTEND",
+        "INTERESTED",
+        start,
+        end
+      );
 
-    const stmt = db.prepare(deliveryQuery);
-    const rows = stmt.all(
-      start,
-      end, // undelivered
-      start,
-      end, // delivered
-      start,
-      end // read
-    );
+      const response_result = {};
+      _rows.forEach(({ type, to_number }) => {
+        response_result[type] = to_number ?? 0;
+      });
 
-    const delivery_result = rows.map((e) => ({
-      ...e,
-      templateName: templateMap.get(e.contentSid) || null,
-    }));
-
-    const _stmt = db.prepare(responseQuery);
-    const _rows = _stmt.all(
-      "NOT_ATTEND",
-      "NOT_INTERESTED",
-      start,
-      end,
-      "ATTEND",
-      "INTERESTED",
-      start,
-      end
-    );
-
-    const response_result = {};
-    _rows.forEach(({ type, to_number }) => {
-      response_result[type] = to_number ?? 0;
+      return { response_result, delivery_result };
     });
 
-    return res
-      .status(200)
-      .json({ status: true, data: { response_result, delivery_result } });
+    return res.status(200).json({ status: true, data });
   } catch (err) {
     console.error(`${Date.now()} - Failed to fetch insights`, err);
     return res.status(500).json({ status: false, message: "Server error" });
@@ -1012,84 +1091,94 @@ router.get("/api/whatsapp/insight", async (req, res) => {
 });
 
 router.get("/api/whatsapp/attendance-insight-by-type", async (req, res) => {
+  const range = parseInsightRange(req.query);
+  if (!range) {
+    return res.status(400).json({ status: false, message: "Invalid date range" });
+  }
+  const { start, end } = range;
+
   try {
-    const { startDate, endDate } = req.query;
+    const data = await getOrComputeInsight("attendance-insight-by-type", start, end, req.query.refresh === "1", async () => {
+      const attendanceInsightByTypeQuery = `
 
-    const start = new Date(startDate).toISOString().slice(0, 10);
-    const end = new Date(endDate).toISOString().slice(0, 10);
-
-    const attendanceInsightByTypeQuery = `
-
-WITH responses AS (
-  SELECT 
-    '+' || json_extract(tr.payload, '$.WaId') AS phone,
-    CASE 
-      WHEN json_extract(tr.payload, '$.ButtonPayload') IN ('ATTEND', 'INTERESTED') THEN 'attend'
-      WHEN json_extract(tr.payload, '$.ButtonPayload') IN ('NOT_ATTEND', 'NOT_INTERESTED') THEN 'notAttend'
-    END AS status
-  FROM twilio_responses AS tr
-  WHERE json_extract(tr.payload, '$.ButtonPayload') IN (
-    'ATTEND', 'INTERESTED', 'NOT_ATTEND', 'NOT_INTERESTED'
+  WITH responses AS (
+    SELECT 
+      '+' || json_extract(tr.payload, '$.WaId') AS phone,
+      CASE 
+        WHEN json_extract(tr.payload, '$.ButtonPayload') IN ('ATTEND', 'INTERESTED') THEN 'attend'
+        WHEN json_extract(tr.payload, '$.ButtonPayload') IN ('NOT_ATTEND', 'NOT_INTERESTED') THEN 'notAttend'
+      END AS status
+    FROM twilio_responses AS tr
+    WHERE json_extract(tr.payload, '$.ButtonPayload') IN (
+      'ATTEND', 'INTERESTED', 'NOT_ATTEND', 'NOT_INTERESTED'
+    )
+    AND tr.received_at BETWEEN ? AND ?
   )
-  AND tr.received_at BETWEEN ? AND ?
-)
-SELECT 
-  COALESCE(cb.type, 'unknown') AS type,
-  r.status,
-  COUNT(*) AS responses
-FROM responses r
-LEFT JOIN contact_book cb 
-  ON r.phone = cb.phone
-GROUP BY cb.type, r.status
-ORDER BY responses DESC;
-  `;
+  SELECT 
+    COALESCE(cb.type, 'unknown') AS type,
+    r.status,
+    COUNT(*) AS responses
+  FROM responses r
+  LEFT JOIN contact_book cb 
+    ON r.phone = cb.phone
+  GROUP BY cb.type, r.status
+  ORDER BY responses DESC;
+    `;
 
-    const stmt = db.prepare(attendanceInsightByTypeQuery);
-    const attendance_result = stmt.all(start, end);
+      const stmt = db.prepare(attendanceInsightByTypeQuery);
+      const attendance_result = stmt.all(start, end);
 
-    return res.status(200).json({ status: true, data: { attendance_result } });
+      return { attendance_result };
+    });
+
+    return res.status(200).json({ status: true, data });
   } catch (err) {
     console.error(`${Date.now()} - Failed to fetch insights`, err);
     return res.status(500).json({ status: false, message: "Server error" });
   }
 });
 router.get("/api/whatsapp/insight-by-type", async (req, res) => {
+  const range = parseInsightRange(req.query);
+  if (!range) {
+    return res.status(400).json({ status: false, message: "Invalid date range" });
+  }
+  const { start, end } = range;
+
   try {
-    const { startDate, endDate } = req.query;
+    const data = await getOrComputeInsight("insight-by-type", start, end, req.query.refresh === "1", async () => {
+      const deliveryInsightByTypeQuery = `
 
-    const start = new Date(startDate).toISOString().slice(0, 10);
-    const end = new Date(endDate).toISOString().slice(0, 10);
+   WITH messages AS (
+      SELECT
+          replace(json_extract(td.response, '$.To'), 'whatsapp:', '') AS to_number,
+          json_extract(td.response, '$.MessageStatus') AS status
+      FROM twilio_delivery td
+      LEFT JOIN twilio_template_message ttm
+          ON json_extract(td.response, '$.SmsSid') = ttm.messageSid
+      WHERE json_extract(td.response, '$.MessageStatus') IN ('delivered', 'undelivered', 'read')
+      AND td.metadata_createdAt BETWEEN ? AND ?
+  )
+  SELECT 
+      COALESCE(cb.type, 'unknown') AS type,
+      SUM(CASE WHEN dm.status = 'delivered'   THEN 1 ELSE 0 END) AS delivered_count,
+      SUM(CASE WHEN dm.status = 'undelivered' THEN 1 ELSE 0 END) AS undelivered_count,
+      SUM(CASE WHEN dm.status = 'read'        THEN 1 ELSE 0 END) AS read_count,
+      COUNT(*) AS total_count
+  FROM messages dm
+  LEFT JOIN contact_book cb 
+      ON dm.to_number = cb.phone
+  GROUP BY cb.type
+  ORDER BY total_count DESC;
 
-    const deliveryInsightByTypeQuery = `
+    `;
 
- WITH messages AS (
-    SELECT
-        replace(json_extract(td.response, '$.To'), 'whatsapp:', '') AS to_number,
-        json_extract(td.response, '$.MessageStatus') AS status
-    FROM twilio_delivery td
-    LEFT JOIN twilio_template_message ttm
-        ON json_extract(td.response, '$.SmsSid') = ttm.messageSid
-    WHERE json_extract(td.response, '$.MessageStatus') IN ('delivered', 'undelivered', 'read')
-    AND td.metadata_createdAt BETWEEN ? AND ?
-)
-SELECT 
-    COALESCE(cb.type, 'unknown') AS type,
-    SUM(CASE WHEN dm.status = 'delivered'   THEN 1 ELSE 0 END) AS delivered_count,
-    SUM(CASE WHEN dm.status = 'undelivered' THEN 1 ELSE 0 END) AS undelivered_count,
-    SUM(CASE WHEN dm.status = 'read'        THEN 1 ELSE 0 END) AS read_count,
-    COUNT(*) AS total_count
-FROM messages dm
-LEFT JOIN contact_book cb 
-    ON dm.to_number = cb.phone
-GROUP BY cb.type
-ORDER BY total_count DESC;
+      const stmt = db.prepare(deliveryInsightByTypeQuery);
+      const delivery_result = stmt.all(start, end);
 
-  `;
+      return { delivery_result };
+    });
 
-    const stmt = db.prepare(deliveryInsightByTypeQuery);
-    const delivery_result = stmt.all(start, end);
-
-    return res.status(200).json({ status: true, data: { delivery_result } });
+    return res.status(200).json({ status: true, data });
   } catch (err) {
     console.error(`${Date.now()} - Failed to fetch insights`, err);
     return res.status(500).json({ status: false, message: "Server error" });
