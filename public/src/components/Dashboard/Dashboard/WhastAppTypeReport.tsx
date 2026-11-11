@@ -9,6 +9,8 @@ import {
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { Bar } from "react-chartjs-2";
 import { useState, useEffect, useCallback } from "react";
+import { Button, CircularProgress } from "@mui/material";
+import RefreshIcon from "@mui/icons-material/Refresh";
 
 ChartJS.register(
   CategoryScale,
@@ -29,6 +31,8 @@ type ReportItem = {
 
 export default function WhastAppTypeReport() {
   const [loading, setLoading] = useState(true);
+  // Refresh keeps the chart and date filters on screen; only the button spins.
+  const [refreshing, setRefreshing] = useState(false);
   const [panelData, setPanelData] = useState<ReportItem[]>([]);
 
   const yesterday = new Date();
@@ -39,12 +43,15 @@ export default function WhastAppTypeReport() {
   const [startDate, setStartDate] = useState(formatDateForInput(yesterday));
   const [endDate, setEndDate] = useState(formatDateForInput(new Date()));
 
-  const fetchReport = useCallback(async () => {
+  // refresh: true (Refresh button) makes the server recompute instead of
+  // serving its cached result for this date range.
+  const fetchReport = useCallback(async (refresh = false) => {
     try {
-      setLoading(true);
+      if (refresh) setRefreshing(true);
+      else setLoading(true);
 
       const response = await fetch(
-        `${import.meta.env.VITE_SERVERURL}/api/whatsapp/insight-by-type?startDate=${startDate}&endDate=${endDate}`,
+        `${import.meta.env.VITE_SERVERURL}/api/whatsapp/insight-by-type?startDate=${startDate}&endDate=${endDate}${refresh ? "&refresh=1" : ""}`,
         { credentials: "include" }
       );
 
@@ -61,11 +68,12 @@ export default function WhastAppTypeReport() {
       setPanelData([]);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [startDate, endDate]);
 
   useEffect(() => {
-    fetchReport();
+    fetchReport(false);
   }, [fetchReport]);
 
   if (loading) return <div>Loading report…</div>;
@@ -155,7 +163,18 @@ export default function WhastAppTypeReport() {
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
           />
-        </label>
+        </label>{" "}
+        <Button
+          size="small"
+          variant="outlined"
+          sx={{ textTransform: "none", ml: 1 }}
+          startIcon={refreshing ? <CircularProgress size={14} color="inherit" /> : <RefreshIcon fontSize="small" />}
+          disabled={refreshing || loading}
+          onClick={() => fetchReport(true)}
+          title="Recalculate this report for the selected dates"
+        >
+          Refresh
+        </Button>
       </div>
 
       <div

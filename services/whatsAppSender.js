@@ -5,6 +5,11 @@ const twilioClient = require("twilio")(
 );
 const { parsePhoneNumberFromString } = require("libphonenumber-js");
 const dbService = require("../services/dbService");
+const {
+  twilioMessageCache,
+  historyPageCache,
+  templateListCache,
+} = require("../services/cacheService");
 const db = dbService.getDB();
 const fs = require("fs");
 const path = require("path");
@@ -571,16 +576,67 @@ function buildInteractiveMessage(type, data) {
   }
 }
 
-const fetchContentTemplates = async () => {
-  try {
-    const templates = await twilioClient.content.v1.contents.list({
-      limit: 100,
-    });
-    return { status: true, result: templates };
-  } catch (error) {
-    console.error(`${Date.now()} - WhatsApp sender error:`, error);
-    return { status: false, result: error };
+// Template list cache (spec 017 User Story 5, research R11).
+// The cached array is shared by every caller: read it, never mutate it.
+const TEMPLATE_LIST_KEY = "all";
+let templateListInFlight = null; // { generation, forced, promise }
+// Bumped on every reset. A fetch started before a reset (e.g. a delete) must
+// neither repopulate the cache nor be reused by a later caller.
+let templateListGeneration = 0;
+// Start order of fetches; an older fetch finishing late must not overwrite a newer result.
+let templateListSeq = 0;
+let templateListStoredSeq = 0;
+
+/** Drop the cached template list; the next fetchContentTemplates() asks Twilio. */
+const resetTemplateListCache = () => {
+  templateListGeneration++;
+  templateListCache.delete(TEMPLATE_LIST_KEY);
+};
+
+/**
+ * The Twilio content template list, from cache when possible.
+ * Concurrent callers share one Twilio request. Failures are not cached.
+ *
+ * @param {{ force?: boolean }} [options] force: drop the cache and fetch fresh (admin Refresh)
+ * @returns {Promise<{status: boolean, result: any}>}
+ */
+const fetchContentTemplates = async ({ force = false } = {}) => {
+  if (force) {
+    // Not a reset: the list didn't change on our side, the admin just wants it
+    // fresh. Skip the cache, and only share a fetch that a refresh started too,
+    // so the grid's two parallel Refresh requests make one Twilio call.
+    templateListCache.delete(TEMPLATE_LIST_KEY);
+  } else {
+    const cached = templateListCache.get(TEMPLATE_LIST_KEY);
+    if (cached) return { status: true, result: cached };
   }
+
+  const generation = templateListGeneration;
+  const inFlight = templateListInFlight;
+  if (inFlight && inFlight.generation === generation && (!force || inFlight.forced)) {
+    return inFlight.promise;
+  }
+
+  const entry = { generation, forced: force, promise: null };
+  const seq = ++templateListSeq;
+  entry.promise = (async () => {
+    try {
+      const templates = await twilioClient.content.v1.contents.list();
+      if (generation === templateListGeneration && seq > templateListStoredSeq) {
+        templateListStoredSeq = seq;
+        templateListCache.set(TEMPLATE_LIST_KEY, templates);
+      }
+      return { status: true, result: templates };
+    } catch (error) {
+      console.error(`${Date.now()} - WhatsApp sender error:`, error);
+      return { status: false, result: error };
+    } finally {
+      if (templateListInFlight === entry) templateListInFlight = null;
+    }
+  })();
+  templateListInFlight = entry;
+
+  return entry.promise;
 };
 
 /**
@@ -602,6 +658,7 @@ const fetchContentTemplates = async () => {
 const deleteContentTemplate = async (contentSid) => {
   try {
     await twilioClient.content.v1.contents(contentSid).remove();
+    resetTemplateListCache();
 
     return { status: true, result: true };
   } catch (error) {
@@ -622,72 +679,290 @@ async function getMessageBody(messageSid) {
   }
 }
 
-async function fetchHistory(phone) {
+// ---------------------------------------------------------------------------
+// Chat history — keyset pagination over two sources (spec 017)
+//
+// Sent messages come from twilio_delivery ⨝ twilio_template_message (body is
+// fetched from Twilio), received ones from twilio_responses. Each source is
+// paged by (ts, id) DESC; the cursor remembers the last row consumed from
+// EACH source, so ties on the same second are never skipped or repeated.
+// ---------------------------------------------------------------------------
+
+const HISTORY_PAGE_SIZE = 20;
+const HISTORY_MAX_PAGE_SIZE = 1000;
+
+class InvalidCursorError extends Error {
+  constructor(message = "Invalid cursor") {
+    super(message);
+    this.name = "InvalidCursorError";
+  }
+}
+
+const CURSOR_SOURCES = ["r", "s"];
+
+/** @param {{r?: {ts: string, id: number}, s?: {ts: string, id: number}}} obj */
+function encodeCursor(obj) {
+  return Buffer.from(JSON.stringify(obj), "utf8").toString("base64url");
+}
+
+/** Throws InvalidCursorError on anything that isn't a cursor we produced. */
+function decodeCursor(str) {
+  if (str === undefined || str === null || str === "") return {};
+  if (typeof str !== "string") throw new InvalidCursorError();
+
+  let parsed;
   try {
-    const toNumber = `whatsapp:+${phone}`;
+    parsed = JSON.parse(Buffer.from(str, "base64url").toString("utf8"));
+  } catch {
+    throw new InvalidCursorError();
+  }
 
-    const sentQuery = `
-      SELECT 
-        ttm.messageSid,
-        td.metadata_createdAt
-      FROM twilio_delivery td
-      INNER JOIN twilio_template_message ttm
-        ON json_extract(td.response, '$.MessageSid') = ttm.messageSid
-      WHERE json_extract(td.response, '$.MessageStatus') = 'delivered'
-        AND json_extract(td.response, '$.To') = ?
-        AND ttm.contentSid IS NOT NULL
-      ORDER BY td.metadata_createdAt DESC
-    `;
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new InvalidCursorError();
+  }
 
-    const receivedQuery = `
-      SELECT
-        json_extract(tr.payload, '$.Body')              AS body,
-        json_extract(tr.payload, '$.MediaUrl0')         AS media_url,
-        json_extract(tr.payload, '$.MediaContentType0') AS media_type,
-        tr.received_at,
-        'r' AS type
-      FROM twilio_responses tr
-      WHERE json_extract(tr.payload, '$.WaId') = ?
-    `;
+  const cursor = {};
+  for (const [key, value] of Object.entries(parsed)) {
+    if (!CURSOR_SOURCES.includes(key)) throw new InvalidCursorError();
+    if (
+      !value ||
+      typeof value.ts !== "string" ||
+      !Number.isInteger(value.id)
+    ) {
+      throw new InvalidCursorError();
+    }
+    cursor[key] = { ts: value.ts, id: value.id };
+  }
+  return cursor;
+}
 
-    const allSentMessages = db.prepare(sentQuery).all(toNumber);
-    const receivedMessages = db.prepare(receivedQuery).all(phone);
+// Newest first: ts DESC, then source, then id DESC — a total order, so the
+// merge is deterministic even when sent and received share a timestamp.
+const newestFirst = (a, b) => {
+  if (a.ts !== b.ts) return a.ts < b.ts ? 1 : -1;
+  if (a.source !== b.source) return a.source < b.source ? 1 : -1;
+  return b.id - a.id;
+};
 
-    let detailedBodies = [];
+/**
+ * Merge the two newest-first source lists and take one page.
+ * Each list must hold up to `limit + 1` rows so `hasMore` is exact.
+ * Rows need { source: 'r'|'s', ts, id }.
+ *
+ * @returns {{ taken: object[], hasMore: boolean, lastBySource: {r?: object, s?: object} }}
+ */
+function mergePage(sentRows, receivedRows, limit) {
+  const merged = [...sentRows, ...receivedRows].sort(newestFirst);
+  const taken = merged.slice(0, limit);
 
-    if (allSentMessages.length > 0) {
-      const detailedMessages = await fetchTwilioMessagesDetails(
-        allSentMessages
-      );
+  // Rows taken from each source are a prefix of that source's list, so the
+  // last one of each is the next cursor for that source.
+  const lastBySource = {};
+  for (const row of taken) lastBySource[row.source] = row;
 
-      detailedBodies = detailedMessages
-        .filter((item) => item.twilioMessage)
-        .map((item) => ({
-          body: item.twilioMessage.body,
-          received_at: toUAE(item.twilioMessage.dateSent), // Twilio ISO → UAE
-          type: "s",
-        }));
+  return { taken, hasMore: merged.length > limit, lastBySource };
+}
+
+// Prepare once at module load, not on every call.
+// db must already be opened when this module loads, and the generated columns
+// + indexes from sql_versions/20261106165300_add_twilio_generated_columns.sql and
+// ..._add_twilio_message_history_indexes.sql must exist, or these prepares throw.
+const SENT_SELECT = `
+  SELECT
+    td.id                 AS id,
+    td.metadata_createdAt AS ts,
+    ttm.messageSid
+  FROM twilio_delivery td
+  INNER JOIN twilio_template_message ttm
+    ON td.msg_sid = ttm.messageSid
+  WHERE td.to_number = ?
+    AND td.msg_status = 'delivered'
+    AND ttm.contentSid IS NOT NULL`;
+const SENT_ORDER = `
+  ORDER BY td.metadata_createdAt DESC, td.id DESC
+  LIMIT ?`;
+
+const sentFirstStmt = db.prepare(SENT_SELECT + SENT_ORDER);
+const sentAfterStmt = db.prepare(
+  SENT_SELECT + `
+    AND (td.metadata_createdAt, td.id) < (?, ?)` + SENT_ORDER
+);
+
+// payload ->> 'WaId' must match idx_tr_waid / idx_tr_waid_received exactly.
+const RECEIVED_SELECT = `
+  SELECT
+    tr.id          AS id,
+    tr.received_at AS ts,
+    tr.body,
+    tr.media_url,
+    tr.media_type
+  FROM twilio_responses tr
+  WHERE tr.payload ->> 'WaId' = ?`;
+const RECEIVED_ORDER = `
+  ORDER BY tr.received_at DESC, tr.id DESC
+  LIMIT ?`;
+
+const receivedFirstStmt = db.prepare(RECEIVED_SELECT + RECEIVED_ORDER);
+const receivedAfterStmt = db.prepare(
+  RECEIVED_SELECT + `
+    AND (tr.received_at, tr.id) < (?, ?)` + RECEIVED_ORDER
+);
+
+const clampLimit = (limit) => {
+  const n = Number.isInteger(limit) ? limit : HISTORY_PAGE_SIZE;
+  return Math.min(Math.max(n, 1), HISTORY_MAX_PAGE_SIZE);
+};
+
+/**
+ * One page of the chat history for a WhatsApp number, newest page first.
+ *
+ * Caching (spec 017 User Story 4, research R9/R10):
+ *  - twilioMessageCache (in fetchTwilioMessagesDetails): a sent message's body
+ *    and time never change, so each messageSid goes to Twilio at most once.
+ *  - historyPageCache (here): older pages, i.e. requests with a cursor, are
+ *    cached whole. That is only correct because nextCursor pins BOTH sources
+ *    (see below): rows are inserted with datetime('now'), so nothing new can
+ *    ever fall inside a pinned cursor's range. Only full cursors are cached,
+ *    never one missing a source.
+ *  - The first page (no cursor) is never page-cached, because every new
+ *    message changes it. It still benefits from twilioMessageCache.
+ *  - A page with a failed Twilio lookup is not cached, so the dropped bubble
+ *    comes back on a later request.
+ *
+ * @param {string|number} phone  WaId (digits only)
+ * @param {{ limit?: number, cursor?: string }} [options]
+ * @returns {Promise<{ messages: object[], hasMore: boolean, nextCursor: string|null }>}
+ *          messages are oldest → newest within the page.
+ * @throws {InvalidCursorError} when `cursor` is not one we produced.
+ */
+async function fetchHistory(phone, { limit, cursor } = {}) {
+  const pageSize = clampLimit(limit);
+  const after = decodeCursor(cursor); // throws InvalidCursorError — let the route map it to 400
+
+  try {
+    const phoneStr = String(phone); // JSON values are TEXT; a number won't match
+
+    const pageCacheKey =
+      after.r && after.s ? `${phoneStr}|${pageSize}|${cursor}` : null;
+    if (pageCacheKey) {
+      const hit = historyPageCache.get(pageCacheKey);
+      if (hit) return structuredClone(hit);
     }
 
-    const normalizedReceived = receivedMessages.map((msg) => ({
-      ...msg,
-      received_at: toUAE(msg.received_at), // SQLite UTC bare string → UAE
-    }));
+    const toNumber = `whatsapp:+${phoneStr}`;
+    const probe = pageSize + 1;
 
-    const combined = [...normalizedReceived, ...detailedBodies].sort(
-      (a, b) => a.received_at.valueOf() - b.received_at.valueOf() // dayjs .valueOf() for ms comparison
+    const sentRows = (
+      after.s
+        ? sentAfterStmt.all(toNumber, after.s.ts, after.s.id, probe)
+        : sentFirstStmt.all(toNumber, probe)
+    ).map((row) => ({ ...row, source: "s" }));
+
+    const receivedRows = (
+      after.r
+        ? receivedAfterStmt.all(phoneStr, after.r.ts, after.r.id, probe)
+        : receivedFirstStmt.all(phoneStr, probe)
+    ).map((row) => ({ ...row, source: "r" }));
+
+    const { taken, hasMore, lastBySource } = mergePage(
+      sentRows,
+      receivedRows,
+      pageSize
     );
 
-    // Optional: format for display
-    return combined.map((msg) => ({
-      ...msg,
-      received_at: msg.received_at.format("YYYY-MM-DD HH:mm:ss"),
-    }));
+    // Twilio is only asked for the sent messages on THIS page.
+    const takenSent = taken.filter((row) => row.source === "s");
+    const details = takenSent.length
+      ? await fetchTwilioMessagesDetails(takenSent)
+      : [];
+    const twilioBySid = new Map(
+      details
+        .filter((item) => item.twilioMessage)
+        .map((item) => [item.localRecord.messageSid, item.twilioMessage])
+    );
+
+    let allSentResolved = true;
+    const page = [];
+    for (const row of taken) {
+      if (row.source === "r") {
+        page.push({
+          id: `r:${row.id}`,
+          body: row.body,
+          media_url: row.media_url,
+          media_type: row.media_type,
+          received_at: toUAE(row.ts), // SQLite UTC bare string → UAE
+          type: "r",
+        });
+        continue;
+      }
+
+      // A failed Twilio lookup drops the bubble (as before) but the row still
+      // counts as consumed, so paging moves past it.
+      const twilioMessage = twilioBySid.get(row.messageSid);
+      if (!twilioMessage) {
+        allSentResolved = false;
+        continue;
+      }
+
+      page.push({
+        id: `s:${row.messageSid}`,
+        body: twilioMessage.body,
+        received_at: toUAE(twilioMessage.dateSent || row.ts), // Twilio ISO → UAE
+        type: "s",
+      });
+    }
+
+    // Display order: oldest → newest by the time shown in the bubble.
+    // Array.prototype.sort is stable, and `page` is newest-first, so reverse first.
+    page.reverse().sort((a, b) => a.received_at.valueOf() - b.received_at.valueOf());
+
+    // The next cursor pins BOTH sources (research R10), so an older page can't
+    // change when new messages arrive, which is what makes it cacheable.
+    let nextCursor = null;
+    if (hasMore) {
+      const rowsBySource = { s: sentRows, r: receivedRows };
+      const next = {};
+      for (const source of CURSOR_SOURCES) {
+        const last = lastBySource[source];
+        const rows = rowsBySource[source];
+        if (last) {
+          // Consumed up to here.
+          next[source] = { ts: last.ts, id: last.id };
+        } else if (rows.length) {
+          // Nothing taken yet: bound at the newest row seen. ids are integers,
+          // so (ts, id) < (ts, id + 1) means "at or below that row", and a row
+          // inserted later (newer ts, or same second with a higher id) is excluded.
+          next[source] = { ts: rows[0].ts, id: rows[0].id + 1 };
+        } else if (after[source]) {
+          next[source] = after[source];
+        } else {
+          // Source is empty for this contact: (ts, id) < ("", 0) matches nothing.
+          next[source] = { ts: "", id: 0 };
+        }
+      }
+      nextCursor = encodeCursor(next);
+    }
+
+    const result = {
+      messages: page.map((msg) => ({
+        ...msg,
+        received_at: msg.received_at.format("YYYY-MM-DD HH:mm:ss"),
+      })),
+      hasMore,
+      nextCursor,
+    };
+
+    if (pageCacheKey && allSentResolved) {
+      historyPageCache.set(pageCacheKey, structuredClone(result));
+    }
+
+    return result;
   } catch (error) {
-    console.error(`${Date.now()} - Failed to fetch message:`, error);
+    console.error(`${Date.now()} - Failed to fetch history:`, error);
     throw error;
   }
 }
+
 
 function fetchEvent(OriginalRepliedMessageSid) {
   return new Promise((resolve, reject) => {
@@ -706,15 +981,28 @@ function fetchEvent(OriginalRepliedMessageSid) {
   });
 }
 
+/**
+ * Body and send time of each sent message, from twilioMessageCache when
+ * possible, otherwise from Twilio. A sent message never changes, so successful
+ * lookups are cached for good. Failures are never cached, so they are retried.
+ *
+ * @returns {Promise<Array<{ localRecord: object, twilioMessage: {body: string, dateSent: Date|null}|null, error?: unknown }>>}
+ */
 async function fetchTwilioMessagesDetails(sentMessages) {
-  // Map each messageSid to a fetch Promise
   const fetchPromises = sentMessages.map(async (msg) => {
+    const cached = twilioMessageCache.get(msg.messageSid);
+    if (cached) {
+      return { localRecord: msg, twilioMessage: cached };
+    }
+
     try {
-      // messageSid is in your local record as `msg.messageSid`
-      const twilioMessage = await twilioClient.messages(msg.messageSid).fetch();
+      const full = await twilioClient.messages(msg.messageSid).fetch();
+      // Keep only what the history needs; the full Twilio object is large.
+      const twilioMessage = { body: full.body, dateSent: full.dateSent };
+      twilioMessageCache.set(msg.messageSid, twilioMessage);
       return {
         localRecord: msg,
-        twilioMessage, // full details from Twilio
+        twilioMessage,
       };
     } catch (error) {
       console.error(
@@ -891,9 +1179,16 @@ async function handleAutoResponse(From, ButtonPayload, OriginalRepliedMessageSid
 
 module.exports = {
   fetchHistory,
+  HISTORY_PAGE_SIZE,
+  HISTORY_MAX_PAGE_SIZE,
+  InvalidCursorError,
+  encodeCursor,
+  decodeCursor,
+  mergePage,
   otpSender,
   messageSender,
   fetchContentTemplates,
+  resetTemplateListCache,
   deleteContentTemplate,
   handleAutoResponse,
   corruptedContactBookData,

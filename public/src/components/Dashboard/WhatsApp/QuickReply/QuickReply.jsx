@@ -1,8 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useSnackbar } from '../../../Providers/Snackbar';
 import { Button, CircularProgress } from '@mui/material';
 import ChatView from '../ChatView/ChatView';
 import './QuickReply.css';
+
+// Must match HISTORY_PAGE_SIZE in services/whatsAppSender.js.
+const HISTORY_PAGE_SIZE = 20;
 
 const QuickReply = ({ CloseModal, incoming_message }) => {
     const { showSnackbar } = useSnackbar();
@@ -48,31 +51,65 @@ const QuickReply = ({ CloseModal, incoming_message }) => {
         }
     };
 
+    // Paging state: newest page first, older pages prepended on scroll-up.
+    const [cursor, setCursor] = useState(null);
+    const [hasMore, setHasMore] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const loadingMoreRef = useRef(false);
+
+    const requestHistoryPage = useCallback(async (pageCursor) => {
+        const params = new URLSearchParams({ limit: String(HISTORY_PAGE_SIZE) });
+        if (pageCursor) params.set("cursor", pageCursor);
+
+        const response = await fetch(
+            `${import.meta.env.VITE_SERVERURL}/api/whatsapp/history/${incoming_message.WaId}?${params}`,
+            {
+                method: "GET",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+            }
+        );
+        const responseData = await response.json();
+
+        if (!response.ok) {
+            throw new Error(responseData.message || "Failed to fetch WhatsApp history");
+        }
+        return responseData;
+    }, [incoming_message.WaId]);
+
     const fetchHistory = useCallback(async () => {
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_SERVERURL}/api/whatsapp/history/${incoming_message.WaId}`,
-                {
-                    method: "GET",
-                    credentials: "include",
-                    headers: { "Content-Type": "application/json" },
-                }
-            );
-            const responseData = await response.json();
-
-            if (!response.ok) {
-                console.error(responseData.error);
-                showSnackbar(responseData.message, "error");
-            } else {
-                setHistory(responseData.result);
-            }
+            const page = await requestHistoryPage(null);
+            setHistory(page.result || []);
+            setCursor(page.nextCursor || null);
+            setHasMore(Boolean(page.hasMore));
         } catch (error) {
             console.error(error);
             showSnackbar(error.message || "Unexpected error occurred", "error");
         } finally {
             setLoadingHistory(false);
         }
-    }, []);
+    }, [requestHistoryPage]);
+
+    const loadMore = useCallback(async () => {
+        if (!hasMore || !cursor || loadingMoreRef.current) return;
+
+        loadingMoreRef.current = true;
+        setLoadingMore(true);
+        try {
+            const page = await requestHistoryPage(cursor);
+            setHistory((prev) => [...(page.result || []), ...prev]);
+            setCursor(page.nextCursor || null);
+            setHasMore(Boolean(page.hasMore));
+        } catch (error) {
+            console.error(error);
+            showSnackbar(error.message || "Unexpected error occurred", "error");
+            setHasMore(false); // stop retrying on every scroll after a failure
+        } finally {
+            loadingMoreRef.current = false;
+            setLoadingMore(false);
+        }
+    }, [hasMore, cursor, requestHistoryPage]);
 
     useEffect(() => {
         fetchHistory();
@@ -84,7 +121,13 @@ const QuickReply = ({ CloseModal, incoming_message }) => {
                     
                     
                     
-                    <ChatView messages={history} loadingHistory={loadingHistory} />
+                    <ChatView
+                        messages={history}
+                        loadingHistory={loadingHistory}
+                        hasMore={hasMore}
+                        loadingMore={loadingMore}
+                        onLoadMore={loadMore}
+                    />
                
 
 

@@ -317,10 +317,12 @@ export default function TwilioTemplateDataGrid({
     const [approvals, setApprovals] = useState<Record<string, any>>({});
     const [approvalsLoading, setApprovalsLoading] = useState(false);
 
-    const fetchApprovals = useCallback(async () => {
+    // refresh: true only from Refresh, so the server re-reads the template list;
+    // it shares one Twilio call with the parent's /api/whatsapp/list?refresh=1.
+    const fetchApprovals = useCallback(async (refresh = false) => {
         setApprovalsLoading(true);
         try {
-            const res = await fetch(`${import.meta.env.VITE_SERVERURL}/api/twilio/approvals`, { credentials: 'include' });
+            const res = await fetch(`${import.meta.env.VITE_SERVERURL}/api/twilio/approvals${refresh ? "?refresh=1" : ""}`, { credentials: 'include' });
             const data = await res.json();
             if (data.status) setApprovals(data.approvals ?? {});
         } catch (e) {
@@ -375,7 +377,7 @@ export default function TwilioTemplateDataGrid({
         if (refreshing) return;
         setRefreshing(true);
         try {
-            await Promise.all([onRefresh?.(), fetchApprovals()]);
+            await Promise.all([onRefresh?.(), fetchApprovals(true)]);
         } catch (e) {
             console.error("Failed to refresh templates", e);
             // The already-loaded rows stay on screen; a failed refresh must not
