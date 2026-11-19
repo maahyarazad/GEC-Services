@@ -216,6 +216,13 @@ const MiniTable = React.memo(function MiniTable({ title, rows, columns: cols, lo
 
 const emptyForm = { title: '', firstname: '', lastname: '', gender: '', mobile_number: '', email: '', partner: '', birthday: '', card_expiry_date: '', type: 7 };
 
+// New members default to a card valid for one year from today (YYYY-MM-DD, local date).
+const defaultCardExpiry = () => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const MemberCardDataGrid = () => {
     const [loadingRowId, setLoadingRowId] = useState(null);
     const [members, setMembers] = useState([]);
@@ -672,7 +679,7 @@ const MemberCardDataGrid = () => {
         }
     },[]);
 
-    const handleOpenAdd = useCallback(() => { setFormData(emptyForm); setEditingId(null); setFormOpen(true); }, []);
+    const handleOpenAdd = useCallback(() => { setFormData({ ...emptyForm, card_expiry_date: defaultCardExpiry() }); setEditingId(null); setFormOpen(true); }, []);
 
     const handleOpenEdit = useCallback((row) => {
         setFormData({
@@ -727,20 +734,6 @@ const MemberCardDataGrid = () => {
         }
         setFormSaving(true);
         try {
-            if (editingId) {
-                const patchR = await fetch(`${import.meta.env.VITE_SERVERURL}/api/partner-onboarding/employee/${editingId}/card-expiry-date`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ card_expiry_date: formData.card_expiry_date || null }),
-                });
-                const patchD = await patchR.json();
-                if (!patchD.status) {
-                    showSnackbar(`Failed to update card expiry date: ${patchD.message}`, 'error');
-                    return;
-                }
-            }
-
             const url = editingId
                 ? `${import.meta.env.VITE_SERVERURL}/api/partner-onboarding/employee/${editingId}`
                 : `${import.meta.env.VITE_SERVERURL}/api/partner-onboarding/employee`;
@@ -987,13 +980,11 @@ const MemberCardDataGrid = () => {
                             onChange={(e) => setFormData(p => ({ ...p, birthday: e.target.value }))}
                             slotProps={{ inputLabel: { shrink: true } }} sx={{ flex: 1 }}
                         />
-                        {editingId && (
-                            <TextField
-                                size="small" label="Card Expiry Date" type="date" value={formData.card_expiry_date}
-                                onChange={(e) => setFormData(p => ({ ...p, card_expiry_date: e.target.value }))}
-                                slotProps={{ inputLabel: { shrink: true } }} sx={{ flex: 1 }}
-                            />
-                        )}
+                        <TextField
+                            size="small" label="Card Expiry Date" type="date" value={formData.card_expiry_date}
+                            onChange={(e) => setFormData(p => ({ ...p, card_expiry_date: e.target.value }))}
+                            slotProps={{ inputLabel: { shrink: true } }} sx={{ flex: 1 }}
+                        />
                         <FormControl size="small" sx={{ minWidth: 180 }}>
                             <InputLabel>Type</InputLabel>
                             <Select value={formData.type} label="Type" onChange={(e) => setFormData(p => ({ ...p, type: e.target.value }))}>

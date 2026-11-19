@@ -369,21 +369,28 @@ router.get("/api/partner-delivery-employees", (req, res) => {
   }
 });
 
+// YYYY-MM-DD, as sent by <input type="date">
+const CARD_EXPIRY_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
 // ── Corporate Member ADD ──────────────────────────────────────────────────────
 router.post("/api/partner-onboarding/employee", (req, res) => {
   try {
-    const { title, firstname, lastname, gender, mobile_number, email, partner, birthday, type } = req.body;
+    const { title, firstname, lastname, gender, mobile_number, email, partner, birthday, type, card_expiry_date } = req.body;
 
     if (!firstname || !lastname || !email || !partner) {
       return res.status(400).json({ status: false, message: "firstname, lastname, email and partner are required" });
+    }
+    if (card_expiry_date && !CARD_EXPIRY_DATE_RE.test(card_expiry_date)) {
+      return res.status(400).json({ status: false, message: "card_expiry_date must be in YYYY-MM-DD format" });
     }
 
     const VALID_TITLES = ["Mr.", "Ms.", "Mrs.", "Dr.", ""];
     const VALID_GENDERS = ["Herr", "Frau", ""];
 
+    // No expiry given: default to one year from today, like members added by the sync.
     const result = db.prepare(`
-      INSERT INTO member_card (title, firstname, lastname, gender, mobile_number, email, partner, birthday, active, type, remarks)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 'manually added')
+      INSERT INTO member_card (title, firstname, lastname, gender, mobile_number, email, partner, birthday, active, type, remarks, card_expiry_date)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 'manually added', COALESCE(?, datetime('now', '+1 year')))
     `).run(
       VALID_TITLES.includes(title) ? title : "",
       firstname,
@@ -393,7 +400,8 @@ router.post("/api/partner-onboarding/employee", (req, res) => {
       email,
       partner,
       birthday || null,
-      type === 5 ? 5 : 7
+      type === 5 ? 5 : 7,
+      card_expiry_date || null
     );
 
     return res.status(201).json({ status: true, message: "Member added", id: result.lastInsertRowid });
@@ -407,19 +415,27 @@ router.post("/api/partner-onboarding/employee", (req, res) => {
 router.put("/api/partner-onboarding/employee/:id", (req, res) => {
   try {
     const { id } = req.params;
-    const { title, firstname, lastname, gender, mobile_number, email, partner, birthday, type } = req.body;
+    const { title, firstname, lastname, gender, mobile_number, email, partner, birthday, type, card_expiry_date } = req.body;
 
     if (!firstname || !lastname || !email || !partner) {
       return res.status(400).json({ status: false, message: "firstname, lastname, email and partner are required" });
+    }
+    if (card_expiry_date && !CARD_EXPIRY_DATE_RE.test(card_expiry_date)) {
+      return res.status(400).json({ status: false, message: "card_expiry_date must be in YYYY-MM-DD format" });
     }
 
     const VALID_TITLES = ["Mr.", "Ms.", "Mrs.", "Dr.", ""];
     const VALID_GENDERS = ["Herr", "Frau", ""];
 
+    // card_expiry_date is only changed when the client sends it (an empty value clears it).
+    const changesExpiry = card_expiry_date !== undefined;
+
     const result = db.prepare(`
       UPDATE member_card
       SET title = ?, firstname = ?, lastname = ?, gender = ?, mobile_number = ?,
-          email = ?, partner = ?, birthday = ?, type = ?, metadata_modifiedAt = datetime('now')
+          email = ?, partner = ?, birthday = ?, type = ?,
+          ${changesExpiry ? "card_expiry_date = ?," : ""}
+          metadata_modifiedAt = datetime('now')
       WHERE id = ?
     `).run(
       VALID_TITLES.includes(title) ? title : "",
@@ -431,6 +447,7 @@ router.put("/api/partner-onboarding/employee/:id", (req, res) => {
       partner,
       birthday || null,
       type === 5 ? 5 : 7,
+      ...(changesExpiry ? [card_expiry_date || null] : []),
       id
     );
 
@@ -449,7 +466,6 @@ router.patch("/api/partner-onboarding/employee/:id/card-expiry-date", (req, res)
     const { id } = req.params;
     const { card_expiry_date } = req.body;
 
-    const CARD_EXPIRY_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
     if (card_expiry_date && !CARD_EXPIRY_DATE_RE.test(card_expiry_date)) {
       return res.status(400).json({ status: false, message: "card_expiry_date must be in YYYY-MM-DD format" });
     }
