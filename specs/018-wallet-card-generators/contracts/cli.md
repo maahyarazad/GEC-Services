@@ -10,7 +10,7 @@
 - Exit 1 with a message on: missing design (lists available designs), missing `--red`/`--gold`, Chrome not found (mentions `CHROME_PATH`), render failure. No partial output.
 
 ## Google
-`node scripts/wallet/generate-google-class.js <design> [--out <dir>] [--issuer <id>] [--root <dir>]`
+`node scripts/wallet/generate-google-class.js <design> [--out <dir>] [--issuer <id>] [--root <dir>] [--logo <png>]`
 `node scripts/wallet/generate-google-class.js --list`
 
 - `--out`: default `wallet_assets/google/<design>`. `--issuer`: default is the issuer id used in `services/googlePassService.js`.

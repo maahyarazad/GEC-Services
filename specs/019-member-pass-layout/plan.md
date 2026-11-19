@@ -4,7 +4,7 @@
 
 ## Summary
 
-Add a small pure module with the partner rules (design choice, logo text, field list) and use it in `generateMemberPass`. The route passes the partner read from the database. A second module builds the "pass issued" email (two versions) from the same rules and the design colors, and `membership_pass_email` uses it. Apple pass and that email only.
+Add a small pure module with the partner rules (design choice, logo text, field list) and use it in `generateMemberPass`. The route passes the partner read from the database. A second module builds the "pass issued" email (two versions) from the same rules and the design colors, and `membership_pass_email` uses it. The Google member pass gets the same rules through a pure builder (`services/googleMemberPass.js`), and the Google logo is replaced by the Apple logo on a square image. Apple pass, Google pass and that email.
 
 ## Technical Context
 
@@ -33,11 +33,17 @@ specs/019-member-pass-layout/{spec.md, plan.md, tasks.md}
 
 services/memberPassLayout.js        # NEW: pure rules (design, label, fields)
 services/memberPassEmail.js         # NEW: builds the pass-issued email (subject, html, text, inline strip image)
+services/googleMemberPass.js        # NEW: pure builder of the Google class and object (design, label, fields, images)
+services/googlePassService.js       # generateMemberGooglePass uses the builder; logo URL of the event pass
 services/applePassService.js        # generateMemberPass uses the rules
 services/emailService.js            # membership_pass_email uses memberPassEmail.js
 routes/member_card.js               # /member-pass: partner and expiry from the database
 tests/wallet/memberPassLayout.test.js
 tests/wallet/memberPassEmail.test.js
+tests/wallet/googleMemberPass.test.js
+file_storage/wallet/{logo.png, corporate_card-hero.png, family_card-hero.png}   # served at /uploads/wallet/
+scripts/wallet/lib/render.js + generate-google-class.js   # logo = Apple logo, square, transparent
+(file_storage/ is not in git or in the deployment: upload the three images by hand)
 descriptions/Wallet-Card-Generators.md   # note on design selection
 ```
 

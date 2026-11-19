@@ -80,6 +80,41 @@ The email sent when a member's pass is issued has two versions. Family members (
 
 ---
 
+### User Story 5 - The Google Wallet pass follows the same rules (Priority: P1)
+
+The Google Wallet member pass gets the same behaviour as the Apple pass: family members get the green family design, everyone else the red corporate design; the text beside the logo is the same label; and the member's name replaces the "Corporate Partner" field.
+
+**Why this priority**: Android members must get the same card as iPhone members.
+
+**Independent Test**: Generate the Google save link for a member with partner "ACME" and one with "GEC Family Membership", decode it, and compare colour, title, hero image and fields with the Apple pass.
+
+**Acceptance Scenarios**:
+
+1. **Given** partner "ACME", **When** the Google pass is generated, **Then** its background is the corporate red, the title beside the logo is "Corporate Card - ACME" and the hero image is the corporate design.
+2. **Given** partner "GEC Family Membership", **Then** the background is the family green, the title is "GEC Family Membership" and the hero image is the family design.
+3. **Given** any member, **Then** the card shows Expiry Date, Member ID and Name in one row, plus the serial number below, and no "Corporate Partner".
+4. **Given** members who already have a Google pass, **Then** their existing passes keep working unchanged (new passes use new class ids per design).
+5. **Given** the partner is empty, **Then** the title is "Corporate Card" with the corporate design.
+
+---
+
+### User Story 6 - The Google pass logo is the Apple logo (Priority: P1)
+
+The logo on the Google pass is the same German Emirates Club logo used on the Apple pass (not the "20 Jahre" anniversary logo), shown fully inside Google's round logo frame.
+
+**Why this priority**: The two passes should look like the same card; today the Google one shows a different logo.
+
+**Independent Test**: Open the logo and hero URLs used by the Google pass in a browser and add a pass on an Android phone.
+
+**Acceptance Scenarios**:
+
+1. **Given** the Google member pass, **Then** its logo is the Apple logo (eagle and palm), without "20 Jahre" and without a laurel wreath.
+2. **Given** Google's circular logo frame, **Then** the logo is not cut off (it is on a square image with margin).
+3. **Given** the Google event pass, **Then** it uses the same logo.
+4. **Given** the images have been uploaded to the server, **Then** the logo and hero images are reachable at public addresses.
+
+---
+
 ### Edge Cases
 
 - Partner is empty, missing or only spaces: corporate design, text "Corporate Card".
@@ -88,6 +123,8 @@ The email sent when a member's pass is issued has two versions. Family members (
 - Members whose passes were already issued keep them; only newly issued passes use the new rules.
 - Email: partner, name or other values containing HTML characters are shown as text, never as markup.
 - Email: partner empty or missing gives "Corporate Card" with no dangling dash, and the corporate design.
+- Google: if a hero or logo image address is not reachable, Google shows the pass without that image; the pass still works.
+- Google: passes already saved by members stay on the old class and layout; only newly generated passes use the new layout.
 - Email: it is also sent when the pass is not re-issued (existing serial number); it still uses the stored partner and expiry.
 - The stored passes' folder and download links stay the same for both designs.
 
@@ -110,6 +147,12 @@ The email sent when a member's pass is issued has two versions. Family members (
 - **FR-013**: Member values in the email MUST be HTML-escaped; the partner and expiry shown MUST come from the member record (database), not the request.
 - **FR-014**: If the strip image is unavailable, the email MUST still be sent without it and the problem MUST be logged.
 - **FR-015**: The Apple Wallet and Google Wallet buttons, the app links and the footer MUST stay as they are.
+- **FR-016**: The Google member pass MUST use the design chosen by the stored partner (same rule as FR-001): background colour and hero image of the family or the corporate design.
+- **FR-017**: The title beside the logo on the Google member pass MUST be the label from FR-003.
+- **FR-018**: The Google member pass MUST NOT show "Corporate Partner"; it MUST show Expiry Date, Member ID and Name in one row, with the serial number below. Because the name is now in that row, the large header MUST be the fixed text "Membership Pass".
+- **FR-019**: New Google passes MUST use a class per design (corporate and family) so passes already issued under the old class are not changed.
+- **FR-020**: The logo of the Google member pass and of the Google event pass MUST be the Apple logo on a square image with margin.
+- **FR-021**: The Google logo and the two hero images MUST be produced from the repository (`wallet_assets/google/`) and made available on the server under `/uploads/wallet/` (copied by hand, because `file_storage/` is not in git or in the deployment).
 
 ### Key Entities
 
@@ -126,6 +169,8 @@ The email sent when a member's pass is issued has two versions. Family members (
 - **SC-004**: Both designs show Expiry Date, Member ID and Name in one row, and no "Corporate Partner".
 - **SC-005**: In a mail client (Gmail and Apple Mail), the email card of each type visually matches its Wallet pass (colors, logo text, icon strip, fields).
 - **SC-006**: 100% of tested emails (named partner, family, empty partner) have the right subject, card color and text.
+- **SC-007**: For 100% of tested partner values (named, family, empty) the decoded Google pass has the right class, colour, title and hero image, and no "Corporate Partner".
+- **SC-008**: On an Android phone, the Google pass of each type shows the Apple logo inside the round frame and matches its Apple pass in colour and text.
 
 ## Assumptions
 
@@ -138,3 +183,8 @@ The email sent when a member's pass is issued has two versions. Family members (
 - The email card is built from the same data as the pass: the design colors come from `corporate_card.html` / `family_card.html`, and the icon strip image is the one already generated in the model folder (attached inline, so no image hosting is needed).
 - The expiry in the email uses the same DD-MM-YYYY format as the pass.
 - The invitation email (`membership__invitation`, sent to employees before they have a pass) is not changed.
+- Google Wallet is now in scope (this replaces the earlier "Apple only" assumption for the pass).
+- On Google, the "header" must exist, and the name now sits in the row, so the header becomes the fixed text "Membership Pass" (change it if you prefer the name there).
+- "The Google icon" means the logo image of the Google pass. The Apple logo comes from `models/membership.pass/logo-original.png`.
+- Google images need public addresses. They are served by the server from `file_storage/` under `/uploads/`, so the new images go in `file_storage/wallet/` on the server. `file_storage/` is ignored by git and not part of the deployment, so they are uploaded by hand.
+- The Google event pass keeps its layout; only its logo is replaced.

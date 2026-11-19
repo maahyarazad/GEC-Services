@@ -48,17 +48,6 @@ html,body{margin:0!important;padding:0!important;min-height:0!important;display:
 `
     );
   }
-  if (mode === "logo") {
-    const badge = Math.round(width * 0.6);
-    return (
-      common +
-      `.card > :not(.icons){display:none!important}
-.icons > :not(.gec){display:none!important}
-.icons{left:0!important;right:0!important;top:50%!important;transform:translateY(-50%)!important;justify-content:center!important}
-.gec{width:${badge}px!important;height:${badge}px!important;font-size:${Math.round(badge * 0.36)}px!important;border-radius:${Math.round(badge * 0.16)}px!important}
-`
-    );
-  }
   throw new Error(`Unknown render mode "${mode}".`);
 }
 
@@ -119,4 +108,44 @@ async function renderDesign(design, { mode, width, height, scale = 1, outFile })
   }
 }
 
-module.exports = { findChrome, buildInjectedCss, readPngSize, renderDesign };
+// Renders a logo image onto a square, transparent PNG (Google shows logos in a round frame, so the
+// logo is centred with margin). Used for the Google pass logo, the same logo as on the Apple pass.
+async function renderLogoImage({ logoFile, size = 660, outFile }) {
+  if (!fs.existsSync(logoFile)) throw new Error(`Logo image not found: ${logoFile}`);
+  const chrome = findChrome();
+  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "wallet-logo-"));
+  try {
+    const dataUri = `data:image/png;base64,${fs.readFileSync(logoFile).toString("base64")}`;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;padding:0;background:transparent}
+body{width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center}
+img{max-width:80%;max-height:80%}
+</style></head><body><img src="${dataUri}" alt=""></body></html>`;
+    const htmlFile = path.join(workDir, "logo.html");
+    fs.writeFileSync(htmlFile, html);
+    const args = [
+      "--headless=new",
+      "--disable-gpu",
+      "--hide-scrollbars",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--default-background-color=00000000", // keep the PNG transparent
+      `--user-data-dir=${path.join(workDir, "profile")}`,
+      "--force-device-scale-factor=1",
+      `--window-size=${size},${size}`,
+      `--screenshot=${outFile}`,
+      `file://${htmlFile}`,
+    ];
+    if (typeof process.getuid === "function" && process.getuid() === 0) args.unshift("--no-sandbox");
+    await runChrome(chrome, args);
+    if (!fs.existsSync(outFile)) throw new Error(`Chrome did not produce ${outFile}.`);
+    const got = readPngSize(outFile);
+    if (got.width !== size || got.height !== size) {
+      throw new Error(`${path.basename(outFile)} is ${got.width}x${got.height}, expected ${size}x${size}.`);
+    }
+  } finally {
+    fs.rmSync(workDir, { recursive: true, force: true });
+  }
+}
+
+module.exports = { findChrome, buildInjectedCss, readPngSize, renderDesign, renderLogoImage };

@@ -73,6 +73,8 @@ test("Google generator builds a class for a new design", needsChrome, () => {
   assert.ok(JSON.parse(fs.readFileSync(path.join(out, "class.json"), "utf8")).id.endsWith("membership_blue_card"));
   assert.deepEqual(readPngSize(path.join(out, "hero.png")), { width: 1032, height: 336 });
   assert.deepEqual(readPngSize(path.join(out, "logo.png")), { width: 660, height: 660 });
+  // The logo is a transparent PNG (RGBA, color type 6): the Apple logo centred on a square.
+  assert.equal(fs.readFileSync(path.join(out, "logo.png"))[25], 6);
 });
 
 test("re-running gives identical output (FR-011)", needsChrome, () => {

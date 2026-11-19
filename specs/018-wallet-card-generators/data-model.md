@@ -23,7 +23,7 @@ Invariant: designs are listed by scanning the repo root for `*_card.html`.
 - `class.json`: GenericClass resource: `id` and `classTemplateInfo` only (Google keeps colors and images on each object, not on the class)
 - `look.json`: `classId`, `issuerName`, `hexBackgroundColor`, `heroImageFile`, `logoFile` for creating objects of this class
 - `hero.png`: 1032x336
-- `logo.png`: 660x660
+- `logo.png`: 660x660, the Apple logo (`models/membership.pass/logo-original.png`, or `--logo`) centred on a transparent square
 
 ## State
 Stateless. Re-running replaces output atomically; failure leaves previous output intact.
