@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GEC Red Card Sample</title>
+  <style>
+    :root {
+      --gold: #dfab3c;
+      --red: #139038;
+      --box: 55px
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #efefef;
+      font-family: -apple-system, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 24px;
+      box-sizing: border-box
+    }
+
+    .cardContainer {
+      width: min(90vw, 520px);
+      aspect-ratio: 1.45;
+      filter: drop-shadow(0 8px 12px rgba(0, 0, 0, .18))
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 10px;
+      background: var(--red);
+      overflow: hidden;
+      container-type: inline-size
+    }
+
+    .logo {
+      position: absolute;
+      top: 15px;
+      left: 0;
+      width: 120px;
+      height: 60px;
+      object-fit: contain
+    }
+
+    .cardLabel {
+      position: absolute;
+      right: 30px;
+      top: 20%;
+      color: var(--gold);
+      font-size: 22px
+    }
+
+    .glow {
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      box-shadow: inset 0 0 10px rgba(223, 171, 60, .22)
+    }
+
+    .texture {
+      position: absolute;
+      top: -20px;
+      right: -20px;
+      width: 75%;
+      height: 85%;
+      opacity: .08;
+      border-radius: 999px;
+      background: #fff;
+      transform: rotate(-25deg) scaleX(1.2)
+    }
+
+    .glare {
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .04), rgba(0, 0, 0, .08))
+    }
+
+    .icons {
+      position: absolute;
+      left: 30px;
+      right: 30px;
+      top: 50%;
+      transform: translateY(-20px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    .box {
+      width: var(--box);
+      height: var(--box);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: none
+    }
+
+    .icon {
+      border: 1.5px solid var(--gold);
+      background: rgba(223, 171, 60, .04);
+      box-sizing: border-box
+    }
+
+    .icon svg {
+      width: 50px;
+      height: 50px;
+      stroke: var(--gold);
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .gec {
+  background: linear-gradient(90deg, #DFAB3C, #dabe828c, #DFAB3C);
+  color: #dcd6ba;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 1px;
+
+  
+}
+
+    .blk {
+      position: absolute;
+      bottom: 10px
+    }
+
+    .blk small {
+      display: block;
+      color: var(--gold);
+      font-size: 11px;
+      margin-bottom: 2px
+    }
+
+    .blk span {
+      display: block;
+      color: #fff;
+      font-size: 15px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .name {
+      left: 10px;
+      width: 42%
+    }
+
+    .partner {
+      left: 46%;
+      width: 30%
+    }
+
+    .expiry {
+      right: 10px;
+      width: 18%;
+      text-align: right
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px 12px;
+      align-items: center;
+      background: #fff;
+      padding: 16px;
+      border-radius: 10px
+    }
+
+    .controls input {
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 6px
+    }
+  </style>
+</head>
+
+<body>
+  <div class="cardContainer">
+    <div class="card">
+      <div class="cardLabel">Family Membership Card</div>
+      <div class="glow"></div>
+      <div class="texture"></div>
+      <div class="glare"></div>
+      <div class="icons">
+        <div class="box icon"><svg viewBox="0 0 64 64"><path d="M32 5C30.5 5 29.5 7 29.5 9V24L8 37V42L29.5 38V52L23 58V61L32 58.5L41 61V58L34.5 52V38L56 42V37L34.5 24V9C34.5 7 33.5 5 32 5Z"/></svg></div>
+        <div class="box icon"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="16"/><path d="M40.5 23.5A11 11 0 0 1 35 42"/><path d="M8 13v9q0 3 2 3t2-3v-9M10 13v12M10 25v26"/><path d="M53 13C55.5 14 56.5 17 56.5 23V50Q56.5 52 54.5 52Q52.5 52 52.5 50Z"/></svg></div>
+        <div class="box icon"><svg viewBox="0 0 64 64"><rect x="10" y="24" width="44" height="9"/><path d="M12 33v22h40V33M29 24v31M35 24v31M32 24C26 24 22 20 25 17C28 14 32 20 32 24C32 20 36 14 39 17C42 20 38 24 32 24ZM32 24C26 22 21 20 17 16M32 24C38 22 43 20 47 16"/></svg></div>
+        <div class="box icon"><svg viewBox="0 0 64 64"><g transform="translate(21 14) rotate(-14) scale(1.35)"><path d="M-5 0H5C5 9 6 14 0 14C-6 14-5 9-5 0ZM-5 4H5M0 14V28M-6 30Q0 26 6 30"/></g><g transform="translate(43 14) rotate(14) scale(1.35)"><path d="M-5 0H5C5 9 6 14 0 14C-6 14-5 9-5 0ZM-5 4H5M0 14V28M-6 30Q0 26 6 30"/></g><path d="M32 2V7M23 4L26 8M41 4L38 8"/></svg></div>
+        <div class="box icon"><svg viewBox="0 0 64 64"><path d="M4 9H10L17 38H47L53 17H12.5M14 25H51M15 31H49M22 17L25 38M30 17L31 38M38 17V38M46 17L44 38M17 38C11 38 11 46 17 46H50"/><circle cx="22" cy="53" r="3.5"/><circle cx="44" cy="53" r="3.5"/></svg></div>
+        <div class="box gec">GEC</div>
+      </div>
+      
+    </div>
+  </div>
+  
+</body>
+
+</html>

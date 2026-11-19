@@ -1,0 +1,53 @@
+{
+  "id": "3388000000022971699.membership_family_card",
+  "classTemplateInfo": {
+    "cardTemplateOverride": {
+      "cardRowTemplateInfos": [
+        {
+          "twoItems": {
+            "startItem": {
+              "firstValue": {
+                "fields": [
+                  {
+                    "fieldPath": "object.textModulesData[\"cardnumber\"].body"
+                  }
+                ]
+              }
+            },
+            "endItem": {
+              "firstValue": {
+                "fields": [
+                  {
+                    "fieldPath": "object.textModulesData[\"partner\"].body"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "twoItems": {
+            "startItem": {
+              "firstValue": {
+                "fields": [
+                  {
+                    "fieldPath": "object.textModulesData[\"expiry\"].body"
+                  }
+                ]
+              }
+            },
+            "endItem": {
+              "firstValue": {
+                "fields": [
+                  {
+                    "fieldPath": "object.textModulesData[\"serialNumber\"].body"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

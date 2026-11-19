@@ -8,7 +8,11 @@
     "start": "pm2 start server.js",
     "stop": "pm2 stop server.js",
     "restart": "pm2 restart server.js",
-    "logs": "pm2 logs"
+    "logs": "pm2 logs",
+    "wallet:apple": "node scripts/wallet/generate-apple-pass.js",
+    "wallet:google": "node scripts/wallet/generate-google-class.js",
+    "test:wallet": "node --test tests/wallet/*.test.js",
+    "test:members": "node --test tests/members/*.test.js"
   },
   "keywords": [],
   "author": "",

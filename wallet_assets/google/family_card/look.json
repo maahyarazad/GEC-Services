@@ -1,0 +1,8 @@
+{
+  "classId": "3388000000022971699.membership_family_card",
+  "issuerName": "German Emirates Club",
+  "hexBackgroundColor": "#139038",
+  "heroImageFile": "hero.png",
+  "logoFile": "logo.png",
+  "note": "Host hero.png and logo.png at public URLs and use them as heroImage.sourceUri.uri and logo.sourceUri.uri on each object."
+}
