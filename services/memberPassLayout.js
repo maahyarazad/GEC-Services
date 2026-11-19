@@ -5,6 +5,14 @@
 
 const FAMILY_PARTNER = "GEC Family Membership";
 
+// Card colors of the two designs. They are repeated here (and checked against corporate_card.html /
+// family_card.html by tests/wallet/memberPassLayout.test.js) because the server deployment copies only
+// services/, routes/, helpers/, middleware/ and websocket/, not the design HTML files or scripts/.
+const DESIGN_COLORS = {
+  corporate_card: { backgroundColor: "#9d1d1d", accentColor: "#dfab3c" },
+  family_card: { backgroundColor: "#139038", accentColor: "#dfab3c" },
+};
+
 const clean = (value) => String(value ?? "").trim();
 
 function isFamilyPartner(partner) {
@@ -14,6 +22,10 @@ function isFamilyPartner(partner) {
 // Design name = the HTML file in the repo root (without .html) = the model folder (without .pass).
 function designNameFor(partner) {
   return isFamilyPartner(partner) ? "family_card" : "corporate_card";
+}
+
+function designColorsFor(partner) {
+  return DESIGN_COLORS[designNameFor(partner)];
 }
 
 function modelNameFor(partner) {
@@ -40,4 +52,4 @@ function buildMemberFields({ firstname, lastname, memberId, expiry }) {
   };
 }
 
-module.exports = { FAMILY_PARTNER, isFamilyPartner, designNameFor, modelNameFor, passLabelFor, buildMemberFields };
+module.exports = { FAMILY_PARTNER, DESIGN_COLORS, isFamilyPartner, designNameFor, designColorsFor, modelNameFor, passLabelFor, buildMemberFields };

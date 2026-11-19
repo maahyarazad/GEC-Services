@@ -9,16 +9,10 @@
 const fs = require("fs");
 const path = require("path");
 const moment = require("moment");
-const { loadDesign } = require("../scripts/wallet/lib/design");
-const { isFamilyPartner, designNameFor, passLabelFor } = require("./memberPassLayout");
+const { isFamilyPartner, designNameFor, designColorsFor, passLabelFor } = require("./memberPassLayout");
 
 const STRIP_CID = "card-strip";
 const LOGO_URL = "https://www.german-emirates-club.com/uploads/files/user/GE-LOGO-GOLD.png";
-// Used only if a design HTML file cannot be read.
-const FALLBACK_COLORS = {
-  corporate_card: { backgroundColor: "#9d1d1d", accentColor: "#dfab3c" },
-  family_card: { backgroundColor: "#139038", accentColor: "#dfab3c" },
-};
 
 const escapeHtml = (value) =>
   String(value ?? "")
@@ -27,16 +21,6 @@ const escapeHtml = (value) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-
-function colorsFor(designName, warnings) {
-  try {
-    const d = loadDesign(designName);
-    return { backgroundColor: d.backgroundColor, accentColor: d.accentColor };
-  } catch (err) {
-    warnings.push(`Could not read the ${designName} design colors (${err.message}); using defaults.`);
-    return FALLBACK_COLORS[designName];
-  }
-}
 
 function formatExpiry(value) {
   if (!value) return "--";
@@ -54,7 +38,7 @@ function buildMemberPassEmail({ member, applePKpassPath, googlePassToken, client
   const family = isFamilyPartner(partner);
   const designName = designNameFor(partner);
   const label = passLabelFor(partner);
-  const { backgroundColor: bg, accentColor: accent } = colorsFor(designName, warnings);
+  const { backgroundColor: bg, accentColor: accent } = designColorsFor(partner);
 
   const stripPath = path.join(modelsDir, `${designName}.pass`, "strip@2x.png");
   const hasStrip = fs.existsSync(stripPath);

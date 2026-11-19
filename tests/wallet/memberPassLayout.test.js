@@ -2,7 +2,9 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const { loadDesign } = require("../../scripts/wallet/lib/design");
 const {
+  DESIGN_COLORS,
   FAMILY_PARTNER, isFamilyPartner, modelNameFor, designNameFor, passLabelFor, buildMemberFields,
 } = require("../../services/memberPassLayout");
 
@@ -45,4 +47,12 @@ test("buildMemberFields copes with missing names", () => {
   const none = buildMemberFields({ memberId: 1, expiry: "x" }).auxiliaryFields[1].value;
   assert.equal(none, "");
   assert.ok(!/undefined|null/.test(only + none));
+});
+
+test("DESIGN_COLORS match the design HTML files (the server does not have those files)", () => {
+  for (const name of ["corporate_card", "family_card"]) {
+    const d = loadDesign(name);
+    assert.equal(DESIGN_COLORS[name].backgroundColor, d.backgroundColor, `${name} background`);
+    assert.equal(DESIGN_COLORS[name].accentColor, d.accentColor, `${name} accent`);
+  }
 });
