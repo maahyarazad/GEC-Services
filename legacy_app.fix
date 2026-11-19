@@ -1,0 +1,98 @@
+<?php
+/*
+==========================================================================
+ NOTES: Webmail one-click login (Roundcube)  --  not executable code
+==========================================================================
+
+Q: If I change RoundcubeAutoLogin('https://www.german-emirates-club.com/admin/_webmail/')
+   to 'https://buenapublica.cmpsrv.com/rc/', does it work?
+
+A: No. The script logs in from our server, so the login cookies end up on
+   german-emirates-club.com. A browser can't use cookies from one domain on
+   another, so when it is redirected to buenapublica.cmpsrv.com/rc/ it has no
+   session there and Roundcube shows the login form. One-click login into /rc/
+   needs something running on buenapublica.cmpsrv.com (an SSO plugin or a
+   script there), which only the hosting provider can add.
+
+What will work: keep the URL as https://www.german-emirates-club.com/admin/_webmail/
+and fix the script. It's our own Roundcube (1.4.13) on the same server, so it
+reads the same mailboxes as /rc/ (config: default_host = 'localhost').
+
+Likely bug: the server answers with HTTP/1.1, so Apache sends the cookie header
+as "Set-Cookie:" with capitals. __class_roundcube.php searches only for
+lowercase "set-cookie:", so it finds no cookies and the user lands on the
+login form.
+
+--------------------------------------------------------------------------
+ STEP 1 - Back up (OUTSIDE the web root, so .bak files can't be downloaded)
+--------------------------------------------------------------------------
+    mkdir -p ~/backups
+    cd ~/buenapublica/german-emirates-club.com/admin
+    cp classes/__class_roundcube.php ~/backups/__class_roundcube.php.bak
+    cp webmail-login.php ~/backups/webmail-login.php.bak
+
+ To undo: copy those two files back to their original places.
+
+--------------------------------------------------------------------------
+ STEP 2 - admin/classes/__class_roundcube.php, in login()
+--------------------------------------------------------------------------
+ Replace:
+
+    preg_match_all('/set-cookie: (.*)\b/', $response, $cookies);
+    $cookie_return = array();
+    foreach($cookies[1] as $cookie)
+    {
+        preg_match('|([A-z0-9\_]*)=([A-z0-9\_\-]*);|', $cookie, $cookie_match);
+        if($cookie_match) {
+            $cookie_return[$cookie_match[1]] = $cookie_match[2];
+        }
+    }
+    return $cookie_return;
+
+ With:
+
+    preg_match_all('/^set-cookie:\s*([^=;\s]+)=([^;\r\n]*)/mi', $response, $m, PREG_SET_ORDER);
+    $cookie_return = array();
+    foreach ($m as $c) {
+        if ($c[2] !== '' && $c[2] !== 'deleted') {   // skip cookies Roundcube is clearing
+            $cookie_return[$c[1]] = $c[2];           // last value wins
+        }
+    }
+    return $cookie_return;
+
+--------------------------------------------------------------------------
+ STEP 3 - admin/classes/__class_roundcube.php, in redirect()
+--------------------------------------------------------------------------
+ The parameter needs the underscore, and the script should stop afterwards:
+
+    header('Location: ' . $this->_rc_link . '?_task=mail');
+    exit;
+
+--------------------------------------------------------------------------
+ STEP 4 - admin/webmail-login.php
+--------------------------------------------------------------------------
+ Stop the foreach from running on null when the login fails:
+
+    $cookies = $rc->login($_POST['_user'], $_POST['_pass']) ?: array();
+
+--------------------------------------------------------------------------
+ STEP 5 - Test
+--------------------------------------------------------------------------
+ - No service restart needed: PHP reads the files on every request.
+   If OPcache shows old behaviour, wait about a minute and retry.
+ - Test in a private/incognito window, or clear the cookies for
+   german-emirates-club.com first.
+ - Still showing the login form? Ask for a debug version that prints
+   exactly what Roundcube sends back.
+
+--------------------------------------------------------------------------
+ Other checks
+--------------------------------------------------------------------------
+ Encryption-key check (use single quotes; bash treats ! specially in double quotes).
+ Run inside ~/buenapublica/german-emirates-club.com/admin/_webmail:
+
+    grep -cF 'rcmail-!24ByteDESkey*Str' config/config.inc.php
+
+ 1 = default des_key still in use -> set a random 24-character string.
+ 0 = already changed.
+*/
