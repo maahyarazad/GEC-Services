@@ -279,7 +279,8 @@ CREATE TABLE IF NOT EXISTS member_card (
     partner TEXT,
     birthday datetime,
     active BOOLEAN,
-    remarks TEXT
+    remarks TEXT,
+    pass_expiry_date TEXT
 );
 
 

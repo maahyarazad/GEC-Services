@@ -8,6 +8,7 @@ const authorization_middleware = require("../middleware/auth");
 const { exportTableAsCSV } = require("../services/csvParser");
 const { generateMemberPass } = require("../services/applePassService");
 const { generateMemberGooglePass } = require("../services/googlePassService");
+const { planMemberPass } = require("../services/memberPassRenewal");
 const { membership_pass_email, sendBatchEmails } = require("../services/emailService");
 const uniqid = require("uniqid");
 const path = require("path");
@@ -29,6 +30,11 @@ function titleToSlug(title) {
     .replace(/\s+/g, "-") // replace spaces (or multiple spaces) with dashes
     .replace(/[^\w-]+/g, ""); // remove any non-alphanumeric characters except dash
 }
+
+// member_card.pass_expiry_date is added by sql_versions/*_add_member_card_pass_expiry_date.sql;
+// until that migration runs, the route works but cannot detect an expiry changed outside it.
+const hasPassExpiryColumn = (db) =>
+  db.prepare("PRAGMA table_info(member_card)").all().some((c) => c.name === "pass_expiry_date");
 
 // ── Member card CSV export ─────────────────────────────────────────────────
 // Member passes are stored under the "CORPORATE CARD" title slug (see /member-pass).
@@ -174,29 +180,21 @@ router.post(
       let applePKpassPath;
       let googlePassToken;
 
-      const expirationDate = new Date(_member.card_expiry_date);
-
       const now = new Date();
       const timestamp = Date.now();
 
-      const sameMonthAndYear =
-        expirationDate.getFullYear() === now.getFullYear() &&
-        expirationDate.getMonth() === now.getMonth();
-
-      let newSerialNumberRequired = false;
       if (!memberId) {
         member.memberId = timestamp;
       }
 
-      if (!sameMonthAndYear && expirationDate < now) {
-        const newExpiry = new Date(now);
-        newExpiry.setFullYear(newExpiry.getFullYear() + 1);
-        member.card_expiry_date = newExpiry;
-        newSerialNumberRequired = true;
-      }
+      // New passes are needed for a missing serial number, a card that expired in an
+      // earlier month (renewed for a year), or an expiry that changed since the pass was issued.
+      const plan = planMemberPass({ memberRow: _member, now });
 
-      if (newSerialNumberRequired || !_member.serial_number) {
+      if (plan.needsNewPass) {
         member.serial_number = `GEC-${uniqid().toUpperCase()}`;
+        // Always use the expiry from the database (or the renewal), never one sent by the client.
+        member.card_expiry_date = plan.expiry;
 
         await generateMemberPass({ ...req.body, ...member });
         googlePassToken = await generateMemberGooglePass({
@@ -221,6 +219,12 @@ router.post(
         google_pass_token: googlePassToken,
         birthday: new Date(member.birthday).toISOString(),
       };
+
+      if (plan.needsNewPass) {
+        // Save the renewal, and remember which expiry is printed on the pass that was just issued.
+        updateData.card_expiry_date = plan.expirySql;
+        if (hasPassExpiryColumn(db)) updateData.pass_expiry_date = plan.expirySql;
+      }
 
       // Add memberId only when it doesn’t exist yet
       if (!memberId) {
