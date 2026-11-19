@@ -12,6 +12,7 @@ const {chunkArray} = require("../helpers/essentials");
 const emailLogService = require("./emailLogService");
 const dbService = require("./dbService");
 const { buildMemberPassEmail } = require("./memberPassEmail");
+const { enhanceEmailHtml } = require("./emailResponsive");
 
 function slugToTitle(slug) {
   return slug
@@ -43,7 +44,7 @@ async function sendEmail({ to, subject, html, text }) {
     Message: {
       Subject: { Data: subject },
       Body: {
-        Html: { Data: html },
+        Html: { Data: enhanceEmailHtml(html) },
         Text: { Data: text || "" },
       },
     },
@@ -96,7 +97,7 @@ async function sendRawEmailWithAttachments({
     bcc: bcc,
     subject,
     text,
-    html,
+    html: enhanceEmailHtml(html), // viewport, mobile and dark-mode CSS for every email (see emailResponsive.js)
     attachments, // Example format below
   };
 
@@ -143,7 +144,7 @@ async function sendRawEmailWithAttachments_AppSupport({
     bcc,
     subject,
     text,
-    html,
+    html: enhanceEmailHtml(html), // viewport, mobile and dark-mode CSS for every email (see emailResponsive.js)
     attachments,
     ...(inReplyTo  && { inReplyTo }),
     ...(references && { references }),

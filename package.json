@@ -12,7 +12,8 @@
     "wallet:apple": "node scripts/wallet/generate-apple-pass.js",
     "wallet:google": "node scripts/wallet/generate-google-class.js",
     "test:wallet": "node --test tests/wallet/*.test.js",
-    "test:members": "node --test tests/members/*.test.js"
+    "test:members": "node --test tests/members/*.test.js",
+    "test:email": "node --test tests/email/*.test.js"
   },
   "keywords": [],
   "author": "",

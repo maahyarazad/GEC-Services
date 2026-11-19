@@ -91,3 +91,54 @@ test("strip missing: email still built, without the image, and a warning", () =>
   assert.equal(r.warnings.length, 1);
   assert.ok(r.html.includes("Corporate Card - ACME"));
 });
+
+// ── Responsive and adaptive behaviour ────────────────────────────────────────
+
+const { enhanceEmailHtml } = require("../../services/emailResponsive");
+
+test("responsive head: viewport, color scheme, mobile and dark-mode CSS", () => {
+  const { html } = buildMemberPassEmail({ ...base, member: member() });
+  assert.equal((html.match(/name="viewport"/g) || []).length, 1);
+  for (const needle of ['content="width=device-width, initial-scale=1.0"', 'name="color-scheme"', 'name="supported-color-schemes"',
+    "@media only screen and (max-width: 520px)", "@media only screen and (max-width: 620px)", "prefers-color-scheme: dark", "[data-ogsc]"]) {
+    assert.ok(html.includes(needle), needle);
+  }
+  assert.ok(html.includes('<html lang="en"'));
+});
+
+test("fluid wrapper with Outlook fallback and a hidden preheader", () => {
+  const { html } = buildMemberPassEmail({ ...base, member: member() });
+  assert.ok(/<table[^>]*width="500"[^>]*class="em-wrap em-card"[^>]*max-width:500px/.test(html));
+  assert.ok(html.includes("<!--[if mso]>") && html.includes("<![endif]-->"));
+  assert.match(html, /class="em-preheader">Your Corporate Card - ACME has been issued\./);
+});
+
+test("phone layout hooks: logo/title, fields and badges can stack", () => {
+  const { html } = buildMemberPassEmail({ ...base, member: member() });
+  assert.equal((html.match(/class="mp-field"/g) || []).length, 3);
+  assert.ok(html.includes("mp-logo-cell") && html.includes("mp-title-cell"));
+  assert.equal((html.match(/class="mp-btn"/g) || []).length, 4, "two wallet badges and two app-store badges");
+  assert.ok(html.includes(".mp-field { display: block !important"));
+});
+
+test("dark mode: neutral layers are tagged, the brand card is not", () => {
+  const { html } = buildMemberPassEmail({ ...base, member: member() });
+  for (const cls of ["em-page", "em-card", "em-text", "em-muted", "em-border", "em-link"]) assert.ok(html.includes(cls), cls);
+  const brandCard = /<table[^>]*bgcolor="#9d1d1d"[^>]*>/.exec(html)[0];
+  assert.ok(!/em-(card|page)/.test(brandCard));
+});
+
+test("the generic enhancer leaves the native template unchanged and no fixed pixel width exceeds the wrapper", () => {
+  for (const partner of ["ACME", "GEC Family Membership"]) {
+    const { html } = buildMemberPassEmail({ ...base, member: member({ partner }) });
+    assert.equal(enhanceEmailHtml(html), html);
+    const widths = [...html.matchAll(/(?<![a-z-])width:\s*(\d+)px/g)].map((m) => +m[1]);
+    assert.ok(widths.every((w) => w <= 500), `style widths: ${widths}`);
+  }
+});
+
+test("long values are escaped and cannot add markup", () => {
+  const { html } = buildMemberPassEmail({ ...base, member: member({ partner: "A".repeat(80) + "<b>x</b>", firstname: "Very".repeat(30) }) });
+  assert.ok(!html.includes("<b>x</b>"));
+  assert.ok(html.includes("&lt;b&gt;x&lt;/b&gt;"));
+});

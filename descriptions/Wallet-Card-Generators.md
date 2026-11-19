@@ -45,7 +45,7 @@ Rules live in `services/memberPassLayout.js`; the partner always comes from the 
 | none / empty | `models/corporate_card.pass` | `Corporate Card` | red card |
 
 - **Pass layout** (`generateMemberPass`): nothing over the icon strip; one row below it with Expiry Date, Member ID and Name (Name takes the place of the old "Corporate Partner" field). The QR link and the `pass_storage/corporate-card/` folder are unchanged for both designs.
-- **Email** (`membership_pass_email` -> `services/memberPassEmail.js`): the card mirrors the pass (logo, label, icon strip, one row of fields). Colors come from `corporate_card.html` / `family_card.html`; the strip is `models/<design>.pass/strip@2x.png`, attached inline (`cid:card-strip`). Member values are HTML-escaped. If the strip is missing the email is still sent without it and a line is written to `error_log`.
+- **Email** (`membership_pass_email` -> `services/memberPassEmail.js`, responsive and with dark mode, see `descriptions/Email-Templates.md`): the card mirrors the pass (logo, label, icon strip, one row of fields). Colors come from `corporate_card.html` / `family_card.html`; the strip is `models/<design>.pass/strip@2x.png`, attached inline (`cid:card-strip`). Member values are HTML-escaped. If the strip is missing the email is still sent without it and a line is written to `error_log`.
 - **Server requirement**: both model folders must exist on the server (`models/` is not in git). Build them with `npm run wallet:apple -- corporate_card` and `-- family_card`, or copy the folders. A missing model makes pass issuing fail with a clear error (it never falls back to the other design).
 - Not changed: the Apple event pass (`generateApplePass`), `emailMembershipCard` (unused) and the employee invitation email.
 
