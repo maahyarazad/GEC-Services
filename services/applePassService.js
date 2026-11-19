@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const { PKPass } = require("passkit-generator");
 const fs = require("fs");
+const { modelNameFor, passLabelFor, buildMemberFields } = require("./memberPassLayout");
 
 function slugToTitle(slug) {
     return slug
@@ -21,9 +22,8 @@ function titleToSlug(title) {
 
 const generateMemberPass = async (data) => {
 
-    const title = slugToTitle(data.title);
     const event_page = titleToSlug(data.title);
-    const { firstname, lastname, event_id, card_expiry_date, memberId, serial_number, partner } = data;
+    const { firstname, lastname, card_expiry_date, memberId, serial_number, partner } = data;
     const wwdrPath = path.join(__dirname, "../certs/AppleWWDRCAG4.pem");
     const signerCertPath = path.join(__dirname, "../certs/signerCert.pem");
     const signerKeyPath = path.join(__dirname, "../certs/signerKey.pem");
@@ -40,10 +40,18 @@ const generateMemberPass = async (data) => {
         _date.getSeconds()
     );
 
-    
+
+    // The partner decides the design: "GEC Family Membership" -> family_card.pass, others -> corporate_card.pass.
+    const modelPath = path.join(process.cwd(), "models", modelNameFor(partner));
+    if (!fs.existsSync(modelPath)) {
+        // No fallback to the other design: a member must never get the wrong card silently.
+        throw new Error(`Pass model not found: ${modelPath}. Build it with npm run wallet:apple.`);
+    }
+    const label = passLabelFor(partner); // text beside the logo and the Add-sheet heading
+
     // Load pass template
     const pass = await PKPass.from({
-        model: path.join(process.cwd(), "models/corporate_card.pass"),
+        model: modelPath,
         certificates: {
             wwdr: fs.readFileSync(wwdrPath),
             signerCert: fs.readFileSync(signerCertPath),
@@ -52,17 +60,17 @@ const generateMemberPass = async (data) => {
         }
     }, {
         serialNumber: `${serial_number}`,
-        description: `${title}`,   // 👈 overrides pass.json
-        logoText: `${title}`, // 👈 overrides pass.json
+        description: label,   // 👈 overrides pass.json
+        logoText: label, // 👈 overrides pass.json
     });
 
     const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
     const formattedDate = expirationDate.toLocaleDateString('en-GB', options).replace(/\//g, '-');
-    pass.secondaryFields.push({ key: "expiry", label: "Expiry Date", value: formattedDate });
-    pass.primaryFields.push({ key: "event_name", label: "Name", "value": `${firstname} ${lastname}` });
-    pass.auxiliaryFields.push({ key: "fullname", label: "Member ID", "value": `${memberId}`, textAlignment: "PKTextAlignmentLeft" });
-    pass.auxiliaryFields.push({ key: "partner", label: "Corporate Partner", value: `${partner}` , textAlignment: "PKTextAlignmentRight"});
-    // pass.auxiliaryFields.push({ key: "passid", label: "Pass ID", value: `${event_id}`, textAlignment: "PKTextAlignmentLeft" });
+    // Layout: nothing over the icon strip; Expiry Date, Member ID and Name in one row.
+    const fields = buildMemberFields({ firstname, lastname, memberId, expiry: formattedDate });
+    fields.primaryFields.forEach((f) => pass.primaryFields.push(f));
+    fields.secondaryFields.forEach((f) => pass.secondaryFields.push(f));
+    fields.auxiliaryFields.forEach((f) => pass.auxiliaryFields.push(f));
     // Add QR code at the bottom of the pass
     const qeValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event_page}?guest-code=${serial_number}`;
 

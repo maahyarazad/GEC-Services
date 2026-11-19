@@ -33,3 +33,18 @@ Nothing is sent to Google; create or update the class with the Wallet console or
 ## Requirements
 
 Node and Chrome/Chromium (set `CHROME_PATH` if it is not in a standard location). Rendering uses headless Chrome; the HTML source files are never modified.
+
+## Member pass design and email (feature 019)
+
+Rules live in `services/memberPassLayout.js`; the partner always comes from the member record in the database (not the request).
+
+| Partner | Apple pass model | Text beside the logo (and Add-sheet heading) | Email |
+|---|---|---|---|
+| `GEC Family Membership` (case and spaces ignored) | `models/family_card.pass` (green) | `GEC Family Membership` | green card, subject "Your GEC Family Membership Card Has Been Issued" |
+| any other partner | `models/corporate_card.pass` (red) | `Corporate Card - {Partner}` | red card, subject "Your Corporate Card Has Been Issued" |
+| none / empty | `models/corporate_card.pass` | `Corporate Card` | red card |
+
+- **Pass layout** (`generateMemberPass`): nothing over the icon strip; one row below it with Expiry Date, Member ID and Name (Name takes the place of the old "Corporate Partner" field). The QR link and the `pass_storage/corporate-card/` folder are unchanged for both designs.
+- **Email** (`membership_pass_email` -> `services/memberPassEmail.js`): the card mirrors the pass (logo, label, icon strip, one row of fields). Colors come from `corporate_card.html` / `family_card.html`; the strip is `models/<design>.pass/strip@2x.png`, attached inline (`cid:card-strip`). Member values are HTML-escaped. If the strip is missing the email is still sent without it and a line is written to `error_log`.
+- **Server requirement**: both model folders must exist on the server (`models/` is not in git). Build them with `npm run wallet:apple -- corporate_card` and `-- family_card`, or copy the folders. A missing model makes pass issuing fail with a clear error (it never falls back to the other design).
+- Not changed: the Google Wallet member pass, the event pass (`generateApplePass`), `emailMembershipCard` (unused) and the employee invitation email.

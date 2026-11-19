@@ -191,6 +191,9 @@ router.post(
       // earlier month (renewed for a year), or an expiry that changed since the pass was issued.
       const plan = planMemberPass({ memberRow: _member, now });
 
+      // The stored partner (not the one in the request) decides the pass design and the texts.
+      member.partner = _member.partner || "";
+
       if (plan.needsNewPass) {
         member.serial_number = `GEC-${uniqid().toUpperCase()}`;
         // Always use the expiry from the database (or the renewal), never one sent by the client.
@@ -239,6 +242,9 @@ router.post(
       });
 
       transaction();
+
+      // The email shows the stored (or renewed) expiry, not a value sent by the client.
+      member.card_expiry_date = plan.expiry;
 
       await membership_pass_email({
         data: { member, applePKpassPath, googlePassToken },
