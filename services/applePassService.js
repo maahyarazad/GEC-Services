@@ -43,7 +43,7 @@ const generateMemberPass = async (data) => {
     
     // Load pass template
     const pass = await PKPass.from({
-        model: path.join(process.cwd(), "models/membership.pass"),
+        model: path.join(process.cwd(), "models/corporate_card.pass"),
         certificates: {
             wwdr: fs.readFileSync(wwdrPath),
             signerCert: fs.readFileSync(signerCertPath),
