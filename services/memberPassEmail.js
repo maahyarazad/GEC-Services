@@ -68,8 +68,8 @@ function buildMemberPassEmail({ member, applePKpassPath, googlePassToken, client
     warnings.push(`Card strip image not found: ${stripPath}; the email was sent without it.`);
   }
 
-  const cardName = family ? "GEC Family Membership" : "Corporate Card";
-  const subject = family ? "Your GEC Family Membership Card Has Been Issued" : "Your Corporate Card Has Been Issued";
+  const cardName = family ? "Family Membership" : "Corporate Card";
+  const subject = family ? "Your Family Membership Card Has Been Issued" : "Your Corporate Card Has Been Issued";
   const firstName = escapeHtml(String(member?.firstname ?? "").trim() || "Member");
   const expiry = formatExpiry(member?.card_expiry_date);
   const memberId = member?.memberId ?? "";
@@ -77,7 +77,7 @@ function buildMemberPassEmail({ member, applePKpassPath, googlePassToken, client
   const year = now.getFullYear();
 
   const intro = family
-    ? "Your account has been verified and we've issued your GEC Family Membership Pass below. Please click on the image matching your mobile app wallet."
+    ? "Your account has been verified and we've issued your Family Membership Pass below. Please click on the image matching your mobile app wallet."
     : "Your account has been verified and we've issued your Membership Pass below. Please click on the image matching your mobile app wallet.";
 
   const field = (labelText, value, align) => `
@@ -238,7 +238,7 @@ function buildMemberPassEmail({ member, applePKpassPath, googlePassToken, client
 </html>`;
 
   const text = family
-    ? "Your GEC Family Membership card has been issued. Please download the mobile application, register, and log in. You can also add your card to Apple Wallet or Google Wallet."
+    ? "Your Family Membership card has been issued. Please download the mobile application, register, and log in. You can also add your card to Apple Wallet or Google Wallet."
     : "Your Corporate Card has been issued. Please download the mobile application, register, and log in. You can also add your card to Apple Wallet or Google Wallet.";
 
   return { subject, html, text, attachments, warnings };

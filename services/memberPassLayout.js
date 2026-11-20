@@ -3,7 +3,7 @@
 // Rules for the member pass and the pass-issued email: which design a member gets, the text
 // beside the logo, and the fields shown on the pass. Pure functions, no Wallet or SMTP needed.
 
-const FAMILY_PARTNER = "GEC Family Membership";
+const FAMILY_PARTNER = "Family Membership";
 
 // Card colors of the two designs. They are repeated here (and checked against corporate_card.html /
 // family_card.html by tests/wallet/memberPassLayout.test.js) because the server deployment copies only
