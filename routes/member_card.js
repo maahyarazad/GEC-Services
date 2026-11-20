@@ -9,6 +9,7 @@ const { exportTableAsCSV } = require("../services/csvParser");
 const { generateMemberPass } = require("../services/applePassService");
 const { generateMemberGooglePass } = require("../services/googlePassService");
 const { planMemberPass } = require("../services/memberPassRenewal");
+const { MOBILE_CHECK_SQL, classifyMobileCheck, maskMobile } = require("../services/mobileCheck");
 const { membership_pass_email, sendBatchEmails } = require("../services/emailService");
 const uniqid = require("uniqid");
 const path = require("path");
@@ -849,6 +850,7 @@ router.post("/members/mobile-check", upload.none(), async (req, res) => {
   if (!apiKey || apiKey !== process.env.SERVICES_SECRET) {
     return res.status(401).json({
       status: false,
+      code: "unauthorized",
       message: "Unauthorized",
     });
   }
@@ -858,64 +860,40 @@ router.post("/members/mobile-check", upload.none(), async (req, res) => {
   if (!mobile) {
     return res.status(400).json({
       status: false,
+      code: "mobile_required",
       message: "Mobile number is required",
     });
   }
 
-  const sanitizedMobile = mobile.trim().replace(/\D/g, ""); 
+  const sanitizedMobile = String(mobile).trim().replace(/\D/g, "");
 
   if (!sanitizedMobile) {
     return res.status(400).json({
       status: false,
+      code: "invalid_mobile",
       message: "Invalid mobile number format",
     });
   }
 
   try {
-    const query = `
-      SELECT *,
-        CASE WHEN DATE('now') <= DATE(mc.card_expiry_date, 'start of month', '+1 month', '-1 day')
-          THEN 0 ELSE 1 END AS is_expired
-      FROM member_card mc
-      WHERE mc.mobile_number = ?
-        AND mc.serial_number IS NOT NULL
-        AND mc.active = 1
-    `;
+    // Every card with this number (active or not, with or without a pass); services/mobileCheck.js
+    // decides the answer: member_found, no_pass, expired, inactive or not_found.
+    const allRecords = db.prepare(MOBILE_CHECK_SQL).all(sanitizedMobile);
+    const { httpStatus, body } = classifyMobileCheck(allRecords);
 
-    const stmt = db.prepare(query);
-    const allRecords = stmt.all(sanitizedMobile);
-    const memberRecords = allRecords.filter((r) => r.is_expired === 0);
-    const expiredRecords = allRecords.filter((r) => r.is_expired === 1);
-
-    if (memberRecords.length > 0) {
-      return res.status(200).json({
-        status: true,
-        message: "Member found",
-        count: memberRecords.length,
-        data: memberRecords,
-      });
-    } else if (expiredRecords.length > 0) {
-      return res.status(200).json({
-        status: false,
-        expired: true,
-        message: "Member card has expired",
-        count: expiredRecords.length,
-        data: expiredRecords,
-      });
-    } else {
-      return res.status(404).json({
-        status: false,
-        message: "No active member found for this mobile number",
-      });
-    }
+    console.log(`${Date.now()} - /members/mobile-check mobile=${maskMobile(sanitizedMobile)} result=${body.code} count=${body.count ?? 0}`);
+    return res.status(httpStatus).json(body);
   } catch (error) {
     console.error(`${Date.now()} - Error checking mobile number:`, error.message);
     return res.status(500).json({
       status: false,
+      code: "server_error",
       message: "An unexpected server error occurred. Please try again later.",
     });
   }
 });
+
+
 // GET /api/partner-delivery-info?partner=X  (admin, no partner JWT required)
 router.get("/api/partner-delivery-info", (req, res) => {
   try {
