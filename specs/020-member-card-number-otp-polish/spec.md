@@ -23,5 +23,12 @@
 ### US3 - Final step tells the member to create the app account (P2)
 **Acceptance**: below "Your account has been verified!..." a bold line says to register the username in the mobile app ("Create an Account"). The existing "Don't forget to download the GEC Mobile App" text stays.
 
+### US4 - Search result is brought into view (P2)
+When the member searches by email in step 1 and a member is found, the result card gets focus and scrolls into view (centered). No change when nothing is found (the "Email not found" message stays).
+**Acceptance**
+1. Given a found member, the member card is scrolled into view and focused (no focus ring needed).
+2. Given not found, no scroll.
+3. Searching again re-focuses; the OTP focus from US2 still works afterwards.
+
 ## Out of Scope
 Backfilling card numbers of existing members; changing the sync numbering; OTP length or backend OTP logic.

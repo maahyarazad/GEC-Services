@@ -32,6 +32,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
     const statusRef = useRef();
     const otpRef = useRef();
     const otpFocus = useRef();
+    const resultRef = useRef(null);
     const [validOtp, setValidOtp] = useState(null);
     const [otpKey, setOtpKey] = useState(0);
     const [currentResponseStatus, setCurrentResponseStatus] = useState(null);
@@ -81,6 +82,16 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
             if (timer.current) clearTimeout(timer.current);
         };
     }, []);
+
+    // Bring the search result (member card) into view when a member is found.
+    useEffect(() => {
+        if (!wizardState?.member) return;
+        const t = setTimeout(() => {
+            resultRef.current?.focus({ preventScroll: true });
+            resultRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 100);
+        return () => clearTimeout(t);
+    }, [wizardState?.member?.email]);
 
     // Focus the first OTP box and scroll it into view once the OTP block has slid open.
     useEffect(() => {
@@ -522,7 +533,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                 </div>
 
                 {wizardState?.member && (
-                    <Card sx={{ minWidth: isMobile ? 'auto' : 400, boxShadow: 3, cursor: 'pointer', textAlign: 'start', width: isMobile ? "100%" : "" }}>
+                    <Card ref={resultRef} tabIndex={-1} sx={{ minWidth: isMobile ? 'auto' : 400, boxShadow: 3, cursor: 'pointer', textAlign: 'start', width: isMobile ? "100%" : "", outline: 'none' }}>
                         <CardContent>
                             {/* Helper to mask text */}
                             {(() => {

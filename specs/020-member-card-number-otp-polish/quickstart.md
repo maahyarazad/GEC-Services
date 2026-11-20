@@ -5,3 +5,5 @@
 3. OTP step 2: same checks on the second step (phone/update OTP).
 4. Final step: complete the flow; the bold "register your username in the mobile app (Create an Account)" line shows under the verified message.
 5. Regression: typing digits and Backspace still work; the sync (`/api/member-card-sync`) still numbers new members.
+
+6. Search result: in step 1 search a known email; the member card scrolls to the center and takes focus. Search an unknown email: no scroll, "Email not found" message shows.

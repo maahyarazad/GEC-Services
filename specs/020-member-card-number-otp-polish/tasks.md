@@ -36,14 +36,21 @@ No setup needed (no new dependency, no schema change).
 **Independent test**: quickstart step 4.
 - [X] T012 [P] [US3] In `public/src/components/pages/MemberOnboarding.jsx` after the "Your account has been verified!..." Typography (~l.199-205) add a bold line, e.g. `<strong style={{ color: GEC.goldDark }}>Register your username in the GEC Mobile App (Create an Account) to access your membership.</strong>`, as its own `Typography variant="body2"` inside the same box or directly below it, matching spacing.
 
-## Phase 6: Polish
+## Phase 6: User Story 4 - Search result scrolls into view (P2)
+**Goal**: after a successful email search in step 1, the member card is focused and visible.
+**Independent test**: search a known email in step 1 on a phone-width screen; the card is scrolled to the center. Search an unknown email; no scroll and the error message shows.
+- [X] T015 [US4] In `public/src/components/pages/MemberOnboardingComponents/MemberLogin.jsx` add `const resultRef = useRef(null)`; put `ref={resultRef}` and `tabIndex={-1}` (plus `outline: 'none'` in `sx`) on the result `<Card>` rendered under `{wizardState?.member && (` (~l.524).
+- [X] T016 [US4] In the same file add `useEffect(() => { if (!wizardState?.member) return; const t = setTimeout(() => { resultRef.current?.focus({ preventScroll: true }); resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); return () => clearTimeout(t); }, [wizardState?.member?.email]);` so it runs when a member is found (keyed on the email so authentication state changes do not re-scroll). Keep it clear of the OTP focus effect (350 ms, runs only after OTP is requested).
+- [X] T017 [US4] Verify manually (quickstart step 6): found email scrolls/focuses the card, unknown email does not, OTP focus still works after "Send OTP".
+
+## Phase 7: Polish
 - [X] T013 Run `npm run test:members` and `npm run test:wallet`, then the frontend build/lint (`cd public && npm run build`) to confirm nothing broke.
 - [X] T014 Walk through `quickstart.md` end to end.
 
 ## Dependencies & Order
 - T001 blocks T003, T005; T002 can run in parallel with T003 once T001 exists.
 - US1 (T001-T005), US2 (T006-T011) and US3 (T012) touch different files and are independent. Within US2: T006 → T007 → T008 → (T009, T010 in parallel) → T011.
-- Polish after all stories.
+- US4 (T015-T017) touches only `MemberLogin.jsx`, after US2's edit to that file (T009). Polish after all stories.
 
 ## Parallel example
 T002 with T003; T009 with T010; T012 anytime.
