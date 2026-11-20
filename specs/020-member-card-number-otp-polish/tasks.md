@@ -43,14 +43,23 @@ No setup needed (no new dependency, no schema change).
 - [X] T016 [US4] In the same file add `useEffect(() => { if (!wizardState?.member) return; const t = setTimeout(() => { resultRef.current?.focus({ preventScroll: true }); resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); return () => clearTimeout(t); }, [wizardState?.member?.email]);` so it runs when a member is found (keyed on the email so authentication state changes do not re-scroll). Keep it clear of the OTP focus effect (350 ms, runs only after OTP is requested).
 - [X] T017 [US4] Verify manually (quickstart step 6): found email scrolls/focuses the card, unknown email does not, OTP focus still works after "Send OTP".
 
-## Phase 7: Polish
+## Phase 7: User Story 5 - Mobile app sign-in notice (P2)
+**Goal**: the sentence below appears on the last onboarding step and in the pass email.
+**Sentence (use exactly)**: `You need to register your username in the Mobile Application before signing in. Please go to Create an Account (Corporate and Family Cardholders Only).`
+**Independent test**: finish onboarding and read the last step; issue a pass email and read it (or run `npm run test:wallet`).
+- [ ] T018 [P] [US5] In `public/src/components/pages/MemberOnboarding.jsx` (~l.199-210, the "Your account has been verified!" Typography) replace the bold line "Register your username in the GEC Mobile App (Create an Account)." with the sentence above, kept inside the `<strong style={{ color: GEC.goldDark }}>` after the `<br />`.
+- [ ] T019 [P] [US5] In `services/memberPassEmail.js` add a paragraph with the sentence above in bold (`<strong>`) in the html, directly after the "Download the GEC Mobile App here to avail your benefits." row (~l.182) using the same cell styles, and append the sentence to both plain-text strings (~l.240-242). Show it for both the corporate and family versions.
+- [ ] T020 [US5] In `tests/wallet/memberPassEmail.test.js` add assertions that the html and the text of both versions contain the sentence (HTML-escape-safe: the sentence has no special characters except parentheses).
+- [ ] T021 [US5] Run `npm run test:wallet` (existing `partnerList`-style failures aside, `memberPassEmail` tests must pass) and `cd public && npm run build`.
+
+## Phase 8: Polish
 - [X] T013 Run `npm run test:members` and `npm run test:wallet`, then the frontend build/lint (`cd public && npm run build`) to confirm nothing broke.
 - [X] T014 Walk through `quickstart.md` end to end.
 
 ## Dependencies & Order
 - T001 blocks T003, T005; T002 can run in parallel with T003 once T001 exists.
 - US1 (T001-T005), US2 (T006-T011) and US3 (T012) touch different files and are independent. Within US2: T006 → T007 → T008 → (T009, T010 in parallel) → T011.
-- US4 (T015-T017) touches only `MemberLogin.jsx`, after US2's edit to that file (T009). Polish after all stories.
+- US4 (T015-T017) touches only `MemberLogin.jsx`, after US2's edit to that file (T009). US5 (T018-T021): T018 and T019 are parallel (different files); T020 after T019. Polish after all stories.
 
 ## Parallel example
 T002 with T003; T009 with T010; T012 anytime.

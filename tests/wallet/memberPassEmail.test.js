@@ -142,3 +142,12 @@ test("long values are escaped and cannot add markup", () => {
   assert.ok(!html.includes("<b>x</b>"));
   assert.ok(html.includes("&lt;b&gt;x&lt;/b&gt;"));
 });
+
+test("both versions tell the member to register in the mobile app before signing in", () => {
+  const sentence = "You need to register your username in the Mobile Application before signing in. Please go to Create an Account (Corporate and Family Cardholders Only).";
+  for (const partner of ["ACME", "GEC Family Membership"]) {
+    const r = buildMemberPassEmail({ ...base, member: member({ partner }) });
+    assert.ok(r.html.includes(`<strong>${sentence}</strong>`));
+    assert.ok(r.text.includes(sentence));
+  }
+});

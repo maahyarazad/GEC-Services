@@ -30,5 +30,14 @@ When the member searches by email in step 1 and a member is found, the result ca
 2. Given not found, no scroll.
 3. Searching again re-focuses; the OTP focus from US2 still works afterwards.
 
+### US5 - Mobile app sign-in notice (P2)
+Members must register their username in the mobile app before signing in. The notice sentence appears on the last onboarding step and in the "pass issued" email.
+Sentence (the user's wording with grammar fixed: "before sign in" -> "before signing in", and a full stop after "in" so "Please" starts a new sentence, full stop at the end):
+`You need to register your username in the Mobile Application before signing in. Please go to Create an Account (Corporate and Family Cardholders Only).`
+**Acceptance**
+1. The last step of `MemberOnboarding.jsx` shows the sentence in bold (it replaces the shorter "Register your username in the GEC Mobile App (Create an Account)." line from US3).
+2. The pass email (both corporate and family versions, html and plain text) contains the same sentence, near the app download text.
+3. The wording is identical in both places (one shared constant is not required, but the text must match).
+
 ## Out of Scope
 Backfilling card numbers of existing members; changing the sync numbering; OTP length or backend OTP logic.

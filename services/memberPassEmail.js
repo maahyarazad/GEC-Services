@@ -180,6 +180,7 @@ function buildMemberPassEmail({ member, applePKpassPath, googlePassToken, client
                     <tr>
                         <td class="em-px em-text" style="padding:0 30px 20px; font-size:16px; color:#333333; line-height:1.7;">
                             <p style="margin:0;">Download the GEC Mobile App here to avail your benefits.</p>
+                            <p style="margin:10px 0 0;"><strong>You need to register your username in the Mobile Application before signing in. Please go to Create an Account (Corporate and Family Cardholders Only).</strong></p>
                         </td>
                     </tr>
 
@@ -238,8 +239,8 @@ function buildMemberPassEmail({ member, applePKpassPath, googlePassToken, client
 </html>`;
 
   const text = family
-    ? "Your Family Membership card has been issued. Please download the mobile application, register, and log in. You can also add your card to Apple Wallet or Google Wallet."
-    : "Your Corporate Card has been issued. Please download the mobile application, register, and log in. You can also add your card to Apple Wallet or Google Wallet.";
+    ? "Your Family Membership card has been issued. Please download the mobile application, register, and log in. You can also add your card to Apple Wallet or Google Wallet. You need to register your username in the Mobile Application before signing in. Please go to Create an Account (Corporate and Family Cardholders Only)."
+    : "Your Corporate Card has been issued. Please download the mobile application, register, and log in. You can also add your card to Apple Wallet or Google Wallet. You need to register your username in the Mobile Application before signing in. Please go to Create an Account (Corporate and Family Cardholders Only).";
 
   return { subject, html, text, attachments, warnings };
 }

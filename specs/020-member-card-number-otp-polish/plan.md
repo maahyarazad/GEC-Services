@@ -25,6 +25,8 @@ public/src/components/utils/OtpInput.jsx    # paste, multi-char change, focus() 
 public/src/components/pages/MemberOnboardingComponents/MemberLogin.jsx   # useGECStyle, focus on open
 public/src/components/pages/MemberOnboardingComponents/MemberUpdate.jsx  # useGECStyle, focus on open
 public/src/components/pages/MemberOnboarding.jsx                         # bold app-account line
+services/memberPassEmail.js                                              # US5: add the notice to the html and the plain text
+tests/wallet/memberPassEmail.test.js                                     # US5: assert the sentence is present
 # US4: MemberLogin.jsx also gets a ref on the result <Card> and an effect that focuses/scrolls it when `wizardState.member` is set
 ```
 **Structure Decision**: single project; shared helper and shared component so both paths and both OTP steps behave the same.

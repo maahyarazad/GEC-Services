@@ -204,7 +204,7 @@ export default function MemberOnboarding({
                                                                     personalised Membership Pass.
                                                                     <br />
                                                                     <strong style={{ color: GEC.goldDark }}>
-                                                                        Register your username in the GEC Mobile App (Create an Account).
+                                                                        You need to register your username in the Mobile Application before signing in. Please go to Create an Account (Corporate and Family Cardholders Only).
                                                                     </strong>
                                                                 </Typography>
                                                             </Box>
