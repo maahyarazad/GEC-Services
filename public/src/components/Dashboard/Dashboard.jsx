@@ -264,7 +264,7 @@ const Admin = ({ data }) => {
         },
         {
             icon: <PiBriefcaseDuotone size={24} />,
-            label: "Partner Onboarding",
+            label: "Member Management",
         },
 
         {
@@ -452,7 +452,7 @@ const Admin = ({ data }) => {
         case "Surveys":
             content = <SurveyDataGrid />;
             break;
-        case "Partner Onboarding":
+        case "Member Management":
             content = <MemberCardDataGrid />;
             break;
         case "Expert Circle":

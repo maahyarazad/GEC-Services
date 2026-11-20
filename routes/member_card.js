@@ -10,6 +10,7 @@ const { generateMemberPass } = require("../services/applePassService");
 const { generateMemberGooglePass } = require("../services/googlePassService");
 const { planMemberPass } = require("../services/memberPassRenewal");
 const { MOBILE_CHECK_SQL, classifyMobileCheck, maskMobile } = require("../services/mobileCheck");
+const { ACTIVE_PARTNERS_SQL, buildPartnerOptions } = require("../services/partnerList");
 const { membership_pass_email, sendBatchEmails } = require("../services/emailService");
 const uniqid = require("uniqid");
 const path = require("path");
@@ -367,6 +368,18 @@ router.post("/member-logout", (req, res) => {
       status: false,
       message: "Failed to log out. Please try again.",
     });
+  }
+});
+
+// Partners the admin can choose in the Add Member dialog: active partners from GEC Services (MySQL),
+// with "GEC Family Membership" (web_partner id 1719) on top. See services/partnerList.js.
+router.get("/api/active-partners", async (req, res) => {
+  try {
+    const [rows] = await getPool().query(ACTIVE_PARTNERS_SQL);
+    return res.json({ status: true, data: buildPartnerOptions(rows) });
+  } catch (error) {
+    console.error(`${Date.now()} - Error in /api/active-partners:`, error);
+    res.status(500).json({ status: false, message: "Server error" });
   }
 });
 
