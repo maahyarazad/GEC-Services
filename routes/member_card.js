@@ -8,6 +8,9 @@ const authorization_middleware = require("../middleware/auth");
 const { exportTableAsCSV } = require("../services/csvParser");
 const { generateMemberPass } = require("../services/applePassService");
 const { generateMemberGooglePass } = require("../services/googlePassService");
+const { planMemberPass } = require("../services/memberPassRenewal");
+const { MOBILE_CHECK_SQL, classifyMobileCheck, maskMobile } = require("../services/mobileCheck");
+const { ACTIVE_PARTNERS_SQL, buildPartnerOptions } = require("../services/partnerList");
 const { membership_pass_email, sendBatchEmails } = require("../services/emailService");
 const uniqid = require("uniqid");
 const path = require("path");
@@ -29,6 +32,11 @@ function titleToSlug(title) {
     .replace(/\s+/g, "-") // replace spaces (or multiple spaces) with dashes
     .replace(/[^\w-]+/g, ""); // remove any non-alphanumeric characters except dash
 }
+
+// member_card.pass_expiry_date is added by sql_versions/*_add_member_card_pass_expiry_date.sql;
+// until that migration runs, the route works but cannot detect an expiry changed outside it.
+const hasPassExpiryColumn = (db) =>
+  db.prepare("PRAGMA table_info(member_card)").all().some((c) => c.name === "pass_expiry_date");
 
 // ── Member card CSV export ─────────────────────────────────────────────────
 // Member passes are stored under the "CORPORATE CARD" title slug (see /member-pass).
@@ -174,29 +182,24 @@ router.post(
       let applePKpassPath;
       let googlePassToken;
 
-      const expirationDate = new Date(_member.card_expiry_date);
-
       const now = new Date();
       const timestamp = Date.now();
 
-      const sameMonthAndYear =
-        expirationDate.getFullYear() === now.getFullYear() &&
-        expirationDate.getMonth() === now.getMonth();
-
-      let newSerialNumberRequired = false;
       if (!memberId) {
         member.memberId = timestamp;
       }
 
-      if (!sameMonthAndYear && expirationDate < now) {
-        const newExpiry = new Date(now);
-        newExpiry.setFullYear(newExpiry.getFullYear() + 1);
-        member.card_expiry_date = newExpiry;
-        newSerialNumberRequired = true;
-      }
+      // New passes are needed for a missing serial number, a card that expired in an
+      // earlier month (renewed for a year), or an expiry that changed since the pass was issued.
+      const plan = planMemberPass({ memberRow: _member, now });
 
-      if (newSerialNumberRequired || !_member.serial_number) {
+      // The stored partner (not the one in the request) decides the pass design and the texts.
+      member.partner = _member.partner || "";
+
+      if (plan.needsNewPass) {
         member.serial_number = `GEC-${uniqid().toUpperCase()}`;
+        // Always use the expiry from the database (or the renewal), never one sent by the client.
+        member.card_expiry_date = plan.expiry;
 
         await generateMemberPass({ ...req.body, ...member });
         googlePassToken = await generateMemberGooglePass({
@@ -222,6 +225,12 @@ router.post(
         birthday: new Date(member.birthday).toISOString(),
       };
 
+      if (plan.needsNewPass) {
+        // Save the renewal, and remember which expiry is printed on the pass that was just issued.
+        updateData.card_expiry_date = plan.expirySql;
+        if (hasPassExpiryColumn(db)) updateData.pass_expiry_date = plan.expirySql;
+      }
+
       // Add memberId only when it doesn’t exist yet
       if (!memberId) {
         updateData.memberId = timestamp;
@@ -235,6 +244,9 @@ router.post(
       });
 
       transaction();
+
+      // The email shows the stored (or renewed) expiry, not a value sent by the client.
+      member.card_expiry_date = plan.expiry;
 
       await membership_pass_email({
         data: { member, applePKpassPath, googlePassToken },
@@ -356,6 +368,18 @@ router.post("/member-logout", (req, res) => {
       status: false,
       message: "Failed to log out. Please try again.",
     });
+  }
+});
+
+// Partners the admin can choose in the Add Member dialog: active partners from GEC Services (MySQL),
+// with "GEC Family Membership" (web_partner id 1719) on top. See services/partnerList.js.
+router.get("/api/active-partners", async (req, res) => {
+  try {
+    const [rows] = await getPool().query(ACTIVE_PARTNERS_SQL);
+    return res.json({ status: true, data: buildPartnerOptions(rows) });
+  } catch (error) {
+    console.error(`${Date.now()} - Error in /api/active-partners:`, error);
+    res.status(500).json({ status: false, message: "Server error" });
   }
 });
 
@@ -839,6 +863,7 @@ router.post("/members/mobile-check", upload.none(), async (req, res) => {
   if (!apiKey || apiKey !== process.env.SERVICES_SECRET) {
     return res.status(401).json({
       status: false,
+      code: "unauthorized",
       message: "Unauthorized",
     });
   }
@@ -848,64 +873,40 @@ router.post("/members/mobile-check", upload.none(), async (req, res) => {
   if (!mobile) {
     return res.status(400).json({
       status: false,
+      code: "mobile_required",
       message: "Mobile number is required",
     });
   }
 
-  const sanitizedMobile = mobile.trim().replace(/\D/g, ""); 
+  const sanitizedMobile = String(mobile).trim().replace(/\D/g, "");
 
   if (!sanitizedMobile) {
     return res.status(400).json({
       status: false,
+      code: "invalid_mobile",
       message: "Invalid mobile number format",
     });
   }
 
   try {
-    const query = `
-      SELECT *,
-        CASE WHEN DATE('now') <= DATE(mc.card_expiry_date, 'start of month', '+1 month', '-1 day')
-          THEN 0 ELSE 1 END AS is_expired
-      FROM member_card mc
-      WHERE mc.mobile_number = ?
-        AND mc.serial_number IS NOT NULL
-        AND mc.active = 1
-    `;
+    // Every card with this number (active or not, with or without a pass); services/mobileCheck.js
+    // decides the answer: member_found, no_pass, expired, inactive or not_found.
+    const allRecords = db.prepare(MOBILE_CHECK_SQL).all(sanitizedMobile);
+    const { httpStatus, body } = classifyMobileCheck(allRecords);
 
-    const stmt = db.prepare(query);
-    const allRecords = stmt.all(sanitizedMobile);
-    const memberRecords = allRecords.filter((r) => r.is_expired === 0);
-    const expiredRecords = allRecords.filter((r) => r.is_expired === 1);
-
-    if (memberRecords.length > 0) {
-      return res.status(200).json({
-        status: true,
-        message: "Member found",
-        count: memberRecords.length,
-        data: memberRecords,
-      });
-    } else if (expiredRecords.length > 0) {
-      return res.status(200).json({
-        status: false,
-        expired: true,
-        message: "Member card has expired",
-        count: expiredRecords.length,
-        data: expiredRecords,
-      });
-    } else {
-      return res.status(404).json({
-        status: false,
-        message: "No active member found for this mobile number",
-      });
-    }
+    console.log(`${Date.now()} - /members/mobile-check mobile=${maskMobile(sanitizedMobile)} result=${body.code} count=${body.count ?? 0}`);
+    return res.status(httpStatus).json(body);
   } catch (error) {
     console.error(`${Date.now()} - Error checking mobile number:`, error.message);
     return res.status(500).json({
       status: false,
+      code: "server_error",
       message: "An unexpected server error occurred. Please try again later.",
     });
   }
 });
+
+
 // GET /api/partner-delivery-info?partner=X  (admin, no partner JWT required)
 router.get("/api/partner-delivery-info", (req, res) => {
   try {

@@ -7,7 +7,11 @@ const googleConfig = JSON.parse(
 );
 const dbService = require("../services/dbService");
 
+const { buildGoogleMemberPass } = require("./googleMemberPass");
+
 const issuerId = "3388000000022971699";
+// Public address of the wallet images (logo and hero images in file_storage/wallet/, served at /uploads).
+const WALLET_ASSET_BASE = process.env.WALLET_ASSET_BASE_URL || "https://services.german-emirates-club.com/uploads";
 
 const classId = `${issuerId}.membership_class`;
 const baseUrl = "https://walletobjects.googleapis.com/walletobjects/v1";
@@ -30,7 +34,6 @@ function titleToSlug(title) {
 }
 
 async function generateMemberGooglePass(data) {
-  const title = slugToTitle(data.title);
   const event_page = titleToSlug(data.title);
   const {
     firstname,
@@ -42,7 +45,6 @@ async function generateMemberGooglePass(data) {
   } = data;
 
   const qrValue = `${process.env.CLIENT_ORIGIN}/guest-registration/${event_page}?guest-code=${serial_number}`;
-  const objectId = `${issuerId}.member_${Date.now()}`;
 
   const now = Math.floor(Date.now() / 1000);
   const _now = new Date(card_expiry_date);
@@ -62,149 +64,14 @@ async function generateMemberGooglePass(data) {
     .toLocaleDateString("en-GB", options)
     .replace(/\//g, "-");
 
-  const genericClass = {
-    id: classId,
-    issuerName: "German Emirates Club",
-    title: "German Emirates Club",
-    programName: "German Emirates Club",
-    reviewStatus: "underReview",
-    hexBackgroundColor: "#9d1d1d",
-
-    textModulesData: [
-      {
-        id: "game_overview",
-        header: "Welcome",
-        body: title,
-      },
-    ],
-    classTemplateInfo: {
-      cardTemplateOverride: {
-        cardRowTemplateInfos: [
-          {
-            twoItems: {
-              startItem: {
-                firstValue: {
-                  fields: [
-                    { fieldPath: 'object.textModulesData["cardnumber"].body' },
-                  ],
-                },
-              },
-              endItem: {
-                firstValue: {
-                  fields: [
-                    { fieldPath: 'object.textModulesData["partner"].body' },
-                  ],
-                },
-              },
-            },
-          },
-          {
-            twoItems: {
-              startItem: {
-                firstValue: {
-                  fields: [
-                    { fieldPath: 'object.textModulesData["expiry"].body' },
-                  ],
-                },
-              },
-              endItem: {
-                firstValue: {
-                  fields: [
-                    {
-                      fieldPath: 'object.textModulesData["serialNumber"].body',
-                    },
-                  ],
-                },
-              },
-            },
-          },
-        ],
-      },
-    },
-  };
-
-  const genericObject = {
-    id: objectId,
-    classId: classId,
-    state: "active",
-    hexBackgroundColor: "#9d1d1d",
-    logo: {
-      sourceUri: {
-        uri: "https://services.german-emirates-club.com/uploads/logo@2x.png",
-      },
-    },
-    cardTitle: {
-      defaultValue: {
-        language: "en-US",
-        value: `${title}`,
-      },
-    },
-    header: {
-      defaultValue: {
-        language: "en-US",
-        value: `${firstname} ${lastname}`,
-      },
-    },
-    subheader: {
-      defaultValue: {
-        language: "en-US",
-        value: `Name`,
-      },
-    },
-    heroImage: {
-      sourceUri: {
-        uri: "https://services.german-emirates-club.com/uploads/GEC_transparent.png",
-      },
-      contentDescription: {
-        defaultValue: {
-          language: "en-US",
-          value: "Hero Image Banner",
-        },
-      },
-      logo: {
-        sourceUri: {
-          uri: "https://services.german-emirates-club.com/uploads/logo@2x.png",
-        },
-        contentDescription: {
-          defaultValue: {
-            language: "en-US",
-            value: "German Emirates Club Logo",
-          },
-        },
-      },
-    },
-    linksModuleData: {
-      uris: [
-        {
-          id: "official_site",
-          uri: "https://www.german-emirates-club.com/",
-          description: "Visit German Emirates Club",
-        },
-      ],
-    },
-    textModulesData: [
-      {
-        id: "cardnumber",
-        header: "Member Id",
-        body: `${memberId}`,
-      },
-      { id: "partner", header: "Corporate Partner", body: `${partner}` },
-      {
-        id: "expiry",
-        header: "Expiry Date",
-        body: `${formattedDate}`,
-      },
-      { id: "serialNumber", header: "Serial Number", body: `${serial_number}` },
-    ],
-    barcode: {
-      type: "QR_CODE",
-      value: qrValue,
-    },
-    validTimeInterval: {
-      start: { date: new Date().toISOString() },
-      end: { date: expirationDate.toISOString() },
-    },
-  };
+  // Design (colour, hero), title, fields and class come from the member's partner: see googleMemberPass.js.
+  const { genericClass, genericObject } = buildGoogleMemberPass({
+    data: { firstname, lastname, memberId, serial_number, partner, formattedExpiry: formattedDate },
+    issuerId,
+    assetBaseUrl: WALLET_ASSET_BASE,
+    qrValue,
+    expirationDate,
+  });
 
   // TODO: Create the signed JWT and link
   const claims = {
@@ -318,7 +185,7 @@ async function generateGooglePass(data) {
     hexBackgroundColor: "#0d1b2a",
     logo: {
       sourceUri: {
-        uri: "https://services.german-emirates-club.com/uploads/logo@2x.png",
+        uri: `${WALLET_ASSET_BASE}/wallet/logo.png`,
       },
     },
     cardTitle: {

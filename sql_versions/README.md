@@ -30,5 +30,6 @@ Database changes for `app.db` (SQLite). The app runs no migrations itself; apply
 | `20261027115245_add_partner_onboarding_sync_status.sql` | aa0869774 (#78, feature 016) | Run before deploying 016; second run reports "duplicate column name". |
 | `20261106165300_add_twilio_generated_columns.sql` | feature 017 (branch `017-whatsapp-history-pagination`) | Not idempotent. Run before deploying 017, or the server won't start. |
 | `20261106165400_add_twilio_message_history_indexes.sql` | feature 017 (branch `017-whatsapp-history-pagination`) | Needs the generated columns above. |
+| `20261119130941_add_member_card_pass_expiry_date.sql` | branch `018-wallet-card-generators` | Not idempotent. Backfills existing passes as matching the current expiry. |
 
 Apply one: `sqlite3 app.db < sql_versions/<file>.sql`

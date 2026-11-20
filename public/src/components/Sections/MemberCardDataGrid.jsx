@@ -21,6 +21,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Select from '@mui/material/Select';
+import Autocomplete from '@mui/material/Autocomplete';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -216,6 +217,13 @@ const MiniTable = React.memo(function MiniTable({ title, rows, columns: cols, lo
 
 const emptyForm = { title: '', firstname: '', lastname: '', gender: '', mobile_number: '', email: '', partner: '', birthday: '', card_expiry_date: '', type: 7 };
 
+// New members default to a card valid for one year from today (YYYY-MM-DD, local date).
+const defaultCardExpiry = () => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const MemberCardDataGrid = () => {
     const [loadingRowId, setLoadingRowId] = useState(null);
     const [members, setMembers] = useState([]);
@@ -254,6 +262,25 @@ const MemberCardDataGrid = () => {
     const [formData, setFormData] = useState(emptyForm);
     const [editingId, setEditingId] = useState(null);
     const [formSaving, setFormSaving] = useState(false);
+
+    // Active partners for the Add Member dropdown: [{ id, title }], "GEC Family Membership" first.
+    const [partnerOptions, setPartnerOptions] = useState([]);
+    const [partnerOptionsLoading, setPartnerOptionsLoading] = useState(false);
+
+    const loadPartnerOptions = useCallback(async () => {
+        setPartnerOptionsLoading(true);
+        try {
+            const r = await fetch(`${import.meta.env.VITE_SERVERURL}/api/active-partners`, { credentials: 'include' });
+            const d = await r.json();
+            if (!d.status) throw new Error(d.message || 'Request failed');
+            setPartnerOptions(d.data ?? []);
+        } catch (e) {
+            console.error('active partners fetch failed', e);
+            showSnackbar('Could not load the partner list', 'error');
+        } finally {
+            setPartnerOptionsLoading(false);
+        }
+    }, [showSnackbar]);
 
     // ─── Partner stats fetch ─────────────────────────────────────────────────
     const centerStyle = {display: 'flex', justifyContent: 'center' };
@@ -672,7 +699,12 @@ const MemberCardDataGrid = () => {
         }
     },[]);
 
-    const handleOpenAdd = useCallback(() => { setFormData(emptyForm); setEditingId(null); setFormOpen(true); }, []);
+    const handleOpenAdd = useCallback(() => {
+        setFormData({ ...emptyForm, card_expiry_date: defaultCardExpiry() });
+        setEditingId(null);
+        setFormOpen(true);
+        loadPartnerOptions();
+    }, [loadPartnerOptions]);
 
     const handleOpenEdit = useCallback((row) => {
         setFormData({
@@ -727,20 +759,6 @@ const MemberCardDataGrid = () => {
         }
         setFormSaving(true);
         try {
-            if (editingId) {
-                const patchR = await fetch(`${import.meta.env.VITE_SERVERURL}/api/partner-onboarding/employee/${editingId}/card-expiry-date`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ card_expiry_date: formData.card_expiry_date || null }),
-                });
-                const patchD = await patchR.json();
-                if (!patchD.status) {
-                    showSnackbar(`Failed to update card expiry date: ${patchD.message}`, 'error');
-                    return;
-                }
-            }
-
             const url = editingId
                 ? `${import.meta.env.VITE_SERVERURL}/api/partner-onboarding/employee/${editingId}`
                 : `${import.meta.env.VITE_SERVERURL}/api/partner-onboarding/employee`;
@@ -797,7 +815,7 @@ const MemberCardDataGrid = () => {
                         onClick={handleOpenMembersGrid}
                         sx={{ fontSize: 13, textTransform: 'none' }}
                     >
-                        Corporate Members
+                        GEC Corporate and Family Members
 
                     </Button>
                     <Button
@@ -887,7 +905,7 @@ const MemberCardDataGrid = () => {
             <SlideMenu
                 isOpen={showMembersGrid}
                 onClose={() => setShowMembersGrid(false)}
-                headerTitle="Corporate Members"
+                headerTitle="GEC Corporate and Family Members"
             >
                 <div style={{ width: '100%', height: 'calc(100vh - 125px)', display: 'flex', flexDirection: 'column' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -910,7 +928,7 @@ const MemberCardDataGrid = () => {
                             onClick={handleOpenAdd}
                             sx={{ fontSize: 13, textTransform: 'none' }}
                         >
-                            Add Employee
+                            Add Member
                         </Button>
                     </Box>
                     <Box sx={{ flex: 1, minHeight: 0 }}>
@@ -954,7 +972,7 @@ const MemberCardDataGrid = () => {
 
             {/* Add / Edit Employee dialog */}
             <Dialog open={formOpen} onClose={() => setFormOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>{editingId ? `Edit ${formData.firstname} ${formData.lastname}` : 'Add Corporate Member'}</DialogTitle>
+                <DialogTitle>{editingId ? `Edit ${formData.firstname} ${formData.lastname}` : 'Add Member'}</DialogTitle>
                 <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '16px !important' }}>
                     <Box sx={{ display: 'flex', gap: 2 }}>
                         <FormControl size="small" sx={{ minWidth: 100 }}>
@@ -980,20 +998,38 @@ const MemberCardDataGrid = () => {
                         <TextField size="small" label="Mobile Number" value={formData.mobile_number} onChange={(e) => setFormData(p => ({ ...p, mobile_number: e.target.value }))} fullWidth />
                     </Box>
                     <TextField size="small" label="Email *" value={formData.email} onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))} fullWidth />
-                    <TextField size="small" label="Partner *" value={formData.partner} onChange={(e) => setFormData(p => ({ ...p, partner: e.target.value }))} fullWidth />
+                    {editingId ? (
+                        // Locked when editing: the partner decides the pass design and the member's synchronisation,
+                        // so changing it on an existing member could corrupt the data.
+                        <TextField
+                            size="small" label="Partner (locked)" value={formData.partner} disabled fullWidth
+                            helperText="The partner cannot be changed after the member is added."
+                        />
+                    ) : (
+                        <Autocomplete
+                            size="small"
+                            fullWidth
+                            options={partnerOptions}
+                            loading={partnerOptionsLoading}
+                            value={partnerOptions.find((o) => o.title === formData.partner) ?? null}
+                            onChange={(_, option) => setFormData(p => ({ ...p, partner: option ? option.title : '' }))}
+                            getOptionLabel={(option) => option.title}
+                            isOptionEqualToValue={(option, value) => option.id === value.id}
+                            noOptionsText="No matching partner"
+                            renderInput={(params) => <TextField {...params} label="Partner *" placeholder="Search partner…" />}
+                        />
+                    )}
                     <Box sx={{ display: 'flex', gap: 2 }}>
                         <TextField
                             size="small" label="Birthday" type="date" value={formData.birthday}
                             onChange={(e) => setFormData(p => ({ ...p, birthday: e.target.value }))}
                             slotProps={{ inputLabel: { shrink: true } }} sx={{ flex: 1 }}
                         />
-                        {editingId && (
-                            <TextField
-                                size="small" label="Card Expiry Date" type="date" value={formData.card_expiry_date}
-                                onChange={(e) => setFormData(p => ({ ...p, card_expiry_date: e.target.value }))}
-                                slotProps={{ inputLabel: { shrink: true } }} sx={{ flex: 1 }}
-                            />
-                        )}
+                        <TextField
+                            size="small" label="Card Expiry Date" type="date" value={formData.card_expiry_date}
+                            onChange={(e) => setFormData(p => ({ ...p, card_expiry_date: e.target.value }))}
+                            slotProps={{ inputLabel: { shrink: true } }} sx={{ flex: 1 }}
+                        />
                         <FormControl size="small" sx={{ minWidth: 180 }}>
                             <InputLabel>Type</InputLabel>
                             <Select value={formData.type} label="Type" onChange={(e) => setFormData(p => ({ ...p, type: e.target.value }))}>

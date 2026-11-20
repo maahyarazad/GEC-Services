@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "passTypeIdentifier": "pass.com.gec.membercard",
+  "passTypeIdentifier": "pass.com.gec.virtualmembercard",
   "serialNumber": "123456",
   "teamIdentifier": "YQFY6269ZL",
   "organizationName": "CORPORATE CARD",
