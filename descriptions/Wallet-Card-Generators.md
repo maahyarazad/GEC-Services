@@ -38,12 +38,13 @@ Node and Chrome/Chromium (set `CHROME_PATH` if it is not in a standard location)
 
 Rules live in `services/memberPassLayout.js`; the partner always comes from the member record in the database (not the request).
 
-| Partner | Apple pass model | Text beside the logo (and Add-sheet heading) | Email |
+| Partner | Apple pass model | Pass label (Apple: right end of the header; Google and email: beside the logo; also the Add-sheet heading) | Email |
 |---|---|---|---|
 | `GEC Family Membership` (case and spaces ignored) | `models/family_card.pass` (green) | `GEC Family Membership` | green card, subject "Your GEC Family Membership Card Has Been Issued" |
 | any other partner | `models/corporate_card.pass` (red) | `Corporate Card - {Partner}` | red card, subject "Your Corporate Card Has Been Issued" |
 | none / empty | `models/corporate_card.pass` | `Corporate Card` | red card |
 
+- **Apple label position** (`generateMemberPass`): the label is **not** beside the logo. It is a right-aligned header field (`buildHeaderFields` in `services/memberPassLayout.js`), which Wallet draws at the right end of the top row, and the model's `logoText` is replaced by a single space (the pass library rejects an empty string). Long labels are shortened by Wallet. The Add-sheet heading (`description`) is still the label. The Google pass and the email are unchanged: the label stays beside the logo there.
 - **Pass layout** (`generateMemberPass`): nothing over the icon strip; one row below it with Expiry Date, Member ID and Name (Name takes the place of the old "Corporate Partner" field). The QR link and the `pass_storage/corporate-card/` folder are unchanged for both designs.
 - **Email** (`membership_pass_email` -> `services/memberPassEmail.js`, responsive and with dark mode, see `descriptions/Email-Templates.md`): the card mirrors the pass (logo, label, icon strip, one row of fields). Colors come from `corporate_card.html` / `family_card.html`; the strip is `models/<design>.pass/strip@2x.png`, attached inline (`cid:card-strip`). Member values are HTML-escaped. If the strip is missing the email is still sent without it and a line is written to `error_log`.
 - **Server requirement**: both model folders must exist on the server (`models/` is not in git). Build them with `npm run wallet:apple -- corporate_card` and `-- family_card`, or copy the folders. A missing model makes pass issuing fail with a clear error (it never falls back to the other design).

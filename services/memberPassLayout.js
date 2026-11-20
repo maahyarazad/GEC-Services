@@ -39,6 +39,12 @@ function passLabelFor(partner) {
   return name ? `Corporate Card - ${name}` : "Corporate Card";
 }
 
+// Apple pass only: the label is not drawn beside the logo (logoText) but at the right end of the header,
+// right-aligned (Wallet draws header fields at the top right). Google and the email keep it beside the logo.
+function buildHeaderFields(partner) {
+  return [{ key: "card", value: passLabelFor(partner), textAlignment: "PKTextAlignmentRight" }];
+}
+
 // Pass layout: nothing over the icon strip; one row below it with Expiry Date, Member ID and Name.
 function buildMemberFields({ firstname, lastname, memberId, expiry }) {
   const name = [clean(firstname), clean(lastname)].filter(Boolean).join(" ");
@@ -52,4 +58,4 @@ function buildMemberFields({ firstname, lastname, memberId, expiry }) {
   };
 }
 
-module.exports = { FAMILY_PARTNER, DESIGN_COLORS, isFamilyPartner, designNameFor, designColorsFor, modelNameFor, passLabelFor, buildMemberFields };
+module.exports = { FAMILY_PARTNER, DESIGN_COLORS, isFamilyPartner, designNameFor, designColorsFor, modelNameFor, passLabelFor, buildHeaderFields, buildMemberFields };

@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const { PKPass } = require("passkit-generator");
 const fs = require("fs");
-const { modelNameFor, passLabelFor, buildMemberFields } = require("./memberPassLayout");
+const { modelNameFor, passLabelFor, buildHeaderFields, buildMemberFields } = require("./memberPassLayout");
 
 function slugToTitle(slug) {
     return slug
@@ -47,7 +47,7 @@ const generateMemberPass = async (data) => {
         // No fallback to the other design: a member must never get the wrong card silently.
         throw new Error(`Pass model not found: ${modelPath}. Build it with npm run wallet:apple.`);
     }
-    const label = passLabelFor(partner); // text beside the logo and the Add-sheet heading
+    const label = passLabelFor(partner); // header text (right end) and the Add-sheet heading
 
     // Load pass template
     const pass = await PKPass.from({
@@ -61,12 +61,16 @@ const generateMemberPass = async (data) => {
     }, {
         serialNumber: `${serial_number}`,
         description: label,   // 👈 overrides pass.json
-        logoText: label, // 👈 overrides pass.json
+        // Nothing beside the logo: the label is a header field at the right end (below). The model's own
+        // logoText must be replaced, and the library rejects an empty string, so a single space is used.
+        logoText: " ", // 👈 overrides pass.json
     });
 
     const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
     const formattedDate = expirationDate.toLocaleDateString('en-GB', options).replace(/\//g, '-');
-    // Layout: nothing over the icon strip; Expiry Date, Member ID and Name in one row.
+    // Layout: the label at the right end of the header; nothing over the icon strip;
+    // Expiry Date, Member ID and Name in one row.
+    buildHeaderFields(partner).forEach((f) => pass.headerFields.push(f));
     const fields = buildMemberFields({ firstname, lastname, memberId, expiry: formattedDate });
     fields.primaryFields.forEach((f) => pass.primaryFields.push(f));
     fields.secondaryFields.forEach((f) => pass.secondaryFields.push(f));

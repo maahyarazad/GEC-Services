@@ -5,8 +5,18 @@ const assert = require("node:assert/strict");
 const { loadDesign } = require("../../scripts/wallet/lib/design");
 const {
   DESIGN_COLORS,
-  FAMILY_PARTNER, isFamilyPartner, modelNameFor, designNameFor, passLabelFor, buildMemberFields,
+  FAMILY_PARTNER, isFamilyPartner, modelNameFor, designNameFor, passLabelFor, buildHeaderFields, buildMemberFields,
 } = require("../../services/memberPassLayout");
+
+// Apple pass only: the label sits at the right end of the header, right-aligned (not beside the logo).
+// Uses FAMILY_PARTNER, not a literal, so it does not depend on how the family partner is spelled.
+test("buildHeaderFields: one right-aligned header field with the pass label", () => {
+  assert.deepEqual(buildHeaderFields("ACME"), [{ key: "card", value: "Corporate Card - ACME", textAlignment: "PKTextAlignmentRight" }]);
+  assert.equal(buildHeaderFields(FAMILY_PARTNER)[0].value, passLabelFor(FAMILY_PARTNER));
+  assert.equal(buildHeaderFields(` ${FAMILY_PARTNER.toLowerCase()} `)[0].value, FAMILY_PARTNER);
+  for (const none of ["", "  ", null, undefined]) assert.equal(buildHeaderFields(none)[0].value, "Corporate Card");
+  assert.equal("label" in buildHeaderFields("ACME")[0], false); // no small heading above the text
+});
 
 test("isFamilyPartner ignores case and surrounding spaces", () => {
   assert.equal(FAMILY_PARTNER, "GEC Family Membership");
