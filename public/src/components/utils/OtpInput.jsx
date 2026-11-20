@@ -7,20 +7,35 @@ const OtpInput = forwardRef(({ length = 5, onChange, onComplete, useGECStyle = f
     const inputsRef = useRef([]);
     const completedRef = useRef(false);
 
-const handleChange = (value, index) => {
-    const sanitized = value.replace(/[^0-9]/g, "");
-    if (!sanitized) return;
+// Fill the boxes from startIndex with the digits of a typed, autofilled or pasted value.
+    const fillFrom = (startIndex, rawValue) => {
+        const digits = rawValue.replace(/[^0-9]/g, "");
+        if (!digits) return;
 
-    const newOtp = [...otp];
-    newOtp[index] = sanitized;
-    setOtp(newOtp);
-    onChange?.(newOtp.join(""));
+        const newOtp = [...otp];
+        let last = startIndex;
+        for (let i = 0; i < digits.length && startIndex + i < length; i++) {
+            newOtp[startIndex + i] = digits[i];
+            last = startIndex + i;
+        }
+        setOtp(newOtp);
+        onChange?.(newOtp.join(""));
+        inputsRef.current[Math.min(last + 1, length - 1)]?.focus();
+    };
 
-    if (index < length - 1) {
-         
-        inputsRef.current[index + 1]?.focus();
-    }
-};
+    const handleChange = (value, index) => {
+        // Typing over a filled box gives two characters: keep the new one.
+        // Three or more (autofill) spread over the next boxes.
+        fillFrom(index, value.length === 2 ? value.slice(-1) : value);
+    };
+
+    const handlePaste = (e, index) => {
+        e.preventDefault();
+        // A full code always fills from the first box; a short paste starts at the clicked box.
+        const text = e.clipboardData.getData("text");
+        const digits = text.replace(/[^0-9]/g, "");
+        fillFrom(digits.length >= length ? 0 : index, text);
+    };
 
     const handleKeyDown = (e, index) => {
         if (e.key === "Backspace") {
@@ -51,6 +66,12 @@ const handleChange = (value, index) => {
             completedRef.current = false;
             onChange?.("");
             inputsRef.current[0]?.focus();
+        },
+        focus: () => {
+            const first = inputsRef.current[0];
+            if (!first) return;
+            first.focus({ preventScroll: true });
+            first.scrollIntoView({ behavior: "smooth", block: "center" });
         },
         blurAll: () => {
             inputsRef.current.forEach((input) => input?.blur());
@@ -128,9 +149,10 @@ const handleChange = (value, index) => {
                     value={digit}
                     onChange={(e) => handleChange(e.target.value, idx)}
                     onKeyDown={(e) => handleKeyDown(e, idx)}
+                    onPaste={(e) => handlePaste(e, idx)}
                     inputRef={(el) => (inputsRef.current[idx] = el)}
                     inputProps={{
-                        maxLength: 1,
+                        maxLength: length,
                         inputMode: "numeric",
                         pattern: "[0-9]*",
                     }}

@@ -8,6 +8,7 @@ const authorization_middleware = require("../middleware/auth");
 const { exportTableAsCSV } = require("../services/csvParser");
 const { generateMemberPass } = require("../services/applePassService");
 const { generateMemberGooglePass } = require("../services/googlePassService");
+const { nextCardNumber } = require("../services/cardNumber");
 const { planMemberPass } = require("../services/memberPassRenewal");
 const { MOBILE_CHECK_SQL, classifyMobileCheck, maskMobile } = require("../services/mobileCheck");
 const { ACTIVE_PARTNERS_SQL, buildPartnerOptions } = require("../services/partnerList");
@@ -572,10 +573,6 @@ FROM unsynced_table;
         LIMIT 1
       `);
 
-      const getMaxCardNumber = db.prepare(
-        `SELECT MAX(card_number) AS max_num FROM member_card WHERE CAST(card_number AS TEXT) LIKE ?`
-      );
-
       const insertMcStmt = db.prepare(`
         INSERT INTO member_card (
           partner, mobile_number, firstname, lastname, title, gender,
@@ -675,12 +672,9 @@ FROM unsynced_table;
           close('synchronized', `moved from ${from.partner}`);
         } else {
           // New member — next card number in the language's range, 1-year expiry
-          const prefix = r.language === 'de' ? '5' : '7';
-          const maxRow = getMaxCardNumber.get(`${prefix}%`);
-          const baseNumber = r.language === 'de' ? 5000000 : 7000000;
-          const newCardNumber = (maxRow?.max_num ?? baseNumber) + 1;
-          const mcGender = r.gender === 'm' ? 'Herr' : r.gender === 'f' ? 'Frau' : null;
           const mcType = r.language === 'de' ? 5 : 7;
+          const newCardNumber = nextCardNumber(db, mcType);
+          const mcGender = r.gender === 'm' ? 'Herr' : r.gender === 'f' ? 'Frau' : null;
           const info = insertMcStmt.run(
             r.partner, phone, r.firstname, r.lastname, r.title,
             mcGender, r.email, birthday, mcType, newCardNumber

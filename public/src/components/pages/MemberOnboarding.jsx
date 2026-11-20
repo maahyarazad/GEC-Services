@@ -202,6 +202,10 @@ export default function MemberOnboarding({
                                                                 >
                                                                     Your account has been verified! Please check your email for a
                                                                     personalised Membership Pass.
+                                                                    <br />
+                                                                    <strong style={{ color: GEC.goldDark }}>
+                                                                        Register your username in the GEC Mobile App (Create an Account).
+                                                                    </strong>
                                                                 </Typography>
                                                             </Box>
 

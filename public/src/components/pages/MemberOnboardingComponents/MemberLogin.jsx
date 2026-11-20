@@ -82,6 +82,13 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
         };
     }, []);
 
+    // Focus the first OTP box and scroll it into view once the OTP block has slid open.
+    useEffect(() => {
+        if (!showOtpInput || !currentResponseStatus) return;
+        const t = setTimeout(() => otpRef.current?.focus(), 350);
+        return () => clearTimeout(t);
+    }, [showOtpInput, currentResponseStatus]);
+
     const searchMember = async (values) => {
         setIsSearching(true);
         try {
@@ -629,6 +636,7 @@ const MemberLogin = forwardRef(({ handleLoginSubmit, isLogging = false, setRegis
                                                     <>
                                                         <OtpInput
                                                             ref={otpRef}
+                                                            useGECStyle
                                                             onComplete={(val) => {
                                                                 handlePostOTP(val);
                                                             }}

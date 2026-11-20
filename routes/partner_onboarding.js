@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const { parse } = require("csv-parse/sync");
 const dbService = require("../services/dbService");
+const { nextCardNumber } = require("../services/cardNumber");
 require("dotenv").config();
 const authorization_middleware = require("../middleware/auth");
 const { normalizePhone, parseBirthday } = require("../helpers/essentials");
@@ -387,24 +388,33 @@ router.post("/api/partner-onboarding/employee", (req, res) => {
     const VALID_TITLES = ["Mr.", "Ms.", "Mrs.", "Dr.", ""];
     const VALID_GENDERS = ["Herr", "Frau", ""];
 
-    // No expiry given: default to one year from today, like members added by the sync.
-    const result = db.prepare(`
-      INSERT INTO member_card (title, firstname, lastname, gender, mobile_number, email, partner, birthday, active, type, remarks, card_expiry_date)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 'manually added', COALESCE(?, datetime('now', '+1 year')))
-    `).run(
-      VALID_TITLES.includes(title) ? title : "",
-      firstname,
-      lastname,
-      VALID_GENDERS.includes(gender) ? (gender || null) : null,
-      mobile_number || null,
-      email,
-      partner,
-      birthday || null,
-      type === 5 ? 5 : 7,
-      card_expiry_date || null
-    );
+    const memberType = type === 5 ? 5 : 7;
 
-    return res.status(201).json({ status: true, message: "Member added", id: result.lastInsertRowid });
+    // No expiry given: default to one year from today, like members added by the sync.
+    // The card number is the latest in the type's range + 1; lookup and insert run in one transaction.
+    const addMember = db.transaction(() => {
+      const cardNumber = nextCardNumber(db, memberType);
+      const info = db.prepare(`
+        INSERT INTO member_card (title, firstname, lastname, gender, mobile_number, email, partner, birthday, active, type, card_number, remarks, card_expiry_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 'manually added', COALESCE(?, datetime('now', '+1 year')))
+      `).run(
+        VALID_TITLES.includes(title) ? title : "",
+        firstname,
+        lastname,
+        VALID_GENDERS.includes(gender) ? (gender || null) : null,
+        mobile_number || null,
+        email,
+        partner,
+        birthday || null,
+        memberType,
+        cardNumber,
+        card_expiry_date || null
+      );
+      return { id: info.lastInsertRowid, cardNumber };
+    });
+    const result = addMember();
+
+    return res.status(201).json({ status: true, message: "Member added", id: result.id, card_number: result.cardNumber });
   } catch (error) {
     console.error(`${Date.now()} - Add member error:`, error);
     res.status(500).json({ status: false, message: "Server error" });

@@ -100,6 +100,13 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
     }, []);
 
 
+    // Focus the first OTP box and scroll it into view once the OTP block has slid open.
+    useEffect(() => {
+        if (!wizardState.otpState?.showOtpInput || !wizardState.otpState?.currentResponseStatus) return;
+        const t = setTimeout(() => otpRef.current?.focus(), 350);
+        return () => clearTimeout(t);
+    }, [wizardState.otpState?.showOtpInput, wizardState.otpState?.currentResponseStatus]);
+
     const tick = useCallback(() => {
         setWizardState(prev => ({
             ...prev,
@@ -567,6 +574,7 @@ const MemberUpdate = forwardRef(({ handleLoginSubmit, isLogging = false, setRegi
                                         <>
                                             <OtpInput
                                                 ref={otpRef}
+                                                useGECStyle
                                                 onComplete={(val) => {
                                                     handlePostOTP(val);
                                                 }}
