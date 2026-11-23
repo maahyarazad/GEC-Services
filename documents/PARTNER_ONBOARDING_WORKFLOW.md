@@ -208,7 +208,7 @@ its `sync_status`, `synced_at` and a `sync_note` (for example `owned by <partner
 process.
 
 **After commit:** each newly created card (re-read from `member_card`) gets an invitation
-(`membership__invitation`). Invitations go out in batches of 25, 10 s apart. A failed email is
+(`membership__invitation`). Members of the Family Membership partner get their own text (no employer or HR mention); all other partners get the corporate text. Invitations go out in batches of 25, 10 s apart. A failed email is
 written to `error_log` with its address and does not stop the others.
 
 **Response:** `{ status, inserted, updated, moved, deactivated, superseded, not_found, conflict,

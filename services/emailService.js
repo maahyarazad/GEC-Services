@@ -12,7 +12,8 @@ const {chunkArray} = require("../helpers/essentials");
 const emailLogService = require("./emailLogService");
 const dbService = require("./dbService");
 const { buildMemberPassEmail } = require("./memberPassEmail");
-const { enhanceEmailHtml } = require("./emailResponsive");
+const { enhanceEmailHtml, EMAIL_META } = require("./emailResponsive");
+const { isFamilyPartner } = require("./memberPassLayout");
 
 function slugToTitle(slug) {
   return slug
@@ -648,111 +649,101 @@ async function membership_pass_email({ data }) {
     throw error;
   }
 }
-async function membership__invitation(data) {
-  try {
-    const attachments = [];
+const INVITATION_LINK = "https://services.german-emirates-club.com/membership";
 
-    const currentYear = new Date().getFullYear();
+// Invitation sent to a member after a card is created. Family Membership members get their own text
+// (no employer); every other partner gets the corporate text.
+function buildMembershipInvitation(data) {
+  const isFamily = isFamilyPartner(data?.partner);
+  const firstname = data?.firstname || "member";
+  const partner = data?.partner || "our partner";
+  const currentYear = new Date().getFullYear();
 
-    const htmlBody = `<!DOCTYPE html>
-<html>
+  const intro = isFamily
+    ? "As requested, here is your digital Membership Pass for you with the German Emirates Club. With your Pass, you gain access to a wide range of discounts and privileges across Dubai, conveniently available on your mobile device. To activate your membership, please click the link below and complete your account setup:"
+    : `Your employer, ${partner}, has requested a complimentary digital Membership Pass for you with the German Emirates Club. With your Pass, you gain access to a wide range of discounts and privileges across Dubai, conveniently available on your mobile device. To activate your membership, please click the link below and complete your account setup:`;
+  const help = isFamily
+    ? "If you have any questions, please reach out to us via email or WhatsApp."
+    : "If you have any questions, please contact your HR department or reach out to us via email or WhatsApp.";
+  const subject = isFamily
+    ? "Your German Emirates Club Membership Pass"
+    : `${partner} offers you your Membership Pass - for free!`;
+  const title = subject;
 
+  const html = `<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title></title>
+    ${EMAIL_META.map(([, tag]) => tag).join("\n    ")}
+    <title>${title}</title>
 </head>
-
 <body style="margin:0; padding:0; background-color:#f4f4f4; font-family:Arial, sans-serif;">
-
     <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f4f4">
         <tr>
             <td align="center">
                 <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;">
-
                     <tr>
-                        <td align="center"
-                            style="background-color: #000000; padding:10px 30px;  border-top-left-radius:8px; border-top-right-radius:8px;">
-                            <img src="https://www.german-emirates-club.com/uploads/files/user/GE-LOGO-GOLD.png"
-                                width="120" alt="GE Logo" style="display:block; border:0;">
+                        <td align="center" style="background-color:#000000; padding:10px 30px; border-top-left-radius:8px; border-top-right-radius:8px;">
+                            <img src="https://www.german-emirates-club.com/uploads/files/user/GE-LOGO-GOLD.png" width="120" alt="GE Logo" style="display:block; border:0; max-width:100%; height:auto;">
                         </td>
                     </tr>
-
                     <tr>
                         <td style="padding:0 30px; font-size:16px; color:#333333; line-height:1.7;">
-                            <p>
-                                Dear ${data?.firstname || "member"},
-                            </p>
+                            <p>Dear ${firstname},</p>
                         </td>
                     </tr>
-
                     <tr>
-                        <td style="padding:0 30px 0; font-size:16px; color:#333333; line-height:1.7;">
-                            <p>
-                                Your employer, ${data?.partner || "our partner"}, has requested a complimentary digital Membership Pass for you with the German Emirates Club.
-With your Pass, you gain access to a wide range of discounts and privileges across Dubai, conveniently available on your mobile device.
-To activate your membership, please click the link below and complete your account setup:
-<br />
-                            </p>
-                            <a
-                                href="https://services.german-emirates-club.com/membership">https://services.german-emirates-club.com/membership</a>
+                        <td style="padding:0 30px; font-size:16px; color:#333333; line-height:1.7;">
+                            <p>${intro}</p>
+                            <p><a href="${INVITATION_LINK}">${INVITATION_LINK}</a></p>
                         </td>
                     </tr>
-
-
-
                     <tr>
                         <td style="padding:0 30px 10px; font-size:16px; color:#333333; line-height:1.7;">
                             <p>
-                                If you have any questions, please contact your HR department or reach out to us via email or WhatsApp.
+                                ${help}
                                 <br />
-Thank you,
+                                Thank you,
                                 <br />
                                 German Emirates Club
                                 <br />
                                 Email:
-                                <a
-                                    href="mailto:office2@german-emirates-club.com?subject=GEC%20Mobile%20App%20Inquiries">
-                                    office2@german-emirates-club.com
-                                </a>
+                                <a href="mailto:office2@german-emirates-club.com?subject=GEC%20Mobile%20App%20Inquiries">office2@german-emirates-club.com</a>
                                 <br />
-
                                 WhatsApp:
-                                <a href="https://wa.me/971562050066">
-                                    +971 56 205 0066
-                                </a>
+                                <a href="https://wa.me/971562050066">+971 56 205 0066</a>
                             </p>
-
-                           
                         </td>
                     </tr>
-
                     <tr>
-                        <td
-                            style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
+                        <td style="font-size:13px; color:#777777; text-align:center; padding:20px; border-top:1px solid #dddddd;">
                             &copy; ${currentYear} German Emirates Club. All rights reserved.
                         </td>
                     </tr>
-
                 </table>
             </td>
         </tr>
     </table>
-
 </body>
-
 </html>`;
 
-    // ✅ Send email using your own SMTP function
+  const text = `Dear ${firstname},\n\n${intro}\n${INVITATION_LINK}\n\n${help}\nThank you,\nGerman Emirates Club\nEmail: office2@german-emirates-club.com\nWhatsApp: +971 56 205 0066`;
+  return { subject, html, text };
+}
+
+async function membership__invitation(data) {
+  try {
+    const { subject, html, text } = buildMembershipInvitation(data);
     return await sendRawEmailWithAttachments({
       category: "membership-invitation",
       to: data.email,
-      subject: `${data?.partner || "Our partner"} offers you your Membership Pass - for free!`,
-      html: htmlBody,
-      //   text: "Your Corporate Card has been issued. Please download the mobile application, register, and log in. You can also add your card to Apple Wallet or Google Wallet.",
-      attachments,
+      subject,
+      html,
+      text,
+      attachments: [],
     });
   } catch (error) {
-    console.error(`${Date.now()} - Failed to send registration email:`, error);
+    console.error(`${Date.now()} - Failed to send membership invitation email:`, error);
     throw error;
   }
 }

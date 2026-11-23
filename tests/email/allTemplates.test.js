@@ -42,17 +42,20 @@ const calls = {
   emailMembershipCard: () => svc.emailMembershipCard(sample({ memberName: "Ana Lopez", cardNumber: "100200", expiryDate: "24-03-2027", membershipTier: "Premium" }), Buffer.from("x")),
   membership_courtacy_at_venue_message: () => svc.membership_courtacy_at_venue_message(sample({ firstName: "Ana", lastName: "Lopez", event: "GEC Summer Party" })),
   membership__invitation: () => svc.membership__invitation(sample({ firstname: "Ana", partner: "ACME Trading LLC" })),
+  membership__invitation_family: () => svc.membership__invitation(sample({ firstname: "Ana", partner: "Family Membership" })),
   send_party_invitation: () => svc.send_party_invitation(sample({ firstName: "Ana", lastName: "Lopez", event: "GEC Summer Party" })),
   company_data_confirmation_email: () =>
     svc.company_data_confirmation_email(sample({ event: "gec-summer-party", company_data: JSON.stringify(Object.fromEntries(companyFields.map((k) => [`company_${k}`, /mail/i.test(k) ? "c@example.com" : `Sample ${k}`]))) })),
 };
 
 const captured = {};
+const sentByName = {};
 test.before(async () => {
   for (const [name, fn] of Object.entries(calls)) {
     sent = [];
     await fn();
     captured[name] = sent[sent.length - 1].html;
+    sentByName[name] = sent[sent.length - 1];
   }
 });
 
@@ -121,5 +124,27 @@ test("no email has horizontal overflow at 375px and 320px (headless Chrome)", { 
     }
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("membership invitation: Family Membership has its own text, other partners keep the corporate text", () => {
+  const family = captured.membership__invitation_family;
+  const corporate = captured.membership__invitation;
+  assert.ok(family.includes("As requested, here is your digital Membership Pass"));
+  assert.ok(!/Your employer|HR department/.test(family));
+  assert.ok(family.includes("please reach out to us via email or WhatsApp."));
+  assert.ok(corporate.includes("Your employer, ACME Trading LLC"));
+  assert.ok(corporate.includes("HR department"));
+  assert.ok(!corporate.includes("As requested, here is your digital"));
+});
+
+test("membership invitation: subjects, plain text and head tags", () => {
+  assert.equal(sentByName.membership__invitation.subject, "ACME Trading LLC offers you your Membership Pass - for free!");
+  assert.equal(sentByName.membership__invitation_family.subject, "Your German Emirates Club Membership Pass");
+  for (const name of ["membership__invitation", "membership__invitation_family"]) {
+    assert.ok(sentByName[name].text && sentByName[name].text.includes("https://services.german-emirates-club.com/membership"), name);
+    const html = captured[name];
+    assert.ok(/<title>[^<]+<\/title>/.test(html), `${name}: title`);
+    assert.ok(html.includes('name="viewport"') && html.includes('name="color-scheme"') && html.includes('<html lang="en">'), name);
   }
 });
