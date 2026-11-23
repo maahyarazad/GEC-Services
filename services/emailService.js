@@ -660,7 +660,7 @@ function buildMembershipInvitation(data) {
   const currentYear = new Date().getFullYear();
 
   const intro = isFamily
-    ? "As requested, here is your digital Membership Pass for you with the German Emirates Club. With your Pass, you gain access to a wide range of discounts and privileges across Dubai, conveniently available on your mobile device. To activate your membership, please click the link below and complete your account setup:"
+    ? "As requested, your Family Membership with the German Emirates Club is ready. With your membership, you gain access to a wide range of discounts and privileges across Dubai, conveniently available on your mobile device. To activate your membership, please click the link below and complete your account setup:"
     : `Your employer, ${partner}, has requested a complimentary digital Membership Pass for you with the German Emirates Club. With your Pass, you gain access to a wide range of discounts and privileges across Dubai, conveniently available on your mobile device. To activate your membership, please click the link below and complete your account setup:`;
   const help = isFamily
     ? "If you have any questions, please reach out to us via email or WhatsApp."
